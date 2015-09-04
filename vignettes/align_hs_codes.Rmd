@@ -1,0 +1,10 @@
+---
+title: "Convert HS-codes to numbers of equal order of magnitude"
+author: "Alex Matrunich"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Convert HS-codes to numbers of equal order of magnitude}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---

@@ -21,8 +21,6 @@ data("hsfclmap")
 data("unsdpartnersblocks", package = "tradeproc")
 data("unsdpartners", package = "tradeproc")
 
-# source(file.path(Sys.getenv("HOME"), ".pwd.R"))
-
 trade_src <- src_postgres("sws_data", "localhost", 5432, "trade", .pwd,
                           options = "-c search_path=ess")
 
@@ -46,12 +44,7 @@ mapmaxlength <- hsfclmap %>%
   summarise(mapmaxlength = max(str_length(fromcode))) %>%
   ungroup()
 
-
-
-
-
-### Extract TL data and calculate length of hs codes
-
+### Extract TL data
 
 tldata <- agri_db %>%
   select(-hs2, -hs4, -hs6) %>%
@@ -60,25 +53,52 @@ tldata <- agri_db %>%
   collect() %>%
   mutate(reporter = as.integer(reporter),
          partner = as.integer(partner)) %>%
-  mutate(hs = stringr::str_extract(hs, "^[0-9]*")) %>% # Artifacts in reporters 646 and 208
-  ## Converting area codes to FAO
+  mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
+
+### Converting area codes to FAO
+
+tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
               select(wholepartner = rtCode,
                      part = formula) %>%
               filter(wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)), # Exclude EU and old countries
             by = c("partner" = "part")) %>%
   mutate(partner = ifelse(is.na(wholepartner), partner, wholepartner)) %>%
-  ## Aggregation of numbers for FAO areas
+  ## Aggregation of numbers for joined M49 areas
   ## We could aggregate later after convertion to FCL commodities
   group_by(year, reporter, partner, flow, hs, qunit) %>%
   summarize_each(funs(sum(., na.rm = T)), weight, qty, value) %>% # We convert NA to zero here!!!!
   ungroup() %>%
-  mutate(flow = as.character(factor(flow, labels = c("Import", "Export")))) %>%
+  mutate(flow = as.character(factor(flow, labels = c("Import", "Export"))),
+         m49rep = reporter,
+         m49par = partner,
+         reporter = tradeproc::convertComtradeM49ToFAO(m49rep),
+         partner = tradeproc::convertTLParnterToFAO(partner))
+
+# Nonmapped M49 partner codes: 251, 381, 473, 490,
+# 527, 568, 577, 579, 581, 637, 711, 757, 837, 838, 839, 842, 899
+
+
+if(any(is.na(tldata$reporter)))
+  message(paste0(
+    "Nonmapped M49 reporter codes: ",
+    paste(sort(unique(tldata$m49rep[is.na(tldata$reporter)])), collapse = ", "),
+    "\nProportion of trade flows with nonmapped M49 reporter codes: ",
+    scales::percent(sum(is.na(tldata$reporter))/nrow(tldata))))
+
+if(any(is.na(tldata$partner)))
+  message(paste0(
+    "Nonmapped M49 partner codes: ",
+    paste(sort(unique(tldata$m49par[is.na(tldata$partner)])), collapse = ", "),
+    "\nProportion of trade flows with nonmapped M49 partner codes: ",
+    scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
+
+###  Calculate length of hs codes
+
+tldata <- tldata %>%
   group_by(reporter, flow) %>%
   mutate(tlmaxlength = max(stringr::str_length(hs), na.rm = T)) %>%
-  ungroup() %>%
-  mutate(reporter = tradeproc::convertTLParnterToFAO(reporter),
-         partner = tradeproc::convertTLParnterToFAO(partner))
+  ungroup()
 
 
 ## Max length in TL
@@ -143,7 +163,9 @@ fcldf <- hsInRange(df$hsext, df$reporter, df$flow, hsfclmap1,
                    calculation = "grouping",
                    parallel = T)
 
-print(paste0("Proportion of nonmapped HS-codes: ", sum(is.na(fcldf$fcl))/nrow(fcldf)))
+if(any(is.na(fcldf$fcl)))
+  message(paste0("Proportion of nonmapped HS-codes: ",
+                 scales::percent(sum(is.na(fcldf$fcl))/nrow(fcldf))))
 
 ## Adding FCL to main TL data set
 #
@@ -151,7 +173,9 @@ tldata <- tldata %>%
   left_join(fcldf,
             by = c("reporter" = "areacode", "flow" = "flowname", "hsext" = "hs"))
 
-print(paste0("Proportion of tradeflows with nonmapped HS-codes: ", sum(is.na(tldata$fcl))/nrow(tldata)))
+if(any(is.na(tldata$fcl)))
+  message(paste0("Proportion of tradeflows with nonmapped HS-codes: ",
+                 scales::percent(sum(is.na(tldata$fcl))/nrow(tldata))))
 
 
 ## Unite weight with qty and aggregate by fcl

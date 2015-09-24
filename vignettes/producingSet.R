@@ -225,7 +225,14 @@ tldata <- tldata %>%
 
 ## Units of Comtrade
 
+data("comtradeunits",
+     package = "tradeproc",
+     envir = environment())
 
+tldata <- tldata %>%
+  mutate_(qunit = ~as.integer(qunit)) %>%
+  left_join(comtradeunits,
+            by = "qunit")
 
 ## Add conv. factor
 

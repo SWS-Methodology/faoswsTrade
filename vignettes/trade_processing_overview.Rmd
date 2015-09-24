@@ -1,0 +1,17 @@
+---
+title: "Trade processing overview"
+author: "Aleksandr Matrunich"
+date: `r Sys.time()`
+output: html_document
+---
+
+# Extraction of Comtrade data
+
+# Reimport / reexport aggregation
+
+# Conversion to FCL
+
+## Area codes from M49 to FAO area list
+
+## Mapping of HS codes to FCL
+

@@ -210,6 +210,28 @@ if(any(is.na(tldata$fcl)))
                  scales::percent(sum(is.na(tldata$fcl))/nrow(tldata))))
 
 #############Units of measurment ##################
+
+## Add target fclunit
+
+## units for fcl
+data("fclunits",
+     package = "tradeproc",
+     envir = environment())
+
+tldata <- tldata %>%
+  left_join(fclunits,
+            by = "fcl")
+
+
+## Units of Comtrade
+
+
+
+## Add conv. factor
+
+##
+
+
 ## Unite weight with qty and aggregate by fcl
 
 tldata <- tldata %>%

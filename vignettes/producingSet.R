@@ -1,3 +1,6 @@
+year <- 2011
+
+
 library(dplyr, warn.conflicts = F)
 library(stringr)
 library(hsfclmap)
@@ -16,7 +19,7 @@ if(length(lapply(dir(file.path(Sys.getenv("HOME"), "r_adhoc", "privateFAO", subd
                      full.names = T),
                  source)) == 0) stop("Files for sourcing not found")
 
-data("hsfclmap")
+data("hsfclmap2", package = "hsfclmap")
 
 data("unsdpartnersblocks", package = "tradeproc")
 data("unsdpartners", package = "tradeproc")
@@ -29,18 +32,19 @@ agri_db <- tbl(trade_src, sql("
                               "))
 
 
-hsfclmap <- hsfclmap %>%
-  mutate(tocode = trailingDigits(fromcode, tocode, digit = 9),
-         validyear = as.integer(validyear),
-         validyear = ifelse(is.na(validyear), 0, validyear)) %>%
-  manualCorrections() %>%
-  mutate(fao = as.integer(fao))
+hsfclmap <- hsfclmap2 %>%
+  filter(mdbyear == year,
+         validyear %in% c(0, year)) %>%
+  mutate(tocode = hsfclmap::trailingDigits(fromcode,
+                                           tocode,
+                                           digit = 9)) %>%
+  manualCorrections()
 
 
 # Max length of HS-codes in MDB-files
 
 mapmaxlength <- hsfclmap %>%
-  group_by(fao, flow) %>%
+  group_by(area, flow) %>%
   summarise(mapmaxlength = max(str_length(fromcode))) %>%
   ungroup()
 
@@ -48,12 +52,34 @@ mapmaxlength <- hsfclmap %>%
 
 tldata <- agri_db %>%
   select(-hs2, -hs4, -hs6) %>%
-  filter(year == "2011",
-         flow %in% c("1", "2")) %>% #Drop reexport and reimport
+  filter(year == "2011") %>%
   collect() %>%
   mutate(reporter = as.integer(reporter),
          partner = as.integer(partner)) %>%
   mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
+
+### Reimport and reexport
+# http://comtrade.un.org/data/cache/tradeRegimes.json
+# { "id": "1", "text": "Import" },
+# { "id": "2", "text": "Export" },
+# { "id": "4", "text": "re-Import" },
+# { "id": "3", "text": "re-Export" }
+
+tldata <- tldata %>%
+  group_by(year,
+           reporter,
+           partner,
+           hs,
+           qunit,
+           flow = ifelse(flow %in% c("1", "3"),
+                         "Import",
+                         "Export")) %>%
+  summarize_each(funs(sum(., na.rm = T)),
+                 weight,
+                 qty,
+                 value) %>%  # We convert NA to zero here!!!!
+  ungroup()
+
 
 ### Converting area codes to FAO
 
@@ -69,8 +95,7 @@ tldata <- tldata %>%
   group_by(year, reporter, partner, flow, hs, qunit) %>%
   summarize_each(funs(sum(., na.rm = T)), weight, qty, value) %>% # We convert NA to zero here!!!!
   ungroup() %>%
-  mutate(flow = as.character(factor(flow, labels = c("Import", "Export"))),
-         m49rep = reporter,
+  mutate(m49rep = reporter,
          m49par = partner,
          reporter = tradeproc::convertComtradeM49ToFAO(m49rep),
          partner = tradeproc::convertTLParnterToFAO(partner))
@@ -93,6 +118,8 @@ if(any(is.na(tldata$partner)))
     "\nProportion of trade flows with nonmapped M49 partner codes: ",
     scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
 
+
+############# Lengths of HS-codes stuff ######################
 ###  Calculate length of hs codes
 
 tldata <- tldata %>%
@@ -118,12 +145,17 @@ tlmaxlength <- tldata %>%
 
 maxlengthdf <- tlmaxlength %>%
   left_join(mapmaxlength,
-            by = c("reporter" = "fao", "flow")) %>%
+            by = c("reporter" = "area", "flow")) %>%
   group_by(reporter, flow) %>%
   mutate(maxlength = max(tlmaxlength, mapmaxlength, na.rm = T)) %>%
   # na.rm here: some reporters are absent in map
   #  122 145 180 224 276
   ungroup()
+
+
+####
+# hsnotequal.R
+
 
 
 
@@ -145,7 +177,7 @@ tldata <- tldata %>%
 hsfclmap1 <- hsfclmap %>%
   left_join(maxlengthdf %>%
               select(-tlmaxlength, -mapmaxlength),
-            by = c("fao" = "reporter", "flow")) %>%
+            by = c("area" = "reporter", "flow")) %>%
   filter(!is.na(maxlength))                                         ## Attention!!!
 
 hsfclmap1 <- hsfclmap1 %>%
@@ -153,7 +185,7 @@ hsfclmap1 <- hsfclmap1 %>%
          tocode = as.numeric(trailingDigits2(tocode, maxlength, 9)))
 
 
-## Mapping HS codes to FCL
+########### Mapping HS codes to FCL ###############
 
 df <- tldata %>%
   select(reporter, flow, hsext) %>%
@@ -177,7 +209,7 @@ if(any(is.na(tldata$fcl)))
   message(paste0("Proportion of tradeflows with nonmapped HS-codes: ",
                  scales::percent(sum(is.na(tldata$fcl))/nrow(tldata))))
 
-
+#############Units of measurment ##################
 ## Unite weight with qty and aggregate by fcl
 
 tldata <- tldata %>%

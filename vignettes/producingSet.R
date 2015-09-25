@@ -231,21 +231,118 @@ data("comtradeunits",
 
 tldata <- tldata %>%
   mutate_(qunit = ~as.integer(qunit)) %>%
-  left_join(comtradeunits,
+  left_join(comtradeunits %>%
+              select_(~qunit, ~wco),
             by = "qunit")
 
-## Add conv. factor
+ctfclunitsconv <- tldata %>%
+  select(qunit, wco, fclunit) %>%
+  distinct() %>%
+  arrange(qunit)
 
-##
+################ Conv. factor################
 
 
-## Unite weight with qty and aggregate by fcl
+##### Table for conv. factor
+
+ctfclunitsconv$conv <- 0
+ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "$ value only"] <- NA # Missing quantity
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
+                      ctfclunitsconv$wco == "m²"] <- 1
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
+                      ctfclunitsconv$wco == "l"] <- .001
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
+                      ctfclunitsconv$wco == "u"] <- 1
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
+                      ctfclunitsconv$wco == "u"] <- .001
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
+                      ctfclunitsconv$wco == "u"] <- 1
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
+                      ctfclunitsconv$wco == "kg"] <- .001
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
+                      ctfclunitsconv$wco == "m³"] <- 1
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
+                      ctfclunitsconv$wco == "carat"] <- 5e-6
+
+
+##### Add conv factor to the dataset
 
 tldata <- tldata %>%
-  mutate(kgyes = !is.na(weight) & weight > 0,
-         qunit = ifelse(kgyes, 8, qunit),
-         qty = ifelse(kgyes, weight, qty)) %>%
-  select(year, reporter, partner, flow, fcl, qunit, qty, value) %>%
-  group_by(year, reporter, partner, flow, fcl, qunit) %>%
+  left_join(ctfclunitsconv,
+            by = c("qunit", "wco", "fclunit"))
+
+#### Commodity specific conversion
+
+fcl_spec_mt_conv <- tldata %>%
+  filter(fclunit == "mt" & weight == 0 & conv == 0) %>%
+  select(fcl, wco) %>%
+  distinct() %>%
+  mutate(fcldesc = fclhs::descfcl(fcl))
+
+fcl_spec_mt_conv$convspec <- 0
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
+                            fcl_spec_mt_conv$wco == "1000u"] <- .01
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
+                            fcl_spec_mt_conv$wco == "u"] <- .0001
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+                            fcl_spec_mt_conv$wco == "u"] <- .00006
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+                            fcl_spec_mt_conv$wco == "2u"] <- .00012
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+                            fcl_spec_mt_conv$wco == "12u"] <- .00072
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+                            fcl_spec_mt_conv$wco == "1000u"] <- .006
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars and Cheroots" &
+                            fcl_spec_mt_conv$wco == "u"] <- 0.000008
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars and Cheroots" &
+                            fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
+                            fcl_spec_mt_conv$wco == "u"] <- 0.000008
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
+                            fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit, prepared nes" &
+                            fcl_spec_mt_conv$wco == "U (jeu/pack)"] <- 0.0208333
+
+### Add commodity specific conv.factors to dataset
+
+tldata <- tldata %>%
+  left_join(fcl_spec_mt_conv %>%
+              select(-fcldesc),
+            by = c("fcl", "wco"))
+
+
+########## Conversion of units
+
+#### FCL specific conv
+
+tldata$qtyfcl <- tldata$qty * tldata$convspec
+
+#### Common conv
+# If no specific conv. factor, we apply general
+
+tldata$qtyfcl <- ifelse(is.na(tldata$convspec),
+                        tldata$qty * tldata$conv,
+                        tldata$qtyfcl)
+
+##### No qty, but weight and target is mt: we take weight from there
+
+tldata$qtyfcl <- ifelse(tldata$qty == 0 &
+                          tldata$fclunit == "mt" &
+                          is.na(tldata$qtyfcl) &
+                          tldata$weight > 0,
+                        tldata$weight,
+                        tldata$qtyfcl)
+
+
+######### Value to thousands
+
+tldata$value <- tldata$value / 1000
+
+## aggregate by fcl
+
+tldata <- tldata %>%
+  select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%
+  group_by(year, reporter, partner, flow, fcl) %>%
   summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
   ungroup()

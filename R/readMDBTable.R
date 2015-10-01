@@ -1,3 +1,11 @@
+#' Reads a specific table from an MDB file, prepared for
+#' Jellyfish software.
+#'
+#' It is expected folder name and file name are the same and
+#' are formed from country name abbreviation and year, for example,
+#' USA_2011.
+#'
+
 readMDBTable <- function(area,
                          year,
                          table,

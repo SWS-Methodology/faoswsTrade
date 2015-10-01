@@ -34,8 +34,12 @@ joined <- valid %>%
   left_join(fclhs::fcl %>%
               select(fcl, fcldesc = fcltitle),
             by = "fcl") %>%
-  select(year, reporter, flow, fcl, fcldesc, quantity, value, valueprop, quantityprop) %>%
-  mutate(reporter = ifelse(reporter == 231, "US", "Ethiopia"))
+  mutate(reporter = ifelse(reporter == 231, "US", "Ethiopia"),
+         quantityabs = abs(quantity)) %>%
+  select(year, reporter, flow, fcl, fcldesc, quantity, quantityabs,
+         quantityprop, value, valueprop) %>%
+  mutate_each(funs(as.integer(round(., 0))),
+              quantity, quantityabs, value)
 
 XLConnect::writeWorksheetToFile("vignettes/usa_eth.xlsx",
                                 as.data.frame(joined),

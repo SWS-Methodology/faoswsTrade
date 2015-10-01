@@ -129,6 +129,8 @@ if(any(is.na(tldata$partner)))
     scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
 
 
+
+
 ### Reimport and reexport
 # http://comtrade.un.org/data/cache/tradeRegimes.json
 # { "id": "1", "text": "Import" },
@@ -136,21 +138,21 @@ if(any(is.na(tldata$partner)))
 # { "id": "4", "text": "re-Import" },
 # { "id": "3", "text": "re-Export" }
 
-tldata <- tldata %>%
-  group_by(year,
-           reporter,
-           partner,
-           hs,
-           qunit,
-           flow = ifelse(flow %in% c("1", "3"),
-                         "Import",
-                         "Export")) %>%
-  # Aggregation of RE-flows
-  summarize_each(funs(sum(., na.rm = T)),
-                 weight,
-                 qty,
-                 value) %>%  # We convert NA to zero here!!!!
-  ungroup()
+# tldata <- tldata %>%
+#   group_by(year,
+#            reporter,
+#            partner,
+#            hs,
+#            qunit,
+#            flow = ifelse(flow %in% c("1", "3"),
+#                          "Import",
+#                          "Export")) %>%
+#   # Aggregation of RE-flows
+#   summarize_each(funs(sum(., na.rm = T)),
+#                  weight,
+#                  qty,
+#                  value) %>%  # We convert NA to zero here!!!!
+#   ungroup()
 
 ############# Lengths of HS-codes stuff ######################
 ###  Calculate length of hs codes

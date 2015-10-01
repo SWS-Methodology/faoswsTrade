@@ -1,4 +1,10 @@
+# Year for processing
 year <- 2011
+
+# Elements of path to sourced files with functions.
+# They should be moved to a package
+subdir <- "OrangeBook"
+sourcedir <- "tradeR"
 
 
 library(dplyr, warn.conflicts = F)
@@ -9,20 +15,41 @@ suppressPackageStartupMessages(library(doParallel))
 library(foreach)
 registerDoParallel(cores=detectCores(all.tests=TRUE))
 
-subdir <- "OrangeBook"
-sourcedir <- "tradeR"
 
+# Connection to SWS
+# TODO: DEV MODE!!!!!!!!
 
-source(file.path(Sys.getenv("HOME"), "r_adhoc", "trade_prevalid_testing", "setupconnection.R"))
+source(file.path(Sys.getenv("HOME"),
+                 "r_adhoc",
+                 "trade_prevalid_testing",
+                 "setupconnection.R"))
 
-if(length(lapply(dir(file.path(Sys.getenv("HOME"), "r_adhoc", "privateFAO", subdir, sourcedir),
-                     full.names = T),
-                 source)) == 0) stop("Files for sourcing not found")
+# Functions to get different M49 schemes from Web,
+# MADB, missingIndicator, printTab
+# TODO: should be in a package
+
+if(length(
+  lapply(
+    dir(
+      file.path(
+        Sys.getenv("HOME"),
+        "r_adhoc",
+        "privateFAO",
+        subdir,
+        sourcedir),
+      full.names = T),
+    source)) == 0) stop("Files for sourcing not found")
+
+## Data sets with hs->fcl map (from mdb files)
+# and UNSD area codes (M49)
+## TODO: replace by ad hoc tables
 
 data("hsfclmap2", package = "hsfclmap")
-
 data("unsdpartnersblocks", package = "tradeproc")
 data("unsdpartners", package = "tradeproc")
+
+## Connection to the local DB
+## TODO: should be replaced by ad boc table
 
 trade_src <- src_postgres("sws_data", "localhost", 5432, "trade", .pwd,
                           options = "-c search_path=ess")
@@ -31,24 +58,29 @@ agri_db <- tbl(trade_src, sql("
                               select * from ess.agri
                               "))
 
+## Filter hs->fcl links we need (based on year)
 
 hsfclmap <- hsfclmap2 %>%
-  filter(mdbyear == year,
+  filter_(~mdbyear == year &
          validyear %in% c(0, year)) %>%
-  mutate(tocode = hsfclmap::trailingDigits(fromcode,
+## and add trailing 9 to tocode, where it is shorter
+## TODO: check how many such cases and, if possible, move to manualCorrectoins
+  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
                                            tocode,
                                            digit = 9)) %>%
-  manualCorrections()
+## Manual corrections of typos
+    manualCorrections()
 
 
 # Max length of HS-codes in MDB-files
 
 mapmaxlength <- hsfclmap %>%
-  group_by(area, flow) %>%
-  summarise(mapmaxlength = max(str_length(fromcode))) %>%
+  group_by_(~area, ~flow) %>%
+  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
   ungroup()
 
 ### Extract TL data
+## TODO: replace by call to SWS ad hoc
 
 tldata <- agri_db %>%
   select(-hs2, -hs4, -hs6) %>%
@@ -74,6 +106,7 @@ tldata <- tldata %>%
            flow = ifelse(flow %in% c("1", "3"),
                          "Import",
                          "Export")) %>%
+  # Aggregation of RE-flows
   summarize_each(funs(sum(., na.rm = T)),
                  weight,
                  qty,

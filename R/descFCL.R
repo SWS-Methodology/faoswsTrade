@@ -1,4 +1,5 @@
 #' @import dplyr
+#' @export
 
 descFCL <- function(item,
                     swsdomain = "trade",
@@ -13,6 +14,7 @@ descFCL <- function(item,
   # get a 500 error from the server. So it is easier to get full set
   data.frame(item) %>%
     left_join(faosws::GetCodeList(swsdomain, swsdataset, swsdimension) %>%
+                as.data.frame() %>%
                 select_(~code, ~description) %>%
                 mutate_(code = ~as.integer(code)),
               by = c("item" = "code")) %>%

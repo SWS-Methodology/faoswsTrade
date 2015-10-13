@@ -1,17 +1,135 @@
 ---
 title: "Trade processing overview"
 author: "Aleksandr Matrunich"
-date: `r Sys.time()`
-output: html_document
+output:
+  html_document:
+    toc: true
 ---
+```{r options, echo = F}
+library(dplyr, warn.conflicts = F)
+```
+Updated: `r Sys.time()`
 
 # Extraction of Comtrade data
 
-# Reimport / reexport aggregation
+Reporters' and partners' codes are converted from character to numeric (integer) format.
+
+Non-numeric trailing symbols are removed from HS codes, as they were found in reporters 646 and 208.
+
+# Area codes from M49 to FAO area list
+
+## Unifying of partners' and reporters' M49 codes
+
+In the trade dataset received from UNSD, a modified M49 classification is used for reporters. For example, the code 842 is used for the United States, including Virgin Islands and Puerto Rico. Appearingly the US reports its trade flows including these territories.
+
+For partners the standard M49 classification is used: the US is under #840, and the territories have their own codes. So in the column with reporters only #842 is presented. But in the column with partners you will find 840 (the US) and 850 (US Virgin Islands).
+
+For further steps (conversion area codes into FAO classification and mirroring) we need to have identical codification in partners' and reporters' columns. Since we can not split trade flows of the reporter #842, we have to merge trade flows of partners #840 and #850 and assign partner code #842. Analogous steps are taken for France, Italy, Norway, Switzerland and US Minor Outlying Islands.
+
+After reassigning of codes weight, other quantity and value are aggregated.
+
+## Conversion to FAO area codes
+
+Conversion of area codes into FAO standard is required for further steps of mapping of HS commodity codes to FCL and applying country specific adjustments to quantities and commodities.
+
+Conversion of reporters' codes is done with using of countrycode R-package with matching by country names. Exceptions are stored in `convertComtradeM49ToFAO()` R-function.
+
+ Conversion of partners' codes is done with country profiles table from FAOSTAT package. Exceptions are stored in `convertTLParnterToFAO()` R-function.
+
+ __TODO:__ to clarify should we use `swsUtils::m492fs()` function for both columns.
+
+With current procedure all reporters' codes are mapped to FAO list, but there is no assurance that all codes are converted properly.
+
+As about partners, following M49 codes are not mapped to FAO classification: 473, 490, 527, 568, 577, 637, 711, 837, 838, 839, 899. All of them are group of countries, for example Other Oceania, nes or Southern African Customs Union. Currently these trade flows are dropped from further processing.
+
+__TODO__: We could add quantities and values from these trade flows.
 
 # Conversion to FCL
 
-## Area codes from M49 to FAO area list
+## Structure of FAO's HS-to-FCL mapping files
 
-## Mapping of HS codes to FCL
+Every country uses its own extended HS codes. Mapping of country-specific HS codes to FCL is maintained by ESS FAO specialists. Links are stored in MDB database files, which are used by Jellyfish software (pre-SWS era). Processed table from such file looks like following.
 
+```{r mdb-example, echo = F}
+data("hsfclmap2", package = "hsfclmap")
+hsfclmap2 %>%
+  select_(~ - fclorig, ~ - mdbyear) %>%
+  head
+```
+
+A link HS-to-FCL is represented not as one-to-one correspondence, but as a numeric range of HS codes on the left-hand side and a single FCL code on the right-hand side.
+
+During the process of mapping for every record in the table we should find all HS codes which fall into the range and assign corresponding FCL code to all of them.
+
+Such approach assumes all HS codes in  a group (by year, reporter, flow) have identical lengths in Comtrade dataset and in MDB files. For example, HS code `23.02.20.00.00` should fall into interval `23.02.20 - 23.02.30`, because this interval includes all items under header 23, subheading 02 and subheadings numbered from 20 to 30. So more correct representation of the interval would be `23.02.[20-30].*`
+
+But in case of direct numeric representation such matching will fail: 2,302,200,000 is bigger than upper bound of the interval (230,230).
+
+## Quality assessment of MDB files
+
+Some of the following issues are recorded in function `manualCorrections()`. The function is applied every time HS-to-FCL links are exported.
+
+* Upper-bound HS code must be equal or greater than lower-bound HS-code.
+* Upper-bound HS code of the previous record must be less than lower-bound of the current record. In some cases map contains overlapping HS intervals. Currently first suitable link is selected. __TODO__: check this issue.
+* There are cases when lower-bound HS code has length greater than upper-bound HS code. Then upper-bound code (_to_HS_) is extended by 9.
+
+__TODO__: In some cases it is better to extend upper-bound by zeros instead of 9. For example, in HS interval `040510000:04058999` field _to_HS_ should be extended by 9, but in case of `0708900000:07089000` zeros should be used.
+
+## Mapping of HS codes to FCL codes
+
+During data processing we found out that in some cases lengths of HS codes in Comtrade data and in MDB maps don't match. Full list of mismatched codes one can find in this [Shiny application](https://malexan.shinyapps.io/hslength), what was designed specially for investigation of the problem.
+
+### Aligning of HS codes with different length
+
+The reason for this problem is not clear. In some cases UNSD uses other sources of trade data than FAO used before (e.g. members of the EU). To complete HS-to-FCL mapping we have to align HS-codes on both sides. Our current approach is the following:
+
+1. Split both datasets in groups by year, reporter and flow.
+2. In every group detect maximal length of HS code.
+3. For every year, reporter and flow detect maximal length of HS code as in Comtrade dataset, so in MDB mapping file.
+4. For every trade flow and for every mapping link, where HS code is shorter than maximal length in the group, extend HS code with trailing digits.
+    - HS codes in Comtrade data and in _from_HS_ column of MDB tables are extended by zeros;
+    - HS codes in _to_HS_ column of MDB tables are extended with 9.
+
+### Example of short code in dataset
+
+For example, in Comtrade dataset Canada reports import of a commodity under HS code `10.01.10.00` in 2011. Length of the HS code is 8 digits. But corresponding MDB mapping table Canada is represented only by 10-digit HS codes. Manually we can find suitable interval of HS codes: from `10.01.10.00.00` to `10.01.10.00.00` which is mapped to FCL code 15. But mathematically `10011000` is not equal to `1001100000`. So to complete the operation we add two additional zeros to the HS code from the Comtrade dataset.
+
+### Example of short code in MDB mapping table
+
+On the same year Indonesia reports export of HS `15.11.10.00.00` --- 10-digit code. MDB table provides us only with 9-digit codes. Suitable HS range would be this one: from `15.11.00.00.0` to `15.11.99.99.9`, which is linked with FCL #257. We extend lower-bound (_from_HS_) with zero and upper-bound (_to_HS_) with 9 and get interval `1511000000:1511999999` where the code of question (`1511100000`) perfectly falls.
+
+## Aggregation of trade flows by FCL code
+
+After converting of HS codes to FCL we get several identical trade flows per each year/reporter/partner/flow/FCL. At this stage we aggregate such trade flows.
+
+__TODO__: During aggregation we lose information about missing values and quantities, because NAs are removed during summarizing. We could do missing values imputation on HS level.
+
+# Reimport / reexport aggregation
+
+Re-export and and re-import trade flows are added to corresponding export and import trade flows.
+
+# Units of measurement
+
+## FCL target units
+
+## Units of Comtrade
+
+## General conversion
+
+## Commodity specific conversion
+
+## Applying notes from MDB
+
+## Value to $1000
+
+# Validation
+
+## Missing quantities and values
+
+## UV calculation
+
+## Outlier detection
+
+## Imputation of missings and outliers
+
+## Adding non-reporting countries

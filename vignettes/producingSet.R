@@ -7,13 +7,14 @@ subdir <- "OrangeBook"
 sourcedir <- "tradeR"
 
 
-library(dplyr, warn.conflicts = F)
 library(stringr)
 library(hsfclmap)
+#library(fclhs, warn.conflicts = F)
 library(fclcpcmap)
 suppressPackageStartupMessages(library(doParallel))
 library(foreach)
 registerDoParallel(cores=detectCores(all.tests=TRUE))
+library(dplyr, warn.conflicts = F)
 
 
 # Connection to SWS
@@ -51,18 +52,26 @@ data("unsdpartners", package = "tradeproc")
 ## Connection to the local DB
 ## TODO: should be replaced by ad boc table
 
-trade_src <- src_postgres("sws_data", "localhost", 5432, "trade", .pwd,
+trade_src <- src_postgres("sws_data",
+                          "localhost",
+                          5432,
+                          "trade",
+                          .pwd,
                           options = "-c search_path=ess")
 
 agri_db <- tbl(trade_src, sql("
                               select * from ess.agri
                               "))
-
+######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)
 
 hsfclmap <- hsfclmap2 %>%
   filter_(~mdbyear == year &
          validyear %in% c(0, year)) %>%
+  # Convert flow to numbers for further joining with tlmaxlength
+  mutate_(flow = ~ifelse(flow == "Import", 1L,
+                         ifelse(flow == "Export", 2L,
+                                NA))) %>%
 ## and add trailing 9 to tocode, where it is shorter
 ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
@@ -72,14 +81,15 @@ hsfclmap <- hsfclmap2 %>%
     manualCorrections()
 
 
-# Max length of HS-codes in MDB-files
+# Max length of HS-codes in MDB-files ####
 
 mapmaxlength <- hsfclmap %>%
   group_by_(~area, ~flow) %>%
   summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
+
   ungroup()
 
-### Extract TL data
+### Extract TL data ####
 ## TODO: replace by call to SWS ad hoc
 
 tldata <- agri_db %>%
@@ -87,7 +97,8 @@ tldata <- agri_db %>%
   filter(year == "2011") %>%
   collect() %>%
   mutate(reporter = as.integer(reporter),
-         partner = as.integer(partner)) %>%
+         partner = as.integer(partner),
+         flow = as.integer(flow)) %>%
   mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
 
 

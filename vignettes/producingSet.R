@@ -9,7 +9,7 @@ sourcedir <- "tradeR"
 
 library(stringr)
 library(hsfclmap)
-#library(fclhs, warn.conflicts = F)
+library(tradeproc)
 library(fclcpcmap)
 suppressPackageStartupMessages(library(doParallel))
 library(foreach)
@@ -68,6 +68,10 @@ agri_db <- tbl(trade_src, sql("
 hsfclmap <- hsfclmap2 %>%
   filter_(~mdbyear == year &
          validyear %in% c(0, year)) %>%
+  # Removing leading/trailing zeros from HS, else we get
+  # NA during as.numeric()
+  mutate_each_(funs(str_trim),
+               c("fromcode", "tocode")) %>%
   # Convert flow to numbers for further joining with tlmaxlength
   mutate_(flow = ~ifelse(flow == "Import", 1L,
                          ifelse(flow == "Export", 2L,
@@ -324,7 +328,7 @@ fcl_spec_mt_conv <- tldata %>%
   filter(fclunit == "mt" & weight == 0 & conv == 0) %>%
   select(fcl, wco) %>%
   distinct() %>%
-  mutate(fcldesc = fclhs::descfcl(fcl))
+  mutate(fcldesc = descFCL(fcl))
 
 fcl_spec_mt_conv$convspec <- 0
 fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &

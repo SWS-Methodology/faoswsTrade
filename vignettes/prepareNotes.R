@@ -80,5 +80,9 @@ adjustments <- adjustments %>%
 adjustments %>%
   filter(grepl("[a-zA-Z]", quantity)) %>%
   group_by(quantity) %>%
-  sample_n(5, replace = T) %>%
+  mutate(n_quant = n()) %>%
+  ungroup() %>%
+  mutate(q_w = 1/(n_quant / n())) %>%
+  sample_n(10, weight = q_w) %>%
+  arrange(quantity) %>%
   as.data.frame

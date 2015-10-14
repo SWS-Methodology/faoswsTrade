@@ -54,6 +54,8 @@ test_that("All nonnumeric variants of quantity.other are expected", {
 adjustments <- adjustments %>%
   mutate_(
     flow = ~as.integer(flow),
+    # flow 0 means apply to all flows
+    flow = ~ifelse(flow == 0, NA, flow),
     hs   = ~as.numeric(hs),
     fcl  = ~as.integer(fcl),
     partner = ~as.integer(partner),

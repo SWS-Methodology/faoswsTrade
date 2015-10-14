@@ -257,7 +257,10 @@ tldata <- tldata %>%
 
 if(any(is.na(tldata$fcl)))
   message(paste0("Proportion of tradeflows with nonmapped HS-codes: ",
-                 scales::percent(sum(is.na(tldata$fcl))/nrow(tldata))))
+                 scales::percent(sum(is.na(tldata$fcl))/nrow(tldata)),
+                 "\nShare of value of tradeflows with nonmapped HS-codes in total value: ",
+                 scales::percent(sum(tldata$value[is.na(tldata$fcl)], na.rm = T) /
+                                   sum(tldata$value, na.rm = T))))
 
 #############Units of measurment ##################
 
@@ -335,23 +338,23 @@ fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
                             fcl_spec_mt_conv$wco == "1000u"] <- .01
 fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
                             fcl_spec_mt_conv$wco == "u"] <- .0001
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
                             fcl_spec_mt_conv$wco == "u"] <- .00006
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
                             fcl_spec_mt_conv$wco == "2u"] <- .00012
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
                             fcl_spec_mt_conv$wco == "12u"] <- .00072
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen eggs" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
                             fcl_spec_mt_conv$wco == "1000u"] <- .006
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars and Cheroots" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
                             fcl_spec_mt_conv$wco == "u"] <- 0.000008
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars and Cheroots" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
                             fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
 fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
                             fcl_spec_mt_conv$wco == "u"] <- 0.000008
 fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
                             fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit, prepared nes" &
+fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit Prepared nes" &
                             fcl_spec_mt_conv$wco == "U (jeu/pack)"] <- 0.0208333
 
 ### Add commodity specific conv.factors to dataset

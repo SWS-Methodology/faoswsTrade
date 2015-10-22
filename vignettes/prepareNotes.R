@@ -1,4 +1,4 @@
-load("tldata2011.RData")
+# load("tldata2011.RData")
 load("usanotes2011.RData")
 
 library(dplyr, warn.conflicts = F)

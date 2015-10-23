@@ -23,7 +23,7 @@ getTableFromDB <- function(
                             password = password,
                             options = options)
 
-  tbl_src <- tbl(trade_src, sql(sqlrequest))
+  tbl_src <- tbl(sws_src, sql(sqlrequest))
 
   localtbl <- collect(tbl_src)
 

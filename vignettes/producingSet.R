@@ -75,7 +75,7 @@ where hs6 in (",
 
 tldata <- getTableFromDB(tlsql)
 
-essql <- "
+essql <- paste0("
 select * from (
 select declarant as reporter,
 partner,
@@ -88,7 +88,7 @@ qty_ton as weight,
 sup_quantity as qty
 from ess.ce_combinednomenclature_unlogged) tbl1
 
-where hs6 in ('",
+where hs6 in (",
 agricodeslist,
 ") and year = '",
 year,

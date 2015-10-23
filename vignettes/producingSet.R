@@ -68,13 +68,33 @@ qty,
 qunit
 from ess.ct_tariffline_adhoc_unlogged) tbl1
 where hs6 in (",
-                agricodeslist
-                ,
+                agricodeslist,                ,
                 ") and year = '",
                 year,
                 "'")
 
 tldata <- getTableFromDB(tlsql)
+
+essql <- "
+select * from (
+select declarant as reporter,
+partner,
+product_nc as hs,
+substring(product_nc from 1 for 6) as hs6,
+flow,
+substring(period from 1 for 4) as year,
+value_1k_euro as value,
+qty_ton as weight,
+sup_quantity as qty
+from ess.ce_combinednomenclature_unlogged) tbl1
+
+where hs6 in ('",
+agricodeslist,
+") and year = '",
+year,
+"'")
+
+esdata <- getTableFromDB(essql)
 
 ######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)

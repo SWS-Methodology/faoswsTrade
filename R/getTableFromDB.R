@@ -27,7 +27,7 @@ getTableFromDB <- function(
 
   localtbl <- collect(tbl_src)
 
-  RODBC::odbcClose(src_src$con)
+  RPostgreSQL::dbDisconnect(sws_src$con)
 
   localtbl
 

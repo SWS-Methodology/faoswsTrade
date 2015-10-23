@@ -74,6 +74,8 @@ where hs6 in (",
                 year,
                 "'")
 
+tldata <- getTableFromDB(tlsql)
+
 ######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)
 

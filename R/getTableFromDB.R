@@ -27,7 +27,7 @@ getTableFromDB <- function(
 
   localtbl <- collect(tbl_src)
 
-  RODBC::odbcClose(tbl_src$con)
+  RODBC::odbcClose(src_src$con)
 
   localtbl
 

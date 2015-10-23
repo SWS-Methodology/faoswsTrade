@@ -49,19 +49,31 @@ data("hsfclmap2", package = "hsfclmap")
 data("unsdpartnersblocks", package = "tradeproc")
 data("unsdpartners", package = "tradeproc")
 
-## Connection to the local DB
-## TODO: should be replaced by ad boc table
+agricodeslist <- paste0("'",
+                        paste(getAgriHSCodes(),
+                              collapse = "', '"),
+                        "'")
 
-trade_src <- src_postgres("sws_data",
-                          "localhost",
-                          5432,
-                          "trade",
-                          .pwd,
-                          options = "-c search_path=ess")
+tlsql <- paste0("
+select * from (
+select rep as reporter,
+prt as partner,
+comm as hs,
+substring(comm from 1 for 6) as hs6,
+flow,
+tyear as year,
+tvalue as value,
+weight,
+qty,
+qunit
+from ess.ct_tariffline_adhoc_unlogged) tbl1
+where hs6 in (",
+                agricodeslist
+                ,
+                ") and year = '",
+                year,
+                "'")
 
-agri_db <- tbl(trade_src, sql("
-                              select * from ess.agri
-                              "))
 ######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)
 
@@ -96,13 +108,9 @@ mapmaxlength <- hsfclmap %>%
 ### Extract TL data ####
 ## TODO: replace by call to SWS ad hoc
 
-tldata <- agri_db %>%
-  select(-hs2, -hs4, -hs6) %>%
-  filter(year == "2011") %>%
-  collect() %>%
-  mutate(reporter = as.integer(reporter),
-         partner = as.integer(partner),
-         flow = as.integer(flow)) %>%
+load("tldata.RData")
+
+tldata <- tldata %>%
   mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
 
 

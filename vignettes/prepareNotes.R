@@ -79,12 +79,12 @@ adjustments <- adjustments %>%
 #   select(quantity.other) %>%
 #   distinct()
 
-adjustments %>%
-  filter(grepl("[a-zA-Z]", quantity)) %>%
-  group_by(quantity) %>%
-  mutate(n_quant = n()) %>%
-  ungroup() %>%
-  mutate(q_w = 1/(n_quant / n())) %>%
-  sample_n(10, weight = q_w) %>%
-  arrange(quantity) %>%
-  as.data.frame
+# adjustments %>%
+#   filter(grepl("[a-zA-Z]", quantity)) %>%
+#   group_by(quantity) %>%
+#   mutate(n_quant = n()) %>%
+#   ungroup() %>%
+#   mutate(q_w = 1/(n_quant / n())) %>%
+#   sample_n(10, weight = q_w) %>%
+#   arrange(quantity) %>%
+#   as.data.frame

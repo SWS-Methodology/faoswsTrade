@@ -1,10 +1,10 @@
-.pwd <- "rUikJnLmtDN7iA5c7u06"
+.swsdbpwd <- "rUikJnLmtDN7iA5c7u06"
 
 trade_src <- src_postgres(dbname = "sws_data",
                           host = "hqldvpostgres01.hq.un.fao.org",
                           port = 5420,
                           user = "sws",
-                          password = .pwd)
+                          password = .swsdbpwd)
 
 # It is required for table view
 # ,

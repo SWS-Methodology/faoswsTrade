@@ -14,7 +14,9 @@ library(fclcpcmap)
 suppressPackageStartupMessages(library(doParallel))
 library(foreach)
 registerDoParallel(cores=detectCores(all.tests=TRUE))
+library(testthat)
 library(dplyr, warn.conflicts = F)
+
 
 
 # Connection to SWS
@@ -48,6 +50,7 @@ if(length(
 data("hsfclmap2", package = "hsfclmap")
 data("unsdpartnersblocks", package = "tradeproc")
 data("unsdpartners", package = "tradeproc")
+data("geonom2fao", package = "tradeproc")
 
 agricodeslist <- paste0("'",
                         paste(getAgriHSCodes(),
@@ -56,45 +59,70 @@ agricodeslist <- paste0("'",
 
 tlsql <- paste0("
 select * from (
-select rep as reporter,
-prt as partner,
+select rep::int as reporter,
+prt::int as partner,
 comm as hs,
 substring(comm from 1 for 6) as hs6,
-flow,
-tyear as year,
+flow::int,
+tyear::int as year,
 tvalue as value,
 weight,
 qty,
-qunit
+qunit::int
 from ess.ct_tariffline_adhoc_unlogged) tbl1
 where hs6 in (",
-                agricodeslist,                ,
-                ") and year = '",
-                year,
-                "'")
+                agricodeslist,
+                ") and year = ",
+                year)
+# 276 Germany
+
 
 tldata <- getTableFromDB(tlsql)
 
+tldata <- tldata %>
+  mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
+
 essql <- paste0("
 select * from (
-select declarant as reporter,
-partner,
+select declarant::int as reporter,
+partner::int,
 product_nc as hs,
 substring(product_nc from 1 for 6) as hs6,
-flow,
-substring(period from 1 for 4) as year,
+flow::int,
+substring(period from 1 for 4)::int as year,
 value_1k_euro as value,
 qty_ton as weight,
 sup_quantity as qty
-from ess.ce_combinednomenclature_unlogged) tbl1
-
+from ess.ce_combinednomenclature_unlogged
+where declarant <> 'EU') tbl1
 where hs6 in (",
 agricodeslist,
-") and year = '",
-year,
-"'")
+") and year = ",
+year)
 
 esdata <- getTableFromDB(essql)
+
+###### convert geonom to fao area list
+
+esdata <- esdata %>%
+  left_join(geonom2fao %>%
+              select_(reporter = ~code,
+                      faorep   = ~active),
+            by = "reporter") %>%
+  select_(~-reporter) %>%
+  rename_(reporter = ~faorep) %>%
+  left_join(geonom2fao %>%
+              select_(partner = ~code,
+                      faopar  = ~active),
+            by = "partner") %>%
+  select_(~-partner) %>%
+  rename_(partner = ~faopar)
+
+test_that("all geonom codes are converted into fao areas codes", {
+          expect_equal(sum(is.na(esdata$reporter)), 0)
+          expect_equal(sum(is.na(esdata$partner)), 0)
+})
+
 
 ######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)
@@ -110,13 +138,14 @@ hsfclmap <- hsfclmap2 %>%
   mutate_(flow = ~ifelse(flow == "Import", 1L,
                          ifelse(flow == "Export", 2L,
                                 NA))) %>%
+  ## Manual corrections of typos
+  hsfclmap::manualCorrections() %>%
 ## and add trailing 9 to tocode, where it is shorter
 ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
                                            tocode,
-                                           digit = 9)) %>%
-## Manual corrections of typos
-    manualCorrections()
+                                           digit = 9))
+
 
 
 # Max length of HS-codes in MDB-files ####
@@ -124,16 +153,9 @@ hsfclmap <- hsfclmap2 %>%
 mapmaxlength <- hsfclmap %>%
   group_by_(~area, ~flow) %>%
   summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
-
   ungroup()
 
-### Extract TL data ####
-## TODO: replace by call to SWS ad hoc
 
-load("tldata.RData")
-
-tldata <- tldata %>%
-  mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
 
 
 ### Converting area codes to FAO

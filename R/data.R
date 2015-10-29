@@ -48,3 +48,15 @@
 #' like USSR, in active column were equal 0, but replaced by NA.
 
 "geonom2fao"
+
+
+#' Mapping between character codes of areas in folders' names with
+#' Jellyfish MDB files and FAO area codes
+#'
+#' Produced by Onno
+#'
+#' @format A data frame:
+#' mdbarea - character vector with area codes in folders with MDB
+#' faoarea - integer vector with FAO area codes
+
+"mdbfaoareamap"

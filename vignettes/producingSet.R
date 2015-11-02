@@ -194,6 +194,30 @@ test_that("all HS codes in MDB files and in ES dataset have length 8", {
   expect_equal(esdatarowswithnot8, 0)
 
 })
+########### Mapping HS codes to FCL in ES ###############
+
+df <- esdata %>%
+  select_(~reporter, ~flow, ~hs) %>%
+  distinct()
+
+fcldf <- hsInRange(df$hs, df$reporter, df$flow, hsfclmap_es,
+                   calculation = "grouping",
+                   parallel = T)
+
+if(any(is.na(fcldf$fcl)))
+  message(paste0("EuroStat: proportion of HS-codes not converted in FCL: ",
+                 scales::percent(sum(is.na(fcldf$fcl))/nrow(fcldf))))
+
+esdata <- esdata %>%
+  left_join(fcldf,
+            by = c("reporter" = "areacode", "flow" = "flowname", "hs" = "hs"))
+
+if(any(is.na(esdata$fcl)))
+  message(paste0("Eurostat: proportion of tradeflows with nonmapped HS-codes: ",
+                 scales::percent(sum(is.na(esdata$fcl))/nrow(esdata)),
+                 "\nShare of value of tradeflows with nonmapped HS-codes in total value: ",
+                 scales::percent(sum(esdata$value[is.na(esdata$fcl)], na.rm = T) /
+                                   sum(esdata$value, na.rm = T))))
 
 #### TL Converting area codes to FAO area codes ####
 ## Based on Excel file from UNSD (unsdpartners..)

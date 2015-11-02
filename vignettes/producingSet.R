@@ -52,6 +52,40 @@ data("unsdpartnersblocks", package = "tradeproc")
 data("unsdpartners", package = "tradeproc")
 data("geonom2fao", package = "tradeproc")
 
+
+######### HS -> FCL map ############
+## Filter hs->fcl links we need (based on year)
+
+hsfclmap <- hsfclmap2 %>%
+  filter_(~mdbyear == year &
+         validyear %in% c(0, year)) %>%
+  # Removing leading/trailing zeros from HS, else we get
+  # NA during as.numeric()
+  mutate_each_(funs(str_trim),
+               c("fromcode", "tocode")) %>%
+  # Convert flow to numbers for further joining with tlmaxlength
+  mutate_(flow = ~ifelse(flow == "Import", 1L,
+                         ifelse(flow == "Export", 2L,
+                                NA))) %>%
+  ## Manual corrections of typos
+  hsfclmap::manualCorrections() %>%
+## and add trailing 9 to tocode, where it is shorter
+## TODO: check how many such cases and, if possible, move to manualCorrectoins
+  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
+                                           tocode,
+                                           digit = 9))
+
+
+
+#### Max length of HS-codes in MDB-files ####
+
+mapmaxlength <- hsfclmap %>%
+  group_by_(~area, ~flow) %>%
+  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
+  ungroup()
+
+
+#### Get list of agri codes ####
 agricodeslist <- paste0("'",
                         paste(getAgriHSCodes(),
                               collapse = "', '"),
@@ -124,36 +158,6 @@ test_that("all geonom codes are converted into fao areas codes", {
 })
 
 
-######### HS -> FCL map ############
-## Filter hs->fcl links we need (based on year)
-
-hsfclmap <- hsfclmap2 %>%
-  filter_(~mdbyear == year &
-         validyear %in% c(0, year)) %>%
-  # Removing leading/trailing zeros from HS, else we get
-  # NA during as.numeric()
-  mutate_each_(funs(str_trim),
-               c("fromcode", "tocode")) %>%
-  # Convert flow to numbers for further joining with tlmaxlength
-  mutate_(flow = ~ifelse(flow == "Import", 1L,
-                         ifelse(flow == "Export", 2L,
-                                NA))) %>%
-  ## Manual corrections of typos
-  hsfclmap::manualCorrections() %>%
-## and add trailing 9 to tocode, where it is shorter
-## TODO: check how many such cases and, if possible, move to manualCorrectoins
-  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
-                                           tocode,
-                                           digit = 9))
-
-
-
-# Max length of HS-codes in MDB-files ####
-
-mapmaxlength <- hsfclmap %>%
-  group_by_(~area, ~flow) %>%
-  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
-  ungroup()
 
 
 

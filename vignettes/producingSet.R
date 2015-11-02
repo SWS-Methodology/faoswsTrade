@@ -195,7 +195,7 @@ test_that("all HS codes in MDB files and in ES dataset have length 8", {
 
 })
 ########### Mapping HS codes to FCL in ES ###############
-
+# TODO: this code duplicates similar steps for TL data ####
 df <- esdata %>%
   select_(~reporter, ~flow, ~hs) %>%
   distinct()
@@ -257,6 +257,16 @@ if(any(is.na(tldata$partner)))
     paste(sort(unique(tldata$m49par[is.na(tldata$partner)])), collapse = ", "),
     "\nProportion of trade flows with nonmapped M49 partner codes: ",
     scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
+
+# Filtering out tradeflows reported by EU countires.
+# They will be replaced by ES data
+
+tldata <- tldata %>%
+  anti_join(esdata %>%
+              select_(~reporter) %>%
+              distinct(),
+            by = "reporter")
+
 
 ############# Lengths of HS-codes stuff ######################
 ###  Calculate length of hs codes in TL

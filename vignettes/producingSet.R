@@ -172,8 +172,28 @@ hsfclmap_es <- hsfclmap %>%
              by = c("area" = "reporter"))
 
 test_that("all partners from ES dataset have info in MDB files", {
+  expect_equal(sum(is.na(hsfclmap_es$area)), 0)
+})
 
-  })
+test_that("all HS codes in MDB files and in ES dataset have length 8", {
+  maprowswithnot8 <- hsfclmap_es %>%
+    select_(~fromcode, ~tocode) %>%
+    mutate_(fromlen = ~stringr::str_length(fromcode),
+            tolen   = ~stringr::str_length(fromcode)) %>%
+    filter_(~fromlen != 8 | tolen != 8) %>%
+    nrow
+
+  expect_equal(maprowswithnot8, 0)
+
+  esdatarowswithnot8 <- esdata %>%
+    select_(~hs) %>%
+    mutate_(hslen = ~stringr::str_length(hs)) %>%
+    filter_(~hslen != 8) %>%
+    nrow
+
+  expect_equal(esdatarowswithnot8, 0)
+
+})
 
 #### TL Converting area codes to FAO area codes ####
 ## Based on Excel file from UNSD (unsdpartners..)

@@ -115,7 +115,7 @@ where hs6 in (",
 
 tldata <- getTableFromDB(tlsql)
 
-tldata <- tldata %>
+tldata <- tldata %>%
   mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
 
 
@@ -163,7 +163,7 @@ test_that("all geonom codes are converted into fao areas codes", {
 })
 
 
-# Subset of hsfcl map for EU countries
+# Subset of hsfcl map for EU countries ####
 
 hsfclmap_es <- hsfclmap %>%
   right_join(esdata %>%

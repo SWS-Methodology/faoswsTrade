@@ -91,6 +91,8 @@ agricodeslist <- paste0("'",
                               collapse = "', '"),
                         "'")
 
+### Download TL data ####
+
 tlsql <- paste0("
 select * from (
 select rep::int as reporter,
@@ -116,6 +118,9 @@ tldata <- getTableFromDB(tlsql)
 tldata <- tldata %>
   mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
 
+
+#### Download ES data ####
+
 essql <- paste0("
 select * from (
 select declarant::int as reporter,
@@ -136,7 +141,7 @@ year)
 
 esdata <- getTableFromDB(essql)
 
-###### convert geonom to fao area list
+###### convert geonom to fao area list ####
 
 esdata <- esdata %>%
   left_join(geonom2fao %>%
@@ -153,22 +158,32 @@ esdata <- esdata %>%
   rename_(partner = ~faopar)
 
 test_that("all geonom codes are converted into fao areas codes", {
-          expect_equal(sum(is.na(esdata$reporter)), 0)
-          expect_equal(sum(is.na(esdata$partner)), 0)
+  expect_equal(sum(is.na(esdata$reporter)), 0)
+  expect_equal(sum(is.na(esdata$partner)), 0)
 })
 
 
+# Subset of hsfcl map for EU countries
 
+hsfclmap_es <- hsfclmap %>%
+  right_join(esdata %>%
+               select_(~reporter) %>%
+               distinct_(),
+             by = c("area" = "reporter"))
 
+test_that("all partners from ES dataset have info in MDB files", {
 
+  })
 
-### Converting area codes to FAO
+#### TL Converting area codes to FAO area codes ####
+## Based on Excel file from UNSD (unsdpartners..)
 
 tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
               select(wholepartner = rtCode,
                      part = formula) %>%
-              filter(wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)), # Exclude EU and old countries
+              # Exclude EU grouping and old countries
+              filter(wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
             by = c("partner" = "part")) %>%
   mutate(partner = ifelse(is.na(wholepartner), partner, wholepartner)) %>%
   ## Aggregation of numbers for joined M49 areas
@@ -200,7 +215,7 @@ if(any(is.na(tldata$partner)))
     scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
 
 ############# Lengths of HS-codes stuff ######################
-###  Calculate length of hs codes
+###  Calculate length of hs codes in TL
 
 tldata <- tldata %>%
   group_by(reporter, flow) %>%
@@ -208,7 +223,7 @@ tldata <- tldata %>%
   ungroup()
 
 
-## Max length in TL
+## Dataset with max length in TL ####
 
 
 tlmaxlength <- tldata %>%
@@ -220,7 +235,7 @@ tlmaxlength <- tldata %>%
   ungroup()
 
 
-## Common max length
+## Common max length between TL and map ####
 
 
 maxlengthdf <- tlmaxlength %>%
@@ -239,7 +254,7 @@ maxlengthdf <- tlmaxlength %>%
 
 
 
-### Extension of HS-codes in TL
+### Extension of HS-codes in TL ####
 
 
 tldata <- tldata %>%
@@ -251,7 +266,7 @@ tldata <- tldata %>%
                                             maxlength = maxlength,
                                             digit = 0)))
 
-### Extension of HS ranges in map
+### Extension of HS ranges in map ####
 
 
 hsfclmap1 <- hsfclmap %>%
@@ -265,7 +280,7 @@ hsfclmap1 <- hsfclmap1 %>%
          tocode = as.numeric(trailingDigits2(tocode, maxlength, 9)))
 
 
-########### Mapping HS codes to FCL ###############
+########### Mapping HS codes to FCL in TL ###############
 
 df <- tldata %>%
   select(reporter, flow, hsext) %>%
@@ -279,7 +294,7 @@ if(any(is.na(fcldf$fcl)))
   message(paste0("Proportion of nonmapped HS-codes: ",
                  scales::percent(sum(is.na(fcldf$fcl))/nrow(fcldf))))
 
-## Adding FCL to main TL data set
+## Adding FCL to main TL data set ####
 #
 tldata <- tldata %>%
   left_join(fcldf,
@@ -292,7 +307,7 @@ if(any(is.na(tldata$fcl)))
                  scales::percent(sum(tldata$value[is.na(tldata$fcl)], na.rm = T) /
                                    sum(tldata$value, na.rm = T))))
 
-#############Units of measurment ##################
+#############Units of measurment in TL ####
 
 ## Add target fclunit
 
@@ -323,7 +338,7 @@ ctfclunitsconv <- tldata %>%
   distinct() %>%
   arrange(qunit)
 
-################ Conv. factor################
+################ Conv. factor (TL) ################
 
 
 ##### Table for conv. factor

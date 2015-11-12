@@ -219,6 +219,17 @@ if(any(is.na(esdata$fcl)))
                  scales::percent(sum(esdata$value[is.na(esdata$fcl)], na.rm = T) /
                                    sum(esdata$value, na.rm = T))))
 
+## ES data aggreg by FCL #####
+
+# esdata <- esdata %>%
+#   select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~value, ~weight, ~qty) %>%
+#   filter_(~!is.na(fcl)) %>% # We drop NA fcl here!!!
+#   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+#   summarise_each_(funs(sum(., na.rm = TRUE)),
+#                   vars = list(~value, ~weight, ~qty)) %>% # We lose NA numbers here!!!!
+#   ungroup()
+
+
 #### TL Converting area codes to FAO area codes ####
 ## Based on Excel file from UNSD (unsdpartners..)
 
@@ -237,8 +248,8 @@ tldata <- tldata %>%
   ungroup() %>%
   mutate(m49rep = reporter,
          m49par = partner,
-         reporter = tradeproc::convertComtradeM49ToFAO(m49rep),
-         partner = tradeproc::convertTLParnterToFAO(partner))
+         reporter = as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
+         partner = as.integer(tradeproc::convertTLParnterToFAO(partner)))
 
 # Nonmapped M49 partner codes: 251, 381, 473, 490,
 # 527, 568, 577, 579, 581, 637, 711, 757, 837, 838, 839, 842, 899
@@ -493,8 +504,8 @@ tldata$value <- tldata$value / 1000
 
 ## aggregate by fcl
 
-tldata <- tldata %>%
-  select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%
-  group_by(year, reporter, partner, flow, fcl) %>%
-  summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
-  ungroup()
+# tldata <- tldata %>%
+#   select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%
+#   group_by(year, reporter, partner, flow, fcl) %>%
+#   summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
+#   ungroup()

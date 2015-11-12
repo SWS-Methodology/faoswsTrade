@@ -1,3 +1,6 @@
+#' @import dplyr
+#' @export
+
 convertTLParnterToFAO <- function(partners) {
   partners <- data.frame(partner = as.integer(partners))
 

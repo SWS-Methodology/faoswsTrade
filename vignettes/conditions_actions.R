@@ -1,14 +1,8 @@
-tradedata <- bind_rows(
-  tldata %>%
-    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value),
-  esdata %>%
-    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value)
-)
 
-ustrade <- tradedata %>%
-  filter(reporter == 231)
-
-rep <- 231
+#
+# ustrade <- tradedata %>%   filter(reporter == 231)
+#
+# rep <- 231
 
 getlistofadjs <- function(rep, yr, adjustments) {
 
@@ -39,6 +33,10 @@ getlistofadjs <- function(rep, yr, adjustments) {
       if(i > 2L)  joinedconds <- call("&", joinedconds, listofconds[[i]])
     }
 
+    # Without list we can't specify name in mutate_
+    if(!is.list(joinedconds)) joinedconds <- list(joinedconds)
+    joinedconds <- setNames(joinedconds, "applyrule")
+
     # joinedconds <- unlist(joinedconds, use.names = FALSE)
 
     ### Actions
@@ -56,15 +54,36 @@ getlistofadjs <- function(rep, yr, adjustments) {
 
     nospecial <- !is.element("special", colnames(action))
 
+    if(!nospecial) special <- as.numeric(action[1, "special", drop = T])
+
+    # Value from target column
     one <- action[1, target, drop = T]
 
     # Multiply column itself by coeff (no special)
-    if(stringr::str_detect(one, "^\\d*\\.?\\d*$") & nospecial)
+    if(stringr::str_detect(one, "^\\d*\\.?\\d*$") & nospecial) {
       one <- as.numeric(one)
-      action <- setNames(list(lazyeval::interp(~target * one,
-                                          target = as.name(target),
-                                          one = one)),
-                         target)
+#       action <- lazyeval::interp(~ifelse(applyrule, target * one, target),
+#                                  target = as.name(target),
+#                                  one = one)
+      action <- lazyeval::interp(as.call(list(`*`, as.name(target), one)),
+                                 target = target,
+                                 one = one)
+
+      # It is better to move ifelse inside of apply part, to make list more clear
+      action <- as.call(list(ifelse, quote(applyrule), action, as.name(target)))
+
+    }
+
+    # Multiply column by special
+    if(stringr::str_detect(one, "^value$|^weight$|^qty$") & !nospecial ) {
+      action <- lazyeval::interp(~ifelse(applyrule, one * special, target),
+                                 one = as.name(one),
+                                 target = as.name(target),
+                                 special = special)
+    }
+
+    action <- setNames(list(action), target)
+
 
     list(conditions = joinedconds,
          action = action)
@@ -84,6 +103,9 @@ applyadj <- function(rep, yr, adjustments, tradedata) {
   adjustments <- adjustments %>%
     filter_(~reporter == rep & (year == yr | is.na(year)))
 
+  tradedata <- tradedata %>%
+    filter_(~reporter == rep & year == yr)
+
   if(length(unique(tradedata$year)) > 1)
     stop("More than one year in trade data")
 
@@ -92,16 +114,23 @@ applyadj <- function(rep, yr, adjustments, tradedata) {
 
   adjustments <- getlistofadjs(rep, yr, adjustments)
 
-  for(i in seq_len((adjustments))) {
-    tradedata <- tradedata %>%
+  for(i in seq_along((adjustments))) {
+
+
+    t <- try(tradedata %>%
       # Create logical vector where to apply current adjustment
-      mutate_(applyrule = adjustments[[i]]$conditions[[1]])
+      mutate_(.dots = adjustments[[i]]$conditions) %>%
+      mutate_(.dots = setNames(list(~ifelse(is.na(applyrule), FALSE, applyrule)), "applyrule")) %>%
+      mutate_(.dots = adjustments[[i]]$action)
+    )
+
+    if(inherits(t, "try-error")) message(i) else tradedata <- t
   }
 
   tradedata
 
 
 }
-
-ustrade %>%
-  mutate_(.dots = usadj[[137]]$action) %>% head
+#
+# ustrade %>%
+#   mutate_(.dots = ifelse(~value > 15, usadj[[137]]$action) %>% head

@@ -509,3 +509,10 @@ tldata$value <- tldata$value / 1000
 #   group_by(year, reporter, partner, flow, fcl) %>%
 #   summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
 #   ungroup()
+
+tradedata <- bind_rows(
+  tldata %>%
+    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value),
+  esdata %>%
+    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value)
+)

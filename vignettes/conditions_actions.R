@@ -59,19 +59,16 @@ getlistofadjs <- function(rep, yr, adjustments) {
     # Value from target column
     one <- action[1, target, drop = T]
 
-    # Multiply column itself by coeff (no special)
+    # Action 1. Multiply column itself by coeff (no special)
     if(stringr::str_detect(one, "^\\d*\\.?\\d*$") & nospecial) {
       one <- as.numeric(one)
 
       action <- lazyeval::interp(as.call(list(`*`, as.name(target), one)),
                                  target = target,
                                  one = one)
-
-
-
     }
 
-    # Multiply column by special
+    # Action 2. Multiply column by special
     if(stringr::str_detect(one, "^value$|^weight$|^qty$") & !nospecial ) {
 #       action <- lazyeval::interp(~ifelse(applyrule, one * special, target),
 #                                  one = as.name(one),
@@ -81,6 +78,15 @@ getlistofadjs <- function(rep, yr, adjustments) {
       action <- lazyeval::interp(as.call(list(`*`, as.name(one), special)),
                                  one = one,
                                  special = special)
+    }
+
+    # Action 3. SET value/quantity to a constant
+    if(stringr::str_detect(one, "^[m,f,o]\\d*\\.?\\d*$")) {
+      one <- one(stringr::str_replace(one, "^[m,f,o]", ""))
+      one <- as.numeric(one)
+
+      action <- one
+
     }
 
 

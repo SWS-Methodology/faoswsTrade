@@ -67,8 +67,7 @@ getlistofadjs <- function(rep, yr, adjustments) {
                                  target = target,
                                  one = one)
 
-      # It is better to move ifelse inside of apply part, to make list more clear
-      action <- as.call(list(ifelse, quote(applyrule), action, as.name(target)))
+
 
     }
 
@@ -83,6 +82,13 @@ getlistofadjs <- function(rep, yr, adjustments) {
                                  one = one,
                                  special = special)
     }
+
+
+    # General procedures for all types of actions
+
+    # ifelse() in case rule is not applied than we return current value
+    # It is better to move ifelse inside of apply part, to make list more clear
+    action <- as.call(list(ifelse, quote(applyrule), action, as.name(target)))
 
     action <- setNames(list(action), target)
 

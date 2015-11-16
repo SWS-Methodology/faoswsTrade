@@ -375,6 +375,7 @@ if(any(is.na(tldata$fcl)))
 #############Units of measurment in TL ####
 
 ## Add target fclunit
+# What units does FAO expects for given FCL codes
 
 ## units for fcl
 data("fclunits",
@@ -398,6 +399,7 @@ tldata <- tldata %>%
               select_(~qunit, ~wco),
             by = "qunit")
 
+## Dataset with all matches between Comtrade and FAO units
 ctfclunitsconv <- tldata %>%
   select(qunit, wco, fclunit) %>%
   distinct() %>%
@@ -502,7 +504,7 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
 
 tldata$value <- tldata$value / 1000
 
-## aggregate by fcl
+## TLDATA: aggregate by fcl
 
 # tldata <- tldata %>%
 #   select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%

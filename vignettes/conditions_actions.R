@@ -87,8 +87,11 @@ getlistofadjs <- function(rep, yr, adjustments) {
     # General procedures for all types of actions
 
     # ifelse() in case rule is not applied than we return current value
-    # It is better to move ifelse inside of apply part, to make list more clear
-    action <- as.call(list(ifelse, quote(applyrule), action, as.name(target)))
+    # including when condition is NA
+    # P.S.: It is better to move ifelse inside of apply part, to make list more clear
+    action <- as.call(list(ifelse, quote(applyrule | !is.na(applyrule)),
+                           action,
+                           as.name(target)))
 
     action <- setNames(list(action), target)
 

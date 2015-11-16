@@ -89,9 +89,8 @@ getlistofadjs <- function(rep, yr, adjustments) {
     # General procedures for all types of actions
 
     # ifelse() in case rule is not applied than we return current value
-    # including when condition is NA
     # P.S.: It is better to move ifelse inside of apply part, to make list more clear
-    action <- as.call(list(ifelse, quote(applyrule | !is.na(applyrule)),
+    action <- as.call(list(ifelse, quote(applyrule),
                            action,
                            as.name(target)))
 
@@ -133,6 +132,7 @@ applyadj <- function(rep, yr, adjustments, tradedata) {
     t <- try(tradedata %>%
       # Create logical vector where to apply current adjustment
       mutate_(.dots = adjustments[[i]]$conditions) %>%
+      # If condition is NA than not to apply rule
       mutate_(.dots = setNames(list(~ifelse(is.na(applyrule), FALSE, applyrule)), "applyrule")) %>%
       mutate_(.dots = adjustments[[i]]$action)
     )

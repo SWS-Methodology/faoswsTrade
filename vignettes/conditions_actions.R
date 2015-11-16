@@ -7,7 +7,8 @@
 getlistofadjs <- function(rep, yr, adjustments) {
 
   adjustments <- adjustments %>%
-    filter_(~reporter == rep & (year == yr | is.na(year)))
+    filter_(~reporter == rep & (year == yr | is.na(year))) %>%
+    distinct()
 
   plyr::alply(adjustments, 1, function(r) {
     conditions <- c("flow", "hs", "fcl", "partner")

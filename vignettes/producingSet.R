@@ -513,9 +513,20 @@ tldata$value <- tldata$value / 1000
 #   summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
 #   ungroup()
 
+# Trade data with hs extended
 tradedata <- bind_rows(
   tldata %>%
-    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value),
+    select_(~year, ~reporter, ~partner, ~flow,
+            hs = ~hsext, # !!!!
+            ~fcl, ~weight, ~qty, ~value),
   esdata %>%
-    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value)
+    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value) %>%
+    mutate_(hs = ~as.numeric(hs))
 )
+
+tradedata <- plyr::ldply(unique(tradedata$reporter),
+                          function(x) applyadj(x, 2011, adjustments, tradedata),
+                          .progress = "none",
+                          .inform = F,
+                          .parallel = T)
+

@@ -505,6 +505,7 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
 tldata$value <- tldata$value / 1000
 
 ## TLDATA: aggregate by fcl
+## Here we select column qtyfcl which contains quantity, requested by FAO
 
 # tldata <- tldata %>%
 #   select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%

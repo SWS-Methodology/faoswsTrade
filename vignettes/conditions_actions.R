@@ -20,20 +20,24 @@ getlistofadjs <- function(rep, yr, adjustments) {
     # Drop columns which are not part of the condition
     conditions <- conditions[,!is.na(conditions), drop = F]
 
-    conditions <- data.frame(var = names(conditions),
-                             value = unname(unlist(conditions)),
-                             stringsAsFactors = F)
-    listofconds <- unlist(plyr::alply(conditions, 1, function(x) {
-      call("==", as.name(x$var), x$value)
-    }),
-    use.names = FALSE)
+    # If rule applies to all flows there are no conditions
+    if(ncol(conditions) > 0) {
+      conditions <- data.frame(var = names(conditions),
+                               value = unname(unlist(conditions)),
+                               stringsAsFactors = F)
+      listofconds <- unlist(plyr::alply(conditions, 1, function(x) {
+        call("==", as.name(x$var), x$value)
+      }),
+      use.names = FALSE)
 
-    for(i in seq_along(listofconds)) {
-      if(i == 1L) joinedconds <- listofconds
-      if(i == 2L) joinedconds <- call("&", listofconds[[1L]], listofconds[[2L]])
-      if(i > 2L)  joinedconds <- call("&", joinedconds, listofconds[[i]])
+      for(i in seq_along(listofconds)) {
+        if(i == 1L) joinedconds <- listofconds
+        if(i == 2L) joinedconds <- call("&", listofconds[[1L]], listofconds[[2L]])
+        if(i > 2L)  joinedconds <- call("&", joinedconds, listofconds[[i]])
+      }
+    } else {
+      joinedconds <- list(TRUE)
     }
-
     # Without list we can't specify name in mutate_
     if(!is.list(joinedconds)) joinedconds <- list(joinedconds)
     joinedconds <- setNames(joinedconds, "applyrule")
@@ -103,7 +107,7 @@ getlistofadjs <- function(rep, yr, adjustments) {
 
 
   },
-  .progress = "text",
+  .progress = "none",
   .inform = FALSE,
   .parallel = FALSE)
 

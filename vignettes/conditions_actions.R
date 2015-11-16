@@ -146,7 +146,7 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
 
     if(inherits(t, "try-error")) message(i) else tradedata <- t
 
-    matching_adjustments[,i] <<- tradedata$applyrule
+    if(dbg) matching_adjustments[,i] <<- tradedata$applyrule
   }
 
   tradedata

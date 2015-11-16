@@ -110,7 +110,7 @@ getlistofadjs <- function(rep, yr, adjustments) {
 }
 
 
-applyadj <- function(rep, yr, adjustments, tradedata) {
+applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
 
   adjustments <- adjustments %>%
     filter_(~reporter == rep & (year == yr | is.na(year)))
@@ -126,6 +126,13 @@ applyadj <- function(rep, yr, adjustments, tradedata) {
 
   adjustments <- getlistofadjs(rep, yr, adjustments)
 
+  if(dbg) {
+    # if(exists(matching_adjustments)) stop("Variable matching_adjustments already exists")
+    matching_adjustments <<- matrix(data = logical(0),
+                                    nrow = nrow(tradedata),
+                                    ncol = length(adjustments))
+  }
+
   for(i in seq_along((adjustments))) {
 
 
@@ -138,6 +145,8 @@ applyadj <- function(rep, yr, adjustments, tradedata) {
     )
 
     if(inherits(t, "try-error")) message(i) else tradedata <- t
+
+    matching_adjustments[,i] <<- tradedata$applyrule
   }
 
   tradedata

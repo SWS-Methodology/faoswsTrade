@@ -70,10 +70,6 @@ getlistofadjs <- function(rep, yr, adjustments) {
 
     # Action 2. Multiply column by special
     if(stringr::str_detect(one, "^value$|^weight$|^qty$") & !nospecial ) {
-#       action <- lazyeval::interp(~ifelse(applyrule, one * special, target),
-#                                  one = as.name(one),
-#                                  target = as.name(target),
-#                                  special = special)
 
       action <- lazyeval::interp(as.call(list(`*`, as.name(one), special)),
                                  one = one,

@@ -36,6 +36,7 @@ getlistofadjs <- function(rep, yr, adjustments) {
         if(i > 2L)  joinedconds <- call("&", joinedconds, listofconds[[i]])
       }
     } else {
+      # If rule applies to all rows (no conditions)
       joinedconds <- list(TRUE)
     }
     # Without list we can't specify name in mutate_

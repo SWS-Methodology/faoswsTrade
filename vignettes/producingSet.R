@@ -59,6 +59,7 @@ data("geonom2fao", package = "tradeproc")
 ## Filter hs->fcl links we need (based on year)
 
 hsfclmap <- hsfclmap2 %>%
+  distinct() %>%
   filter_(~mdbyear == year &
          validyear %in% c(0, year)) %>%
   # Removing leading/trailing zeros from HS, else we get

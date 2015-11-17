@@ -1,6 +1,8 @@
 # Year for processing
 year <- 2011
 
+debughsfclmap <- TRUE
+
 # Elements of path to sourced files with functions.
 # They should be moved to a package
 subdir <- "OrangeBook"
@@ -371,6 +373,10 @@ if(any(is.na(tldata$fcl)))
                  "\nShare of value of tradeflows with nonmapped HS-codes in total value: ",
                  scales::percent(sum(tldata$value[is.na(tldata$fcl)], na.rm = T) /
                                    sum(tldata$value, na.rm = T))))
+if(debughsfclmap) {
+  hsfclmappingdebug <- tldata %>%
+    filter_(~is.na(fcl))
+}
 
 #############Units of measurment in TL ####
 

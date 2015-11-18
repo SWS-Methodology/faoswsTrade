@@ -300,6 +300,7 @@ adjustments <- adjustments %>%
   # All data is already orig
   mutate_(weight = ~stringr::str_replace(weight, "_orig$", "")) %>%
   mutate_(weight = ~ifelse(weight == "quantity_other", "qty", weight)) %>%
-  mutate_(weight = ~ifelse(weight == "quantity", "weight", weight))
+  mutate_(weight = ~ifelse(weight == "quantity", "weight", weight)) %>%
+  mutate_(value = ~ifelse(value == "quantity", "weight", value))
 
 

@@ -540,6 +540,6 @@ tradedata <- plyr::ldply(sort(unique(tradedata$reporter)),
                             applyadj(x, year, adjustments, tradedata)
                             },
                           .progress = "none",
-                          .inform = T,
-                          .parallel = F)
+                          .inform = F,
+                          .parallel = T)
 

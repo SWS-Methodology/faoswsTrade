@@ -82,7 +82,7 @@ getlistofadjs <- function(rep, yr, adjustments) {
 
     # Action 3. SET value/quantity to a constant
     if(stringr::str_detect(one, "^[m,f,o]\\d*\\.?\\d*$")) {
-      one <- one(stringr::str_replace(one, "^[m,f,o]", ""))
+      one <- stringr::str_replace(one, "^[m,f,o]", "")
       one <- as.numeric(one)
 
       action <- one

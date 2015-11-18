@@ -73,7 +73,7 @@ getlistofadjs <- function(rep, yr, adjustments) {
     }
 
     # Action 2. Multiply column by special
-    if(stringr::str_detect(one, "^value$|^weight$|^qty$") & !nospecial ) {
+    if(stringr::str_detect(one, "^value$|^weight$|^qty$") & !nospecial) {
 
       action <- lazyeval::interp(as.call(list(`*`, as.name(one), special)),
                                  one = one,
@@ -87,6 +87,12 @@ getlistofadjs <- function(rep, yr, adjustments) {
 
       action <- one
 
+    }
+
+    # Action 4. SET value/quantity to value from other column
+    if(stringr::str_detect(one, "^value$|^weight$|^qty$") & nospecial) {
+
+      action <- as.name(one)
     }
 
 

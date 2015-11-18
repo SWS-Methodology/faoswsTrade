@@ -509,18 +509,21 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
 
 ######### Value to thousands
 
-tldata$value <- tldata$value / 1000
+# tldata$value <- tldata$value / 1000
+
 
 ## TLDATA: aggregate by fcl
 ## Here we select column qtyfcl which contains quantity, requested by FAO
 
-# tldata <- tldata %>%
-#   select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%
-#   group_by(year, reporter, partner, flow, fcl) %>%
-#   summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
-#   ungroup()
+tldata <- tldata %>%
+  select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%
+  group_by(year, reporter, partner, flow, fcl) %>%
+  summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
+  ungroup()
 
 # Trade data with hs extended
+
+
 tradedata <- bind_rows(
   tldata %>%
     select_(~year, ~reporter, ~partner, ~flow,
@@ -531,9 +534,12 @@ tradedata <- bind_rows(
     mutate_(hs = ~as.numeric(hs))
 )
 
-tradedata <- plyr::ldply(unique(tradedata$reporter),
-                          function(x) applyadj(x, 2011, adjustments, tradedata),
+load("bigdata.RData")
+tradedata <- plyr::ldply(sort(unique(tradedata$reporter)),
+                          function(x) {
+                            applyadj(x, year, adjustments, tradedata)
+                            },
                           .progress = "none",
-                          .inform = F,
-                          .parallel = T)
+                          .inform = T,
+                          .parallel = F)
 

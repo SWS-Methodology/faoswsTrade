@@ -282,7 +282,7 @@ adjustments <- adjustments %>%
             is.na(quantity.other) & is.na(value) & is.na(special)))
 
 adjustments <- adjustments %>%
-  filter_(~!(stringr::str_detect(value, "^QUANTITY_ORIG$|ORACLE_DATA") &
+  filter_(~!(stringr::str_detect(value, "ORACLE_DATA|^VALUE_ORIG$") &
             is.na(quantity.other) & is.na(quantity) & is.na(special)))
 
 

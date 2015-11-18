@@ -1,8 +1,7 @@
-
-#
-# ustrade <- tradedata %>%   filter(reporter == 231)
-#
-# rep <- 231
+#' Apply adjustments to trade data
+#'
+#' @import dplyr
+#' @export
 
 
 applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
@@ -32,11 +31,11 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
 
 
     t <- try(tradedata %>%
-      # Create logical vector where to apply current adjustment
-      mutate_(.dots = adjustments[[i]]$conditions) %>%
-      # If condition is NA than not to apply rule
-      mutate_(.dots = setNames(list(~ifelse(is.na(applyrule), FALSE, applyrule)), "applyrule")) %>%
-      mutate_(.dots = adjustments[[i]]$action)
+               # Create logical vector where to apply current adjustment
+               mutate_(.dots = adjustments[[i]]$conditions) %>%
+               # If condition is NA than not to apply rule
+               mutate_(.dots = setNames(list(~ifelse(is.na(applyrule), FALSE, applyrule)), "applyrule")) %>%
+               mutate_(.dots = adjustments[[i]]$action)
     )
 
     if(inherits(t, "try-error")) message(i) else tradedata <- t
@@ -48,6 +47,3 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
 
 
 }
-#
-# ustrade %>%
-#   mutate_(.dots = ifelse(~value > 15, usadj[[137]]$action) %>% head

@@ -281,6 +281,10 @@ adjustments <- adjustments %>%
   filter_(~!(stringr::str_detect(quantity, "^QUANTITY_ORIG$|ORACLE_DATA") &
             is.na(quantity.other) & is.na(value) & is.na(special)))
 
+adjustments <- adjustments %>%
+  filter_(~!(stringr::str_detect(value, "^QUANTITY_ORIG$|ORACLE_DATA") &
+            is.na(quantity.other) & is.na(quantity) & is.na(special)))
+
 
 ## Names as in trade dataset ####
 

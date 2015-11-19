@@ -3,16 +3,10 @@ year <- 2011
 
 debughsfclmap <- TRUE
 
-# Elements of path to sourced files with functions.
-# They should be moved to a package
-subdir <- "OrangeBook"
-sourcedir <- "tradeR"
-
-
 library(stringr)
-library(hsfclmap)
+# library(hsfclmap)
 library(tradeproc)
-library(fclcpcmap)
+# library(fclcpcmap)
 suppressPackageStartupMessages(library(doParallel))
 library(foreach)
 registerDoParallel(cores=detectCores(all.tests=TRUE))
@@ -24,35 +18,40 @@ library(dplyr, warn.conflicts = F)
 # Connection to SWS
 # TODO: DEV MODE!!!!!!!!
 
-source(file.path(Sys.getenv("HOME"),
-                 "r_adhoc",
-                 "trade_prevalid_testing",
-                 "setupconnection.R"))
+faosws::GetTestEnvironment(
+  # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
+  # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
+  baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
+  # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
+  token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
+# token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
+#token = token)
+
 
 # Functions to get different M49 schemes from Web,
 # MADB, missingIndicator, printTab
 # TODO: should be in a package
 
-if(length(
-  lapply(
-    dir(
-      file.path(
-        Sys.getenv("HOME"),
-        "r_adhoc",
-        "privateFAO",
-        subdir,
-        sourcedir),
-      full.names = T),
-    source)) == 0) stop("Files for sourcing not found")
+# if(length(
+#   lapply(
+#     dir(
+#       file.path(
+#         Sys.getenv("HOME"),
+#         "r_adhoc",
+#         "privateFAO",
+#         subdir,
+#         sourcedir),
+#       full.names = T),
+#     source)) == 0) stop("Files for sourcing not found")
 
 ## Data sets with hs->fcl map (from mdb files)
 # and UNSD area codes (M49)
 ## TODO: replace by ad hoc tables
 
-data("hsfclmap2", package = "hsfclmap")
-data("unsdpartnersblocks", package = "tradeproc")
-data("unsdpartners", package = "tradeproc")
-data("geonom2fao", package = "tradeproc")
+data("hsfclmap2", package = "hsfclmap", envir = environment())
+data("unsdpartnersblocks", package = "tradeproc", envir = environment())
+data("unsdpartners", package = "tradeproc", envir = environment())
+data("geonom2fao", package = "tradeproc", envir = environment())
 
 
 ######### HS -> FCL map ############
@@ -330,7 +329,7 @@ tldata <- tldata %>%
   left_join(maxlengthdf %>%
               select(-tlmaxlength, -mapmaxlength),
             by = c("reporter", "flow")) %>%
-  mutate(hsext = as.numeric(trailingDigits2(hs,
+  mutate(hsext = as.numeric(hsfclmap::trailingDigits2(hs,
                                             maxlength = maxlength,
                                             digit = 0)))
 
@@ -344,8 +343,8 @@ hsfclmap1 <- hsfclmap %>%
   filter(!is.na(maxlength))                                         ## Attention!!!
 
 hsfclmap1 <- hsfclmap1 %>%
-  mutate(fromcode = as.numeric(trailingDigits2(fromcode, maxlength, 0)),
-         tocode = as.numeric(trailingDigits2(tocode, maxlength, 9)))
+  mutate(fromcode = as.numeric(hsfclmap::trailingDigits2(fromcode, maxlength, 0)),
+         tocode = as.numeric(hsfclmap::trailingDigits2(tocode, maxlength, 9)))
 
 
 ########### Mapping HS codes to FCL in TL ###############
@@ -534,7 +533,7 @@ tradedata <- bind_rows(
     mutate_(hs = ~as.numeric(hs))
 )
 
-load("bigdata.RData")
+# load("bigdata.RData")
 tradedata <- plyr::ldply(sort(unique(tradedata$reporter)),
                           function(x) {
                             applyadj(x, year, adjustments, tradedata)

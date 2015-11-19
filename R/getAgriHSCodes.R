@@ -1,11 +1,13 @@
 #' Returns subset of HS-codes of agriculture items used by ESS devision.
-#' 
+#'
 #' List of agricultural commodities provided by Cladia DeVita.
-#'@return Character vector 
+#'@return Character vector
+#'@export
+
 getAgriHSCodes <- function() {
-  
+
   # Eventually table should be moved in ad hoc SWS table
-  
+
   agriItems <- read.table(header = T, text = "
                           fromCode	toCode
                           10100	10699
@@ -51,14 +53,14 @@ getAgriHSCodes <- function() {
                           530100	530599
                           530810	530810
                           ")
-    
+
   # Converts boundaries to vector of all possible integers
   agriItems <- unname(unlist(apply(agriItems, 1, function(x) seq.int(x[1], x[2], by = 1))))
-  
+
   # Leading zero for short codes
   agriItems <- sprintf("%06d", agriItems)
-  
+
   allItems <- getAllItems()$code
-  
+
   allItems[allItems %in% agriItems]
 }

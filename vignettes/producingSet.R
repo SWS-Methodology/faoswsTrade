@@ -509,7 +509,7 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
 
 ######### Value to thousands
 
-# tldata$value <- tldata$value / 1000
+tldata$value <- tldata$value / 1000
 
 
 ## TLDATA: aggregate by fcl
@@ -543,3 +543,8 @@ tradedata <- plyr::ldply(sort(unique(tradedata$reporter)),
                           .inform = F,
                           .parallel = T)
 
+tldata <- tradedata %>%
+  select_(~year, ~reporter, ~partner, ~flow, ~fcl, qty = ~weight, ~value) %>%
+  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
+  ungroup()

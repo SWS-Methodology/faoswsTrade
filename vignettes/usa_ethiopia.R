@@ -1,6 +1,8 @@
 
 reporters <- c(231, 238) # The USA and Ethiopia
 
+reporters <- c(231, 79) # GErmany
+
 .ojdbcclasspath <- file.path(Sys.getenv("HOME"), "dstrbs", "ojdbc14.jar")
 
 valid <- fclhs::gettfvalid(reporter = reporters, year = 2011) %>%
@@ -13,7 +15,7 @@ valid <- fclhs::gettfvalid(reporter = reporters, year = 2011) %>%
 testing <- tldata %>% filter(year == 2011,
                              reporter %in% reporters) %>%
   select(year, reporter, partner, flow, fcl, quantity = qty, value) %>%
-  mutate(flow = ifelse(flow == "Export", 2, 1)) %>%
+  # mutate(flow = ifelse(flow == "Export", 2, 1)) %>%
   mutate_each(funs(as.numeric))  %>%
   group_by(year, reporter, flow, fcl) %>%
   summarize_each(funs(sum(., na.rm = T)),
@@ -38,9 +40,14 @@ joined <- valid %>%
          quantityabs = abs(quantity)) %>%
   select(year, reporter, flow, fcl, fcldesc, quantity, quantityabs,
          quantityprop, value, valueprop) %>%
-  mutate_each(funs(as.integer(round(., 0))),
+  mutate_each(funs(round(., 0)),
               quantity, quantityabs, value)
 
 XLConnect::writeWorksheetToFile("vignettes/usa_eth.xlsx",
                                 as.data.frame(joined),
                                 sheet = "us_eth")
+
+joined %>% sample_n(100) %>%
+ggplot(aes(abs(quantityprop), as.factor(fcl), color = reporter)) +
+  geom_point() +
+  scale_x_continuous(labels = scales::percent)

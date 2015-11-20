@@ -88,61 +88,7 @@ esdata <- esdata %>%
   mutate_(reporter = ~convertGeonom2FAO(reporter),
           partner = ~convertGeonom2FAO(partner))
 
-# Subset of hsfcl map for EU countries ####
-
-hsfclmap_es <- hsfclmap %>%
-  right_join(esdata %>%
-               select_(~reporter) %>%
-               distinct_(),
-             by = c("area" = "reporter"))
-
-test_that("all partners from ES dataset have info in MDB files", {
-  expect_equal(sum(is.na(hsfclmap_es$area)), 0)
-})
-
-test_that("all HS codes in MDB files and in ES dataset have length 8", {
-  maprowswithnot8 <- hsfclmap_es %>%
-    select_(~fromcode, ~tocode) %>%
-    mutate_(fromlen = ~stringr::str_length(fromcode),
-            tolen   = ~stringr::str_length(fromcode)) %>%
-    filter_(~fromlen != 8 | tolen != 8) %>%
-    nrow
-
-  expect_equal(maprowswithnot8, 0)
-
-  esdatarowswithnot8 <- esdata %>%
-    select_(~hs) %>%
-    mutate_(hslen = ~stringr::str_length(hs)) %>%
-    filter_(~hslen != 8) %>%
-    nrow
-
-  expect_equal(esdatarowswithnot8, 0)
-
-})
-########### Mapping HS codes to FCL in ES ###############
-# TODO: this code duplicates similar steps for TL data ####
-df <- esdata %>%
-  select_(~reporter, ~flow, ~hs) %>%
-  distinct()
-
-fcldf <- hsfclmap::hsInRange(df$hs, df$reporter, df$flow, hsfclmap_es,
-                             calculation = "grouping",
-                             parallel = T)
-
-if(any(is.na(fcldf$fcl)))
-  message(paste0("EuroStat: proportion of HS-codes not converted in FCL: ",
-                 scales::percent(sum(is.na(fcldf$fcl))/nrow(fcldf))))
-
-esdata <- esdata %>%
-  left_join(fcldf,
-            by = c("reporter" = "areacode", "flow" = "flowname", "hs" = "hs"))
-
-if(any(is.na(esdata$fcl)))
-  message(paste0("Eurostat: proportion of tradeflows with nonmapped HS-codes: ",
-                 scales::percent(sum(is.na(esdata$fcl))/nrow(esdata)),
-                 "\nShare of value of tradeflows with nonmapped HS-codes in total value: ",
-                 scales::percent(sum(esdata$value[is.na(esdata$fcl)], na.rm = T) /
-                                   sum(esdata$value, na.rm = T))))
+esdata <- convertHS2FCL(esdata, hsfclmap, parallel = TRUE)
 
 ## ES data aggreg by FCL #####
 

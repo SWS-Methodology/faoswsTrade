@@ -2,6 +2,7 @@
 
 export(applyadj)
 export(convertComtradeM49ToFAO)
+export(convertGeonom2FAO)
 export(convertTLParnterToFAO)
 export(descFCL)
 export(faoAreaName)

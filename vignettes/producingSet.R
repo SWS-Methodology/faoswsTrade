@@ -35,7 +35,7 @@ faosws::GetTestEnvironment(
 data("hsfclmap2", package = "hsfclmap", envir = environment())
 data("unsdpartnersblocks", package = "tradeproc", envir = environment())
 data("unsdpartners", package = "tradeproc", envir = environment())
-data("geonom2fao", package = "tradeproc", envir = environment())
+
 
 
 ######### HS -> FCL map ############
@@ -85,24 +85,8 @@ esdata <- getRawAgriES(year, agricodeslist)
 ###### convert geonom to fao area list ####
 
 esdata <- esdata %>%
-  left_join(geonom2fao %>%
-              select_(reporter = ~code,
-                      faorep   = ~active),
-            by = "reporter") %>%
-  select_(~-reporter) %>%
-  rename_(reporter = ~faorep) %>%
-  left_join(geonom2fao %>%
-              select_(partner = ~code,
-                      faopar  = ~active),
-            by = "partner") %>%
-  select_(~-partner) %>%
-  rename_(partner = ~faopar)
-
-test_that("all geonom codes are converted into fao areas codes", {
-  expect_equal(sum(is.na(esdata$reporter)), 0)
-  expect_equal(sum(is.na(esdata$partner)), 0)
-})
-
+  mutate_(reporter = ~convertGeonom2FAO(reporter),
+          partner = ~convertGeonom2FAO(partner))
 
 # Subset of hsfcl map for EU countries ####
 

@@ -125,9 +125,9 @@ df <- esdata %>%
   select_(~reporter, ~flow, ~hs) %>%
   distinct()
 
-fcldf <- hsInRange(df$hs, df$reporter, df$flow, hsfclmap_es,
-                   calculation = "grouping",
-                   parallel = T)
+fcldf <- hsfclmap::hsInRange(df$hs, df$reporter, df$flow, hsfclmap_es,
+                             calculation = "grouping",
+                             parallel = T)
 
 if(any(is.na(fcldf$fcl)))
   message(paste0("EuroStat: proportion of HS-codes not converted in FCL: ",

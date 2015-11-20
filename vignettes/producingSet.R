@@ -28,22 +28,6 @@ faosws::GetTestEnvironment(
 #token = token)
 
 
-# Functions to get different M49 schemes from Web,
-# MADB, missingIndicator, printTab
-# TODO: should be in a package
-
-# if(length(
-#   lapply(
-#     dir(
-#       file.path(
-#         Sys.getenv("HOME"),
-#         "r_adhoc",
-#         "privateFAO",
-#         subdir,
-#         sourcedir),
-#       full.names = T),
-#     source)) == 0) stop("Files for sourcing not found")
-
 ## Data sets with hs->fcl map (from mdb files)
 # and UNSD area codes (M49)
 ## TODO: replace by ad hoc tables
@@ -88,60 +72,15 @@ mapmaxlength <- hsfclmap %>%
 
 
 #### Get list of agri codes ####
-agricodeslist <- paste0("'",
-                        paste(getAgriHSCodes(),
-                              collapse = "', '"),
-                        "'")
+agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
 
 ### Download TL data ####
 
-tlsql <- paste0("
-select * from (
-select rep::int as reporter,
-prt::int as partner,
-comm as hs,
-substring(comm from 1 for 6) as hs6,
-flow::int,
-tyear::int as year,
-tvalue as value,
-weight,
-qty,
-qunit::int
-from ess.ct_tariffline_adhoc_unlogged) tbl1
-where hs6 in (",
-                agricodeslist,
-                ") and year = ",
-                year)
-# 276 Germany
-
-
-tldata <- getTableFromDB(tlsql)
-
-tldata <- tldata %>%
-  mutate(hs = stringr::str_extract(hs, "^[0-9]*")) # Artifacts in reporters 646 and 208
-
+tldata <- getRawAgriTL(year, agricodeslist)
 
 #### Download ES data ####
 
-essql <- paste0("
-select * from (
-select declarant::int as reporter,
-partner::int,
-product_nc as hs,
-substring(product_nc from 1 for 6) as hs6,
-flow::int,
-substring(period from 1 for 4)::int as year,
-value_1k_euro as value,
-qty_ton as weight,
-sup_quantity as qty
-from ess.ce_combinednomenclature_unlogged
-where declarant <> 'EU') tbl1
-where hs6 in (",
-agricodeslist,
-") and year = ",
-year)
-
-esdata <- getTableFromDB(essql)
+esdata <- getRawAgriES(year, agricodeslist)
 
 ###### convert geonom to fao area list ####
 

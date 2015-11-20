@@ -90,17 +90,6 @@ esdata <- esdata %>%
 
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = TRUE)
 
-## ES data aggreg by FCL #####
-
-# esdata <- esdata %>%
-#   select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~value, ~weight, ~qty) %>%
-#   filter_(~!is.na(fcl)) %>% # We drop NA fcl here!!!
-#   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
-#   summarise_each_(funs(sum(., na.rm = TRUE)),
-#                   vars = list(~value, ~weight, ~qty)) %>% # We lose NA numbers here!!!!
-#   ungroup()
-
-
 #### TL Converting area codes to FAO area codes ####
 ## Based on Excel file from UNSD (unsdpartners..)
 
@@ -218,34 +207,7 @@ hsfclmap1 <- hsfclmap1 %>%
 
 ########### Mapping HS codes to FCL in TL ###############
 
-df <- tldata %>%
-  select(reporter, flow, hsext) %>%
-  distinct()
-
-fcldf <- hsInRange(df$hsext, df$reporter, df$flow, hsfclmap1,
-                   calculation = "grouping",
-                   parallel = T)
-
-if(any(is.na(fcldf$fcl)))
-  message(paste0("Proportion of nonmapped HS-codes: ",
-                 scales::percent(sum(is.na(fcldf$fcl))/nrow(fcldf))))
-
-## Adding FCL to main TL data set ####
-#
-tldata <- tldata %>%
-  left_join(fcldf,
-            by = c("reporter" = "areacode", "flow" = "flowname", "hsext" = "hs"))
-
-if(any(is.na(tldata$fcl)))
-  message(paste0("Proportion of tradeflows with nonmapped HS-codes: ",
-                 scales::percent(sum(is.na(tldata$fcl))/nrow(tldata)),
-                 "\nShare of value of tradeflows with nonmapped HS-codes in total value: ",
-                 scales::percent(sum(tldata$value[is.na(tldata$fcl)], na.rm = T) /
-                                   sum(tldata$value, na.rm = T))))
-if(debughsfclmap) {
-  hsfclmappingdebug <- tldata %>%
-    filter_(~is.na(fcl))
-}
+tldata <- convertHS2FCL(tldata, hsfclmap, parallel = TRUE)
 
 #############Units of measurment in TL ####
 

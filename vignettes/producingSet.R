@@ -172,13 +172,6 @@ maxlengthdf <- tlmaxlength %>%
   #  122 145 180 224 276
   ungroup()
 
-
-####
-# hsnotequal.R
-
-
-
-
 ### Extension of HS-codes in TL ####
 
 
@@ -207,7 +200,7 @@ hsfclmap1 <- hsfclmap1 %>%
 
 ########### Mapping HS codes to FCL in TL ###############
 
-tldata <- convertHS2FCL(tldata, hsfclmap, parallel = TRUE)
+tldata <- convertHS2FCL(tldata, hsfclmap1, parallel = TRUE)
 
 #############Units of measurment in TL ####
 

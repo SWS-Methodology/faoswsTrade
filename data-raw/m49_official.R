@@ -39,5 +39,17 @@ m49 <- m49 %>%
   select(-valid.years, -iso) %>%
   mutate_each(funs(as.integer), code, strtyr, endyr)
 
-
+m49 <- bind_rows(
+  m49,
+  data_frame(
+    code = 652L,
+    abbr = "Saint Barthélemy",
+    flnm = "Saint Barthélemy",
+    desc = NA,
+    cmnt = NA,
+    type = NA,
+    iso2 = "BL",
+    iso3 = "BLM",
+    strtyr = 2011,
+    endyr = NA))
 

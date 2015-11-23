@@ -66,3 +66,8 @@
 #'
 
 "m49"
+
+#' Comtrade M49 <-> FAO area list map.
+#' This table should be used for reporters codes.
+
+"m49faomap"

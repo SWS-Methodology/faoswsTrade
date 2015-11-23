@@ -39,6 +39,8 @@ m49 <- m49 %>%
   select(-valid.years, -iso) %>%
   mutate_each(funs(as.integer), code, strtyr, endyr)
 
+# 652 Saint Barthélemy is missed in the table
+
 m49 <- bind_rows(
   m49,
   data_frame(
@@ -50,6 +52,9 @@ m49 <- bind_rows(
     type = NA,
     iso2 = "BL",
     iso3 = "BLM",
-    strtyr = 2011,
+    strtyr = 2011L,
     endyr = NA))
 
+m49 <- as.data.frame(m49) # Drop tbl class
+
+save(m49, file = "data/m49.RData")

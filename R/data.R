@@ -60,3 +60,9 @@
 #' faoarea - integer vector with FAO area codes
 
 "mdbfaoareamap"
+
+#' Table of M49 area codes. Taken from
+#' http://comtrade.un.org/db/mr/rfReportersList.aspx and 652 added manually.
+#'
+
+"m49"

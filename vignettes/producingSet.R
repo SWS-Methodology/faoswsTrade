@@ -100,13 +100,8 @@ tldata <- tldata %>%
               # Exclude EU grouping and old countries
               filter(wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
             by = c("partner" = "part")) %>%
-  mutate(partner = ifelse(is.na(wholepartner), partner, wholepartner)) %>%
-  ## Aggregation of numbers for joined M49 areas
-  ## We could aggregate later after convertion to FCL commodities
-  group_by(year, reporter, partner, flow, hs, qunit) %>%
-  summarize_each(funs(sum(., na.rm = T)), weight, qty, value) %>% # We convert NA to zero here!!!!
-  ungroup() %>%
-  mutate(m49rep = reporter,
+  mutate(partner = ifelse(is.na(wholepartner), partner, wholepartner),
+         m49rep = reporter,
          m49par = partner,
          reporter = as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
          partner = as.integer(tradeproc::convertTLParnterToFAO(partner)))

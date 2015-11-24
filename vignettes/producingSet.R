@@ -95,16 +95,16 @@ esdata <- convertHS2FCL(esdata, hsfclmap, parallel = TRUE)
 
 tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
-              select(wholepartner = rtCode,
-                     part = formula) %>%
+              select_(wholepartner = ~rtCode,
+                      part = ~formula) %>%
               # Exclude EU grouping and old countries
-              filter(wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
+              filter_(~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
             by = c("partner" = "part")) %>%
-  mutate(partner = ifelse(is.na(wholepartner), partner, wholepartner),
-         m49rep = reporter,
-         m49par = partner,
-         reporter = as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
-         partner = as.integer(tradeproc::convertTLParnterToFAO(partner)))
+  mutate_(partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
+          m49rep = ~reporter,
+          m49par = ~partner,
+          reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
+          partner = ~as.integer(tradeproc::convertTLParnterToFAO(partner)))
 
 # Nonmapped M49 partner codes: 251, 381, 473, 490,
 # 527, 568, 577, 579, 581, 637, 711, 757, 837, 838, 839, 842, 899

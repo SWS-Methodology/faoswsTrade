@@ -226,9 +226,9 @@ tldata <- tldata %>%
 
 ## Dataset with all matches between Comtrade and FAO units
 ctfclunitsconv <- tldata %>%
-  select(qunit, wco, fclunit) %>%
+  select_(~qunit, ~wco, ~fclunit) %>%
   distinct() %>%
-  arrange(qunit)
+  arrange_(~qunit)
 
 ################ Conv. factor (TL) ################
 
@@ -265,10 +265,10 @@ tldata <- tldata %>%
 #### Commodity specific conversion
 
 fcl_spec_mt_conv <- tldata %>%
-  filter(fclunit == "mt" & weight == 0 & conv == 0) %>%
-  select(fcl, wco) %>%
+  filter_(~fclunit == "mt" & weight == 0 & conv == 0) %>%
+  select_(~fcl, ~wco) %>%
   distinct() %>%
-  mutate(fcldesc = descFCL(fcl))
+  mutate_(fcldesc = ~descFCL(fcl))
 
 fcl_spec_mt_conv$convspec <- 0
 fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
@@ -298,7 +298,7 @@ fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit Prepared nes" &
 
 tldata <- tldata %>%
   left_join(fcl_spec_mt_conv %>%
-              select(-fcldesc),
+              select_(~-fcldesc),
             by = c("fcl", "wco"))
 
 

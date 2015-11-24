@@ -138,8 +138,8 @@ tldata <- tldata %>%
 ###  Calculate length of hs codes in TL
 
 tldata <- tldata %>%
-  group_by(reporter, flow) %>%
-  mutate(tlmaxlength = max(stringr::str_length(hs), na.rm = T)) %>%
+  group_by_(~reporter, ~flow) %>%
+  mutate_(tlmaxlength = ~max(stringr::str_length(hs), na.rm = TRUE)) %>%
   ungroup()
 
 
@@ -147,11 +147,11 @@ tldata <- tldata %>%
 
 
 tlmaxlength <- tldata %>%
-  select(reporter,
-         flow,
-         tlmaxlength) %>%
-  group_by(reporter, flow) %>%
-  summarize(tlmaxlength = max(tlmaxlength, na.rm = T)) %>%
+  select_(~reporter,
+         ~flow,
+         ~tlmaxlength) %>%
+  group_by_(~reporter, ~flow) %>%
+  summarize_(tlmaxlength = ~max(tlmaxlength, na.rm = TRUE)) %>%
   ungroup()
 
 
@@ -161,8 +161,8 @@ tlmaxlength <- tldata %>%
 maxlengthdf <- tlmaxlength %>%
   left_join(mapmaxlength,
             by = c("reporter" = "area", "flow")) %>%
-  group_by(reporter, flow) %>%
-  mutate(maxlength = max(tlmaxlength, mapmaxlength, na.rm = T)) %>%
+  group_by_(~reporter, ~flow) %>%
+  mutate_(maxlength = ~max(tlmaxlength, mapmaxlength, na.rm = TRUE)) %>%
   # na.rm here: some reporters are absent in map
   #  122 145 180 224 276
   ungroup()
@@ -171,26 +171,26 @@ maxlengthdf <- tlmaxlength %>%
 
 
 tldata <- tldata %>%
-  select(-tlmaxlength) %>%
+  select_(~-tlmaxlength) %>%
   left_join(maxlengthdf %>%
-              select(-tlmaxlength, -mapmaxlength),
+              select_(~-tlmaxlength, ~-mapmaxlength),
             by = c("reporter", "flow")) %>%
-  mutate(hsext = as.numeric(hsfclmap::trailingDigits2(hs,
-                                            maxlength = maxlength,
-                                            digit = 0)))
+  mutate_(hsext = ~as.numeric(hsfclmap::trailingDigits2(hs,
+                                                        maxlength = maxlength,
+                                                        digit = 0)))
 
 ### Extension of HS ranges in map ####
 
 
 hsfclmap1 <- hsfclmap %>%
   left_join(maxlengthdf %>%
-              select(-tlmaxlength, -mapmaxlength),
+              select_(~-tlmaxlength, ~-mapmaxlength),
             by = c("area" = "reporter", "flow")) %>%
-  filter(!is.na(maxlength))                                         ## Attention!!!
+  filter_(~!is.na(maxlength))                                         ## Attention!!!
 
 hsfclmap1 <- hsfclmap1 %>%
-  mutate(fromcode = as.numeric(hsfclmap::trailingDigits2(fromcode, maxlength, 0)),
-         tocode = as.numeric(hsfclmap::trailingDigits2(tocode, maxlength, 9)))
+  mutate_(fromcode = ~as.numeric(hsfclmap::trailingDigits2(fromcode, maxlength, 0)),
+          tocode = ~as.numeric(hsfclmap::trailingDigits2(tocode, maxlength, 9)))
 
 
 ########### Mapping HS codes to FCL in TL ###############

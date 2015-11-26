@@ -9,7 +9,7 @@ library(tradeproc)
 # library(fclcpcmap)
 suppressPackageStartupMessages(library(doParallel))
 library(foreach)
-registerDoParallel(cores=detectCores(all.tests=TRUE))
+doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
 library(testthat)
 library(dplyr, warn.conflicts = F)
 
@@ -144,7 +144,7 @@ tldata <- tldata %>%
 # { "id": "3", "text": "re-Export" }
 
 tldata <- tldata %>%
-  mutate_(flow = ~ifelse(flow == 4, 1, ifelse(flow == 3, 2, flow)))
+  mutate_(flow = ~ifelse(flow == 4, 1L, ifelse(flow == 3, 2L, flow)))
 
 ###  Calculate length of hs codes in TL
 
@@ -206,7 +206,10 @@ hsfclmap1 <- hsfclmap1 %>%
 
 ########### Mapping HS codes to FCL in TL ###############
 
-tldata <- convertHS2FCL(tldata, hsfclmap1, parallel = TRUE)
+tldata <- convertHS2FCL(tldata %>%
+                          select_(~-hs) %>%
+                          rename_(hs = ~hsext),
+                        hsfclmap1, parallel = TRUE)
 
 #############Units of measurment in TL ####
 

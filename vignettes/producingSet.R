@@ -135,6 +135,17 @@ tldata <- tldata %>%
 
 
 ############# Lengths of HS-codes stuff ######################
+
+### Reexport and reimport
+
+# { "id": "1", "text": "Import" },
+# { "id": "2", "text": "Export" },
+# { "id": "4", "text": "re-Import" },
+# { "id": "3", "text": "re-Export" }
+
+tldata <- tldata %>%
+  mutate_(flow = ~ifelse(flow == 4, 1, ifelse(flow == 3, 2, flow)))
+
 ###  Calculate length of hs codes in TL
 
 tldata <- tldata %>%

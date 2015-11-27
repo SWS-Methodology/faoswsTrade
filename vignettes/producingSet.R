@@ -2,6 +2,7 @@
 year <- 2011
 
 debughsfclmap <- TRUE
+multicore <- TRUE
 
 library(stringr)
 # library(hsfclmap)
@@ -43,8 +44,7 @@ data("unsdpartners", package = "tradeproc", envir = environment())
 
 hsfclmap <- hsfclmap2 %>%
   distinct() %>%
-  filter_(~mdbyear == year &
-         validyear %in% c(0, year)) %>%
+  filter_(~validyear %in% c(0, year)) %>%
   # Removing leading/trailing zeros from HS, else we get
   # NA during as.numeric()
   mutate_each_(funs(str_trim),
@@ -88,7 +88,7 @@ esdata <- esdata %>%
   mutate_(reporter = ~convertGeonom2FAO(reporter),
           partner = ~convertGeonom2FAO(partner))
 
-esdata <- convertHS2FCL(esdata, hsfclmap, parallel = TRUE)
+esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
 
 #### TL Converting area codes to FAO area codes ####
 ## Based on Excel file from UNSD (unsdpartners..)
@@ -103,6 +103,7 @@ tldata <- tldata %>%
   mutate_(partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
           m49rep = ~reporter,
           m49par = ~partner,
+          # Conversion from Comtrade M49 to FAO area list
           reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(tradeproc::convertTLParnterToFAO(partner)))
 
@@ -132,6 +133,11 @@ tldata <- tldata %>%
               select_(~reporter) %>%
               distinct(),
             by = "reporter")
+
+# Filter out countries not in MDB notes
+
+tldata <- tldata %>%
+  filter_(~!(reporter %in% c(122, 145, 180, 224, 276)))
 
 
 ############# Lengths of HS-codes stuff ######################
@@ -209,7 +215,9 @@ hsfclmap1 <- hsfclmap1 %>%
 tldata <- convertHS2FCL(tldata %>%
                           select_(~-hs) %>%
                           rename_(hs = ~hsext),
-                        hsfclmap1, parallel = TRUE)
+                        hsfclmap1, parallel = multicore)
+
+
 
 #############Units of measurment in TL ####
 
@@ -339,7 +347,7 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
                         tldata$qtyfcl)
 
 
-######### Value to thousands
+######### Value from USD to thousands of USD
 
 tldata$value <- tldata$value / 1000
 
@@ -348,9 +356,15 @@ tldata$value <- tldata$value / 1000
 ## Here we select column qtyfcl which contains quantity, requested by FAO
 
 tldata <- tldata %>%
-  select(year, reporter, partner, flow, fcl, qty = qtyfcl, value) %>%
-  group_by(year, reporter, partner, flow, fcl) %>%
-  summarise_each(funs(sum(., na.rm = T)), qty, value) %>%
+  select_(~year,
+          ~reporter,
+          ~partner,
+          ~flow,
+          ~fcl,
+          ~qty = qtyfcl, # <----
+          ~value) %>%
+  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+  summarise_each_(funs(sum(., na.rm = T)), vars = c("qty", "value")) %>%
   ungroup()
 
 # Trade data with hs extended
@@ -359,7 +373,7 @@ tldata <- tldata %>%
 tradedata <- bind_rows(
   tldata %>%
     select_(~year, ~reporter, ~partner, ~flow,
-            hs = ~hsext, # !!!!
+            hs = ~hs, # !!!!
             ~fcl, ~weight, ~qty, ~value),
   esdata %>%
     select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value) %>%
@@ -371,11 +385,11 @@ tradedata <- plyr::ldply(sort(unique(tradedata$reporter)),
                           function(x) {
                             applyadj(x, year, adjustments, tradedata)
                             },
-                          .progress = "none",
-                          .inform = F,
-                          .parallel = T)
+                          .progress = ifelse(multicore, "none", "text"),
+                          .inform = FALSE,
+                          .parallel = multicore)
 
-tldata <- tradedata %>%
+tradedata <- tradedata %>%
   select_(~year, ~reporter, ~partner, ~flow, ~fcl, qty = ~weight, ~value) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
   summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%

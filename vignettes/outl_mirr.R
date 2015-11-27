@@ -53,8 +53,8 @@ tldatanonrep <- tldata %>%
   filter(partner %in% nonreporting) %>%
   mutate(partner_mirr = reporter,
          reporter = partner,
-         flow = ifelse(flow == "Export", "Import",
-                       ifelse(flow == "Import", "Export",
+         flow = ifelse(flow == 2, 1,
+                       ifelse(flow == 1, 2,
                               NA)))
 
 tldata <- bind_rows(tldata, tldatanonrep)

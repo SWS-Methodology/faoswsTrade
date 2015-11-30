@@ -36,16 +36,16 @@ joined <- valid %>%
   left_join(fclhs::fcl %>%
               select(fcl, fcldesc = fcltitle),
             by = "fcl") %>%
-  mutate(reporter = ifelse(reporter == 231, "US", "Ethiopia"),
+  mutate(reporter = ifelse(reporter == 231, "US", ifelse(reporter == 238, "Ethiopia", reporter)),
          quantityabs = abs(quantity)) %>%
   select(year, reporter, flow, fcl, fcldesc, quantity, quantityabs,
          quantityprop, value, valueprop) %>%
   mutate_each(funs(round(., 0)),
               quantity, quantityabs, value)
 
-XLConnect::writeWorksheetToFile("vignettes/usa_eth.xlsx",
+XLConnect::writeWorksheetToFile("vignettes/usa_ger.xlsx",
                                 as.data.frame(joined),
-                                sheet = "us_eth")
+                                sheet = "comparison")
 
 joined %>% sample_n(100) %>%
 ggplot(aes(abs(quantityprop), as.factor(fcl), color = reporter)) +

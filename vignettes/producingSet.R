@@ -43,18 +43,7 @@ data("unsdpartners", package = "tradeproc", envir = environment())
 ## Filter hs->fcl links we need (based on year)
 
 hsfclmap <- hsfclmap2 %>%
-  distinct() %>%
   filter_(~validyear %in% c(0, year)) %>%
-  # Removing leading/trailing zeros from HS, else we get
-  # NA during as.numeric()
-  mutate_each_(funs(str_trim),
-               c("fromcode", "tocode")) %>%
-  # Convert flow to numbers for further joining with tlmaxlength
-  mutate_(flow = ~ifelse(flow == "Import", 1L,
-                         ifelse(flow == "Export", 2L,
-                                NA))) %>%
-  ## Manual corrections of typos
-  hsfclmap::manualCorrections() %>%
 ## and add trailing 9 to tocode, where it is shorter
 ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,

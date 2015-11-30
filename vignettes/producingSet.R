@@ -33,7 +33,6 @@ faosws::GetTestEnvironment(
 # and UNSD area codes (M49)
 ## TODO: replace by ad hoc tables
 
-data("hsfclmap2", package = "hsfclmap", envir = environment())
 data("unsdpartnersblocks", package = "tradeproc", envir = environment())
 data("unsdpartners", package = "tradeproc", envir = environment())
 
@@ -42,7 +41,7 @@ data("unsdpartners", package = "tradeproc", envir = environment())
 ######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)
 
-hsfclmap <- hsfclmap2 %>%
+hsfclmap <- hsfclmap::hsfclmap2 %>%
   filter_(~validyear %in% c(0, year)) %>%
 ## and add trailing 9 to tocode, where it is shorter
 ## TODO: check how many such cases and, if possible, move to manualCorrectoins

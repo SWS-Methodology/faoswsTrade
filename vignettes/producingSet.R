@@ -43,7 +43,6 @@ data("unsdpartners", package = "tradeproc", envir = environment())
 ## Filter hs->fcl links we need (based on year)
 
 hsfclmap <- hsfclmap2 %>%
-  distinct() %>%
   filter_(~validyear %in% c(0, year)) %>%
   # Removing leading/trailing zeros from HS, else we get
   # NA during as.numeric()

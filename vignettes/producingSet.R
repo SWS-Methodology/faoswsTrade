@@ -350,7 +350,7 @@ tldata <- tldata %>%
           ~partner,
           ~flow,
           ~fcl,
-          ~qty = qtyfcl, # <----
+          qty = ~qtyfcl, # <----
           ~value) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
   summarise_each_(funs(sum(., na.rm = T)), vars = c("qty", "value")) %>%

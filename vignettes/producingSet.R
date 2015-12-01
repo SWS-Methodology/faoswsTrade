@@ -103,7 +103,7 @@ tldata <- tldata %>%
           m49par = ~partner,
           # Conversion from Comtrade M49 to FAO area list
           reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
-          partner = ~as.integer(tradeproc::convertTLParnterToFAO(partner)))
+          partner = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49par)))
 
 # Nonmapped M49 partner codes: 251, 381, 473, 490,
 # 527, 568, 577, 579, 581, 637, 711, 757, 837, 838, 839, 842, 899

@@ -43,9 +43,18 @@ data("unsdpartners", package = "tradeproc", envir = environment())
 ## Filter hs->fcl links we need (based on year)
 
 hsfclmap <- hsfclmap2 %>%
-  filter_(~mdbyear == year) %>%
-## and add trailing 9 to tocode, where it is shorter
-## TODO: check how many such cases and, if possible, move to manualCorrectoins
+  # Filter out all records from future years
+  filter_(~mdbyear <= year) %>%
+  # Distance from year of interest to year in the map
+  mutate_(yeardistance = ~year - mdbyear) %>%
+  # Select nearest year for every reporter
+  # if year == 2011 and mdbyear == 2011, then distance is 0
+  # if year == 2011 and mdbyear == 2010, distance is 1
+  group_by_(~area) %>%
+  filter_(~yeardistance == min(yeardistance)) %>%
+  ungroup() %>%
+  ## and add trailing 9 to tocode, where it is shorter
+  ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
                                            tocode,
                                            digit = 9))

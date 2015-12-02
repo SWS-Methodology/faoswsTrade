@@ -12,7 +12,7 @@ valid <- fclhs::gettfvalid(reporter = reporters, year = 2011) %>%
                  value) %>%
   ungroup()
 
-testing <- tldata %>% filter(year == 2011,
+testing <- tradedata %>% filter(year == 2011,
                              reporter %in% reporters) %>%
   select(year, reporter, partner, flow, fcl, quantity = qty, value) %>%
   # mutate(flow = ifelse(flow == "Export", 2, 1)) %>%

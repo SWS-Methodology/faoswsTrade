@@ -384,6 +384,7 @@ tradedata <- bind_rows(
   tldata %>%
     select_(~year, ~reporter, ~partner, ~flow,
             ~fcl, ~qty, ~value),
+  # TODO Check quantity/weight
   esdata %>%
     select_(~year, ~reporter, ~partner, ~flow,
             ~fcl, ~qty, ~value)

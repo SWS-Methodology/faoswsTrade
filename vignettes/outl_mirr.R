@@ -4,21 +4,21 @@ out_coef <- 1.5
 
 # Missing quantities and values
 
-tldata <- tldata %>%
+tradedata <- tradedata %>%
   mutate(no_quant = qty == 0 | is.na(qty),  # There are no NA qty, but may be changes later
          no_value = value == 0 | is.na(value))
 
 
 # UV calculation
 
-tldata <- mutate(tldata,
+tradedata <- mutate(tradedata,
                  uv = ifelse(no_quant | no_value, # Only 0 here. Should we care about NA?
                              NA,
                              value / qty))
 
 # Outlier detection
 
-tldata <- tldata %>%
+tradedata <- tradedata %>%
   group_by(year, reporter, flow, fcl) %>%
   mutate(
     uv_reporter = median(uv, na.rm = T),
@@ -27,7 +27,7 @@ tldata <- tldata %>%
 
 # Imputation of missings and outliers
 
-tldata <- tldata %>%
+tradedata <- tradedata %>%
   mutate(qty = ifelse(no_quant | outlier,
                       value / uv_reporter,
                       qty))
@@ -39,8 +39,8 @@ data("FAOcountryProfile",
      package = "FAOSTAT",
      envir = environment())
 
-nonreporting <- unique(tldata$partner)[!is.element(unique(tldata$partner),
-                                                   unique(tldata$reporter))]
+nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
+                                                   unique(tradedata$reporter))]
 
 FAOcountryProfile %>%
   select(area = FAOST_CODE,
@@ -49,7 +49,7 @@ FAOcountryProfile %>%
              by = "area") %>%
   arrange(name)
 
-tldatanonrep <- tldata %>%
+tradedatanonrep <- tradedata %>%
   filter(partner %in% nonreporting) %>%
   mutate(partner_mirr = reporter,
          reporter = partner,
@@ -57,4 +57,4 @@ tldatanonrep <- tldata %>%
                        ifelse(flow == 1, 2,
                               NA)))
 
-tldata <- bind_rows(tldata, tldatanonrep)
+tradedata <- bind_rows(tradedata, tradedatanonrep)

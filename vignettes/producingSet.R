@@ -365,30 +365,29 @@ tldata <- tldata %>%
   summarise_each_(funs(sum(., na.rm = T)), vars = c("qty", "value")) %>%
   ungroup()
 
-# Trade data with hs extended
 
+# Loading of notes/adjustments should be added here
 
-tradedata <- bind_rows(
-  tldata %>%
-    select_(~year, ~reporter, ~partner, ~flow,
-            hs = ~hs, # !!!!
-            ~fcl, ~weight, ~qty, ~value),
-  esdata %>%
-    select_(~year, ~reporter, ~partner, ~flow, ~hs, ~fcl, ~weight, ~qty, ~value) %>%
-    mutate_(hs = ~as.numeric(hs))
-)
-
-# load("bigdata.RData")
-tradedata <- plyr::ldply(sort(unique(tradedata$reporter)),
+esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                           function(x) {
-                            applyadj(x, year, adjustments, tradedata)
+                            applyadj(x, year, adjustments, esdata)
                             },
                           .progress = ifelse(multicore, "none", "text"),
                           .inform = FALSE,
                           .parallel = multicore)
 
+tradedata <- bind_rows(
+  tldata %>%
+    select_(~year, ~reporter, ~partner, ~flow,
+            ~fcl, ~qty, ~value),
+  esdata %>%
+    select_(~year, ~reporter, ~partner, ~flow,
+            ~fcl, ~qty, ~value)
+)
+
+
 tradedata <- tradedata %>%
-  select_(~year, ~reporter, ~partner, ~flow, ~fcl, qty = ~weight, ~value) %>%
+  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~qty, ~value) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
   summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
   ungroup()

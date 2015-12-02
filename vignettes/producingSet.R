@@ -136,10 +136,10 @@ tldata <- tldata %>%
               distinct(),
             by = "reporter")
 
-# Filter out countries not in MDB notes
-
+# We drop reporters what are absent in MDB hsfcl map
+# because in any case we can proceed their data
 tldata <- tldata %>%
-  filter_(~!(reporter %in% c(122, 145, 180, 224, 276)))
+  filter_(~reporter %in% unique(hsfclmap$area))
 
 
 ############# Lengths of HS-codes stuff ######################

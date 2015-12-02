@@ -1,7 +1,3 @@
-out_coef <- 1.5
-
-# Sefl-trade, reimport, reexport
-
 # Missing quantities and values
 
 tradedata <- tradedata %>%

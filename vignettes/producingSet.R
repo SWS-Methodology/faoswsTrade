@@ -43,6 +43,7 @@ faosws::GetTestEnvironment(
 ## TODO: replace by ad hoc tables
 
 data("hsfclmap2", package = "hsfclmap", envir = environment())
+data("adjustments", package = "hsfclmap", envir = environment())
 data("unsdpartnersblocks", package = "tradeproc", envir = environment())
 data("unsdpartners", package = "tradeproc", envir = environment())
 

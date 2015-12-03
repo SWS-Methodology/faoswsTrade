@@ -14,12 +14,14 @@ multicore <- TRUE
 
 library(tradeproc)
 library(stringr)
-suppressPackageStartupMessages(library(doParallel))
-library(foreach)
 library(testthat)
 library(dplyr, warn.conflicts = F)
 
-doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
+if(multicore) {
+  suppressPackageStartupMessages(library(doParallel))
+  library(foreach)
+  doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
+}
 
 # ---- swsdebug ----
 

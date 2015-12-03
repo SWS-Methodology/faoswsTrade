@@ -1,3 +1,5 @@
+# ---- settings ----
+
 # Year for processing
 year <- 2011
 
@@ -8,6 +10,8 @@ out_coef <- 1.5
 debughsfclmap <- TRUE
 multicore <- TRUE
 
+# ---- libs ----
+
 library(tradeproc)
 library(stringr)
 suppressPackageStartupMessages(library(doParallel))
@@ -17,6 +21,7 @@ library(dplyr, warn.conflicts = F)
 
 doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
 
+# ---- swsdebug ----
 
 # Connection to SWS
 # TODO: DEV MODE!!!!!!!!

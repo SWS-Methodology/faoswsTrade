@@ -8,16 +8,14 @@ out_coef <- 1.5
 debughsfclmap <- TRUE
 multicore <- TRUE
 
-library(stringr)
-# library(hsfclmap)
 library(tradeproc)
-# library(fclcpcmap)
+library(stringr)
 suppressPackageStartupMessages(library(doParallel))
 library(foreach)
-doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
 library(testthat)
 library(dplyr, warn.conflicts = F)
 
+doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
 
 
 # Connection to SWS

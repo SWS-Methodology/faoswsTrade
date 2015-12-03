@@ -87,20 +87,6 @@ tldata <- tldata %>%
           reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49par)))
 
-if(any(is.na(tldata$reporter)))
-  message(paste0(
-    "Nonmapped M49 reporter codes: ",
-    paste(sort(unique(tldata$m49rep[is.na(tldata$reporter)])), collapse = ", "),
-    "\nProportion of trade flows with nonmapped M49 reporter codes: ",
-    scales::percent(sum(is.na(tldata$reporter))/nrow(tldata))))
-
-if(any(is.na(tldata$partner)))
-  message(paste0(
-    "Nonmapped M49 partner codes: ",
-    paste(sort(unique(tldata$m49par[is.na(tldata$partner)])), collapse = ", "),
-    "\nProportion of trade flows with nonmapped M49 partner codes: ",
-    scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
-
 # ---- drop_es_from_tl ----
 # They will be replaced by ES data
 

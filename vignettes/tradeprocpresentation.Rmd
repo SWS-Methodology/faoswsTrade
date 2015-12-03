@@ -22,8 +22,6 @@ knitr::read_chunk('producingSet.R')
 ```{r datasets}
 ```
 
-```{r hsfclmapsubset}
-```
 
 ```{r, echo = FALSE}
 glimpse(hsfclmap)
@@ -60,6 +58,9 @@ glimpse(esdata)
 ```
 
 ```{r drop_es_from_tl}
+```
+
+```{r hsfclmapsubset}
 ```
 
 ```{r drop_reps_not_in_mdb}

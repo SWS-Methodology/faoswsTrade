@@ -25,9 +25,49 @@ knitr::read_chunk('producingSet.R')
 ```{r hsfclmapsubset}
 ```
 
-```{r}
+```{r, echo = FALSE}
 glimpse(hsfclmap)
 ```
 
 ```{r tradeload, eval = FALSE}
 ```
+
+```{r, echo = FALSE}
+load("../../esdata_raw_from_db.RData")
+load("../../tldata_raw_from_db.RData")
+```
+
+```{r, echo = TRUE}
+glimpse(tldata)
+glimpse(esdata)
+```
+
+```{r geonom2fao}
+```
+
+```{r, echo = FALSE}
+glimpse(esdata)
+```
+
+```{r es_hs2fcl}
+```
+
+```{r, echo = FALSE}
+glimpse(esdata)
+```
+
+```{r tl_m49fao}
+```
+
+```{r drop_es_from_tl}
+```
+
+```{r drop_reps_not_in_mdb}
+```
+
+```{r reexptoexp}
+```
+
+```{r tl_hslength}
+```
+

@@ -123,7 +123,7 @@ if(any(is.na(tldata$partner)))
     "\nProportion of trade flows with nonmapped M49 partner codes: ",
     scales::percent(sum(is.na(tldata$partner))/nrow(tldata))))
 
-# Filtering out tradeflows reported by EU countires.
+# ---- drop_es_from_tl ----
 # They will be replaced by ES data
 
 tldata <- tldata %>%
@@ -132,22 +132,13 @@ tldata <- tldata %>%
               distinct(),
             by = "reporter")
 
+# ---- drop_reps_not_in_mdb ----
 # We drop reporters what are absent in MDB hsfcl map
 # because in any case we can proceed their data
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-
-############# Lengths of HS-codes stuff ######################
-
-#### Max length of HS-codes in MDB-files ####
-
-mapmaxlength <- hsfclmap %>%
-  group_by_(~area, ~flow) %>%
-  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
-  ungroup()
-
-### Reexport and reimport
+# ---- reexptoexp ----
 
 # { "id": "1", "text": "Import" },
 # { "id": "2", "text": "Export" },
@@ -157,6 +148,15 @@ mapmaxlength <- hsfclmap %>%
 tldata <- tldata %>%
   mutate_(flow = ~ifelse(flow == 4, 1L, ifelse(flow == 3, 2L, flow)))
 
+# ---- tl_hslength ----
+
+#### Max length of HS-codes in MDB-files ####
+
+mapmaxlength <- hsfclmap %>%
+  group_by_(~area, ~flow) %>%
+  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
+  ungroup()
+
 ###  Calculate length of hs codes in TL
 
 tldata <- tldata %>%
@@ -164,9 +164,7 @@ tldata <- tldata %>%
   mutate_(tlmaxlength = ~max(stringr::str_length(hs), na.rm = TRUE)) %>%
   ungroup()
 
-
 ## Dataset with max length in TL ####
-
 
 tlmaxlength <- tldata %>%
   select_(~reporter,
@@ -176,9 +174,7 @@ tlmaxlength <- tldata %>%
   summarize_(tlmaxlength = ~max(tlmaxlength, na.rm = TRUE)) %>%
   ungroup()
 
-
 ## Common max length between TL and map ####
-
 
 maxlengthdf <- tlmaxlength %>%
   left_join(mapmaxlength,
@@ -190,7 +186,6 @@ maxlengthdf <- tlmaxlength %>%
   ungroup()
 
 ### Extension of HS-codes in TL ####
-
 
 tldata <- tldata %>%
   select_(~-tlmaxlength) %>%
@@ -215,7 +210,7 @@ hsfclmap1 <- hsfclmap1 %>%
           tocode = ~as.numeric(hsfclmap::trailingDigits2(tocode, maxlength, 9)))
 
 
-########### Mapping HS codes to FCL in TL ###############
+# ---- tl_hs2fcl ----
 
 tldata <- convertHS2FCL(tldata %>%
                           select_(~-hs) %>%

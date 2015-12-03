@@ -83,15 +83,16 @@ tldata <- getRawAgriTL(year, agricodeslist)
 
 esdata <- getRawAgriES(year, agricodeslist)
 
-###### convert geonom to fao area list ####
+# ---- geonom2fao ----
 
 esdata <- esdata %>%
   mutate_(reporter = ~convertGeonom2FAO(reporter),
           partner = ~convertGeonom2FAO(partner))
 
+# ---- es_hs2fcl ----
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
 
-#### TL Converting area codes to FAO area codes ####
+# ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
 
 tldata <- tldata %>%

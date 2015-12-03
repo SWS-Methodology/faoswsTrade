@@ -68,12 +68,6 @@ hsfclmap <- hsfclmap2 %>%
 
 
 
-#### Max length of HS-codes in MDB-files ####
-
-mapmaxlength <- hsfclmap %>%
-  group_by_(~area, ~flow) %>%
-  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
-  ungroup()
 
 
 #### Get list of agri codes ####
@@ -146,6 +140,13 @@ tldata <- tldata %>%
 
 
 ############# Lengths of HS-codes stuff ######################
+
+#### Max length of HS-codes in MDB-files ####
+
+mapmaxlength <- hsfclmap %>%
+  group_by_(~area, ~flow) %>%
+  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
+  ungroup()
 
 ### Reexport and reimport
 

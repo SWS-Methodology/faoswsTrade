@@ -1,0 +1,33 @@
+---
+title: "Trade data processing demo"
+author: "Alexander Matrunich"
+date: "December 3, 2015"
+output: html_document
+---
+
+```{r cache=FALSE, echo = FALSE}
+knitr::read_chunk('producingSet.R')
+```
+
+```{r settings}
+```
+
+```{r libs}
+```
+
+
+```{r swsdebug}
+```
+
+```{r datasets}
+```
+
+```{r hsfclmapsubset}
+```
+
+```{r}
+glimpse(hsfclmap)
+```
+
+```{r tradeload, eval = FALSE}
+```

@@ -1,7 +1,7 @@
 # ---- settings ----
 
 # Year for processing
-year <- 2011
+year <- 2011L
 
 # Coefficient for outlier detection
 # See coef argument in ?boxplot.stats
@@ -63,6 +63,7 @@ hsfclmap <- hsfclmap2 %>%
   group_by_(~area) %>%
   filter_(~yeardistance == min(yeardistance)) %>%
   ungroup() %>%
+  select_(~-yeardistance) %>%
   ## and add trailing 9 to tocode, where it is shorter
   ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,

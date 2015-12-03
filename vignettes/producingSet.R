@@ -47,6 +47,28 @@ data("adjustments", package = "hsfclmap", envir = environment())
 data("unsdpartnersblocks", package = "tradeproc", envir = environment())
 data("unsdpartners", package = "tradeproc", envir = environment())
 
+# ---- hsfclmapsubset ----
+# HS -> FCL map
+## Filter hs->fcl links we need (based on year)
+
+hsfclmap <- hsfclmap2 %>%
+  # Filter out all records from future years
+  filter_(~mdbyear <= year) %>%
+  # Distance from year of interest to year in the map
+  mutate_(yeardistance = ~year - mdbyear) %>%
+  # Select nearest year for every reporter
+  # if year == 2011 and mdbyear == 2011, then distance is 0
+  # if year == 2011 and mdbyear == 2010, distance is 1
+  group_by_(~area) %>%
+  filter_(~yeardistance == min(yeardistance)) %>%
+  ungroup() %>%
+  select_(~-yeardistance) %>%
+  ## and add trailing 9 to tocode, where it is shorter
+  ## TODO: check how many such cases and, if possible, move to manualCorrectoins
+  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
+                                           tocode,
+                                           digit = 9))
+
 
 # ---- tradeload ----
 
@@ -55,11 +77,13 @@ agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
 
 ### Download TL data ####
 
-tldata <- getRawAgriTL(year, agricodeslist)
+# tldata <- getRawAgriTL(year, agricodeslist)
+load("../tldata_raw_from_db.RData")
 
 #### Download ES data ####
 
-esdata <- getRawAgriES(year, agricodeslist)
+# esdata <- getRawAgriES(year, agricodeslist)
+load("../esdata_raw_from_db.RData")
 
 # ---- geonom2fao ----
 
@@ -97,27 +121,6 @@ tldata <- tldata %>%
             by = "reporter")
 
 
-# ---- hsfclmapsubset ----
-# HS -> FCL map
-## Filter hs->fcl links we need (based on year)
-
-hsfclmap <- hsfclmap2 %>%
-  # Filter out all records from future years
-  filter_(~mdbyear <= year) %>%
-  # Distance from year of interest to year in the map
-  mutate_(yeardistance = ~year - mdbyear) %>%
-  # Select nearest year for every reporter
-  # if year == 2011 and mdbyear == 2011, then distance is 0
-  # if year == 2011 and mdbyear == 2010, distance is 1
-  group_by_(~area) %>%
-  filter_(~yeardistance == min(yeardistance)) %>%
-  ungroup() %>%
-  select_(~-yeardistance) %>%
-  ## and add trailing 9 to tocode, where it is shorter
-  ## TODO: check how many such cases and, if possible, move to manualCorrectoins
-  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
-                                           tocode,
-                                           digit = 9))
 
 # ---- drop_reps_not_in_mdb ----
 # We drop reporters what are absent in MDB hsfcl map

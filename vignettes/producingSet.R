@@ -35,7 +35,7 @@ faosws::GetTestEnvironment(
 # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
 #token = token)
 
-
+# ---- datasets ----
 ## Data sets with hs->fcl map (from mdb files)
 # and UNSD area codes (M49)
 ## TODO: replace by ad hoc tables
@@ -45,7 +45,7 @@ data("unsdpartnersblocks", package = "tradeproc", envir = environment())
 data("unsdpartners", package = "tradeproc", envir = environment())
 
 
-
+# ---- hsfclmapsubset ----
 ######### HS -> FCL map ############
 ## Filter hs->fcl links we need (based on year)
 

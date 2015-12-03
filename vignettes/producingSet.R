@@ -109,10 +109,6 @@ tldata <- tldata %>%
           reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49par)))
 
-# Nonmapped M49 partner codes: 251, 381, 473, 490,
-# 527, 568, 577, 579, 581, 637, 711, 757, 837, 838, 839, 842, 899
-
-
 if(any(is.na(tldata$reporter)))
   message(paste0(
     "Nonmapped M49 reporter codes: ",

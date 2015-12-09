@@ -208,6 +208,15 @@ tldata <- convertHS2FCL(tldata %>%
                         hsfclmap1, parallel = multicore)
 
 
+# ---- units_from_tl_to_es ----
+
+# TODO: Everything is one-to-one, but we need to add test for it
+
+fcl_units <- tldata %>%
+  select_(~qunit, ~fcl) %>%
+  distinct()
+
+
 
 #############Units of measurment in TL ####
 
@@ -277,7 +286,7 @@ tldata <- tldata %>%
 #### Commodity specific conversion
 
 fcl_spec_mt_conv <- tldata %>%
-  filter_(~fclunit == "mt" & weight == 0 & conv == 0) %>%
+  filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
   distinct() %>%
   mutate_(fcldesc = ~descFCL(fcl))
@@ -345,18 +354,29 @@ tldata$value <- tldata$value / 1000
 ## TLDATA: aggregate by fcl
 ## Here we select column qtyfcl which contains quantity, requested by FAO
 
+# tldata <- tldata %>%
+#   select_(~year,
+#           ~reporter,
+#           ~partner,
+#           ~flow,
+#           ~fcl,
+#           qty = ~qtyfcl, # <----
+#           ~value) %>%
+#   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+#   summarise_each_(funs(sum(., na.rm = T)), vars = c("qty", "value")) %>%
+#   ungroup()
+
+# Replace weight (first quantity column) by newly produced qtyfcl column
 tldata <- tldata %>%
   select_(~year,
           ~reporter,
           ~partner,
           ~flow,
           ~fcl,
-          qty = ~qtyfcl, # <----
-          ~value) %>%
-  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
-  summarise_each_(funs(sum(., na.rm = T)), vars = c("qty", "value")) %>%
-  ungroup()
-
+          ~hs,
+          weight = ~qtyfcl,
+          ~qty,
+          ~value)
 
 # Loading of notes/adjustments should be added here
 
@@ -368,10 +388,18 @@ esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                           .inform = FALSE,
                           .parallel = multicore)
 
+tldata <- plyr::ldply(sort(unique(tldata$reporter)),
+                      function(x) {
+                        applyadj(x, year, adjustments, tldata)
+                      },
+                      .progress = ifelse(multicore, "none", "text"),
+                      .inform = FALSE,
+                      .parallel = multicore)
+
 tradedata <- bind_rows(
   tldata %>%
     select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, ~qty, ~value),
+            ~fcl, qty = ~weight, ~value),
   # TODO Check quantity/weight
   esdata %>%
     select_(~year, ~reporter, ~partner, ~flow,

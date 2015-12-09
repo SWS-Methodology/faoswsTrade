@@ -207,17 +207,6 @@ tldata <- convertHS2FCL(tldata %>%
                           rename_(hs = ~hsext),
                         hsfclmap1, parallel = multicore)
 
-
-# ---- units_from_tl_to_es ----
-
-# TODO: Everything is one-to-one, but we need to add test for it
-
-fcl_units <- tldata %>%
-  select_(~qunit, ~fcl) %>%
-  distinct()
-
-
-
 #############Units of measurment in TL ####
 
 ## Add target fclunit

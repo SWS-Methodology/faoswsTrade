@@ -5,7 +5,7 @@
 \alias{m49faomap}
 \title{Comtrade M49 <-> FAO area list map.
 This table should be used for reporters codes.}
-\format{An object of class \code{data.frame} with 294 rows and 2 columns.}
+\format{An object of class \code{data.frame} with 295 rows and 2 columns.}
 \usage{
 m49faomap
 }

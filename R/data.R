@@ -71,3 +71,7 @@
 #' This table should be used for reporters codes.
 
 "m49faomap"
+
+#' Local replacement for table with fcl codes and descriptions from SWS
+#' @format data.table
+"fclcodelist"

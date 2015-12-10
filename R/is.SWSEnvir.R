@@ -3,7 +3,8 @@
 #' Detecting existence of SWS Envir in calling env
 #' by looking for swsContext.datasets
 #' 
-#' @return logical value. TRUE if there 
+#' @return logical value. TRUE if there
+#' @export
 
 is.SWSEnvir <- function(varToCheck = "swsContext.datasets") {
   exists(varToCheck)

@@ -46,6 +46,8 @@ data("hsfclmap2", package = "hsfclmap", envir = environment())
 data("adjustments", package = "hsfclmap", envir = environment())
 data("unsdpartnersblocks", package = "tradeproc", envir = environment())
 data("unsdpartners", package = "tradeproc", envir = environment())
+## units for fcl
+data("fclunits", package = "tradeproc", envir = environment())
 
 # ---- hsfclmapsubset ----
 # HS -> FCL map
@@ -89,7 +91,8 @@ load("../esdata_raw_from_db.RData")
 
 esdata <- esdata %>%
   mutate_(reporter = ~convertGeonom2FAO(reporter),
-          partner = ~convertGeonom2FAO(partner))
+          partner = ~convertGeonom2FAO(partner)) %>%
+  filter_(~partner != 252)
 
 # ---- es_hs2fcl ----
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
@@ -217,11 +220,6 @@ tldata <- convertHS2FCL(tldata %>%
 
 ## Add target fclunit
 # What units does FAO expects for given FCL codes
-
-## units for fcl
-data("fclunits",
-     package = "tradeproc",
-     envir = environment())
 
 tldata <- tldata %>%
   left_join(fclunits,
@@ -397,8 +395,9 @@ tradedata <- bind_rows(
             ~fcl, qty = ~weight, ~value),
   # TODO Check quantity/weight
   esdata %>%
+    mutate_(uniqqty = ~ifelse(fclunit == "mt", weight, qty)) %>%
     select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, ~qty, ~value)
+            ~fcl, qty = ~uniqqty, ~value)
 )
 
 

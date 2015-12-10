@@ -4,6 +4,8 @@
 
 getlistofadjs <- function(rep, yr, adjustments) {
 
+  # Probably filter is not needed (already done in applyadj.R before calling getlistofadjs)
+  # BUT distinct YES!!!
   adjustments <- adjustments %>%
     filter_(~reporter == rep & (year == yr | is.na(year))) %>%
     distinct()

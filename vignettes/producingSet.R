@@ -94,6 +94,12 @@ esdata <- esdata %>%
 # ---- es_hs2fcl ----
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
 
+# ---- es_join_fclunits ----
+
+esdata <- esdata %>%
+  left_join(fclunits, by = "fcl")
+
+
 # ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
 

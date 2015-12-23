@@ -12,4 +12,4 @@ tf_valid <- read.table("data-raw/TF_VALID.csv",
                                       "value"))
 
 
-save(tf_valid, file = "data/tf_valid.RData")
+save(tf_valid, file = "data/tfvalid.RData")

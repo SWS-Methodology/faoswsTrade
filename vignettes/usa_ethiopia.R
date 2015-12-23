@@ -3,14 +3,28 @@ reporters <- c(231, 238) # The USA and Ethiopia
 
 reporters <- c(231, 79) # GErmany
 
-.ojdbcclasspath <- file.path(Sys.getenv("HOME"), "dstrbs", "ojdbc14.jar")
 
-valid <- fclhs::gettfvalid(reporter = reporters, year = 2011) %>%
-  group_by(year, reporter, flow, fcl) %>%
-  summarize_each(funs(sum(., na.rm = T)),
-                 quantity,
-                 value) %>%
-  ungroup()
+if(is.SWSEnvir()) {
+  .ojdbcclasspath <- file.path(Sys.getenv("HOME"), "dstrbs", "ojdbc14.jar")
+  valid <- fclhs::gettfvalid(reporter = reporters, year = 2011) %>%
+    group_by(year, reporter, flow, fcl) %>%
+    summarize_each(funs(sum(., na.rm = T)),
+                   quantity,
+                   value) %>%
+    ungroup()
+} else {
+  valid <- data("tf_valid", package = "tradeproc", envir = environment()) %>%
+    group_by(year, reporter, flow, fcl) %>%
+    summarize_each(funs(sum(., na.rm = T)),
+                   quantity,
+                   value) %>%
+    ungroup()
+}
+
+
+## Get Valid from file get from Giorgio on the 23th december
+test =
+
 
 testing <- tradedata %>% filter(year == 2011,
                              reporter %in% reporters) %>%

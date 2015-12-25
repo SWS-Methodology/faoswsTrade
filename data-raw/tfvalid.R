@@ -1,6 +1,6 @@
 library(dplyr)
 
-tf_valid <- read.table("data-raw/TF_VALID.csv",
+tfvalid <- read.table("data-raw/TF_VALID.csv",
                         header = TRUE,
                         sep = ",",
                         col.names = c("year",
@@ -12,4 +12,4 @@ tf_valid <- read.table("data-raw/TF_VALID.csv",
                                       "value"))
 
 
-save(tf_valid, file = "data/tfvalid.RData")
+save(tfvalid, file = "data/tfvalid.RData")

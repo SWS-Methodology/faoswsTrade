@@ -13,7 +13,7 @@ if(is.SWSEnvir()) {
                    value) %>%
     ungroup()
 } else {
-  valid <- data("tf_valid", package = "tradeproc", envir = environment()) %>%
+  valid <- data("tfvalid", package = "tradeproc", envir = environment()) %>%
     group_by(year, reporter, flow, fcl) %>%
     summarize_each(funs(sum(., na.rm = T)),
                    quantity,

@@ -49,6 +49,7 @@ data("unsdpartners", package = "tradeproc", envir = environment())
 ## units for fcl
 data("fclunits", package = "tradeproc", envir = environment())
 
+
 # ---- hsfclmapsubset ----
 # HS -> FCL map
 ## Filter hs->fcl links we need (based on year)
@@ -80,13 +81,14 @@ agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
 ### Download TL data ####
 
 # tldata <- getRawAgriTL(year, agricodeslist)
-load("../tldata_raw_from_db.RData")
+#load("../tldata_raw_from_db.RData")
+load("~/Dropbox/tradeproc/tldata_raw_from_db.RData")
 
 #### Download ES data ####
 
 # esdata <- getRawAgriES(year, agricodeslist)
-load("../esdata_raw_from_db.RData")
-
+#load("../esdata_raw_from_db.RData")
+load("~/Dropbox/tradeproc/esdata_raw_from_db.RData")
 # ---- geonom2fao ----
 
 esdata <- esdata %>%
@@ -315,6 +317,8 @@ tldata <- tldata %>%
               select_(~-fcldesc),
             by = c("fcl", "wco"))
 
+## Save intermediate dataset for checks
+tldata_old = tldata
 
 ########## Conversion of units
 
@@ -340,9 +344,7 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
 
 
 ######### Value from USD to thousands of USD
-
 tldata$value <- tldata$value / 1000
-
 
 ## TLDATA: aggregate by fcl
 ## Here we select column qtyfcl which contains quantity, requested by FAO
@@ -380,6 +382,10 @@ esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                           .progress = ifelse(multicore, "none", "text"),
                           .inform = FALSE,
                           .parallel = multicore)
+
+## Apply conversion EUR to USD
+load("data/EURconversionUSD.RData")
+esdata$value <- esdata$value * as.numeric(EURconversionUSD %>% filter(Year == year) %>% select(ExchangeRate))
 
 tldata <- plyr::ldply(sort(unique(tldata$reporter)),
                       function(x) {
@@ -431,7 +437,6 @@ tradedata <- tradedata %>%
   ungroup()
 
 # Imputation of missings and outliers
-
 tradedata <- tradedata %>%
   mutate_(qty = ~ifelse(no_quant | outlier,
                       value / uv_reporter,
@@ -439,10 +444,10 @@ tradedata <- tradedata %>%
 
 
 # Non reporting countries
-
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                    unique(tradedata$reporter))]
 
+## Mirroring for non reporting countries
 tradedatanonrep <- tradedata %>%
   filter_(~partner %in% nonreporting) %>%
   mutate_(partner_mirr = ~reporter,
@@ -453,3 +458,15 @@ tradedatanonrep <- tradedata %>%
 
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)
+
+
+
+## Rule 4 "order of magnitude"
+#https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_prevalidation/R/magnitudeOrder.R
+
+## Kernel calculation
+#https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_prevalidation/R/kdeMode.R
+
+## Simple reliability index
+#https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_reliability/simpleReliabilityExampleForDocumentation.R
+

@@ -385,7 +385,9 @@ esdata <- plyr::ldply(sort(unique(esdata$reporter)),
 
 ## Apply conversion EUR to USD
 load("data/EURconversionUSD.RData")
-esdata$value <- esdata$value * as.numeric(EURconversionUSD %>% filter(Year == year) %>% select(ExchangeRate))
+esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
+                                            filter(Year == year) %>%
+                                            select(ExchangeRate))
 
 tldata <- plyr::ldply(sort(unique(tldata$reporter)),
                       function(x) {

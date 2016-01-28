@@ -75,3 +75,12 @@
 #' Local replacement for table with fcl codes and descriptions from SWS
 #' @format data.table
 "fclcodelist"
+
+#' Valid dataset from database to be compared with new procedure
+#'
+#' Taken as CSV from Giorgio Sorbara Giorgio.Sorbara@fao.org
+#'
+#' @format A data frame with seven columns as integers: year, reporter,
+#'  partner, fcl, quantity and value
+
+"tfvalid"

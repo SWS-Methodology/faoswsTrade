@@ -69,8 +69,8 @@ hsfclmap <- hsfclmap2 %>%
   ## and add trailing 9 to tocode, where it is shorter
   ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
-                                           tocode,
-                                           digit = 9))
+                                             tocode,
+                                             digit = 9))
 
 
 # ---- tradeload ----
@@ -169,8 +169,8 @@ tldata <- tldata %>%
 
 tlmaxlength <- tldata %>%
   select_(~reporter,
-         ~flow,
-         ~tlmaxlength) %>%
+          ~flow,
+          ~tlmaxlength) %>%
   group_by_(~reporter, ~flow) %>%
   summarize_(tlmaxlength = ~max(tlmaxlength, na.rm = TRUE)) %>%
   ungroup()
@@ -262,6 +262,13 @@ ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
                       ctfclunitsconv$wco == "u"] <- .001
+## This is just a trick
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
+                      ctfclunitsconv$wco == "kg"] <- 1
+## This one too :)
+ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
+                      ctfclunitsconv$wco == "kg"] <- 1
+
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
@@ -373,15 +380,18 @@ tldata <- tldata %>%
           ~qty,
           ~value)
 
+tldata_mid = tldata
+
 # Loading of notes/adjustments should be added here
+esdata_old = esdata
 
 esdata <- plyr::ldply(sort(unique(esdata$reporter)),
-                          function(x) {
-                            applyadj(x, year, adjustments, esdata)
-                            },
-                          .progress = ifelse(multicore, "none", "text"),
-                          .inform = FALSE,
-                          .parallel = multicore)
+                      function(x) {
+                        applyadj(x, year, adjustments, esdata)
+                      },
+                      .progress = ifelse(multicore, "none", "text"),
+                      .inform = FALSE,
+                      .parallel = multicore)
 
 ## Apply conversion EUR to USD
 load("data/EURconversionUSD.RData")
@@ -419,15 +429,15 @@ tradedata <- tradedata %>%
 
 tradedata <- tradedata %>%
   mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no NA qty, but may be changes later
-         no_value = ~value == 0 | is.na(value))
+          no_value = ~value == 0 | is.na(value))
 
 
 # UV calculation
 
 tradedata <- mutate_(tradedata,
-                 uv = ~ifelse(no_quant | no_value, # Only 0 here. Should we care about NA?
-                             NA,
-                             value / qty))
+                     uv = ~ifelse(no_quant | no_value, # Only 0 here. Should we care about NA?
+                                  NA,
+                                  value / qty))
 
 # Outlier detection
 
@@ -435,28 +445,27 @@ tradedata <- tradedata %>%
   group_by_(~year, ~reporter, ~flow, ~fcl) %>%
   mutate_(
     uv_reporter = ~median(uv, na.rm = T),
-    outlier = ~uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)) %>%
+    outlier = ~uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)$out) %>%
   ungroup()
 
 # Imputation of missings and outliers
 tradedata <- tradedata %>%
   mutate_(qty = ~ifelse(no_quant | outlier,
-                      value / uv_reporter,
-                      qty))
-
+                        value / uv_reporter,
+                        qty))
 
 # Non reporting countries
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
-                                                   unique(tradedata$reporter))]
+                                                      unique(tradedata$reporter))]
 
 ## Mirroring for non reporting countries
 tradedatanonrep <- tradedata %>%
   filter_(~partner %in% nonreporting) %>%
   mutate_(partner_mirr = ~reporter,
-         reporter = ~partner,
-         flow = ~ifelse(flow == 2, 1,
-                       ifelse(flow == 1, 2,
-                              NA)))
+          reporter = ~partner,
+          flow = ~ifelse(flow == 2, 1,
+                         ifelse(flow == 1, 2,
+                                NA)))
 
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)

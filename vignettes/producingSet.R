@@ -473,6 +473,14 @@ tradedata <- bind_rows(tradedata,
                        tradedatanonrep)
 
 
+## Non mapped FCL
+tldata_old %>%
+  filter(is.na(fcl)) %>%
+  select(hs6) %>%
+  unique() %>%
+  write.table(file = "non_mapped_fcl.csv",
+              row.names = F,quote = F)
+
 
 ## Rule 4 "order of magnitude"
 #https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_prevalidation/R/magnitudeOrder.R

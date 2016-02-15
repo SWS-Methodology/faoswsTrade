@@ -1,0 +1,167 @@
+%\VignetteIndexEntry{Statistical Working Paper on balancing of the FBS}
+%\VignetteEngine{knitr::knitr}
+
+%\documentclass[nojss]{jss}
+%\usepackage[]{graphicx}
+%\usepackage[]{color}
+%\usepackage{geometry}
+
+\documentclass[nojss]{jss}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+\usepackage[ruled, vlined]{algorithm2e}
+\usepackage{mathtools}
+\usepackage{draftwatermark}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{mathrsfs}
+\usepackage{multirow}
+\usepackage{courier}
+
+
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+%\makeatotherx
+
+
+%\usepackage{framed}
+%\makeatletter
+%\newenvironment{kframe}{%
+% \def\at@end@of@kframe{}%
+% \ifinner\ifhmode%
+%  \def\at@end@of@kframe{\end{minipage}}%
+%  \begin{minipage}{\columnwidth}%
+% \fi\fi%
+% \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+% \colorbox{shadecolor}{##1}\hskip-\fboxsep
+%     % There is no \\@totalrightmargin, so:
+%     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+% \MakeFramed {\advance\hsize-\width
+%   \@totalleftmargin\z@ \linewidth\hsize
+%   \@setminipage}}%
+% {\par\unskip\endMakeFramed%
+% \at@end@of@kframe}
+%\makeatother
+
+%\definecolor{shadecolor}{rgb}{.97, .97, .97}
+%\definecolor{messagecolor}{rgb}{0, 0, 0}
+%\definecolor{warningcolor}{rgb}{1, 0, 1}
+%\definecolor{errorcolor}{rgb}{1, 0, 0}
+%\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+%\usepackage{geometry}
+%\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+%\usepackage[ruled, vlined]{algorithm2e}
+%\usepackage{mathtools}
+%\usepackage{draftwatermark}
+%\usepackage{float}
+%\usepackage{placeins}
+%\usepackage{mathrsfs}
+%\usepackage{multirow}
+%% \usepackage{mathbbm}
+%\DeclareMathOperator{\sgn}{sgn}
+%\DeclareMathOperator*{\argmax}{\arg\!\max}
+
+\title{\bf faoswsTrade: Data Sources}
+
+\author{Marco Garieri \\ Food and Agriculture Organization \\ of
+  the United Nations}
+
+\Plainauthor{M. Garieri}
+
+\Plaintitle{faoswsProduction: Data Sources}
+
+\Shorttitle{Data Source}
+
+\Abstract{
+
+\noindent
+This vignette provides a detailed description of the various data sources used in the trade modules.
+}
+
+\Keywords{Agricultural Trade, Tariff Line, Eurostat, Mirroring}
+
+\Address{
+  Marco Garieri\\
+  Economics and Social Statistics Division (ESS)\\
+  Economic and Social Development Department (ES)\\
+  Food and Agriculture Organization of the United Nations (FAO)\\
+  Viale delle Terme di Caracalla 00153 Rome, Italy\\
+  E-mail: \email{marco.garieri@fao.org}\\
+  URL: \url{https://gitlab.com/faoess/tradeproc}
+}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+\begin{document}
+
+\newpage
+
+%\section*{Disclaimer}
+%This Working Paper should not be reported as representing the official view of
+%the FAO. The views expressed in this Working Paper are those of the
+%author and do not necessarily represent those of the FAO or FAO
+%policy. Working Papers describe research in progress by the authors and
+%are published to elicit comments and to further discussion.\\
+%
+%This paper is dynamically generated on \today{} and is subject to
+%changes and updates.
+
+\section{Data Source}
+\subsection{Flow Chart}
+Description of the entire flow
+\begin{center}\includegraphics[scale = 0.01]{"trade_1"}\end{center}
+
+\newpage
+\begin{center}\includegraphics{"trade_4"}\end{center}
+\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_legend"}\end{center}
+
+
+\subsection{Example of tables}
+<<echo=FALSE>>=
+# Set up a database connection so we can pull the datasets
+#library(faosws)
+library(data.table)
+library(xtable)
+#SetClientFiles("~/R certificate files/QA/")
+#GetTestEnvironment(
+#    baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws",
+#    token = "c585c410-fb9e-44ea-ba36-ef940d32185d"
+#)
+@
+
+%\begin{itemize}
+%    \item Tariff Line:
+%<<echo = FALSE, results='tex',comment=''>>=
+%load("~/Dropbox/tradeproc/tldata_raw_from_db.RData")
+%print(xtable(head(tldata,4)), include.rownames = FALSE)
+%@
+
+%\end{itemize}
+
+\subsection{Process}
+
+\end{document}
+Status API Training Shop Blog About
+ÔøΩ 2015 GitHub, Inc. Terms Privacy Security Contact
+%

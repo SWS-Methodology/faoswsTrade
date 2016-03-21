@@ -104,7 +104,9 @@ getRawAgriTL_fromGiorgio <- function(year, path) {
 
 tldata <- getRawAgriTL_fromGiorgio(year, "~/Downloads/")
 
-table(nchar(esdata_raw$hs))
+## Quality check
+ggplot2::ggplot(as.data.frame(table(nchar(tldata$hs))), ggplot2::aes(x=Var1, y = Freq)) +
+  ggplot2::geom_bar(stat="identity")
 
 #### Download ES data ####
 
@@ -179,15 +181,7 @@ tldata <- tldata %>%
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-# ---- reexptoexp ----
 
-# { "id": "1", "text": "Import" },
-# { "id": "2", "text": "Export" },
-# { "id": "4", "text": "re-Import" },
-# { "id": "3", "text": "re-Export" }
-
-tldata <- tldata %>%
-  mutate_(flow = ~ifelse(flow == 4, 1L, ifelse(flow == 3, 2L, flow)))
 
 # ---- tl_hslength ----
 

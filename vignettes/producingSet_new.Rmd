@@ -1,0 +1,211 @@
+---
+title: "Trade module"
+output: html_document
+---
+# Settings
+
+```{r parameters, echo = T}
+# Coefficient for outlier detection
+# See coef argument in ?boxplot.stats
+out_coef <- 1.5
+
+## Debug logic for mapping of commodity
+debughsfclmap <- TRUE
+## Is it multicore?
+multicore <- TRUE
+
+```
+
+```{r libraries, echo= F}
+# ---- libs ----
+library(tradeproc)
+library(stringr)
+library(testthat)
+library(ggplot2)
+library(dplyr, warn.conflicts = F)
+
+if(multicore) {
+  suppressPackageStartupMessages(library(doParallel))
+  library(foreach)
+  doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
+}
+
+```
+
+Year under consideration:
+```{r year}
+year <- 2009L
+```
+
+Datasets from other packages for mapping of commodity and countries
+```{r datasets, echo=T}
+# ---- datasets ----
+## Data sets with hs->fcl map (from mdb files)
+# and UNSD area codes (M49)
+## TODO: replace by ad hoc tables
+
+## Mapping of commodity hs to fcl dataset
+data("hsfclmap2", package = "hsfclmap", envir = environment())
+## Loading of the adjustments 
+data("adjustments", package = "hsfclmap", envir = environment())
+## Mapping of countries M49
+data("unsdpartnersblocks", package = "tradeproc", envir = environment())
+data("unsdpartners", package = "tradeproc", envir = environment())
+## Units for fcl commodity
+data("fclunits", package = "tradeproc", envir = environment())
+```
+
+Loading Tariffline (UNSD) and Eurostat data
+```{r loading_data, echo=F, results='hide'}
+# ---- tradeload ----
+
+#### Get list of agri codes #### (Not needed at the moment)
+## agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
+
+## Function of Alex
+# tldata <- getRawAgriTL(year, agricodeslist)
+## Loading from local dataset
+#load("../tldata_raw_from_db.RData")
+#load("~/Dropbox/tradeproc/tldata_raw_from_db.RData")
+
+## Function to read table from drive of Giorgio
+load(paste0("~/Desktop/FAO/Trade/RData/tldata_",year,".RData"))
+tldata <- tldata_raw
+
+#### Download ES data ####
+
+## Function of Alex
+# esdata <- getRawAgriES(year, agricodeslist)
+## Loading from local dataset
+#load("../esdata_raw_from_db.RData")
+#load("~/Dropbox/tradeproc/esdata_raw_from_db.RData")
+
+## Function to read table from drive of Giorgio
+load(paste0("~/Desktop/FAO/Trade/RData/esdata_",year,".RData"))
+esdata <- esdata_raw
+```
+
+# Pre-processing
+* Tariffline (UNSD) data with `r NROW(tldata)` records.
+* Eurostat data with `r NROW(esdata)` records.
+
+```{r summary_raw_data, echo = F, cache=T}
+ggplot(as.data.frame(table(nchar(tldata$hs))), aes(x=Var1, y = Freq)) + 
+  geom_bar(stat="identity") + 
+  geom_text(aes(label=Freq), position=position_dodge(width=0.9), vjust=-0.25) + 
+  ggtitle(paste0("Distribution of hscode for UNSD tariffline, ",year))
+
+ggplot(as.data.frame(table(nchar(esdata$hs))), aes(x=Var1, y = Freq)) + 
+  geom_bar(stat="identity") + 
+  geom_text(aes(label=Freq), position=position_dodge(width=0.9), vjust=-0.25) + 
+  ggtitle(paste0("Distribution of hscode for Eurostat data, ",year))
+```
+
+## Analysis on aggregates
+```{r aggregates}
+
+```
+
+## Filter records with less than 6 digits for hs codes
+```{r filter_short_hs_codes}
+```
+
+# Standardization
+
+## Mapping country codes
+* For Eurostat we convert from geonomenclature to FAO country code
+* For UNSD we convert from M49 to FAO country code
+
+```{r converting_area_code, echo=F}
+# ---- geonom2fao ----
+esdata <- esdata %>%
+  mutate_(reporter = ~convertGeonom2FAO(reporter),
+          partner = ~convertGeonom2FAO(partner)) %>%
+  filter_(~partner != 252)
+
+# ---- tl_m49fao ----
+## Based on Excel file from UNSD (unsdpartners..)
+
+tldata <- tldata %>%
+  left_join(unsdpartnersblocks %>%
+              select_(wholepartner = ~rtCode,
+                      part = ~formula) %>%
+              # Exclude EU grouping and old countries
+              filter_(~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
+            by = c("partner" = "part")) %>%
+  mutate_(partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
+          m49rep = ~reporter,
+          m49par = ~partner,
+          # Conversion from Comtrade M49 to FAO area list
+          reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
+          partner = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49par)))
+
+# ---- drop_es_from_tl ----
+# They will be replaced by ES data
+
+tldata <- tldata %>%
+  anti_join(esdata %>%
+              select_(~reporter) %>%
+              distinct(),
+            by = "reporter")
+
+# ---- reexptoexp ----
+
+# { "id": "1", "text": "Import" },
+# { "id": "2", "text": "Export" },
+# { "id": "4", "text": "re-Import" },
+# { "id": "3", "text": "re-Export" }
+
+tldata <- tldata %>%
+  mutate_(flow = ~ifelse(flow == 4, 1L, ifelse(flow == 3, 2L, flow)))
+
+```
+
+After the convertion of area code, the datasets have the following size:
+
+* UNSD: `r NROW(tldata)`
+* Eurostat: `r NROW(esdata)`
+
+```{r summary_raw_data_after_country_mapping, echo = F, cache=T}
+ggplot(as.data.frame(table(nchar(tldata$hs))), aes(x=Var1, y = Freq)) + 
+  geom_bar(stat="identity") + 
+  geom_text(aes(label=Freq), position=position_dodge(width=0.9), vjust=-0.25) + 
+  ggtitle(paste0("Distribution of hscode for UNSD tariffline, ",year, 
+                 ", after applying mapping of country code"))
+
+ggplot(as.data.frame(table(nchar(esdata$hs))), aes(x=Var1, y = Freq)) + 
+  geom_bar(stat="identity") + 
+  geom_text(aes(label=Freq), position=position_dodge(width=0.9), vjust=-0.25) + 
+  ggtitle(paste0("Distribution of hscode for Eurostat data, ",year,
+                 ", after applying mapping of country code"))
+```
+
+## Mapping commodity codes
+Subset of the commodity mapping 
+```{r subseting_mapping_commodity, echo=F}
+# ---- hsfclmapsubset ----
+# HS -> FCL map
+## Filter hs->fcl links we need (based on year)
+
+hsfclmap <- hsfclmap2 %>%
+  # Filter out all records from future years
+  filter_(~mdbyear <= year) %>%
+  # Distance from year of interest to year in the map
+  mutate_(yeardistance = ~year - mdbyear) %>%
+  # Select nearest year for every reporter
+  # if year == 2011 and mdbyear == 2011, then distance is 0
+  # if year == 2011 and mdbyear == 2010, distance is 1
+  group_by_(~area) %>%
+  filter_(~yeardistance == min(yeardistance)) %>%
+  ungroup() %>%
+  select_(~-yeardistance) %>%
+  ## and add trailing 9 to tocode, where it is shorter
+  ## TODO: check how many such cases and, if possible, move to manualCorrectoins
+  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
+                                             tocode,
+                                             digit = 9))
+```
+
+
+```{r converting_commodity_code}
+```

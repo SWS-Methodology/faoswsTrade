@@ -1,0 +1,285 @@
+---
+title: "Linking Tariffline HS with FCL"
+author: "Alex Matrunich"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Linking Tariffline HS with FCL}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r set_options, echo = F, warning = F}
+suppressPackageStartupMessages(library(dplyr))
+
+knitr::opts_chunk$set(list(echo = FALSE,
+                           eval = TRUE,
+                           cache = TRUE,
+                           warning = FALSE,
+                           message = FALSE,
+                           fig.height = 10,
+                           fig.width = 12))
+
+source(file.path(Sys.getenv("HOME"), ".pwd.R"))
+
+source(file.path(Sys.getenv("HOME"), 
+                 "r_adhoc", 
+                 "trade_prevalid_testing", 
+                 "setupconnection.R"))
+
+trade_src <- src_postgres("sws_data", "localhost", 5432, "trade", .pwd, 
+                          options = "-c search_path=ess")
+
+agri_db <- tbl(trade_src, sql("
+select * from ess.agri
+"))
+```
+
+1. Convert country codes.
+2. Align HS-codes as numbers (max length among Tariffline, fromcode and tocode).
+
+# Country codes
+
+We use countrycode package.
+
+```{r countrycode}
+agri_db %>% 
+  filter(year == "2011") 
+```
+
+All reporters' codes in Tariffline are presented in ComTrade country code scheme:
+
+```{r}
+ctm49 <- getComtradeM49()$code
+unm49 <- getOfficialM49()$code
+
+tlreps <- agri_db %>% 
+  select(reporter) %>% 
+  distinct() %>% 
+  collect()
+
+length(tlreps$reporter[!is.element(tlreps$reporter, ctm49)])
+```
+
+It is more reliable to make conversions through the names of countries rather than digital codes. We can not use FAOSTAT package, as there is no codes from ComTrade.
+
+```{r}
+tlreps <- tlreps %>% 
+  left_join(getComtradeM49(),
+            c("reporter" = "code"))
+```
+
+We got country names. Now we try to match them to FAO area codes using reqular expressions from countrycode package.
+
+```{r, warning = T}
+tlreps <- tlreps %>% 
+  mutate(faoarea = countrycode::countrycode(name, "country.name", "fao", 
+                                            warn = T))
+
+tlreps %>% 
+  filter(is.na(faoarea))
+
+```
+
+The problem with Palestine, for example, that countrycode() does not ignore case during reqular expressions matching.
+
+```{r}
+tlreps$faoarea[tlreps$name == "State of Palestine"] <- 299
+tlreps$faoarea[tlreps$name == "New Caledonia"] <- 153 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "Greenland"] <- 85 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "Mayotte"] <- 270 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "Bermuda"] <- 17 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "French Polynesia"] <- 70 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "Turks and Caicos Isds"] <- 224 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "Aruba"] <- 22 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "Montserrat"] <- 142 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "China, Hong Kong SAR"] <- 96 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "China, Macao SAR"] <- 128 # No code for FAO in countrycode
+tlreps$faoarea[tlreps$name == "China"] <- 41 # In countrycode it is linked to China including Hong Kong and Macao
+
+  
+```
+
+## Partners
+
+
+```{r}
+tlprts <- agri_db %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  collect()
+
+tarifflineData <- agri_db %>% 
+  filter(year == "2011",
+         flow == "1") %>% 
+  group_by(reporter, partner, hs2) %>% 
+  summarise(value = sum(value)) %>% 
+  collect() %>% 
+  mutate(value = round(value, 0)) %>% 
+  ungroup()
+
+# comtradeData <- getCommodityFullData(c("01", "02"), "5621", "2011") %>% 
+comtradeDataRaw <- getCommodityFullData(getAgriHSCodes(), c("5621"), "2011")  
+
+comtradeData <- comtradeDataRaw %>% 
+  select(reporter = starts_with("reporting"),
+         ct_partner  = starts_with("partner"),
+         hs      = ends_with("HS"),
+         ct_value    = Value) %>% 
+  mutate(hs2 = stringr::str_extract(hs, "^.{2}")) %>% 
+  group_by(reporter, ct_partner, hs2) %>% 
+  summarize(ct_value = round(sum(ct_value, na.rm = T), 0)) %>% 
+  ungroup()
+  
+
+joinedByValue <- tarifflineData %>% 
+  left_join(comtradeData,
+            by = c("reporter", "hs2", "value" = "ct_value"))
+
+
+joinedByValue %>% 
+  filter(!is.na(ct_partner)) %>% 
+  select(reporter, partner, ct_partner) %>% 
+  group_by(reporter, partner) %>% 
+  mutate(n = n(),
+         matches = unique(partner) %in% ct_partner,
+         matchesminus = unique(partner) %in% as.character(as.integer(ct_partner) - 1)) %>% 
+  ungroup() %>% 
+  filter(!matches,
+         !matchesminus,
+         partner != "840") %>% 
+  arrange(desc(n)) %>% 
+  as.data.frame()
+  
+
+joinedByValue %>% 
+  filter(is.na(ct_partner))
+
+partlyFinished <- joinedByValue %>% 
+  select(reporter, partner, ct_partner) %>% 
+  group_by(reporter, partner) %>% 
+  mutate(variants = length(unique(ct_partner)),
+         matches = unique(partner) %in% ct_partner,
+         matchesminus1 = unique(partner) %in% as.character(as.integer(ct_partner) - 1),
+         matchesminus2 = unique(partner) %in% as.character(as.integer(ct_partner) - 2)) %>% 
+  ungroup() %>% 
+  mutate(correct_var = ifelse(matches,
+                              partner,
+                              ifelse(matchesminus1, 
+                                     as.character(as.integer(ct_partner) - 1),
+                                     ifelse(matchesminus2, 
+                                            as.character(as.integer(ct_partner) - 2),
+                                            NA))))
+
+
+finishedCodes <- partlyFinished %>% 
+  select(reporter, partner, correct_var) %>% 
+  filter(!is.na(correct_var)) %>% 
+  distinct() 
+  
+x <- joinedByValue %>% 
+  select(reporter, partner, ct_partner) %>% 
+  group_by(reporter, partner, ct_partner) %>% 
+  mutate(ranking = n()) %>% 
+  group_by(reporter, partner) %>% 
+  filter(ranking == max(ranking)) %>% 
+  distinct() %>% 
+  filter(ct_partner != partner &
+           partner != as.character(as.integer(ct_partner) - 1) &
+           partner != as.character(as.integer(ct_partner) - 2)) %>% 
+  as.data.frame() %>% 
+    arrange(partner) 
+# So there are 78 cases when reporter-specific partner's code doesn't match Comtrade's M49
+
+# Codes that are absent in Comtrade list 
+unique(x$ct_partner[!is.element(x$ct_partner, getComtradeM49()$code)])
+
+# Codes that are absent in SWS list 
+unique(x$ct_partner[!is.element(x$ct_partner, getAllReportersRaw()$code)])
+```
+
+```{r}
+partlyFinished %>% 
+  group_by(reporter, partner, ct_partner, correct_var) %>% 
+  summarize(ranking = n()) %>% 
+  group_by(reporter, partner) %>% 
+  mutate(varavail = any(!is.na(correct_var)) | any(!is.na(ct_partner))) %>% 
+  filter(!varavail) %>% 
+  filter(!is.element(partner, getAllCountryCodes())) %>% 
+  select(partner) %>% 
+  
+
+```
+
+666 cases, where partner is not available
+
+
+# By HS6
+
+```{r}
+
+tarifflineData <- agri_db %>% 
+  filter(year == "2011",
+         flow == "1") %>% 
+  group_by(reporter, partner, hs6) %>% 
+  summarise(value = sum(value)) %>% 
+  collect() %>% 
+  mutate(value = round(value, 0)) %>% 
+  ungroup()
+
+comtradeData <- comtradeDataRaw %>% 
+  select(reporter = starts_with("reporting"),
+         ct_partner  = starts_with("partner"),
+         hs6      = ends_with("HS"),
+         ct_value    = Value) 
+  
+
+joinedByValue <- tarifflineData %>% 
+  left_join(comtradeData,
+            by = c("reporter", "hs6", "value" = "ct_value"))
+
+partlyFinished <- joinedByValue %>% 
+  select(reporter, partner, ct_partner) %>% 
+  group_by(reporter, partner) %>% 
+  mutate(matches = unique(partner) %in% ct_partner,
+         matchesminus1 = unique(partner) %in% as.character(as.integer(ct_partner) - 1),
+         matchesminus2 = unique(partner) %in% as.character(as.integer(ct_partner) - 2)) %>% 
+  ungroup() %>% 
+  mutate(correct_var = ifelse(matches,
+                              partner,
+                              ifelse(matchesminus1, 
+                                     as.character(as.integer(ct_partner) - 1),
+                                     ifelse(matchesminus2, 
+                                            as.character(as.integer(ct_partner) - 2),
+                                            NA))))
+
+partlyFinished %>% 
+  group_by(reporter, partner, ct_partner, correct_var) %>% 
+  summarize(ranking = n()) %>% 
+  group_by(reporter, partner) %>% 
+  mutate(varavail = any(!is.na(correct_var)) | any(!is.na(ct_partner))) %>% 
+  ungroup() %>% 
+  filter(!varavail) %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  # filter(!is.element(partner, getAllCountryCodes()))
+  filter(!is.element(partner, getOfficialM49()$code))
+
+```
+
+### Partner reference list
+
+```{r}
+unsdlist <- XLConnect::readWorksheetFromFile(system.file("extdata",
+                                                         "Partner reference list.xlsx",
+                                                         package = "tradeproc"),
+                                             sheet = "countryList")
+
+notInList <- tlprts$partner[!is.element(tlprts$partner, unsdlist$crCode)]
+
+agri_db %>% 
+  filter(year == "2011",
+         partner %in% notInList)
+```
+

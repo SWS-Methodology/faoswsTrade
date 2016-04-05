@@ -1,0 +1,13 @@
+ctunitcode,fclunit,ctunit,ctunitdesc,ctfclconvfactor
+1,$ value only,-,No Quantity,NA
+1,mt,-,No Quantity,NA
+5,$ value only,u,Number of items,NA
+5,mt,u,Number of items,
+5,heads,u,Number of items,1
+5,1000 heads,u,Number of items,0.001
+7,mt,l,Volume in liters,0.001
+8,mt,kg,Weight in kilograms,0.001
+8,$ value only,kg,Weight in kilograms,NA
+8,heads,kg,Weight in kilograms,
+8,1000 heads,kg,Weight in kilograms,
+11,mt,12u,Dozen of items,

@@ -1,0 +1,107 @@
+---
+title: "Partner ref list"
+author: "Aleksandr Matrunich"
+date: "August 31, 2015"
+output: html_document
+---
+
+Ref list contains three variants of name for each partner. We have to decide, which variant is better. Or use them all.
+
+```{r}
+library(dplyr, warn.conflicts = F)
+library(countrycode)
+library(reshape2)
+
+data("unsdpartners", package = "tradeproc")
+data("unsdpartnersblocks", package = "tradeproc")
+data("FAOcountryProfile", package = "FAOSTAT")
+
+matches <- unsdpartners %>% 
+  select(-ends_with("Year")) %>% 
+  melt(id.vars = "crCode", variable.name = "type", value.name = "name") %>% 
+  mutate(faoarea = countrycode(name, "country.name", "fao", warn = T)) %>% 
+  group_by(crCode, faoarea) %>% 
+  mutate(n = n()) %>% 
+  group_by(crCode) %>% 
+  mutate(maxfao = n == max(n, na.rm = T))
+```
+
+```{r}
+tldata %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  mutate(partner = as.numeric(partner)) %>% 
+  left_join(unsdpartners %>% 
+              select(crCode, crNameE),
+            by =c("partner" = "crCode")) %>% 
+  filter(is.na(crNameE)) 
+
+
+tldata %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  mutate(partner = as.numeric(partner)) %>% 
+  left_join(unsdpartners %>% 
+              select(crCode, crNameE),
+            by =c("partner" = "crCode")) %>% 
+  filter(is.na(crNameE)) %>% 
+  select(-crNameE) %>% 
+  left_join(unsdpartnersblocks %>% 
+              select(formula, crNameE),
+            by =c("partner" = "formula")) %>% 
+  filter(is.na(crNameE))
+
+
+## FAOSTAT will help
+
+
+
+detectFao <- function(string) {
+  FAOcountryProfile %>%
+  select_(fao = ~FAOST_CODE, un = ~UN_CODE, name = ~OFFICIAL_FAO_NAME) %>% 
+  filter_(~str_detect(name, coll(string, ignore_case = T)))
+}
+
+tldata %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  mutate(partner = as.numeric(partner)) %>% 
+  left_join(FAOcountryProfile %>% 
+              select(un = UN_CODE, 
+                     name = OFFICIAL_FAO_NAME, 
+                     fao = FAOST_CODE),
+            by = c("partner" = "un")) %>% 
+  filter(is.na(FAOST_CODE)) %>% 
+  arrange(partner)
+
+tldata %>% 
+  select(reporter) %>% 
+  distinct() %>% 
+  filter(reporter %in% c("356", "699"))
+
+
+```
+
+
+```{r}
+## TEsting function
+tldata %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  mutate(fao = convertTLParnterToFAO(partner)) %>% 
+  filter(is.na(fao))
+
+tldata %>% 
+  select(reporter) %>% 
+  distinct() %>% 
+  mutate(fao = convertTLParnterToFAO(reporter)) %>% 
+  filter(is.na(fao)) %>% 
+  arrange(reporter)
+
+tldata %>% 
+  select(partner) %>% 
+  distinct() %>% 
+  filter(partner == "840")
+
+```
+

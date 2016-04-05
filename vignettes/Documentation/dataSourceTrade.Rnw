@@ -1,0 +1,206 @@
+%\VignetteIndexEntry{Statistical Working Paper on balancing of the FBS}
+%\VignetteEngine{knitr::knitr}
+
+%\documentclass[nojss]{jss}
+%\usepackage[]{graphicx}
+%\usepackage[]{color}
+%\usepackage{geometry}
+
+\documentclass[nojss]{jss}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+\usepackage[ruled, vlined]{algorithm2e}
+\usepackage{mathtools}
+\usepackage{draftwatermark}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{mathrsfs}
+\usepackage{multirow}
+\usepackage{courier}
+
+
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+%\makeatotherx
+
+
+%\usepackage{framed}
+%\makeatletter
+%\newenvironment{kframe}{%
+% \def\at@end@of@kframe{}%
+% \ifinner\ifhmode%
+%  \def\at@end@of@kframe{\end{minipage}}%
+%  \begin{minipage}{\columnwidth}%
+% \fi\fi%
+% \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+% \colorbox{shadecolor}{##1}\hskip-\fboxsep
+%     % There is no \\@totalrightmargin, so:
+%     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+% \MakeFramed {\advance\hsize-\width
+%   \@totalleftmargin\z@ \linewidth\hsize
+%   \@setminipage}}%
+% {\par\unskip\endMakeFramed%
+% \at@end@of@kframe}
+%\makeatother
+
+%\definecolor{shadecolor}{rgb}{.97, .97, .97}
+%\definecolor{messagecolor}{rgb}{0, 0, 0}
+%\definecolor{warningcolor}{rgb}{1, 0, 1}
+%\definecolor{errorcolor}{rgb}{1, 0, 0}
+%\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+%\usepackage{geometry}
+%\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+%\usepackage[ruled, vlined]{algorithm2e}
+%\usepackage{mathtools}
+%\usepackage{draftwatermark}
+%\usepackage{float}
+%\usepackage{placeins}
+%\usepackage{mathrsfs}
+%\usepackage{multirow}
+%% \usepackage{mathbbm}
+%\DeclareMathOperator{\sgn}{sgn}
+%\DeclareMathOperator*{\argmax}{\arg\!\max}
+
+\title{\bf faoswsTrade: Data Sources}
+
+\author{Marco Garieri \\ Food and Agriculture Organization \\ of
+  the United Nations}
+
+\Plainauthor{M. Garieri}
+
+\Plaintitle{faoswsProduction: Data Sources}
+
+\Shorttitle{Data Source}
+
+\Abstract{
+
+\noindent
+This vignette provides a detailed description of the various data sources used in the trade modules.
+}
+
+\Keywords{Agricultural Trade, Tariff Line, Eurostat, Mirroring}
+
+\Address{
+  Marco Garieri\\
+  Economics and Social Statistics Division (ESS)\\
+  Economic and Social Development Department (ES)\\
+  Food and Agriculture Organization of the United Nations (FAO)\\
+  Viale delle Terme di Caracalla 00153 Rome, Italy\\
+  E-mail: \email{marco.garieri@fao.org}\\
+  URL: \url{https://gitlab.com/faoess/tradeproc}
+}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+\begin{document}
+
+\newpage
+
+%\section*{Disclaimer}
+%This Working Paper should not be reported as representing the official view of
+%the FAO. The views expressed in this Working Paper are those of the
+%author and do not necessarily represent those of the FAO or FAO
+%policy. Working Papers describe research in progress by the authors and
+%are published to elicit comments and to further discussion.\\
+%
+%This paper is dynamically generated on \today{} and is subject to
+%changes and updates.
+
+\section{Data Source}
+\subsection{Flow Chart}
+Description of the entire flow
+\begin{center}\includegraphics[scale = 0.01]{"trade_1"}\end{center}
+
+\newpage
+\begin{center}\includegraphics{"trade_4"}\end{center}
+\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_legend"}\end{center}
+
+
+\subsection{Data}
+Data received from Giorgio on March 18 for UNSD and Eurostat from 2009 to 2014.
+Some prefiltering has been done from Giorgio:
+\begin{itemize}
+\item [\bf{Eurostat}]
+\begin{itemize}
+\item code of reporter (declarant) just numeric (letters are not allowed)
+\item code of partner (partner) just numeric (letters are not allowed)
+\item code of hs (product\_nc) just numeric (letters are not allowed)
+\end{itemize}
+\item [\bf{UNSD}]
+\begin{itemize}
+\item code of hs (comm) just numeric (letters are not allowed)
+\end{itemize}
+\end{itemize}
+
+This is the summary of the data received:
+\begin{itemize}
+\item[\bf{Eurostat}]
+\begin{itemize}
+\item[2009] Number of records: 8665414, distribution of digits: 2 - 446403 (5\%), 8 - 8219011 (95\%)
+\item[2010] Number of records: 8861460, distribution of digits: 2 - 449191 (5\%), 8 - 8412269 (95\%)
+\item[2011] Number of records: 8977093, distribution of digits: 2 - 458032 (5\%), 8 - 8519061 (95\%)
+\item[2012] Number of records: 9299996, distribution of digits: 2 - 468915 (5\%), 8 - 8831081 (95\%)
+\item[2013] Number of records: 9493511, distribution of digits: 2 - 476782 (5\%), 8 - 9016729 (95\%)
+\item[2014] Number of records: 9610127, distribution of digits: 2 - 480525 (5\%), 8 - 9129602 (95\%)
+\end{itemize}
+\item[\bf{UNSD}]
+\begin{itemize}
+\item[2009] Number of records: 40262359, distribution of digits: 2 - 62687 (0.2\%), 4 - 822372 (0.02\%), 5 - 63 (0\%), 6 - 7197277 (18\%), 7 - 331 (0\%), 8 - 20218041 (50\%), 9 - 722018 (2\%), 10 - 6789612 (17\%), 11 - 2769625 (7\%), 12 - 1680333 (4\%)
+\item[2010] Number of records: 46654452, distribution of digits: 2 - 30547 (0.1\%), 4 - 199688 (0.4\%), 5 - 0 (0\%), 6 - 12394503 (27\%), 7 - 54685 (0.1\%), 8 - 21595733 (46\%), 9 - 608860 (1\%), 10 - 9102501 (20\%), 11 - 2667935 (6\%), 12 - 0 (0\%)
+\item[2011] Number of records: 63535135, distribution of digits: 2 - 41486 (0.1\%), 4 - 1640555 (2.6\%), 5 - 1 (0\%), 6 - 14427100 (23\%), 7 - 8447 (0\%), 8 - 28948926 (46\%), 9 - 636035 (1\%), 10 - 13379759 (21\%), 11 - 2645793 (4\%), 12 - 1807033 (3\%)
+\item[2012] Number of records: 66175819, distribution of digits: 2 - 42165 (0.1\%), 4 - 131569 (0.2\%), 5 - 0 (0\%), 6 - 18723116 (28\%),  7- 14986 (0\%), 8 - 32048866 (48\%), 9 - 643335 (1\%), 10 - 13565552 (21\%), 11 - 1006230 (1.5\%), 12 - 0 (0\%)
+\item[2013] Number of records: 70075550, distribution of digits: 2 - 25395 (0\%), 4 - 995 (0\%), 5 - 0 (0\%), 6 - 26224495 (37\%), 7 - 16979 (0\%), 8 - 32652742 (47\%), 9 - 654930 (1\%), 10 - 9765518 (14\%), 11 - 734496 (1\%), 12 - 0 (0\%)
+\item[2014] Number of records: 79728175, distribution of digits: 2 - 59500 (0.1\%), 4 - 222713 (0.3\%), 5 - 0 (0\%), 6 - 25279829 (32\%), 7 - 66423 (0.1\%), 8 - 42679600 (54\%), 9 - 649753 (1\%), 10 - 10088068 (13\%), 11 - 682289 (1\%), 12 - 0 (0\%)
+\end{itemize}
+\end{itemize}
+
+\subsection{Example of tables}
+<<echo=FALSE>>=
+# Set up a database connection so we can pull the datasets
+#library(faosws)
+library(data.table)
+library(xtable)
+#SetClientFiles("~/R certificate files/QA/")
+#GetTestEnvironment(
+#    baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws",
+#    token = "c585c410-fb9e-44ea-ba36-ef940d32185d"
+#)
+@
+
+
+%\begin{itemize}
+%    \item Tariff Line:
+%<<echo = FALSE, results='tex',comment=''>>=
+%load("~/Dropbox/tradeproc/tldata_raw_from_db.RData")
+%print(xtable(head(tldata,4)), include.rownames = FALSE)
+%@
+
+%\end{itemize}
+
+\subsection{Process}
+
+\end{document}
+Status API Training Shop Blog About
+ÔøΩ 2015 GitHub, Inc. Terms Privacy Security Contact
+%

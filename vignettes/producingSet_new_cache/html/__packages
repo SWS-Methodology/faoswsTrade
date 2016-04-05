@@ -1,0 +1,9 @@
+base
+tradeproc
+stringr
+testthat
+ggplot2
+dplyr
+foreach
+iterators
+doParallel

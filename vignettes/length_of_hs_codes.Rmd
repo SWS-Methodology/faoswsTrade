@@ -1,0 +1,67 @@
+---
+title: "Length of HS codes in tariff-line comtrade"
+author: "Aleksandr Matrunich"
+date: `r Sys.time()`
+output: html_document
+---
+
+```{r}
+library(dplyr, warn.conflicts = F)
+
+knitr::opts_chunk$set(list(echo = FALSE,
+                           eval = TRUE,
+                           cache = TRUE,
+                           warning = FALSE,
+                           message = FALSE,
+                           fig.height = 10,
+                           fig.width = 12))
+
+source(file.path(Sys.getenv("HOME"), ".pwd.R"))
+
+source(file.path(Sys.getenv("HOME"), 
+                 "r_adhoc", 
+                 "trade_prevalid_testing", 
+                 "setupconnection.R"))
+
+trade_src <- src_postgres("sws_data", 
+                          "localhost", 
+                          5432, 
+                          "trade", 
+                          .pwd, 
+                          options = "-c search_path=ess")
+
+agri_db <- tbl(trade_src, sql("
+select * from ess.agri
+"))
+```
+
+```{r}
+hslength <- agri_db %>% 
+  select(year, reporter, flow, hs) %>% 
+  collect() %>% 
+  mutate(hslength = stringr::str_length(hs)) %>% 
+  group_by(year, reporter, flow, hslength) %>% 
+  summarize(n_tradeflows = n()) %>% 
+  ungroup()
+
+areas <- getComtradeM49()
+
+hslength <- hslength %>% 
+  left_join(areas,
+            by = c("reporter" = "code"))
+
+hslength <- hslength %>% 
+  select(-reporter) %>% 
+  rename(reporter = name) %>% 
+  select(year, reporter, flow, hslength, n_tradeflows) %>% 
+  mutate(year = as.integer(year))
+
+save(hslength, file = file.path(
+  Sys.getenv("HOME"), 
+  "r_adhoc", 
+  "hslength_shiny",
+  "hslength.Rdata"))
+
+XLConnect::writeWorksheetToFile("~/Desktop/hslength.xlsx", as.data.frame(hslength), "hslength")
+```
+

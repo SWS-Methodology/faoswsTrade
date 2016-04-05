@@ -1,0 +1,464 @@
+---
+title: "Agricultural trade data processing"
+output:
+  pdf_document:
+    toc: yes
+date: "July 9, 2015"
+---
+
+```{r, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(list(echo = FALSE,
+                           eval = TRUE,
+                           cache = FALSE,
+                           warning = FALSE,
+                           message = FALSE,
+                           fig.height = 10,
+                           fig.width = 12))
+
+#pander::panderOptions("missing", "-") # How to print missing values in pander output
+
+```
+
+Last update: `r Sys.time()`
+
+```{r options}
+no_quant_threshold <- .02
+out_coef <- 1.5
+
+# if(Sys.getenv("HOSTNAME") != "matrunichstation") stop("Sorry, local database is used for compilation")
+
+subdir <- "OrangeBook"
+sourcedir <- "tradeR"
+options(width = 120)
+suppressPackageStartupMessages(library(dplyr))
+library(ggplot2)
+
+
+source(file.path(Sys.getenv("HOME"), "r_adhoc", "trade_prevalid_testing", "setupconnection.R"))
+
+if(length(lapply(dir(file.path(Sys.getenv("HOME"), "r_adhoc", "privateFAO", subdir, sourcedir), 
+                     full.names = T), 
+                 source)) == 0) stop("Files for sourcing not found")
+
+if(length(lapply(dir(file.path(Sys.getenv("HOME"), 
+                               "sws", 
+                               "sws_r_api", 
+                               "r_modules", 
+                               "trade_prevalidation",
+                               "R"), 
+                     full.names = T), 
+                 source)) == 0) stop("Files from Prevalidation SWS Module for sourcing not found")
+
+
+trade_src <- src_postgres("sws_data", "localhost", 5432, "trade", .pwd, 
+                          options = "-c search_path=ess")
+
+cttl <- tbl(trade_src, sql("select * from tariffline"))
+
+agri_db <- tbl(trade_src, sql("select * from ess.agri"))
+
+orange <- agri_db %>%
+  filter(year == "2011",
+         hs2 %in% c('02', '04', '10', '15')) %>% # 4th chapter for demo with Japan
+  collect()
+
+orange <- orange %>% 
+  left_join(getComtradeM49()  %>%
+              mutate(
+                reporter_name = countrycode::countrycode(name,
+                                                       "country.name",
+                                                       "country.name",
+                                                       warn = F)) %>% 
+              select(-name),
+            by= c("reporter" = "code")) %>% 
+  left_join(getOfficialM49() %>% 
+              select(-name) %>% 
+              mutate(
+                # We take iso3 as source because it provides the best cover (only 2 NA)
+                partner_name = countrycode::countrycode(iso3,
+                                                        "iso3c",
+                                                        "country.name",
+                                                        warn = F)) %>% 
+              select(-iso3),
+            by = c("partner" = "code")) %>% 
+  mutate(flow = factor(flow, levels = c(1, 2, 3, 4), 
+                       labels = c("Import", "Export",
+                                  "Re-Import", "Re-Export")))
+
+
+orange <- orange %>% 
+  mutate(no_quant = missingIndicator(weight, NA) &
+           missingIndicator(qty, NA))  
+
+
+orange <- orange %>% 
+  mutate(
+    qty_all = ifelse(!is.na(weight), weight, qty),
+    uv = value / qty_all) %>% 
+  select(-qty_all) %>% 
+  group_by(reporter_name, hs, flow) %>% 
+  mutate(
+    uv_reporter = median(uv, na.rm = T),
+    out_range = uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)) %>% 
+  ungroup()
+
+```
+
+
+# Raw trade data
+
+FAO receives data on trade flows from [United Nations Statistical Division](http://unstats.un.org/unsd/default.htm). The division runs  [Commodity Trade Statistics Database UN Comtrade](http://unstats.un.org/unsd/comtrade_announcement.htm)  "It stores standardised official annual trade statistics reported by countries and reflecting international merchandise flows detailed by commodity and partner country with coverage reaching up to 99 percent of world merchandise trade[^comtrade_ann]". 
+
+[^comtrade_ann]: http://unstats.un.org/unsd/comtrade_announcement.htm Comtrade Announcement
+
+One can freely download this standardised statistics from the [open data base](http://comtrade.un.org/data/). Statistical Division of FAO gets unstandardised data.
+
+```{r example_raw_data, results = "asis"}
+tbl(trade_src, sql("select 
+year, reporter, partner, hs, flow, weight, qty, qunit, value 
+ from tariffline
+where year = '2011' and 
+reporter = '842' and flow = '1' order by random() limit 10")) %>% 
+  collect()  %>% 
+  printTab(caption = "Random sample of import trade flows of 2011 year, reported by the US")
+```
+
+This is an example of unstandardised data on trade inflows in 2011, reported by the United States. Reporters and trade partners are represented with three-digit numerical [codes](http://unstats.un.org/unsd/methods/m49/m49.htm) used by the Statistics Division of the United Nations. Trade commodities are classified with extended Harmonized Commodity Description and Coding System (HS)[^hs_about] maintained by the World Customs Organization[^wto].
+
+[^hs_about]: http://www.wcoomd.org/en/topics/nomenclature/overview/what-is-the-harmonized-system.aspx What is the Harmonized System (HS)?
+[^wto]: http://www.wcoomd.org/en.aspx World Customs Organization
+
+Weight is measured in kilograms and value in US dollars. Quantity (qty column) is an optional alternative for weight. It could be measured in different units (qunit column). See full list of possible units and their descriptions in Annex I of Quantity and Weight Data in UN Comtrade[^un_units].
+
+[^un_units]: http://unstats.un.org/unsd/tradekb/Knowledgebase/Quantity-and-Weight-Data-in-UN-Comtrade Quantity and Weight Data in UN Comtrade
+
+## Country-specific HS commodity codes
+
+Harmonized system classification is declared by WCO up to 6 digits. A country may extend HS to more detailed level  to better respond to local circumstances. Let's compare differencies in codes under subheading 0202 Meat of bovine animals, frozen between the US and Brazil[^meta_copyright].
+
+[^meta_copyright]: http://madb.europa.eu Descriptions of country-specific HS-codes are provided by Market Access Database and copyrighted by Mendel Verlag, Germany.
+
+```{r hscodes_us, results = "asis"}
+getMadbExport("US", "0202") %>% 
+  mutate(desc = stringr::str_replace(desc, "and entered pursuant to its provisions", "...")) %>% 
+  rename(Description = desc) %>% 
+  printTab(caption = "Extension of HS codes by the US", justify = "left")
+
+getMadbExport("BR", "0202") %>% 
+  rename(Description = desc) %>% 
+  printTab(caption = "Extension of HS codes by Brazil", justify = "left")
+```
+
+The set of HS-codes from the US is wider, than Brazilian one. For boneless meat Brazil doesn't extend standard code 0202.30, when the US use here seven additional codes.
+
+## Country codes
+
+### Codes of reporters
+
+Area codes of reporters are standardized by the Statistical Department. The SD follows _in general_ the United Nations Standard Country or Area Codes for Statistical Use[^trade_book]. The code scheme used by the SD[^comtradesource] is slightly modified from the official one[^officialsource]. For example the official scheme offers code 840 for the US, when the modified version uses 842.
+
+[^comtradesource]: http://comtrade.un.org/data/doc/api/ The UN Comtrade data extraction API
+
+[^trade_book]: http://comtrade.un.org/pb/ The United Nations Statistics Division (2015). The 2014 International Trade Statistics Yearbook, Volume I - Trade by Country, xix.
+
+[^officialsource]: http://unstats.un.org/unsd/methods/m49/m49alpha.htm Countries or areas, codes and abbreviations 
+
+### Codes of partners
+
+Partners' codes in Tariffline data are not standardised and presented as they were reported by countries. Reporters can use as standard version of codes, so the version of the Statistical Department. For example, in Tariffline data there are 27 country codes which are not presented in official scheme and 40 codes not covered by the modified version.[^m49]
+
+[^m49]: http://rpubs.com/malexan/m49 Matrunich A. (2015). M49 country codes in Tariffline
+
+
+# Initial validation of trade data
+
+At prevalidation step we are to make a decision should we accept data from a specific country for the further processing or not. A country could provide data of good quality for one part of commodities and inadequate level of quality for another part. We want to estimate quality differences between commodities of a country.
+
+Quality of data is estimated by following indicators:
+
+* Share per cent of missing quantities
+* Share per cent of unit value outliers
+
+
+## Self-trade
+
+There are cases when a country reports itself as a partner to exports or imports. Such situations can occur due to mistakes or when an entrepôt exists.
+
+```{r examples_of_selftrade, results = "asis"}
+orange %>% 
+  filter(hs2 != "04") %>% 
+  filter(reporter_name == partner_name) %>% 
+  group_by(reporter_name, flow) %>% 
+  summarize(ntradeflows = n()) %>% 
+  ungroup() %>% 
+  arrange(desc(ntradeflows)) %>% 
+  rename(Reporter = reporter_name, 
+         Flow = flow, 
+         Total = ntradeflows) %>% 
+  printTab(caption = "Self-trade of commodities from 2nd, 10th and 15th HS chapters in 2011")
+```
+
+## Missing quantities
+
+We identify which reporters provide data of insufficient quality. Firstly for every reporter proportion of trade flows with missing quantity is calculated. 
+
+```{r missing_quantity_props_per_country, cache = F, fig.width = 4, fig.height = 4, dpi = 50} 
+
+#, fig.width = 5, fig.height = 5, dpi = 200}
+
+
+missing_qty <- orange %>% 
+  filter(hs2 != "04") %>% 
+  group_by(reporter_name) %>% 
+  summarize(missing_prop = sum(no_quant) / n()) %>% 
+  ungroup() %>% 
+  filter(missing_prop > no_quant_threshold) %>% 
+  arrange(desc(missing_prop))
+
+missing_qty %>% 
+  mutate(reporter_name = stringr::str_replace(
+    reporter_name, ",.*$", "...")) %>% 
+  ggplot(aes(missing_prop, reorder(reporter_name, missing_prop))) +
+  geom_point() +
+  scale_x_continuous("Trade flows with missing quantities",
+                     labels = scales::percent) +
+  scale_y_discrete("")
+```
+
+## Detection of outliers
+
+We define outliers as observations located outside the range:
+
+$$ [ Q_1 - k (Q_3 - Q_1 ) , Q_3 + k (Q_3 - Q_1 ) ] $$
+
+where $Q_1$ and $Q_3$ are the lower and upper quartiles respectively, and $k$ is a non negative constant. In this paper we use $k$ = 1.5. 
+
+```{r prop_of_outliers_per_country, fig.width = 5, fig.height = 5, dpi = 300}
+
+orange %>%
+  filter(hs2 != "04") %>% 
+  group_by(reporter_name) %>% 
+  summarize(prop_of_outs = sum(out_range) / n()) %>%
+  top_n(30, prop_of_outs) %>%
+  ggplot(aes(prop_of_outs, reorder(reporter_name, prop_of_outs))) +
+  geom_point() +
+  scale_x_continuous("Trade flows with unit value outliers",
+                     labels = scales::percent) +
+  scale_y_discrete("")
+```
+
+## Missing quantites and outliers combined
+
+```{r missings_outliers_together, fig.width = 9, fig.height = 9}
+orange %>% 
+  filter(hs2 != "04") %>% 
+  group_by(reporter_name) %>% 
+  summarize(prop_of_miss = sum(no_quant) / n(),
+            prop_of_outs = sum(out_range) / n()) %>% 
+  filter(prop_of_miss > .001 & prop_of_outs > .001) %>% 
+  ggplot(aes(x = prop_of_miss, 
+             y = prop_of_outs,
+             label = reporter_name)) +
+  geom_text(size = 5) + 
+  scale_x_log10(
+    "Trade flows with missing quantity. Log10 scale",
+    breaks = c(.002, .01, .1, .5, 1),
+    labels = scales::percent) +
+  scale_y_continuous(
+    "Trade flows with UV-outliers",
+    labels = scales::percent)
+```
+
+
+
+# Imputing of missing quantities and replacement of outliers
+
+In data reported by USA for 2011 year in HS chapters 2, 10 and 15 there are `r 
+orange %>% 
+  filter(hs2 != "04") %>% 
+  filter(reporter_name == "United States" & no_quant) %>% 
+  nrow` trade flows with missing quantity and `r 
+orange %>% 
+  filter(hs2 != "04") %>% 
+  filter(reporter_name == "United States" & out_range) %>% 
+  nrow` trade flows with UV-outliers.
+  
+```{r us_outliers_example, results = "asis"}
+out_tab <- orange %>% 
+  filter(hs2 != "04") %>% 
+  filter(reporter_name == "United States" & out_range & !is.na(partner_name)) %>% 
+  select(Reporter = reporter_name, 
+         Partner  = partner_name,
+         Flow     = flow,
+         Commodity = hs,
+         Weight   = weight,
+         Value    = value,
+         UV       = uv,
+         UV_me    = uv_reporter) %>% 
+  sample_n(10) %>% 
+  mutate_each(funs(rnd = round(., 2)), 
+              starts_with("UV")) 
+out_tab %>% 
+  printTab(caption = "Example trade flows with outlying unit values")
+
+```
+
+## Imputing using reporter median unit values
+
+Now we correct weight of this outlying trade flows with help of median reporter unit value for a given commodity.
+
+
+$$ Weight = \frac{Weight}{UV_{reporter}} $$
+
+```{r outlier_corrections, results = "asis"}
+out_tab %>% 
+  mutate(Weight_corr = round(Value / UV_me, 0),
+         Weight_diff = Weight - Weight_corr) %>%
+  select(-Value, -UV, -UV_me) %>% 
+  printTab(caption = "Example trade flows with corrected weight",
+           col.names = c("Reporter", 
+                         "Parnter", 
+                         "Flow",
+                         "HS-code",
+                         "Weight, kg",
+                         "Corrected, kg",
+                         "Difference, kg"))
+```
+
+## Detection of wrongly coded trade flows
+
+
+Another approach to impute missing or outlying quantities of a reporter is to use mirror data from trade partner. Let's check are there any such trade flows related to wheat among reported by the US.
+
+```{r us_problems_tradeflows, results = "asis"}
+orange %>% 
+  filter(reporter_name == "United States" &
+           hs6 %in% c("100110", "100190") &
+           (out_range | no_quant)) %>% 
+  select(year, 
+         partner_name, 
+         flow,
+         hs,
+         weight,
+         value,
+         uv,
+         uv_reporter) %>% 
+  printTab(col.names = c("Year",
+                         "Trade partner",
+                         "Flow",
+                         "HS-code",
+                         "Weight, kg",
+                         "Value, $US",
+                         "Unit Value",
+                         "UV median"))
+```
+
+Outlier detection algorithm shows, that the price (unit value) in this trade flow differs too much from the median price of trade flows of this commodity, reported by the US: 760 $US per kg versus 1.5 $US per kg.
+
+The commodity code _1001.90.20.96_ is country-specific and is used only by the US. It is not listed in the recent Harmonized Tariff Schedule of the United States[^hs_us_2015]. It means this HS-subheading was removed from Harmonized Tariff Schedule and had not been used any more. Panjiva website reports last use of the code was fixed in 2011 and gives description of it[^panjiva]. _1001.90.20.96_ stands for wheat and meslin not mentioned in any other subheadings of _1001.90.20_.
+
+[^hs_us_2015]: http://hts.usitc.gov/?query=wheat Harmonized Tariff Schedule (2015 HTSA Revision 1 Edition) 
+
+[^panjiva]: https://panjiva.com/trendspotting/imports/United-States/1001.90.20.96/Cereals-Wheat-and-meslin-Other-Other-Other-Other/1368 Trend report HTS Code 1001.90.20.96
+
+We want to check characteristics of this trade flow from a partner's side. But Japan didn't report any export of wheat-related commodities to the US in 2011. We expand our search to all trade flows from Japan to the US with nearly the same quantity and value. We find suitable trade flow what was not reported by the US.
+
+```{r jp_export_similar_values, results = "asis"}
+orange %>% 
+  filter(reporter_name == "Japan" &
+           partner_name == "United States" &
+           year == "2011" &
+         weight < 100 &
+         value < 70000 &
+         value > 30000)%>% 
+  select(year, 
+         partner_name, 
+         flow,
+         hs,
+         weight,
+         value,
+         uv,
+         uv_reporter) %>% 
+  printTab(col.names = c("Year",
+                         "Trade partner",
+                         "Flow",
+                         "HS-code",
+                         "Weight, kg",
+                         "Value, $US",
+                         "Unit Value",
+                         "UV median"))
+# 輸出統計品目表 (2011年版). 
+
+```
+
+Code _0410.00.000_ stands for Edible products of animal origin (not especially specified) [^jp_hs]. Probably, imported shipment was not properly coded in the US. We can check in data from Japan existence of similar trade flows to other countries.
+
+[^jp_hs]: http://www.customs.go.jp/yusyutu/2011/data/e201101j_04.htm  
+
+```{r jp_all_export_of_it, results = "asis"}
+tmp_tbl <- orange %>%
+  filter(reporter_name == "Japan" &
+           hs == "041000000" &
+           year == "2011" ) %>% 
+    select(year, 
+         partner_name, 
+         weight,
+         value,
+         uv,
+         uv_reporter) 
+
+tmp_tbl$partner_name[is.na(tmp_tbl$partner_name)] <- "Other Asia" # Taken from Comtrade public API
+
+tmp_tbl %>% 
+  printTab(col.names = c("Year",
+                         "Trade partner",
+                         "Weight, kg",
+                         "Value, $US",
+                         "Unit Value",
+                         "UV median"))
+```
+
+Japan reported export of similar commodity to three distanations. All of these trade flows are not outliers. It supports the hypothesis, that the mistake was done on the part of the US.
+
+
+# Imputing using data from trade partner (mirroring)
+
+```{r wheat_flour_problems_tradeflows, results = "asis"}
+orange %>% 
+  filter(reporter_name == "United States" &
+           hs4 == "1008" &
+           (out_range | no_quant)) %>% 
+  select(year, 
+         partner_name, 
+         flow,
+         hs,
+         weight,
+         value,
+         uv,
+         uv_reporter) %>% 
+  printTab(col.names = c("Year",
+                         "Trade partner",
+                         "Flow",
+                         "HS-code",
+                         "Weight, kg",
+                         "Value, $US",
+                         "Unit Value",
+                         "UV median"))
+
+orange %>% 
+  filter(reporter_name == "Japan" &
+           #partner_name == "United States" &
+           hs6 %in% c("100810", "100820") &
+           flow == "Export") %>% 
+  select(year, 
+         partner_name, 
+         flow,
+         hs,
+         weight,
+         value,
+         uv,
+         uv_reporter, 
+         out_range) %>% 
+  printTab()
+
+```

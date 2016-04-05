@@ -1,0 +1,295 @@
+CT_AreaCode,AreaCode,CT_AreaName,AreaName,CT_Type,CT_AreaLongName,AreaLongName,CT_iso2,ISO2,CT_iso3,CT_Valid.from,CT_Valid.until
+0,5000,World,World,Partners Only,World,World,WL,WL,WLD,1962,2061
+70,80,Bosnia Herzegovina,Bosnia and Herzegovina,Reporters/Partners,Bosnia Herzegovina,Bosnia and Herzegovina,BA,BA,BIH,1992,2061
+74,162,Bouvet Island,Norway,Partners Only,Ile Bouvet,Norway,,NO,BVT,1962,2061
+80,229,Br. Antarctic Terr.,United Kingdom,Partners Only,British Antarctic Territories,United Kingdom,,GB,,1962,2061
+86,24,Br. Indian Ocean Terr.,British Indian Ocean Territory,Partners Only,British Indian Ocean Territories,British Indian Ocean Territory,IO,IO,IOT,1962,2061
+90,25,Solomon Isds,Solomon Islands,Reporters/Partners,Solomon Islands,Solomon Islands,SB,SB,SLB,1962,2061
+92,239,Br. Virgin Isds,British Virgin Islands,Reporters/Partners,British Virgin Islands,British Virgin Islands,VG,VG,VGB,1962,2061
+97,252,EU-28,Unspecified,Reporters/Partners,EU-28,Unspecified,EU,NA,EU2,1962,2061
+129,252,"Caribbean, nes",Unspecified,Partners Only,"Caribbean, not elsewhere specified",Unspecified,,NA,,1962,2004
+136,36,Cayman Isds,Cayman Islands,Reporters/Partners,Cayman Islands,Cayman Islands,KY,KY,CYM,1962,2061
+140,37,Central African Rep.,Central African Republic,Reporters/Partners,Central African Republic,Central African Republic,CF,CF,CAF,1962,2061
+162,42,Christmas Isds,Christmas Island,Partners Only,Christmas Islands,Christmas Island,CX,CX,CXR,1962,2061
+166,43,Cocos Isds,Cocos (Keeling) Islands,Partners Only,Cocos Islands,Cocos (Keeling) Islands,CC,CC,CCK,1962,2061
+180,250,Dem. Rep. of the Congo,Democratic Republic of the Congo,Reporters/Partners,Democratic Republic of the Congo,Democratic Republic of the Congo,CD,CD,COD,1962,2061
+184,47,Cook Isds,Cook Islands,Reporters/Partners,Cook Islands,Cook Islands,CK,CK,COK,1962,2061
+203,167,Czech Rep.,Czech Republic,Reporters/Partners,Czech Republic,Czech Republic,CZ,CZ,CZE,1993,2061
+214,56,Dominican Rep.,Dominican Republic,Reporters/Partners,Dominican Republic,Dominican Republic,DO,DO,DOM,1962,2061
+221,252,"Eastern Europe, nes",Unspecified,Partners Only,"Eastern Europe, not elsewhere specified",Unspecified,,NA,,1962,2004
+230,62,Fmr Ethiopia,Ethiopia PDR,Reporters/Partners,Former Ethiopia,Ethiopia PDR,ET,,ETH,1962,1992
+234,64,Faeroe Isds,Faroe Islands,Reporters/Partners,Faeroe Islands,Faroe Islands,FO,FO,FRO,1962,2061
+238,65,Falkland Isds (Malvinas),Falkland Islands (Malvinas),Reporters/Partners,Falkland Islands (Malvinas),Falkland Islands (Malvinas),FK,FK,FLK,1962,2061
+239,229,South Georgia and the South Sandwich Islands,United Kingdom,Partners Only,South Georgia and the South Sandwich Islands,United Kingdom,GS,GB,SGS,1962,2061
+260,71,Fr. South Antarctic Terr.,French Southern and Antarctic Territories,Partners Only,French South Antarctic Territories,French Southern and Antarctic Territories,FQ,TF,ATF,1962,2061
+275,299,State of Palestine,Occupied Palestinian Territory,Reporters/Partners,State of Palestine,Occupied Palestinian Territory,PS,,PSE,2000,2061
+278,79,Fmr Dem. Rep. of Germany,Germany,Reporters/Partners,Former Democratic Republic of Germany,Germany,DD,DE,DDR,1962,1990
+280,79,Fmr Fed. Rep. of Germany,Germany,Reporters/Partners,Former Federal Republic of Germany,Germany,DE,DE,DEU,1962,1990
+290,252,"Northern Africa, nes",Unspecified,Partners Only,"Northern Africa, not elsewhere specified",Unspecified,,NA,,1962,2004
+334,10,Heard Island and McDonald Islands,Australia,Partners Only,Heard Island and McDonald Islands,Australia,HM,AU,HMD,1962,2061
+336,94,Holy See (Vatican City State),Holy See,Reporters/Partners,Holy See (Vatican City State),Holy See,VA,VA,VAT,2000,2061
+356,100,"India, excl. Sikkim",India,Reporters/Partners,"India, excluding Sikkim",India,IN,IN,IND,1962,1974
+364,102,Iran,Iran (Islamic Republic of),Reporters/Partners,Iran,Iran (Islamic Republic of),IR,IR,IRN,1962,2061
+408,116,Dem. People's Rep. of Korea,Democratic People's Republic of Korea,Reporters/Partners,Democratic People's Republic of Korea,Democratic People's Republic of Korea,KP,KP,PRK,1962,2061
+410,117,Rep. of Korea,Republic of Korea,Reporters/Partners,Republic of Korea,Republic of Korea,KR,KR,KOR,1962,2061
+418,120,Lao People's Dem. Rep.,Lao People's Democratic Republic,Reporters/Partners,Lao People's Dem. Rep.,Lao People's Democratic Republic,LA,LA,LAO,1962,2061
+457,131,Sarawak,Malaysia,Reporters/Partners,Sarawak,Malaysia,,MY,,1962,1963
+459,131,Peninsula Malaysia,Malaysia,Reporters/Partners,Peninsula Malaysia,Malaysia,,MY,,1962,1963
+461,131,Sabah,Malaysia,Reporters/Partners,Sabah,Malaysia,,MY,,1962,1963
+471,252,"CACM, nes",Unspecified,Partners Only,"CACM, not elsewhere specified",Unspecified,,NA,,1962,2004
+472,252,"Africa CAMEU region, nes",Unspecified,Partners Only,"Africa CAMEU region, not elsewhere specified",Unspecified,,NA,,1962,2004
+473,252,"LAIA, nes",Unspecified,Partners Only,"LAIA, not elsewhere specified",Unspecified,,NA,,1962,2061
+490,252,"Other Asia, nes",Unspecified,Reporters/Partners,"Other Asia, not elsewhere specified",Unspecified,,NA,,1962,2061
+492,252,"Europe EU, nes",Unspecified,Partners Only,"Europe EU, not elsewhere specified",Unspecified,,NA,,1962,2004
+498,146,Rep. of Moldova,Republic of Moldova,Reporters/Partners,Republic of Moldova,Republic of Moldova,MD,MD,MDA,1992,2061
+527,252,"Oceania, nes",Unspecified,Partners Only,"Oceania, not elsewhere specified",Unspecified,,NA,,1962,2061
+530,151,Neth. Antilles,Netherlands Antilles,Reporters/Partners,Netherlands Antilles,Netherlands Antilles,AN,AN,ANT,1988,2010
+532,151,Neth. Antilles and Aruba,Netherlands Antilles,Reporters/Partners,Netherlands Antilles and Aruba,Netherlands Antilles,AN,AN,ANT,1962,1987
+534,280,Saint Maarten,Sint Maarten (Dutch Part),Reporters/Partners,Saint Maarten (Dutch part),Sint Maarten (Dutch Part),SX,,SXM,2010,2061
+535,151,Bonaire,Netherlands Antilles,Reporters/Partners,"Bonaire, Saint Eustatius and Saba",Netherlands Antilles,BQ,AN,BES,2011,2061
+536,252,Neutral Zone,Unspecified,Partners Only,Neutral Zone,Unspecified,,NA,,1962,2061
+568,252,"Other Europe, nes",Unspecified,Partners Only,"Other Europe, not elsewhere specified",Unspecified,,NA,,1962,2061
+574,161,Norfolk Isds,Norfolk Island,Partners Only,Norfolk Islands,Norfolk Island,NF,NF,NFK,1962,2061
+577,252,"Other Africa, nes",Unspecified,Partners Only,"Other Africa, not elsewhere specified",Unspecified,,NA,,1962,2061
+580,163,N. Mariana Isds,Northern Mariana Islands,Reporters/Partners,Northern Mariana Islands,Northern Mariana Islands,MP,MP,MNP,1992,2061
+581,231,United States Minor Outlying Islands,United States of America,Partners Only,United States Minor Outlying Islands,United States of America,UM,US,UMI,1962,2061
+582,164,Fmr Pacific Isds,Pacific Islands Trust Territory,Reporters/Partners,Former Pacific Islands,Pacific Islands Trust Territory,PC,,PCI,1962,1991
+583,145,FS Micronesia,Micronesia (Federated States of),Reporters/Partners,Federated State of Micronesia,Micronesia (Federated States of),FM,FM,FSM,1992,2061
+584,127,Marshall Isds,Marshall Islands,Reporters/Partners,Marshall Islands,Marshall Islands,MH,MH,MHL,1992,2061
+588,165,East and West Pakistan,Pakistan,Reporters/Partners,East and West Pakistan,Pakistan,PK,PK,PAK,1962,1971
+590,166,"Fmr Panama, excl.Canal Zone",Panama,Reporters/Partners,"Former Panama, excluding Canal Zone",Panama,PA,PA,PAN,1962,1977
+592,166,Fmr Panama-Canal-Zone,Panama,Reporters/Partners,Former Panama-Canal-Zone,Panama,PZ,PA,PCZ,1962,1977
+612,172,Pitcairn,Pitcairn Islands,Partners Only,Pitcairn,Pitcairn Islands,PN,PN,PCN,1962,2061
+636,252,"Rest of America, nes",Unspecified,Partners Only,"Rest of America, not elsewhere specified",Unspecified,,NA,,1962,2004
+637,252,"North America and Central America, nes",Unspecified,Partners Only,"North America, the Caribbean and Central America not elsewhere specified",Unspecified,,NA,,1962,2061
+647,110,Ryukyu Isd,Japan,Reporters/Partners,Ryukyu Island,Japan,,JP,,1962,1972
+652,68,Saint Barth�lemy,France,Reporters/Partners,Saint Barth�lemy,France,BL,FR,BLM,2013,2061
+654,187,Saint Helena,"Saint Helena, Ascension and Tristan da Cunha",Reporters/Partners,Saint Helena,"Saint Helena, Ascension and Tristan da Cunha",SH,SH,SHN,1962,2061
+658,188,"Saint Kitts, Nevis and Anguilla",Saint Kitts and Nevis,Reporters/Partners,"Saint Kitts, Nevis and Anguilla",Saint Kitts and Nevis,KN,KN,KNA,1962,1980
+697,252,"Europe EFTA, nes",Unspecified,Partners Only,"Europe EFTA, not elsewhere specified",Unspecified,,NA,,1962,2004
+698,100,Sikkim,India,Partners Only,Sikkim,India,,IN,,1962,1974
+711,252,So. African Customs Union,Unspecified,Reporters/Partners,Southern African Customs Union,Unspecified,ZA,NA,ZAF,1962,1999
+717,181,Fmr Rhodesia Nyas,Zimbabwe,Reporters/Partners,Former Rhodesia Nyas,Zimbabwe,,ZW,,1962,1964
+720,249,Fmr Dem. Yemen,Yemen,Reporters/Partners,Former Democratic Yemen,Yemen,YD,YE,YMD,1962,1990
+736,206,Fmr Sudan,Sudan (former),Reporters/Partners,Former Sudan,Sudan (former),SD,SD,SDN,1962,2011
+760,212,Syria,Syrian Arab Republic,Reporters/Partners,Syria,Syrian Arab Republic,SY,SY,SYR,1962,2061
+796,224,Turks and Caicos Isds,Turks and Caicos Islands,Reporters/Partners,Turks and Caicos Islands,Turks and Caicos Islands,TC,TC,TCA,1962,2061
+807,154,TFYR of Macedonia,The former Yugoslav Republic of Macedonia,Reporters/Partners,The Former Yugoslav Republic of Macedonia,The former Yugoslav Republic of Macedonia,MK,MK,MKD,1993,2061
+810,228,Fmr USSR,USSR,Reporters/Partners,Former USSR,USSR,SU,,SUN,1962,1991
+834,215,United Rep. of Tanzania,United Republic of Tanzania,Reporters/Partners,United Republic of Tanzania,United Republic of Tanzania,TZ,TZ,TZA,1965,2061
+835,215,Fmr Tanganyika,United Republic of Tanzania,Reporters/Partners,Former Tanganyika,United Republic of Tanzania,,TZ,,1962,1964
+836,215,Fmr Zanzibar and Pemba Isd,United Republic of Tanzania,Reporters/Partners,Former Zanzibar and Pemba Island,United Republic of Tanzania,,TZ,,1962,1964
+837,252,Bunkers,Unspecified,Partners Only,Bunkers,Unspecified,,NA,,1962,2061
+838,252,Free Zones,Unspecified,Partners Only,Free Zones,Unspecified,,NA,,1962,2061
+839,252,Special Categories,Unspecified,Partners Only,Special Categories,Unspecified,,NA,,1962,2061
+841,231,USA (before 1981),United States of America,Reporters/Partners,USA and Puerto Rico,United States of America,US,US,USA,1962,1980
+842,231,USA,United States of America,Reporters/Partners,"USA, Puerto Rico and US Virgin Islands",United States of America,US,US,USA,1981,2061
+849,231,US Misc. Pacific Isds,United States of America,Partners Only,US Miscellaneous Pacific Islands,United States of America,,US,,1962,1962
+850,240,US Virgin Isds,United States Virgin Islands,Reporters/Partners,US Virgin Islands,United States Virgin Islands,VI,VI,VIR,1962,1980
+862,236,Venezuela,Venezuela (Bolivarian Republic of),Reporters/Partners,Venezuela,Venezuela (Bolivarian Republic of),VE,VE,VEN,1962,2061
+866,237,Fmr Dem. Rep. of Vietnam,Viet Nam,Reporters/Partners,Former Democratic Republic of Vietnam,Viet Nam,VD,VN,VDR,1962,1974
+868,237,Fmr Rep. of Vietnam,Viet Nam,Reporters/Partners,Former Republic of Vietnam,Viet Nam,VN,VN,VNM,1962,1974
+876,243,Wallis and Futuna Isds,Wallis and Futuna Islands,Reporters/Partners,Wallis and Futuna Islands,Wallis and Futuna Islands,WF,WF,WLF,1962,2061
+879,252,"Western Asia, nes",Unspecified,Partners Only,"Western Asia, not elsewhere specified",Unspecified,,NA,,1962,2004
+886,249,Fmr Arab Rep. of Yemen,Yemen,Reporters/Partners,Former Arab Republic of Yemen,Yemen,YE,YE,YEM,1962,1990
+890,248,Fmr Yugoslavia,Yugoslav SFR,Reporters/Partners,Former Yugoslavia,Yugoslav SFR,YU,,YUG,1962,1991
+899,252,"Areas, nes",Unspecified,Partners Only,"Areas, not elsewhere specified",Unspecified,,NA,,1962,2061
+4,2,Afghanistan,Afghanistan,Reporters/Partners,Afghanistan,Afghanistan,AF,AF,AFG,1962,2061
+8,3,Albania,Albania,Reporters/Partners,Albania,Albania,AL,AL,ALB,1962,2061
+12,4,Algeria,Algeria,Reporters/Partners,Algeria,Algeria,DZ,DZ,DZA,1962,2061
+16,5,American Samoa,American Samoa,Partners Only,American Samoa,American Samoa,AS,AS,ASM,1962,2061
+20,6,Andorra,Andorra,Reporters/Partners,Andorra,Andorra,AD,AD,AND,1962,2061
+24,7,Angola,Angola,Reporters/Partners,Angola,Angola,AO,AO,AGO,1962,2061
+660,258,Anguilla,Anguilla,Reporters/Partners,Anguilla,Anguilla,AI,AI,AIA,1981,2061
+10,30,Antarctica,Antarctica,Partners Only,Antarctica,Antarctica,,AQ,ATA,1962,2061
+28,8,Antigua and Barbuda,Antigua and Barbuda,Reporters/Partners,Antigua and Barbuda,Antigua and Barbuda,AG,AG,ATG,1962,2061
+32,9,Argentina,Argentina,Reporters/Partners,Argentina,Argentina,AR,AR,ARG,1962,2061
+51,1,Armenia,Armenia,Reporters/Partners,Armenia,Armenia,AM,AM,ARM,1992,2061
+533,22,Aruba,Aruba,Reporters/Partners,Aruba,Aruba,AW,AW,ABW,1988,2061
+36,10,Australia,Australia,Reporters/Partners,Australia,Australia,AU,AU,AUS,1962,2061
+40,11,Austria,Austria,Reporters/Partners,Austria,Austria,AT,AT,AUT,1962,2061
+31,52,Azerbaijan,Azerbaijan,Reporters/Partners,Azerbaijan,Azerbaijan,AZ,AZ,AZE,1992,2061
+44,12,Bahamas,Bahamas,Reporters/Partners,Bahamas,Bahamas,BS,BS,BHS,1962,2061
+48,13,Bahrain,Bahrain,Reporters/Partners,Bahrain,Bahrain,BH,BH,BHR,1962,2061
+50,16,Bangladesh,Bangladesh,Reporters/Partners,Bangladesh,Bangladesh,BD,BD,BGD,1972,2061
+52,14,Barbados,Barbados,Reporters/Partners,Barbados,Barbados,BB,BB,BRB,1962,2061
+112,57,Belarus,Belarus,Reporters/Partners,Belarus,Belarus,BY,BY,BLR,1992,2061
+56,255,Belgium,Belgium,Reporters/Partners,Belgium,Belgium,BE,BE,BEL,1999,2061
+58,15,Belgium-Luxembourg,Belgium-Luxembourg,Reporters/Partners,Belgium-Luxembourg,Belgium-Luxembourg,BE,,BEL,1962,1998
+84,23,Belize,Belize,Reporters/Partners,Belize,Belize,BZ,BZ,BLZ,1962,2061
+204,53,Benin,Benin,Reporters/Partners,Benin,Benin,BJ,BJ,BEN,1962,2061
+60,17,Bermuda,Bermuda,Reporters/Partners,Bermuda,Bermuda,BM,BM,BMU,1962,2061
+64,18,Bhutan,Bhutan,Reporters/Partners,Bhutan,Bhutan,BT,BT,BTN,1962,2061
+68,19,Bolivia (Plurinational State of),Bolivia (Plurinational State of),Reporters/Partners,Plurinational State of Bolivia,Bolivia (Plurinational State of),BO,BO,BOL,1962,2061
+72,20,Botswana,Botswana,Reporters/Partners,Botswana,Botswana,BW,BW,BWA,2000,2061
+76,21,Brazil,Brazil,Reporters/Partners,Brazil,Brazil,BR,BR,BRA,1962,2061
+96,26,Brunei Darussalam,Brunei Darussalam,Reporters/Partners,Brunei Darussalam,Brunei Darussalam,BN,BN,BRN,1962,2061
+100,27,Bulgaria,Bulgaria,Reporters/Partners,Bulgaria,Bulgaria,BG,BG,BGR,1962,2061
+854,233,Burkina Faso,Burkina Faso,Reporters/Partners,Burkina Faso,Burkina Faso,BF,BF,BFA,1962,2061
+108,29,Burundi,Burundi,Reporters/Partners,Burundi,Burundi,BI,BI,BDI,1962,2061
+132,35,Cabo Verde,Cabo Verde,Reporters/Partners,Cabo Verde,Cabo Verde,CV,CV,CPV,1962,2061
+116,115,Cambodia,Cambodia,Reporters/Partners,Cambodia,Cambodia,KH,KH,KHM,1962,2061
+120,32,Cameroon,Cameroon,Reporters/Partners,Cameroon,Cameroon,CM,CM,CMR,1962,2061
+124,33,Canada,Canada,Reporters/Partners,Canada,Canada,CA,CA,CAN,1962,2061
+148,39,Chad,Chad,Reporters/Partners,Chad,Chad,TD,TD,TCD,1962,2061
+152,40,Chile,Chile,Reporters/Partners,Chile,Chile,CL,CL,CHL,1962,2061
+156,41,China,"China, mainland",Reporters/Partners,China,"China, mainland",CN,CN,CHN,1962,2061
+344,96,"China, Hong Kong SAR","China, Hong Kong SAR",Reporters/Partners,"China, Hong Kong Special Administrative Region","China, Hong Kong SAR",HK,HK,HKG,1962,2061
+446,128,"China, Macao SAR","China, Macao SAR",Reporters/Partners,"China, Macao Special Administrative Region","China, Macao SAR",MO,MO,MAC,1962,2061
+170,44,Colombia,Colombia,Reporters/Partners,Colombia,Colombia,CO,CO,COL,1962,2061
+174,45,Comoros,Comoros,Reporters/Partners,Comoros,Comoros,KM,KM,COM,1962,2061
+178,46,Congo,Congo,Reporters/Partners,Congo,Congo,CG,CG,COG,1962,2061
+188,48,Costa Rica,Costa Rica,Reporters/Partners,Costa Rica,Costa Rica,CR,CR,CRI,1962,2061
+384,107,C�te d'Ivoire,C�te d'Ivoire,Reporters/Partners,C�te d'Ivoire,C�te d'Ivoire,CI,CI,CIV,1962,2061
+191,98,Croatia,Croatia,Reporters/Partners,Croatia,Croatia,HR,HR,HRV,1992,2061
+192,49,Cuba,Cuba,Reporters/Partners,Cuba,Cuba,CU,CU,CUB,1962,2061
+531,279,Cura�ao,Cura�ao,Reporters/Partners,Cura�ao,Cura�ao,CW,,CUW,2010,2061
+196,50,Cyprus,Cyprus,Reporters/Partners,Cyprus,Cyprus,CY,CY,CYP,1962,2061
+200,51,Czechoslovakia,Czechoslovakia,Reporters/Partners,Czechoslovakia,Czechoslovakia,CS,,CSK,1962,1992
+208,54,Denmark,Denmark,Reporters/Partners,Denmark,Denmark,DK,DK,DNK,1962,2061
+262,72,Djibouti,Djibouti,Reporters/Partners,Djibouti,Djibouti,DJ,DJ,DJI,1962,2061
+212,55,Dominica,Dominica,Reporters/Partners,Dominica,Dominica,DM,DM,DMA,1962,2061
+218,58,Ecuador,Ecuador,Reporters/Partners,Ecuador,Ecuador,EC,EC,ECU,1962,2061
+818,59,Egypt,Egypt,Reporters/Partners,Egypt,Egypt,EG,EG,EGY,1962,2061
+222,60,El Salvador,El Salvador,Reporters/Partners,El Salvador,El Salvador,SV,SV,SLV,1962,2061
+226,61,Equatorial Guinea,Equatorial Guinea,Reporters/Partners,Equatorial Guinea,Equatorial Guinea,GQ,GQ,GNQ,1962,2061
+232,178,Eritrea,Eritrea,Reporters/Partners,Eritrea,Eritrea,ER,ER,ERI,1993,2061
+233,63,Estonia,Estonia,Reporters/Partners,Estonia,Estonia,EE,EE,EST,1992,2061
+231,238,Ethiopia,Ethiopia,Reporters/Partners,Ethiopia,Ethiopia,ET,ET,ETH,1993,2061
+242,66,Fiji,Fiji,Reporters/Partners,Fiji,Fiji,FJ,FJ,FJI,1962,2061
+246,67,Finland,Finland,Reporters/Partners,Finland,Finland,FI,FI,FIN,1962,2061
+251,68,France,France,Reporters/Partners,"France, Monaco",France,FR,FR,FRA,1962,2061
+254,69,French Guiana,French Guiana,Reporters/Partners,French Guiana,French Guiana,GF,GF,GUF,1962,1995
+258,70,French Polynesia,French Polynesia,Reporters/Partners,French Polynesia,French Polynesia,PF,PF,PYF,1962,2061
+266,74,Gabon,Gabon,Reporters/Partners,Gabon,Gabon,GA,GA,GAB,1962,2061
+270,75,Gambia,Gambia,Reporters/Partners,Gambia,Gambia,GM,GM,GMB,1962,2061
+268,73,Georgia,Georgia,Reporters/Partners,Georgia,Georgia,GE,GE,GEO,1992,2061
+276,79,Germany,Germany,Reporters/Partners,Germany,Germany,DE,DE,DEU,1991,2061
+288,81,Ghana,Ghana,Reporters/Partners,Ghana,Ghana,GH,GH,GHA,1962,2061
+292,82,Gibraltar,Gibraltar,Reporters/Partners,Gibraltar,Gibraltar,GI,GI,GIB,1962,2061
+300,84,Greece,Greece,Reporters/Partners,Greece,Greece,GR,GR,GRC,1962,2061
+304,85,Greenland,Greenland,Reporters/Partners,Greenland,Greenland,GL,GL,GRL,1962,2061
+308,86,Grenada,Grenada,Reporters/Partners,Grenada,Grenada,GD,GD,GRD,1962,2061
+312,87,Guadeloupe,Guadeloupe,Reporters/Partners,Guadeloupe,Guadeloupe,GP,GP,GLP,1962,1995
+316,88,Guam,Guam,Partners Only,Guam,Guam,GU,GU,GUM,1962,2061
+320,89,Guatemala,Guatemala,Reporters/Partners,Guatemala,Guatemala,GT,GT,GTM,1962,2061
+324,90,Guinea,Guinea,Reporters/Partners,Guinea,Guinea,GN,GN,GIN,1962,2061
+624,175,Guinea-Bissau,Guinea-Bissau,Reporters/Partners,Guinea-Bissau,Guinea-Bissau,GW,GW,GNB,1962,2061
+328,91,Guyana,Guyana,Reporters/Partners,Guyana,Guyana,GY,GY,GUY,1962,2061
+332,93,Haiti,Haiti,Reporters/Partners,Haiti,Haiti,HT,HT,HTI,1962,2061
+340,95,Honduras,Honduras,Reporters/Partners,Honduras,Honduras,HN,HN,HND,1962,2061
+348,97,Hungary,Hungary,Reporters/Partners,Hungary,Hungary,HU,HU,HUN,1962,2061
+352,99,Iceland,Iceland,Reporters/Partners,Iceland,Iceland,IS,IS,ISL,1962,2061
+699,100,India,India,Reporters/Partners,India,India,IN,IN,IND,1975,2061
+360,101,Indonesia,Indonesia,Reporters/Partners,Indonesia,Indonesia,ID,ID,IDN,1962,2061
+368,103,Iraq,Iraq,Reporters/Partners,Iraq,Iraq,IQ,IQ,IRQ,1962,2061
+372,104,Ireland,Ireland,Reporters/Partners,Ireland,Ireland,IE,IE,IRL,1962,2061
+376,105,Israel,Israel,Reporters/Partners,Israel,Israel,IL,IL,ISR,1962,2061
+381,106,Italy,Italy,Reporters/Partners,Italy,Italy,IT,IT,ITA,1962,2061
+388,109,Jamaica,Jamaica,Reporters/Partners,Jamaica,Jamaica,JM,JM,JAM,1962,2061
+392,110,Japan,Japan,Reporters/Partners,Japan,Japan,JP,JP,JPN,1962,2061
+400,112,Jordan,Jordan,Reporters/Partners,Jordan,Jordan,JO,JO,JOR,1962,2061
+398,108,Kazakhstan,Kazakhstan,Reporters/Partners,Kazakhstan,Kazakhstan,KZ,KZ,KAZ,1992,2061
+404,114,Kenya,Kenya,Reporters/Partners,Kenya,Kenya,KE,KE,KEN,1962,2061
+296,83,Kiribati,Kiribati,Reporters/Partners,Kiribati,Kiribati,KI,KI,KIR,1962,2061
+414,118,Kuwait,Kuwait,Reporters/Partners,Kuwait,Kuwait,KW,KW,KWT,1962,2061
+417,113,Kyrgyzstan,Kyrgyzstan,Reporters/Partners,Kyrgyzstan,Kyrgyzstan,KG,KG,KGZ,1992,2061
+428,119,Latvia,Latvia,Reporters/Partners,Latvia,Latvia,LV,LV,LVA,1992,2061
+422,121,Lebanon,Lebanon,Reporters/Partners,Lebanon,Lebanon,LB,LB,LBN,1962,2061
+426,122,Lesotho,Lesotho,Reporters/Partners,Lesotho,Lesotho,LS,LS,LSO,2000,2061
+430,123,Liberia,Liberia,Reporters/Partners,Liberia,Liberia,LR,LR,LBR,1962,2061
+434,124,Libya,Libya,Reporters/Partners,Libya,Libya,LY,LY,LBY,1962,2061
+440,126,Lithuania,Lithuania,Reporters/Partners,Lithuania,Lithuania,LT,LT,LTU,1992,2061
+442,256,Luxembourg,Luxembourg,Reporters/Partners,Luxembourg,Luxembourg,LU,LU,LUX,1999,2061
+450,129,Madagascar,Madagascar,Reporters/Partners,Madagascar,Madagascar,MG,MG,MDG,1962,2061
+454,130,Malawi,Malawi,Reporters/Partners,Malawi,Malawi,MW,MW,MWI,1965,2061
+458,131,Malaysia,Malaysia,Reporters/Partners,Malaysia,Malaysia,MY,MY,MYS,1964,2061
+462,132,Maldives,Maldives,Reporters/Partners,Maldives,Maldives,MV,MV,MDV,1962,2061
+466,133,Mali,Mali,Reporters/Partners,Mali,Mali,ML,ML,MLI,1962,2061
+470,134,Malta,Malta,Reporters/Partners,Malta,Malta,MT,MT,MLT,1962,2061
+474,135,Martinique,Martinique,Reporters/Partners,Martinique,Martinique,MQ,MQ,MTQ,1962,1995
+478,136,Mauritania,Mauritania,Reporters/Partners,Mauritania,Mauritania,MR,MR,MRT,1962,2061
+480,137,Mauritius,Mauritius,Reporters/Partners,Mauritius,Mauritius,MU,MU,MUS,1962,2061
+175,270,Mayotte,Mayotte,Reporters/Partners,Mayotte,Mayotte,YT,YT,MYT,1962,2061
+484,138,Mexico,Mexico,Reporters/Partners,Mexico,Mexico,MX,MX,MEX,1962,2061
+496,141,Mongolia,Mongolia,Reporters/Partners,Mongolia,Mongolia,MN,MN,MNG,1962,2061
+499,273,Montenegro,Montenegro,Reporters/Partners,Montenegro,Montenegro,ME,ME,MNE,2006,2061
+500,142,Montserrat,Montserrat,Reporters/Partners,Montserrat,Montserrat,MS,MS,MSR,1962,2061
+504,143,Morocco,Morocco,Reporters/Partners,Morocco,Morocco,MA,MA,MAR,1962,2061
+508,144,Mozambique,Mozambique,Reporters/Partners,Mozambique,Mozambique,MZ,MZ,MOZ,1962,2061
+104,28,Myanmar,Myanmar,Reporters/Partners,Myanmar,Myanmar,MM,MM,MMR,1962,2061
+516,147,Namibia,Namibia,Reporters/Partners,Namibia,Namibia,NA,NA,NAM,2000,2061
+520,148,Nauru,Nauru,Partners Only,Nauru,Nauru,NR,NR,NRU,1962,2061
+524,149,Nepal,Nepal,Reporters/Partners,Nepal,Nepal,NP,NP,NPL,1962,2061
+528,150,Netherlands,Netherlands,Reporters/Partners,Netherlands,Netherlands,NL,NL,NLD,1962,2061
+540,153,New Caledonia,New Caledonia,Reporters/Partners,New Caledonia,New Caledonia,NC,NC,NCL,1962,2061
+554,156,New Zealand,New Zealand,Reporters/Partners,New Zealand,New Zealand,NZ,NZ,NZL,1962,2061
+558,157,Nicaragua,Nicaragua,Reporters/Partners,Nicaragua,Nicaragua,NI,NI,NIC,1962,2061
+562,158,Niger,Niger,Reporters/Partners,Niger,Niger,NE,NE,NER,1962,2061
+566,159,Nigeria,Nigeria,Reporters/Partners,Nigeria,Nigeria,NG,NG,NGA,1962,2061
+570,160,Niue,Niue,Partners Only,Niue,Niue,NU,NU,NIU,1962,2061
+579,162,Norway,Norway,Reporters/Partners,"Norway, Svalbard and Jan Mayen",Norway,NO,NO,NOR,1962,2061
+512,221,Oman,Oman,Reporters/Partners,Oman,Oman,OM,OM,OMN,1962,2061
+586,165,Pakistan,Pakistan,Reporters/Partners,Pakistan,Pakistan,PK,PK,PAK,1972,2061
+585,180,Palau,Palau,Reporters/Partners,Palau,Palau,PW,PW,PLW,1992,2061
+591,166,Panama,Panama,Reporters/Partners,Panama,Panama,PA,PA,PAN,1978,2061
+598,168,Papua New Guinea,Papua New Guinea,Reporters/Partners,Papua New Guinea,Papua New Guinea,PG,PG,PNG,1962,2061
+600,169,Paraguay,Paraguay,Reporters/Partners,Paraguay,Paraguay,PY,PY,PRY,1962,2061
+604,170,Peru,Peru,Reporters/Partners,Peru,Peru,PE,PE,PER,1962,2061
+608,171,Philippines,Philippines,Reporters/Partners,Philippines,Philippines,PH,PH,PHL,1962,2061
+616,173,Poland,Poland,Reporters/Partners,Poland,Poland,PL,PL,POL,1962,2061
+620,174,Portugal,Portugal,Reporters/Partners,Portugal,Portugal,PT,PT,PRT,1962,2061
+634,179,Qatar,Qatar,Reporters/Partners,Qatar,Qatar,QA,QA,QAT,1962,2061
+638,182,R�union,R�union,Reporters/Partners,R�union,R�union,RE,RE,REU,1962,1995
+642,183,Romania,Romania,Reporters/Partners,Romania,Romania,RO,RO,ROU,1962,2061
+643,185,Russian Federation,Russian Federation,Reporters/Partners,Russian Federation,Russian Federation,RU,RU,RUS,1992,2061
+646,184,Rwanda,Rwanda,Reporters/Partners,Rwanda,Rwanda,RW,RW,RWA,1962,2061
+659,188,Saint Kitts and Nevis,Saint Kitts and Nevis,Reporters/Partners,Saint Kitts and Nevis,Saint Kitts and Nevis,KN,KN,KNA,1981,2061
+662,189,Saint Lucia,Saint Lucia,Reporters/Partners,Saint Lucia,Saint Lucia,LC,LC,LCA,1962,2061
+666,190,Saint Pierre and Miquelon,Saint Pierre and Miquelon,Reporters/Partners,Saint Pierre and Miquelon,Saint Pierre and Miquelon,PM,PM,SPM,1962,2061
+670,191,Saint Vincent and the Grenadines,Saint Vincent and the Grenadines,Reporters/Partners,Saint Vincent and the Grenadines,Saint Vincent and the Grenadines,VC,VC,VCT,1962,2061
+882,244,Samoa,Samoa,Reporters/Partners,Samoa,Samoa,WS,WS,WSM,1962,2061
+674,192,San Marino,San Marino,Reporters/Partners,San Marino,San Marino,SM,SM,SMR,2000,2061
+678,193,Sao Tome and Principe,Sao Tome and Principe,Reporters/Partners,Sao Tome and Principe,Sao Tome and Principe,ST,ST,STP,1962,2061
+682,194,Saudi Arabia,Saudi Arabia,Reporters/Partners,Saudi Arabia,Saudi Arabia,SA,SA,SAU,1962,2061
+686,195,Senegal,Senegal,Reporters/Partners,Senegal,Senegal,SN,SN,SEN,1962,2061
+688,272,Serbia,Serbia,Reporters/Partners,Serbia,Serbia,RS,RS,SRB,2006,2061
+891,186,Serbia and Montenegro,Serbia and Montenegro,Reporters/Partners,Serbia and Montenegro,Serbia and Montenegro,CS,CS,SCG,1992,2005
+690,196,Seychelles,Seychelles,Reporters/Partners,Seychelles,Seychelles,SC,SC,SYC,1962,2061
+694,197,Sierra Leone,Sierra Leone,Reporters/Partners,Sierra Leone,Sierra Leone,SL,SL,SLE,1962,2061
+702,200,Singapore,Singapore,Reporters/Partners,Singapore,Singapore,SG,SG,SGP,1962,2061
+703,199,Slovakia,Slovakia,Reporters/Partners,Slovakia,Slovakia,SK,SK,SVK,1993,2061
+705,198,Slovenia,Slovenia,Reporters/Partners,Slovenia,Slovenia,SI,SI,SVN,1992,2061
+706,201,Somalia,Somalia,Reporters/Partners,Somalia,Somalia,SO,SO,SOM,1962,2061
+710,202,South Africa,South Africa,Reporters/Partners,South Africa,South Africa,ZA,ZA,ZAF,2000,2061
+728,277,South Sudan,South Sudan,Reporters/Partners,South Sudan,South Sudan,SS,SS,SSD,2012,2061
+724,203,Spain,Spain,Reporters/Partners,Spain,Spain,ES,ES,ESP,1962,2061
+144,38,Sri Lanka,Sri Lanka,Reporters/Partners,Sri Lanka,Sri Lanka,LK,LK,LKA,1962,2061
+729,276,Sudan,Sudan,Reporters/Partners,Sudan,Sudan,SD,SD,SDN,2012,2061
+740,207,Suriname,Suriname,Reporters/Partners,Suriname,Suriname,SR,SR,SUR,1962,2061
+748,209,Swaziland,Swaziland,Reporters/Partners,Swaziland,Swaziland,SZ,SZ,SWZ,2000,2061
+752,210,Sweden,Sweden,Reporters/Partners,Sweden,Sweden,SE,SE,SWE,1962,2061
+757,211,Switzerland,Switzerland,Reporters/Partners,"Switzerland, Liechtenstein",Switzerland,CH,CH,CHE,1962,2061
+762,208,Tajikistan,Tajikistan,Reporters/Partners,Tajikistan,Tajikistan,TJ,TJ,TJK,1992,2061
+764,216,Thailand,Thailand,Reporters/Partners,Thailand,Thailand,TH,TH,THA,1962,2061
+626,176,Timor-Leste,Timor-Leste,Reporters/Partners,Timor-Leste,Timor-Leste,TL,TL,TLS,1962,2061
+768,217,Togo,Togo,Reporters/Partners,Togo,Togo,TG,TG,TGO,1962,2061
+772,218,Tokelau,Tokelau,Reporters/Partners,Tokelau,Tokelau,TK,TK,TKL,1962,2061
+776,219,Tonga,Tonga,Reporters/Partners,Tonga,Tonga,TO,TO,TON,1962,2061
+780,220,Trinidad and Tobago,Trinidad and Tobago,Reporters/Partners,Trinidad and Tobago,Trinidad and Tobago,TT,TT,TTO,1962,2061
+788,222,Tunisia,Tunisia,Reporters/Partners,Tunisia,Tunisia,TN,TN,TUN,1962,2061
+792,223,Turkey,Turkey,Reporters/Partners,Turkey,Turkey,TR,TR,TUR,1962,2061
+795,213,Turkmenistan,Turkmenistan,Reporters/Partners,Turkmenistan,Turkmenistan,TM,TM,TKM,1992,2061
+798,227,Tuvalu,Tuvalu,Reporters/Partners,Tuvalu,Tuvalu,TV,TV,TUV,1962,2061
+800,226,Uganda,Uganda,Reporters/Partners,Uganda,Uganda,UG,UG,UGA,1962,2061
+804,230,Ukraine,Ukraine,Reporters/Partners,Ukraine,Ukraine,UA,UA,UKR,1992,2061
+784,225,United Arab Emirates,United Arab Emirates,Reporters/Partners,United Arab Emirates,United Arab Emirates,AE,AE,ARE,1962,2061
+826,229,United Kingdom,United Kingdom,Reporters/Partners,United Kingdom,United Kingdom,GB,GB,GBR,1962,2061
+858,234,Uruguay,Uruguay,Reporters/Partners,Uruguay,Uruguay,UY,UY,URY,1962,2061
+860,235,Uzbekistan,Uzbekistan,Reporters/Partners,Uzbekistan,Uzbekistan,UZ,UZ,UZB,1992,2061
+548,155,Vanuatu,Vanuatu,Reporters/Partners,Vanuatu,Vanuatu,VU,VU,VUT,1962,2061
+704,237,Viet Nam,Viet Nam,Reporters/Partners,Viet Nam,Viet Nam,VN,VN,VNM,1975,2061
+732,205,Western Sahara,Western Sahara,Partners Only,Western Sahara,Western Sahara,EH,EH,ESH,1962,2061
+887,249,Yemen,Yemen,Reporters/Partners,Yemen,Yemen,YE,YE,YEM,1991,2061
+894,251,Zambia,Zambia,Reporters/Partners,Zambia,Zambia,ZM,ZM,ZMB,1965,2061
+716,181,Zimbabwe,Zimbabwe,Reporters/Partners,Zimbabwe,Zimbabwe,ZW,ZW,ZWE,1965,2061

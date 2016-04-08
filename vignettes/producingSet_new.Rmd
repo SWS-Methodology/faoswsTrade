@@ -176,6 +176,8 @@ distribution_hslen(esdata, title = paste0("Eurostat data, year ", year))
 ## Analysis on aggregates
 For each country we stratify by flow and lenght of the hs code (lenhs) and we check if the values are the same for same flow but different hs lenght. In the plots all available data are shown, thus all lenhs available for that specific country.The y axis (total of values) are in log10 scale.
 
+We represent just the countries for which we have two or more different lenghts of the hs code for the same flow.
+
 ```{r aggregates, echo = F, fig.width=8}
 aggregate = function(data){
   result = data %>%
@@ -191,10 +193,14 @@ aggregate_tl = aggregate(tldata)
 aggregate_es = aggregate(esdata)
 
 # ---- TLdata ----
-list_countries_tl = unique(aggregate_tl$reporter)
+aggregate_tl_filtered = aggregate_tl %>%
+  group_by(reporter, flow) %>%
+  filter(n_distinct(lenhs) > 1)
+
+list_countries_tl = unique(aggregate_tl_filtered$reporter)
 splitt = split(list_countries_tl, ceiling(seq_along(list_countries_tl)/25))
 for (i in 1:length(splitt)){
-  g = ggplot(data = as.data.frame(aggregate_tl %>% filter_(~reporter %in% splitt[[i]])), 
+  g = ggplot(data = as.data.frame(aggregate_tl_filtered %>% filter_(~reporter %in% splitt[[i]])), 
          aes(x=factor(lenhs), y=log10(values), fill = factor(flow))) +
     geom_bar(aes(fill=factor(flow)), stat="identity", position = "dodge") + 
     facet_wrap(~country_name, ncol = 5, scale = "free")
@@ -202,9 +208,13 @@ for (i in 1:length(splitt)){
 }
 
 # ---- ESdata ----
+aggregate_es_filtered = aggregate_es %>%
+  group_by(reporter, flow) %>%
+  filter(n_distinct(lenhs) > 1)
+
 ggplot(data = as.data.frame(aggregate_es), aes(x=factor(lenhs), y=log10(values), fill = factor(flow))) +
   geom_bar(stat="identity", position="dodge") + facet_wrap(~country_name)
-
+# ---- end ----
 ```
 
 
@@ -225,9 +235,14 @@ print(xtable::xtable(table), type = "html", include.rownames = F)
 * Tariffline: m49 code mapping to fao code 252
 
 ```{r tl_non_mapping_countries, echo = F, comment=NA, results = 'asis'}
-data("m49faomap", package = "tradeproc", envir = environment())
-table = m49faomap %>%
-  filter_(~fao == 252)
+m49faomap_raw <- tbl_df(read.table("../data-raw/CT.m49_FS.csv",
+                            header = TRUE,
+                            sep = ",",
+                            quote = "\""))
+
+table = m49faomap_raw %>%
+  filter_(~AreaCode == 252) %>%
+  select(m49 = CT_AreaCode, fao = AreaCode, name = CT_AreaName)
 print(xtable::xtable(table), type = "html", include.rownames = F)
 ```
 
@@ -308,7 +323,7 @@ We recode re-Import (4) to Import (1) and re-Export (3) to Export (2) for tariff
 
 > **Distinction between Exports and Re-exports / Imports and Re-imports**
 
-> Exports of a country can be distinguished as exports of domestic goods and exports of foreign goods. The second class is generally referred to as re-exports. The exports shown in our database contain both the exports of domestic and foreign goods. Re-exports are exports of foreign goods in the same state as previously imported; they are to be included in the country exports. It is recommended that they be recorded separately for analytical purposes. This may require the use of supplementary sources of information in order to determine the origin of re-exports, i.e., to determine that the goods in question are indeed re-exports rather than the export of goods that have acquired domestic origin through processing. Re-imports are goods imported in the same state as previously exported. They are included in the country imports. It is recommended that they be recorded separately for analytical purposes. This may require the use of supplementary sources of information in order to determine the origin of re-imports, i.e., to determine that the goods in question are indeed re-imports rather than the import of goods that have acquired foreign origin through processing. There are several reasons why an exported good might return to the country of origin. The exported good might be defective, the importer might have defaulted on payments or cancelled the order, the authorities might have imposed an import barrier, or demand or prices in the country of origin might have made it worthwhile to bring the good back. <cite> UNSD </cite>
+> Exports of a country can be distinguished as exports of domestic goods and exports of foreign goods. The second class is generally referred to as re-exports. The exports shown in our database contain both the exports of domestic and foreign goods. Re-exports are exports of foreign goods in the same state as previously imported; they are to be included in the country exports. It is recommended that they be recorded separately for analytical purposes. This may require the use of supplementary sources of information in order to determine the origin of re-exports, i.e., to determine that the goods in question are indeed re-exports rather than the export of goods that have acquired domestic origin through processing. Re-imports are goods imported in the same state as previously exported. They are included in the country imports. It is recommended that they be recorded separately for analytical purposes. This may require the use of supplementary sources of information in order to determine the origin of re-imports, i.e., to determine that the goods in question are indeed re-imports rather than the import of goods that have acquired foreign origin through processing. There are several reasons why an exported good might return to the country of origin. The exported good might be defective, the importer might have defaulted on payments or cancelled the order, the authorities might have imposed an import barrier, or demand or prices in the country of origin might have made it worthwhile to bring the good back. <cite> from UNSD </cite>
 
 ```{r recode_retrade, echo = F}
 # ---- reexptoexp ----

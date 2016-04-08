@@ -1,0 +1,342 @@
+﻿0001	1976	1996	France      
+0001	1997	2500	France
+0002	1976	1998	Belg.-Luxbg 
+0003	1976	2500	Netherlands 
+0004	1976	1990	Fr Germany  
+0004	1991	2500	Fr Germany
+0005	1976	1993	Italy       
+0005	1994	2500	Italy
+0006	1976	2500	Utd. Kingdom
+0007	1976	2500	Ireland     
+0008	1976	2500	Denmark     
+0009	1981	2500	Greece      
+0010	1986	2500	Portugal    
+0011	1986	1996	Spain       
+0011	1997	2500	Spain
+0017	1999	2500	Belgium
+0018	1999	2500	Luxembourg
+0019	1976	1987	EUR12 Estim 
+0021	1986	1996	Canary -> 96, Ceuta <- 99
+0021	1999	2500	Canary -> 96, Ceuta <- 99
+0022	1986	1998	Ceuta & Mellila
+0023	1999	2500	MELILLA
+0024	1976	2500	Iceland     
+0025	1976	1992	Faroe Isles 
+0027	1995	1996	Svalbard(Arch.)
+0028	1976	1994	Norway      
+0028	1995	1996	Norway
+0028	1997	2500	Norway
+0030	1976	2500	Sweden      
+0032	1976	2500	Finland     
+0036	1976	1994	Switzerland 
+0037	1995	2500	Liechtenstein
+0038	1976	2500	Austria     
+0039	1995	2500	Switzerland
+0040	1976	1985	Portugal    
+0041	1993	2500	Faroe Isles 
+0042	1976	1985	Spain       
+0043	1976	2500	Andorra     
+0044	1976	2500	Gibraltar   
+0045	1976	2500	Holy See (Vatican City State ->2005)
+0046	1976	2500	Malta       
+0047	1994	2500	San Marino  
+0048	1976	1991	Yugoslavia  
+0048	1992	1992	Yugoslavia
+0050	1976	1980	Greece      
+0052	1976	2500	Turkey      
+0053	1992	1992	Estonia     
+0053	1993	2500	Estonia
+0054	1992	1992	Latvia      
+0054	1993	2500	Latvia
+0055	1992	1992	Lithuania   
+0055	1993	2500	Lithuania
+0056	1976	1991	Soviet Union
+0056	1992	1992	Soviet Union
+0058	1976	1990	German Dem.R
+0060	1976	2500	Poland      
+0061	1993	2500	Czech Rep.  
+0062	1976	1992	Czechoslovak
+0063	1993	2500	Slovakia
+0064	1976	2500	Hungary     
+0066	1976	2500	Romania     
+0068	1976	2500	Bulgaria    
+0070	1976	2500	Albania     
+0072	1992	1992	Ukraine     
+0072	1993	2500	Ukraine
+0073	1992	1992	Belarus     
+0073	1993	2500	Belarus
+0074	1992	1992	Moldova     
+0074	1993	2500	Moldova
+0075	1992	1992	Russia      
+0075	1993	2500	Russia
+0076	1992	1992	Georgia     
+0076	1993	2500	Georgia
+0077	1992	1992	Armenia     
+0077	1993	2500	Armenia
+0078	1992	1992	Azerbaijan  
+0078	1993	2500	Azerbaijan
+0079	1992	1992	Kazakhstan
+0079	1993	2500	Kazakhstan
+0080	1992	1992	Turkmenistan
+0080	1993	2500	Turkmenistan
+0081	1992	1992	Uzbekistan  
+0081	1993	2500	Uzbekistan
+0082	1992	1992	Tadjikistan 
+0082	1993	2500	Tadjikistan
+0083	1992	1992	Kyrghyzstan
+0083	1993	2500	Kyrgyz, Republic (ex Kyrghyzstan ->2005)
+0090	1992	1992	Yugoslavia  
+0091	1992	1992	Slovenia    
+0091	1993	2500	Slovenia
+0092	1992	1992	Croatia     
+0092	1993	2500	Croatia
+0093	1992	1992	Bosnia and Herz.
+0093	1993	2500	Bosnia-Herz.
+0094	1993	2500	Serbia and Montenegro till 31/05/2005
+0095	2005	2500	Kosovo
+0096	1993	2500	For.JRep.Mac
+0097	2005	2500	Montenegro
+0098	2005	2500	Serbia
+0201	1976	1976	Sp. Sahara  
+0202	1976	1985	Canary Isles
+0204	1976	2500	Morocco     
+0205	1977	1985	Ceuta & Mellila
+0208	1976	2500	Algeria     
+0212	1976	2500	Tunisia     
+0216	1976	2500	Libyan Arab Jamahiriya
+0220	1976	2500	Egypt       
+0224	1976	2500	Sudan       
+0225	2013	2500	South Sudan
+0228	1976	1976	Mauritania  
+0228	1977	2500	Mauritania
+0229	2013	2500	Western Sahara
+0232	1976	2500	Mali        
+0236	1976	2500	Burkina Faso
+0240	1976	2500	Niger       
+0244	1976	2500	Chad        
+0247	1976	2500	Cape Verde  
+0248	1976	2500	Senegal     
+0252	1976	2500	Gambia      
+0257	1976	2500	Guinea Biss.
+0260	1976	2500	Guinea      
+0264	1976	2500	Sierra Leone
+0268	1976	2500	Liberia     
+0272	1976	2500	Ivory Coast 
+0276	1976	2500	Ghana       
+0280	1976	2500	Togo        
+0284	1976	2500	Benin       
+0288	1976	2500	Nigeria     
+0302	1976	2500	Cameroon    
+0306	1976	2500	Centr.Africa
+0310	1976	2500	Equat.Guinea
+0311	1976	2500	S.Tome,Princ
+0314	1976	2500	Gabon       
+0318	1976	2500	Congo       
+0322	1976	2500	Congo (Dem. Rep.)
+0324	1976	2500	Rwanda      
+0328	1976	2500	Burundi     
+0329	1976	2500	Saint Helena
+0330	1976	2500	Angola      
+0334	1976	1993	Ethiopia    
+0334	1994	2500	Ethiopia
+0336	1994	2500	Eritrea     
+0338	1976	2500	Djibouti    
+0342	1976	2500	Somalia     
+0346	1976	2500	Kenya       
+0350	1976	2500	Uganda      
+0352	1976	2500	Tanzania    
+0355	1976	2500	Seychelles  
+0357	1976	2500	B.I.O.T.    
+0366	1976	2500	Mozambique  
+0370	1976	2500	Madagascar  
+0372	1976	1996	Reunion     
+0373	1976	2500	Mauritius   
+0375	1977	2500	Comoros     
+0376	1976	1976	Comoros     
+0377	1977	2500	Mayotte     
+0378	1976	2500	Zambia      
+0382	1976	2500	Zimbabwe    
+0386	1976	2500	Malawi      
+0388	1990	2500	South Africa
+0389	1990	2500	Namibia
+0390	1976	1989	South Africa
+0391	1976	2500	Botswana    
+0393	1976	2500	Swaziland   
+0395	1976	2500	Lesotho     
+0400	1976	1994	USA         
+0400	1995	2500	USA
+0404	1976	2500	Canada      
+0406	1976	2500	Greenland   
+0408	1976	2500	S.Pierre,Miq
+0412	1976	2500	Mexico      
+0413	1976	2500	Bermuda     
+0416	1976	2500	Guatemala   
+0421	1976	2500	Belize      
+0424	1976	2500	Honduras    
+0428	1976	2500	El Salvador 
+0432	1976	2500	Nicaragua   
+0436	1976	2500	Costa Rica  
+0440	1976	1980	Panama      
+0442	1981	2500	Panama      
+0444	1976	1980	Panama Canal
+0446	1987	2500	Anguilla    
+0448	1976	2500	Cuba        
+0449	1986	2500	St.Ch.&Nevis
+0450	1983	1985	West Indies 
+0451	1980	1982	West Indies 
+0452	1976	2500	Haiti       
+0453	1976	2500	Bahamas     
+0454	1976	2500	Turks,Caicos
+0455	1986	1986	West Indies 
+0456	1976	2500	Dominican R.
+0457	1976	2500	Virgin Isles
+0458	1976	1996	Guadeloupe  
+0459	1983	2500	Antigua,Barb
+0460	1980	2500	Dominica    
+0461	1987	1994	Br.Virgin I.
+0462	1976	1996	Martinique  
+0463	1976	2500	Cayman Isles
+0464	1976	2500	Jamaica     
+0465	1980	2500	St Lucia    
+0466	2013	2500	Saint Barthelemy
+0467	1980	2500	St Vincent  
+0468	1995	2500	Brit.Virg.Isl.
+0469	1976	2500	Barbados    
+0470	1995	2500	Montserrat
+0471	1976	1979	West Indies 
+0472	1976	2500	Trinidad,Tob
+0473	1976	2500	Grenada     
+0474	1987	2500	Aruba       
+0475	2013	2500	Curaçao
+0476	1976	1986	NL.Antilles 
+0477	2013	2500	Bonaire, Sint Eustatius and Saba
+0478	1987	2012	Nl Antilles 
+0479	2013	2500	Sint Maarten (Dutch part) 
+0480	1976	2500	Colombia    
+0484	1976	2500	Venezuela   
+0488	1976	2500	Guyana      
+0492	1976	2500	Surinam     
+0496	1976	1996	Fr. Guiana  
+0500	1976	2500	Ecuador     
+0504	1976	2500	Peru        
+0508	1976	2500	Brazil      
+0512	1976	2500	Chile       
+0516	1976	2500	Bolivia     
+0520	1976	2500	Paraguay    
+0524	1976	2500	Uruguay     
+0528	1976	2500	Argentina   
+0529	1976	1991	Falkland Is.
+0529	1992	2500	Falkland Is.
+0600	1976	2500	Cyprus      
+0604	1976	2500	Lebanon     
+0608	1976	2500	Syria       
+0612	1976	2500	Iraq        
+0616	1976	2500	Iran        
+0624	1976	1994	Israel      
+0624	1995	2500	Israel
+0625	1995	2500	Gaza + Jericho
+0626	2001	2500	Timor-Leste
+0628	1976	2500	Jordan      
+0632	1976	2500	Saudi Arabia
+0636	1976	2500	Kuwait      
+0640	1976	2500	Bahrain     
+0644	1976	2500	Qatar       
+0647	1976	2500	U.A.Emirates
+0649	1976	2500	Oman        
+0652	1976	1990	North Yemen 
+0653	1991	2500	Yemen       
+0656	1976	1990	South Yemen 
+0660	1976	2500	Afghanistan 
+0662	1976	2500	Pakistan    
+0664	1976	2500	India       
+0666	1976	2500	Bangladesh  
+0667	1976	2500	Maldives    
+0669	1976	2500	Sri Lanka   
+0672	1976	2500	Nepal       
+0675	1976	2500	Bhutan      
+0676	1976	2500	Myanmar     
+0680	1976	2500	Thailand    
+0684	1976	2500	Lao (People's Democratic Republic)
+0688	1976	1976	N.Vietnam   
+0690	1977	2500	Vietnam     
+0692	1976	1976	S.Vietnam   
+0696	1976	2500	Cambodia    
+0700	1976	1976	Indonesia   
+0700	1977	2000	Indonesia
+0700	2001	2500	Indonesia
+0701	1976	2500	Malaysia    
+0703	1976	2500	Brunei      
+0704	1976	1976	P.Timor     
+0706	1976	2500	Singapore   
+0708	1976	2500	Philippines 
+0716	1976	2500	Mongolia    
+0720	1976	2500	China       
+0724	1976	2500	North Korea 
+0728	1976	2500	South Korea 
+0732	1976	2500	Japan       
+0736	1976	2500	Taiwan      
+0740	1976	2500	Hong Kong   
+0743	1976	2500	Macao       
+0800	1976	2500	Australia   
+0801	1976	2500	Papua N.G.  
+0802	1976	2000	Aust.Oceania
+0803	1976	2500	Nauru       
+0804	1976	2500	New Zealand 
+0806	1980	2500	Solomon Is. 
+0807	1980	2500	Tuvalu      
+0808	1976	1991	Amer.Oceania
+0809	1976	2500	N. Caledonia
+0810	1980	1980	Am. Oceania 
+0810	1992	1993	Am. Oceania 
+0810	1994	1994	Am. Oceania
+0810	1995	2000	Am. Oceania
+0811	1976	2500	Wallis,Futun
+0812	1976	1979	Kiribati    
+0812	1981	2500	Kiribati    
+0813	1981	2500	Pitcairn    
+0814	1976	2000	N.Z Oceania 
+0815	1976	2500	Fiji        
+0816	1976	2500	Vanuatu     
+0817	1976	2500	Tonga       
+0819	1976	2500	West. Samoa 
+0820	1994	2500	North.Mar.Is
+0822	1976	2500	Fr.Polynesia
+0823	1992	2500	Fed.Micron. 
+0824	1992	2500	Marshall Is.
+0825	1995	2500	Palau
+0830	2001	2500	Américan Samoa
+0831	2001	2500	Guam
+0832	2001	2500	US Minor outlying Islands
+0833	2001	2500	Cocos Islands(or Keeling Isl.)
+0834	2001	2500	Christmas Island
+0835	2001	2500	Heard Island & McDonald Islan.
+0836	2001	2500	Norfolk Island
+0837	2001	2500	Cook Islands
+0838	2001	2500	Niue
+0839	2001	2500	Tokelau
+0890	1976	1991	Polar Reg.  
+0890	1992	2000	Polar Reg.
+0891	2001	2500	Antarctica
+0892	2001	2500	Bouvet Island
+0893	2001	2500	South Georgia & S.Sandwich Is.
+0894	2001	2500	French Southern Territories
+0950	1976	1992	Stores,Prov.
+0950	1999	2500	Stores and provisions
+0951	1976	1992	St,P.Intra
+0951	1993	1998	St,P.Intra
+0951	1999	2500	Stores and provisions intra
+0952	1993	1998	St,P.Extra
+0952	1999	2500	Stores and provisions extra
+0955	2013	2500	High seas
+0958	1976	1992	COUNTRIES and TERRIT. NOT DET.
+0958	1993	2500	COUNTRIES and TERRIT. NOT DET.
+0959	1976	1992	N.det.Intra
+0959	1993	2500	N.det.Intra
+0960	1993	2500	N.det.Extra
+0975	1976	1993	Sec. Eur
+0976	1976	1993	Sec. Extra
+0977	1976	2500	SEC COUNTRIES
+0978	1994	2500	Secr.Intra
+0979	1994	2500	Secr.Extra
+Z999	1976	2500	No data
+ZZZZ	1976	2500	Not determined

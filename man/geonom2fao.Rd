@@ -8,7 +8,8 @@
 faostat (integer) - FAO area code,
 active (integer) - FAO area code to use. For example, French Guiana
 goes to France. So we don't need to aggregate later (probably). Abandoned codes,
-like USSR, in active column were equal 0, but replaced by NA.}
+like USSR, in active column were equal 0, but replaced by NA.
+name (character) - name of the area code}
 \usage{
 geonom2fao
 }

@@ -239,6 +239,48 @@ This is the summary of the data received:
 
 \subsection{Process}
 
+1)	Raw UNSD Tariffline Data
+
+This section covers pre-processing operations. Strictly speaking, pre-processing operations do not pertain to the trade module but to input data management, editing and cleaning.
+We fully agree that more clarity is needed on the operations performed, on the workflow and on who is responsible for them.
+In principle, these operations should be carried out who manages data import in the SWS. At present, these operations have been performed partly by the SWS team, partly by the developer.
+The pre-processing operations will be included in a sub-routine.
+The data content assessment will be done systematically as a summary table and an automatic report.
+
+2)	UNSD Assessed Tariffline Data and Eurostat Data
+
+a. describes well the operations undertaken by the module. It must be clear that no aggregations are done at this stage, i.e. no information is lost. Standardization and mapping steps create additional columns.
+b. There will be no aggregation at this stage. The large number of records strengthens the outliers detection procedure.
+c. The module already generates a report on missing links. What needs to be discussed and agreed with Team B/C and the classification experts is how to up-date the correspondence tables, i.e. the maps.
+ d. i. Capturing missing links. Work had already started in this direction. A sub-module in the trade module tries to map HS codes with FCL automatically. It first checks if a 0 values is missing on the left of the code, then is looks at the highest levels of the classification to do the mapping.
+It must be said that the most problematic items for this sub-modules come from fisheries, pesticides, herbicides and fertilizers. While it is not particularly affecting FBS data, the matter must be solved.
+Point d. iii. Very good suggestion Some preliminary analysis were already made in this direction. The application of natural language processing takes time because it requires HS metadata, i.e. downloading HS labels on top of HS codes. Labels are not included in the file download for size reasons and speed.
+On can consider a separate extraction of single HS codes and descriptions and develop a sub-module that works on this file instead of the large data file. Its implementation cannot a priority now.
+e. The comment made describes how the module works.
+3)	Unified Official Trade Flows Dataset
+
+This step is called “Complete Trade Flows” in the flowchart and should be called so unanimously to avoid confusion.
+b. Validation steps
+i. Changing order between correcting for Orders of Magnitude and Detecting Outliers is a very valid suggestion. The following changes will be made to the module.
+The suggested process for Order of Magnitude corrections, however, is not viable because will excessively slow down the module.
+The following change will be made to the module: corrections for Orders of Magnitude will be managed by the outlier detection process. The process will proceed in steps.
+1.	Orders of magnitude will be detected through time series analysis. The sub-module is still being developed.
+2.	When detecting an outlier in cross-section data, the module will search first for mirror transactions. If there exists a transaction between the same trading partners (same commodity but opposite flow) whose quantity matches but for a multiple of 10, then the module will correct the outlier by copying the quantity recorded by the trading partner.
+3.	If there are no mirror quantities, the module will apply the standard outlier correction process.
+
+iii.	Validation: Outlier Correction
+The module is already implementing a similar threshold rule, to keep as much official data as possible.
+The test however is implemented at tariffline level and not at hs level. This way, commodities are homogenous and extreme unit values are more likely due to pure price effects than to product characteristics.
+c.	Output HS trade table
+The module produces this intermediate output but does not print it for the sake of efficiency and space saving.
+To be discussed.
+
+e.	There should be no automatic over-writing at FCL level, as suggested, once the unit values have already been checked at corrected at tariffline level.
+
+f.	The module will have a sub-module to measure CIF/FOB differences and check the 12% amount that is currently uniformly applied
+
+
+
 \end{document}
 Status API Training Shop Blog About
 ÔøΩ 2015 GitHub, Inc. Terms Privacy Security Contact

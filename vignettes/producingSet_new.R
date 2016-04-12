@@ -14,7 +14,8 @@ multicore <- TRUE
 
 # ---- libs ----
 
-library(tradeproc)
+#library(tradeproc)
+library(faoswsTrade)
 library(stringr)
 library(testthat)
 library(dplyr, warn.conflicts = F)
@@ -47,11 +48,13 @@ if(multicore) {
 
 data("hsfclmap2", package = "hsfclmap", envir = environment())
 data("adjustments", package = "hsfclmap", envir = environment())
-data("unsdpartnersblocks", package = "tradeproc", envir = environment())
-data("unsdpartners", package = "tradeproc", envir = environment())
+#data("unsdpartnersblocks", package = "tradeproc", envir = environment())
+data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
+#data("unsdpartners", package = "tradeproc", envir = environment())
+data("unsdpartners", package = "faoswsTrade", envir = environment())
 ## units for fcl
-data("fclunits", package = "tradeproc", envir = environment())
-
+#data("fclunits", package = "tradeproc", envir = environment())
+data("fclunits", package = "faoswsTrade", envir = environment())
 
 # ---- hsfclmapsubset ----
 # HS -> FCL map
@@ -88,50 +91,25 @@ hsfclmap <- hsfclmap2 %>%
 ### Download TL data ####
 
 # tldata <- getRawAgriTL(year, agricodeslist)
-#load("../tldata_raw_from_db.RData")
-#load("~/Dropbox/tradeproc/tldata_raw_from_db.RData")
-getRawAgriTL_fromGiorgio <- function(year, path) {
-  tldata_raw <- tbl_df(data.table::fread(paste0(path,"/tariffLine_dump_",year,".csv"),
-                                         header = T, sep = ";",
-                                         colClasses = c("integer","integer","character",
-                                                        "integer","character","integer",
-                                                        "integer","double","integer","double"))) %>%
-    select(-hsrep)
-  colnames(tldata_raw) = c("reporter","year","flow","hs","partner","qunit","weight","qty","value")
 
-  tldata_raw
-}
-
-tldata <- getRawAgriTL_fromGiorgio(year, "~/Downloads/")
-
-## Quality check
-ggplot2::ggplot(as.data.frame(table(nchar(tldata$hs))), ggplot2::aes(x=Var1, y = Freq)) +
-  ggplot2::geom_bar(stat="identity")
+## This require a function to access the SWS, at the moment
+## the data are download from google drive
+load(paste0("~/Desktop/FAO/Trade/RData/tldata_",year,".RData"))
+tldata = tldata_raw
 
 #### Download ES data ####
 
 # esdata <- getRawAgriES(year, agricodeslist)
 #load("../esdata_raw_from_db.RData")
 #load("~/Dropbox/tradeproc/esdata_raw_from_db.RData")
+load(paste0("~/Desktop/FAO/Trade/RData/esdata_",year,".RData"))
+esdata = esdata_raw
 
-getRawAgriES_fromGiorgio <- function(year, path) {
-  esdata_raw <- tbl_df(data.table::fread(paste0(path,"/eu_cn8_dump_",year,".csv"),
-                                         header = T, sep = ";",
-                                         colClasses = c("integer","integer","character",
-                                                        "integer","integer","character",
-                                                        "double","double","double"))) %>%
-    select(-stat_regime) %>%
-    mutate(hs6 = stringr::str_sub(product_nc,1,6),
-           period = as.numeric(stringr::str_sub(period,1,4)))
-  colnames(esdata_raw) = c("reporter","partner","hs","flow","year","value","weight","qty","hs6")
-
-  esdata_raw
-}
-
-esdata <- getRawAgriES_fromGiorgio(year, "~/Downloads/")
-
+## To be discussed with Michael:
+## Preanalysis has to be added here or not?
 
 # ---- geonom2fao ----
+
 
 esdata <- esdata %>%
   mutate_(reporter = ~convertGeonom2FAO(reporter),

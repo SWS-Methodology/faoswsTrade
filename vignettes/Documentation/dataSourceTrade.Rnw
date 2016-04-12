@@ -97,7 +97,7 @@
 \Abstract{
 
 \noindent
-This vignette provides a detailed description of the various data sources used in the trade modules.
+This vignette provides a detailed description of the various data sources and procedures used in the trade modules.
 }
 
 \Keywords{Agricultural Trade, Tariff Line, Eurostat, Mirroring}
@@ -109,7 +109,7 @@ This vignette provides a detailed description of the various data sources used i
   Food and Agriculture Organization of the United Nations (FAO)\\
   Viale delle Terme di Caracalla 00153 Rome, Italy\\
   E-mail: \email{marco.garieri@fao.org}\\
-  URL: \url{https://gitlab.com/faoess/tradeproc}
+  URL: \url{https://github.com/SWS-Methodology/faoswsTrade}
 }
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 
@@ -128,17 +128,10 @@ This vignette provides a detailed description of the various data sources used i
 %changes and updates.
 
 %\section{Data Source}
-%\subsection{Flow Chart}
-%Description of the entire flow
-%\begin{center}\includegraphics[scale = 0.01]{"trade_1"}\end{center}
-
-%\newpage
-%\begin{center}\includegraphics{"trade_4"}\end{center}
-%\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_legend"}\end{center}
-
+%
 
 \section{Data}
-Data are provided by Giorgio's team for both UNSD Tariffline and Eurostat Data. The data have been already prefiltered:
+Data are provided by the SWS Team (subunit of Team F) for both UNSD Tariffline and Eurostat Data. The data have been already prefiltered:
 \begin{itemize}
 \item [\bf{Eurostat}]
 \begin{itemize}
@@ -151,6 +144,12 @@ Data are provided by Giorgio's team for both UNSD Tariffline and Eurostat Data. 
 \item code of HS (comm) just numeric (letters are not allowed)
 \end{itemize}
 \end{itemize}
+
+\subsection{Raw Data - Data content assessment}
+Pre-analysis of the data is performed in the first part of the module.\\
+The total number of records is calculate for both Eurostat and UNSD Tariffline datasets and the distribution of lenght of the commodty HS codes (for UNSD Tariffline) and CN8 for Eurostat is performed. For each country we report if data includes imports, exports, re-exports and re-imports at all possible lenght.\\
+All records with hs-lenght (for UNSD Tariffline) or CN8-lenght (for Eurostat) less than 6 are removed.\\
+Moreover all records of European reporters in UNSD Tariffline data are removed.
 
 % This is the summary of the data received:
 % \begin{itemize}
@@ -174,7 +173,7 @@ Data are provided by Giorgio's team for both UNSD Tariffline and Eurostat Data. 
 % \end{itemize}
 % \end{itemize}
 
-\subsection{Example of tables}
+%\subsection{Example of tables}
 <<echo=FALSE>>=
 # Set up a database connection so we can pull the datasets
 #library(faosws)
@@ -198,16 +197,11 @@ library(xtable)
 %\end{itemize}
 
 \section{Process}
-\subsection{Raw Data - Data content assessment}
-Pre-analysis of the data is performed in the first part of the module.\\
-The total number of records is calculate for both Eurostat and UNSD Tariffline datasets and the distribution of lenght of the commodty HS codes (for UNSD Tariffline) and CN8 for Eurostat is performed. For each country we report if data includes imports, exports, re-exports and re-imports at all possible lenght.\\
-All records with hs-lenght (for UNSD Tariffline) or CN8-lenght (for Eurostat) less than 6 are removed.\\
-Moreover all records of European reporters in UNSD Tariffline data are removed.
 
-\subsection{UNSD Assessed Tariffline Data and Eurostat Data}
+\subsection{Mapping UNSD Tariffline and Eurostat data}
 At this stage a standardization/mapping step is performed. The details are devided between UNSD Tariffline and Eurostat due to the nature of the differences among the two datasets.
 \subsubsection{UNSD Tariffline Data}
-UNSD Tariffline data reports area code with M49 standard. The area code is converted in FAO country code using a specific convertion table provided by Eduard from Tubiello's team. Area codes not mapping to any FAO country code or mapping to code 252 (which correpond not defined area) is reported are the records for these area codes are removed.\\
+UNSD Tariffline data reports area code with M49 standard. The area code is converted in FAO country code using a specific convertion table provided by Team ENV. Area codes not mapping to any FAO country code or mapping to code 252 (which correpond not defined area) is reported are the records for these area codes are removed.\\
 Commodity codes are reported in HS codes ({\it Harmonized Commodity Description and Coding System}). The codes are converted in FCL (FAO Commodity List) codes. This step is performed using a specific package ({\tt hsfclmap} developed by Alexander Matrunich) where, for each year, all the mapping between HS and FCL code is stored. The algotithm tries to map at all possible lenght (i.e. if a reporting country has a record with hs code at 12 digits and in the package, for the same reporting country, a HS-to-FCL mapping is available at a lower level, for example 10 digits, the algorithm will include in the mapping all the records having the same 10 digits).\\
 If a specific record has a HS code not mapping to any specific FCL code, then the record is reported and removed.\\
 If a country is not included in the package of the mapping for that specific year, all the records for the reporting country are removed.\\
@@ -220,37 +214,64 @@ Exports of a country can be distinguished as exports of domestic goods and expor
 \end{quote}
 
 \subsubsection{Eurostat Data}
-Eurostat data reports area code with geonomenclature standard. The are code is converted in FAO country code using a specific convertion table provided by Claudia.  Area codes not mapping to any FAO country code or mapping to code 252 (which correpond not defined area) is reported are the records for these area codes are removed.\\
+Eurostat data reports area code with geonomenclature standard. The are code is converted in FAO country code using a specific convertion table provided by Team B/C.  Area codes not mapping to any FAO country code or mapping to code 252 (which correpond not defined area) is reported are the records for these area codes are removed.\\
 Commodity codes are reported in CN8 codes (Combined Nomenclature 8 digits). The codes are converted in FCL (FAO Commodity List) codes. This step is performed using the same package ({\tt hsfclmap}) as for UNSD Tariffline.
 If a specific record has a CN8 code not mapping to any specific FCL code, then the record is reported and removed.\\
 If a country is not included in the package of the mapping for that specific year, all the records for the reporting country are removed.\\\\
 The possible solution for the missing links in the future using Natural language processing routines to read the metadata.\\
 Information of the FCL units is added at the end of this step.\\
-Values are converted from EUR to USD using the table with avarage currency for each year provided by Claudia.\\
+Values are converted from EUR to USD using the table with avarage currency for each year provided by Team B/C.\\
 Eurostat data are already provided in the correct units of measurements and do not need futher conversions.
 %e.	Application of perennial notes, which at this stage mainly regard quantity adjustments
 
 \subsubsection{Unified Official Trade Flows Dataset}
-At this step the UNSD Tariffline and Eurostat datasets are ready to be merged.\\
-Application of perennial and yearly specific notes are applied. These mainly regard quantity adjutments.\\
-An analysis of self trade is performed: for all the records with the same reporter and partner country the sum of the value and the list of commodities is saved and summary statistics are computer world wide.\\
-For each record the unit of value is computed as the value divided by the quantity and the validation steps are applied:
+UNSD Tariffline and Eurostat datasets are ready to be merged.
+
+\subsection{Standardization, editing and outlier detection}
 \begin{itemize}
-\item[Outlier Detection] The outlier are calculated based on the distribution of the unit of value for the same country, year and flow at the HS level. The reason to identify the outlier at the HS level is due to the fact that, under the same FCL code, different commodity might fall (i.e. maize seed and seed). The records with wrong order of magnitude are detected. The outlier are corrected using the corresponding value and dividing it by the median unit of value of that specific commodity, country, flow and year. In this way only few official data are corrected.
-\item[Missing Quantities] For records in which the commodity has to be reported in quantity and the quantity is missing and the value is present, the corresponding quantity is imputed dividing the corresponding value by the median of the units of value of the corresponding commodity (HS level/country/flow/year)
+\item {\bf Application of Notes} Perennial and yearly specific notes are mdb files provided by the Team B/C already saved in a R friendly dataset within the package. These mainly regard quantity adjutments.
+\item {\bf Self Trade Analysis} For all the records having the same reporter and partner an analysis is performed. The sum of the value is computed for both countries and commodity, in order to spot out the countries reporting massive self trade and which are the main commodity repo?boxplot.statsrted as self trade. Summary statistics are computer world wide.
+\item {\bf Unit Values computation} For each record having both quantity and value (thus excluding all commodity reported just as value), the unit of value ($u_v$) is computed as following:
+\begin{equation}
+u_v = \frac{qty}{value}
+\end{equation}
+\item {\bf Outlier Detection and Imputation} The outlier are calculated based on the distribution of the unit of value for the same country, year and flow at the HS level. The reason to identify the outlier at the HS level is due to the fact that, under the same FCL code, different commodity might fall (i.e. maize seed and seed). The records with wrong order of magnitude are detected. The outlier are detecting using the Tukey's procedure:
+\begin{itemize}
+\item The Tukey's five number summary are calculated: minimum (m), lower-hinge ($lh$), median ($med$), upper-hinge ($uh$) and maximum ($M$).
+\item The coefficient for the outlier detection is set up as suggested by Tukey to 1.5 ($coef$).
+\item For each value is calculated a specific distance from the lower or the upper-hinge in the following way:
+\begin{equation}
+\text{x is outlier if} \begin{cases}
+    x < lh - coef * iqr, & \text{lower outlier},\\
+    x > up + coef * iqr, & \text{upper outlier}.
+  \end{cases}
+\end{equation}
+\end{itemize}
+where $iqr$ is the interquartile range.\\
+The outlier are then corrected using the corresponding value and dividing it by the median unit of value of that specific commodity, country, flow and year. In this way only few official data are corrected.
+\item {\bf Missing Quantities Detection and Imputation} For records in which the commodity has to be reported in quantity and the quantity is missing and the value is present, the corresponding quantity is imputed dividing the corresponding value by the median of the units of value of the corresponding commodity (HS level/country/flow/year)
 \end{itemize}
 
-The module produce the list of non-reporting countries: these are the countries present as partners but absent as reporters. For this countries the mirroring process is applied: the corrisponding trade of the non-reporting countries are extracted from the partners inverting the flows.\\
-
+\subsection{Mirroring and Balancing}
 The flows at this point are aggregated by reported over partner countries to a single total trade for each unique FCL commodity code.\\
+The module produce the list of non-reporting countries: these are the countries present as partners but absent as reporters. For this countries the mirroring process is applied: the corrisponding trade of the non-reporting countries are extracted from the partners inverting the flows.\\
 Upon availability of time-series data, a check of the FCL-based unit values accross the time series is performed.\\
 A check is performed to account of the CIF/FOB differences [around 12\%?] (still to be perfomed among time series).
 
 \subsubsection{Unbalanced World Trade Matrix}
 The commodity balance check is computed, which will lead to the "Trade Imbalances" report (not yet implemented).
 
-\subsubsection{Finalized Total Trade}
+\subsection{Total Trade}
 The convertion from FCL to CPC version 2.1 expanded is added and the final output tables of trade by commodity is provided.
+
+
+\section{Flow Chart Process}
+Description of the entire flow
+\begin{center}\includegraphics[scale = 0.01]{"trade_1"}\end{center}
+\newpage
+\begin{center}\includegraphics[scale = 0.01]{"trade_1_bis"}\end{center}
+%\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_3"}\end{center}
+%\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_4"}\end{center}
 
 
 \end{document}

@@ -7,7 +7,7 @@ year <- 2009L
 
 # Coefficient for outlier detection
 # See coef argument in ?boxplot.stats
-out_coef <- 1.5
+# out_coef <- 1.5
 
 debughsfclmap <- TRUE
 multicore <- TRUE

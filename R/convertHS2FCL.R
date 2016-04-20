@@ -29,7 +29,7 @@ convertHS2FCL <- function(tradedata, hsfclmap, parallel) {
                      "hs" = "hs"))
 
   if(any(is.na(tradedata$fcl)))
-    message(paste0("Pproportion of tradeflows with nonmapped HS-codes: ",
+    message(paste0("Proportion of tradeflows with nonmapped HS-codes: ",
                    scales::percent(sum(is.na(tradedata$fcl))/nrow(tradedata)),
                    "\nShare of value of tradeflows with nonmapped HS-codes in total value: ",
                    scales::percent(sum(tradedata$value[is.na(tradedata$fcl)], na.rm = T) /

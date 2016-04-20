@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <RScript xmlns="http://www.fao.org/rScript">
-    <Name>Impute Production</Name>
-    <Description>Impute missing production data using the ensemble model.  This module works on just the commodities/countries open in the current session.</Description>
+    <Name>Trade</Name>
+    <Description>Trade flow.</Description>
     <Category>Imputation</Category>
     <Authors>
         <Author>
-            <Name>Josh Browning</Name>
-            <Mail>joshua.browning@fao.org</Mail>
+            <Name>Marco Garieri</Name>
+            <Mail>marco.garieri@fao.org</Mail>
         </Author>
     </Authors>
     <Params>

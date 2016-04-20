@@ -5,6 +5,10 @@
 # Year for processing
 year <- 2009L
 
+## List of datasets available
+#datas = faosws::FetchDatatableConfig()
+
+
 # Coefficient for outlier detection
 # See coef argument in ?boxplot.stats
 # out_coef <- 1.5
@@ -16,6 +20,7 @@ multicore <- TRUE
 
 #library(tradeproc)
 library(faoswsTrade)
+library(faosws)
 library(stringr)
 library(testthat)
 library(dplyr, warn.conflicts = F)
@@ -30,16 +35,16 @@ if(multicore) {
 
 # Connection to SWS
 # TODO: DEV MODE!!!!!!!!
-
+faosws::SetClientFiles("~/certificates/")
 ## ADDED COMMENT
-# faosws::GetTestEnvironment(
-#   # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
-#   # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
-#   baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
-#   # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
-#   token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
-# # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
-# #token = token)
+ faosws::GetTestEnvironment(
+   # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
+   # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
+   baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
+   # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
+   token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
+ # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
+ #token = token)
 
 # ---- datasets ----
 ## Data sets with hs->fcl map (from mdb files)
@@ -85,8 +90,7 @@ hsfclmap <- hsfclmap2 %>%
 # ---- tradeload ----
 
 #### Get list of agri codes ####
-### ADDED COMMENT
-## agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
+#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
 
 ### Download TL data ####
 
@@ -94,16 +98,53 @@ hsfclmap <- hsfclmap2 %>%
 
 ## This require a function to access the SWS, at the moment
 ## the data are download from google drive
-load(paste0("~/Desktop/FAO/Trade/RData/tldata_",year,".RData"))
-tldata = tldata_raw
+#load(paste0("~/Desktop/FAO/Trade/RData/tldata_",year,".RData"))
+#tldata = tldata_raw
+
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+                            columns=c("rep", "tyear", "flow",
+                                      "comm", "prt", "weight",
+                                      "qty", "qunit", "tvalue"),
+                            limit = 1e4) ## The limit will go away
+
+## Rename columns
+tldata <- tldata %>%
+  transmute_(reporter = ~as.integer(rep),
+          partner = ~as.integer(prt),
+          hs = ~comm,
+          flow = ~as.integer(flow),
+          year = ~as.integer(tyear),
+          value = ~tvalue,
+          weight = ~weight,
+          qty = ~qty,
+          qunit = ~as.integer(qunit)) %>%
+  mutate_(hs6 = ~stringr::str_sub(hs,1,6))
 
 #### Download ES data ####
 
 # esdata <- getRawAgriES(year, agricodeslist)
 #load("../esdata_raw_from_db.RData")
 #load("~/Dropbox/tradeproc/esdata_raw_from_db.RData")
-load(paste0("~/Desktop/FAO/Trade/RData/esdata_",year,".RData"))
-esdata = esdata_raw
+#load(paste0("~/Desktop/FAO/Trade/RData/esdata_",year,".RData"))
+#esdata = esdata_raw
+
+esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
+                                    columns = c("declarant", "partner",
+                                                "product_nc", "flow",
+                                                "period", "value_1k_euro",
+                                                "qty_ton", "sup_quantity"),
+                                    limit = 1e4)
+
+esdata <- esdata %>%
+  transmute_(reporter = ~as.numeric(declarant),
+             partner = ~as.numeric(partner),
+             hs = ~product_nc,
+             flow = ~as.integer(flow),
+             year = ~as.integer(str_sub(period,1,4)),
+             value = ~as.numeric(value_1k_euro),
+             weight = ~as.numeric(qty_ton),
+             qty = ~as.numeric(sup_quantity)) %>%
+  mutate_(hs6 = ~stringr::str_sub(hs,1,6))
 
 ## To be discussed with Michael:
 ## Preanalysis has to be added here or not?

@@ -5,7 +5,7 @@
 
 convertGeonom2FAO <- function(geonom) {
 
-  data("geonom2fao", package = "tradeproc", envir = environment())
+  data("geonom2fao", package = "faoswsTrade", envir = environment())
 
   geonom <- data_frame(geonom = geonom)
 

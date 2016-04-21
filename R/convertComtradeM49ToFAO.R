@@ -14,7 +14,7 @@ convertComtradeM49ToFAO <- function(reporters) {
   reporters <- data.frame(reporter = reporters,
                           stringsAsFactors = F)
 
-  data("m49faomap", package = "tradeproc", envir = environment())
+  data("m49faomap", package = "faoswsTrade", envir = environment())
 
   reporters <- reporters %>%
     left_join(m49faomap, by = c("reporter" = "m49"))

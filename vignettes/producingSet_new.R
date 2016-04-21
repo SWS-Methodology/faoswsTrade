@@ -106,6 +106,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                                       "comm", "prt", "weight",
                                       "qty", "qunit", "tvalue"),
                             limit = 1e4) ## The limit will go away
+tldata <- tbl_df(tldata)
 
 ## Rename columns
 tldata <- tldata %>%
@@ -134,6 +135,7 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                                 "period", "value_1k_euro",
                                                 "qty_ton", "sup_quantity"),
                                     limit = 1e4)
+esdata <- tbl_df(esdata)
 
 esdata <- esdata %>%
   transmute_(reporter = ~as.numeric(declarant),

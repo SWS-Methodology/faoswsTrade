@@ -162,11 +162,17 @@ esdata <- esdata %>%
 # ---- es_hs2fcl ----
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
 
+# ---- remove non mapped fcls ----
+## Non mapped FCL
+esdata_fcl_not_mapped <- esdata %>%
+  filter_(~is.na(fcl))
+
+esdata <- esdata %>%
+  filter_(~!(is.na(fcl)))
 # ---- es_join_fclunits ----
 
 esdata <- esdata %>%
   left_join(fclunits, by = "fcl")
-
 
 # ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
@@ -182,8 +188,8 @@ tldata <- tldata %>%
           m49rep = ~reporter,
           m49par = ~partner,
           # Conversion from Comtrade M49 to FAO area list
-          reporter = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49rep)),
-          partner = ~as.integer(tradeproc::convertComtradeM49ToFAO(m49par)))
+          reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
+          partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
 # ---- drop_es_from_tl ----
 # They will be replaced by ES data
@@ -194,15 +200,15 @@ tldata <- tldata %>%
               distinct(),
             by = "reporter")
 
-
-
 # ---- drop_reps_not_in_mdb ----
 # We drop reporters what are absent in MDB hsfcl map
 # because in any case we can proceed their data
+
+tldata_not_area_in_fcl_mapping <- tldata %>%
+  filter_(~!(reporter %in% unique(hsfclmap$area)))
+
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
-
-
 
 # ---- tl_hslength ----
 
@@ -525,14 +531,6 @@ tradedatanonrep <- tradedata %>%
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)
 
-
-## Non mapped FCL
-tldata_old %>%
-  filter(is.na(fcl)) %>%
-  select(hs6) %>%
-  unique() %>%
-  write.table(file = "non_mapped_fcl.csv",
-              row.names = F,quote = F)
 
 
 ## Rule 4 "order of magnitude"

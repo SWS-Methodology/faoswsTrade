@@ -521,14 +521,11 @@ tradedata <- bind_rows(
             qty = ~uniqqty, ~value)
 )
 
-
-
 # Detection of missing quantities and values
 
 tradedata <- tradedata %>%
   mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no NA qty, but may be changes later
           no_value = ~value == 0 | is.na(value))
-
 
 # UV calculation
 
@@ -550,13 +547,14 @@ tradedata <- tradedata %>%
 tradedata <- tradedata %>%
   mutate_(qty = ~ifelse(no_quant | outlier,
                         value / uv_reporter,
-                        qty))
+                        qty),
+          flagTrade = ~ifelse(no_quant | outlier, 1, 0))
 
 # Aggregation by fcl
 tradedata <- tradedata %>%
-  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value) %>%
+  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value, ~flagTrade) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
-  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
+  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade")) %>%
   ungroup()
 
 # Adding CPC2 extended code
@@ -570,6 +568,7 @@ no_mapping_fcl2cpc = tradedata %>%
   distinct_(~fcl) %>%
   select_(~fcl) %>%
   unlist()
+
 
 # Non reporting countries
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
@@ -609,49 +608,80 @@ countries_not_mapping_M49 <- bind_rows(
   select_(~fc) %>%
   unlist()
 
+
+
+## Flag from numeric to letters
+complete_trade <- tradedata %>%
+  mutate_(flagTrade = ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),"E",""))
+
 # Output for the SWS
 
 ## Completed trade flow
-completed_trade_flow_cpc <- tradedata %>%
-  select_(~-fcl)
+completed_trade_flow_cpc <- complete_trade %>%
+  select_(~-fcl) %>%
+  mutate_(reportingCountryM49 = ~reporterM49,
+          partnerCountryM49 = ~partnerM49,
+          measuredElementTrade = ~ifelse(flow == 1,
+                                         "5610",
+                                         ifelse(flow == 2,
+                                                "5910",
+                                                NA)),
+          measuredItemFS = ~cpc,
+          timePointYears = ~year,
+          flagTrade = ~flagTrade,
+          qty = ~qty,
+          unit = ~fclunit,
+          value = ~value)
 
-# "reportingCountryM49", "partnerCountryM49", "measuredElementTrade",
-# "measuredItemFS", "timePointYears", "flagTrade"
 
-completed_trade_flow_fcl <- tradedata %>%
-  select_(~-cpc)
+completed_trade_flow_fcl <- complete_trade %>%
+  select_(~-cpc) %>%
+  mutate_(reportingCountryM49 = ~reporterM49,
+          partnerCountryM49 = ~partnerM49,
+          measuredElementTrade = ~ifelse(flow == 1,
+                                         "5610",
+                                         ifelse(flow == 2,
+                                                "5910",
+                                                NA)),
+          measuredItemFS = ~fcl,
+          timePointYears = ~year,
+          flagTrade = ~flagTrade,
+          qty = ~qty,
+          unit = ~fclunit,
+          value = ~value)
 
 
 ## Total trade
-total_trade_fcl <- tradedata %>%
-  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value) %>%
-  group_by_(~year, ~reporter, ~flow, ~fcl, ~fclunit) %>%
-  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
+total_trade_fcl <- complete_trade %>%
+  select_(~year, ~reporterM49, ~partnerM49, ~flow, ~fcl, ~fclunit, ~qty, ~value, ~flagTrade) %>%
+  group_by_(~year, ~reporterM49, ~flow, ~fcl, ~fclunit) %>%
+  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade")) %>%
   ungroup()
 
-# "geographicAreaM49", "measuredElementTrade",
-# "measuredItemFS", "timePointYears", "flagTrade"
+total_trade_fcl <- total_trade_fcl %>%
+  mutate_(geographicAreaM49 = ~reporterM49,
+          measuredElementTrade = ~ifelse(flow == 1,
+                                         "5610",
+                                         ifelse(flow == 2,
+                                                "5910",
+                                                NA)),
+          measuredItemFS, = ~fcl,
+          timePointYears = ~year,
+          flagTrade = ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),"E",""))
 
+total_trade_cpc <- complete_trade %>%
+  select_(~year, ~reporterM49, ~partnerM49, ~flow, ~cpc, ~fclunit, ~qty, ~value, ~flagTrade) %>%
+  group_by_(~year, ~reporterM49, ~flow, ~cpc, ~fclunit) %>%
+  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value", "flagTrade")) %>%
+  ungroup()
 
-### NEED TO ADD THE FLAG COLUMN
-# by default flag "", otherwise "E"
-
-
-## Flow --> MeasureElementTrade 5610 (imports), 5910 exports
-## FAO Country code to m49 fs2m49  (back) (both reporter and partner)
-## FCL --> CPC fcl2cpc
-## fcl units
-
-## Tradeflow with partners
-## TotalTrade without partners
-
-
-## Rule 4 "order of magnitude"
-#https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_prevalidation/R/magnitudeOrder.R
-
-## Kernel calculation
-#https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_prevalidation/R/kdeMode.R
-
-## Simple reliability index
-#https://github.com/mkao006/sws_r_api/blob/040fb7f7b6af05ec35293dd5459ee131b31e5856/r_modules/trade_reliability/simpleReliabilityExampleForDocumentation.R
-
+total_trade_fcl <- total_trade_fcl %>%
+  mutate_(geographicAreaM49 = ~reporterM49,
+          measuredElementTrade = ~ifelse(flow == 1,
+                                         "5610",
+                                         ifelse(flow == 2,
+                                                "5910",
+                                                NA)),
+          measuredItemFS, = ~cpc,
+          timePointYears = ~year,
+          flagTrade = ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),"E",""))

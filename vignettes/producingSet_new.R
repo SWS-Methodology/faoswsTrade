@@ -11,7 +11,7 @@ year <- 2009L
 
 # Coefficient for outlier detection
 # See coef argument in ?boxplot.stats
-# out_coef <- 1.5
+out_coef <- 1.5
 
 debughsfclmap <- TRUE
 multicore <- TRUE
@@ -22,7 +22,8 @@ multicore <- TRUE
 library(faoswsTrade)
 library(faosws)
 library(stringr)
-library(testthat)
+library(scales)
+library(faoswsUtil)
 library(dplyr, warn.conflicts = F)
 
 if(multicore) {
@@ -49,17 +50,31 @@ faosws::SetClientFiles("~/certificates/")
 # ---- datasets ----
 ## Data sets with hs->fcl map (from mdb files)
 # and UNSD area codes (M49)
-## TODO: replace by ad hoc tables
 
+## Old procedure
 data("hsfclmap2", package = "hsfclmap", envir = environment())
+## New procedure
+#hsfclmap2 <- ReadDatatable("hsfclmap2")
+## Old precedure
 data("adjustments", package = "hsfclmap", envir = environment())
-#data("unsdpartnersblocks", package = "tradeproc", envir = environment())
+## New procedure
+#adjustments <- ReadDatatable("adjustments")
+## Old procedure
 data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
-#data("unsdpartners", package = "tradeproc", envir = environment())
+#unsdpartnersblocks <- ReadDatatable("unsdpartnersblocks")
+## Old procedure
 data("unsdpartners", package = "faoswsTrade", envir = environment())
-## units for fcl
-#data("fclunits", package = "tradeproc", envir = environment())
+## New procedure
+#unsdpartners <- ReadDatatable("unsdpartners")
+## units for fcl old procedure
 data("fclunits", package = "faoswsTrade", envir = environment())
+#fclunits <- ReadDatatable("fclunits")
+## units of Comtrade old procedure
+data("comtradeunits", package = "faoswsTrade", envir = environment())
+#comtradeunits <- ReadDatatable(comtradeunits)
+## Eur to USD
+load("data/EURconversionUSD.RData")
+#EURconversionUSD <- ReadDatatable(EURconversionUSD)
 
 # ---- hsfclmapsubset ----
 # HS -> FCL map
@@ -96,10 +111,12 @@ hsfclmap <- hsfclmap2 %>%
 
 # tldata <- getRawAgriTL(year, agricodeslist)
 
-## This require a function to access the SWS, at the moment
-## the data are download from google drive
-#load(paste0("~/Desktop/FAO/Trade/RData/tldata_",year,".RData"))
-#tldata = tldata_raw
+## This function might be faster getting the data just for the specific
+## chapters, and not the entire tldata
+## The chapter of interest are:
+## 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19
+## 20 21 22 23 24 33 35 38 40 41 42 43 50 51 52 53
+## Giorgio is testing the performances in the two cases
 
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                             columns=c("rep", "tyear", "flow",
@@ -114,7 +131,7 @@ tldata <- tldata %>%
           partner = ~as.integer(prt),
           hs = ~comm,
           flow = ~as.integer(flow),
-          year = ~as.integer(tyear),
+          year = ~as.character(tyear),
           value = ~tvalue,
           weight = ~weight,
           qty = ~qty,
@@ -142,7 +159,7 @@ esdata <- esdata %>%
              partner = ~as.numeric(partner),
              hs = ~product_nc,
              flow = ~as.integer(flow),
-             year = ~as.integer(str_sub(period,1,4)),
+             year = ~as.character(str_sub(period,1,4)),
              value = ~as.numeric(value_1k_euro),
              weight = ~as.numeric(qty_ton),
              qty = ~as.numeric(sup_quantity)) %>%
@@ -173,6 +190,11 @@ esdata <- esdata %>%
 
 esdata <- esdata %>%
   left_join(fclunits, by = "fcl")
+
+## na fclunits has to be set up as mt (suggest by Claudia)
+esdata$fclunit <- ifelse(is.na(esdata$fclunit),
+                         "mt",
+                         esdata$fclunit)
 
 # ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
@@ -209,6 +231,16 @@ tldata_not_area_in_fcl_mapping <- tldata %>%
 
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
+
+# ---- reexptoexp ----
+
+# { "id": "1", "text": "Import" },
+# { "id": "2", "text": "Export" },
+# { "id": "4", "text": "re-Import" },
+# { "id": "3", "text": "re-Export" }
+
+tldata <- tldata %>%
+  mutate_(flow = ~ifelse(flow == 4, 1L, ifelse(flow == 3, 2L, flow)))
 
 # ---- tl_hslength ----
 
@@ -254,12 +286,11 @@ tldata <- tldata %>%
   left_join(maxlengthdf %>%
               select_(~-tlmaxlength, ~-mapmaxlength),
             by = c("reporter", "flow")) %>%
-  mutate_(hsext = ~as.numeric(hsfclmap::trailingDigits2(hs,
-                                                        maxlength = maxlength,
-                                                        digit = 0)))
+  mutate_(hsext = ~as.numeric(trailingDigits2(hs,
+                                              maxlength = maxlength,
+                                              digit = 0)))
 
 ### Extension of HS ranges in map ####
-
 
 hsfclmap1 <- hsfclmap %>%
   left_join(maxlengthdf %>%
@@ -268,8 +299,8 @@ hsfclmap1 <- hsfclmap %>%
   filter_(~!is.na(maxlength))                                         ## Attention!!!
 
 hsfclmap1 <- hsfclmap1 %>%
-  mutate_(fromcode = ~as.numeric(hsfclmap::trailingDigits2(fromcode, maxlength, 0)),
-          tocode = ~as.numeric(hsfclmap::trailingDigits2(tocode, maxlength, 9)))
+  mutate_(fromcode = ~as.numeric(trailingDigits2(fromcode, maxlength, 0)),
+          tocode = ~as.numeric(trailingDigits2(tocode, maxlength, 9)))
 
 
 # ---- tl_hs2fcl ----
@@ -279,21 +310,27 @@ tldata <- convertHS2FCL(tldata %>%
                           rename_(hs = ~hsext),
                         hsfclmap1, parallel = multicore)
 
+
+## Non mapped FCL
+tldata_fcl_not_mapped <- tldata %>%
+  filter_(~is.na(fcl))
+
+tldata <- tldata %>%
+  filter_(~!(is.na(fcl)))
+
 #############Units of measurment in TL ####
 
 ## Add target fclunit
 # What units does FAO expects for given FCL codes
 
 tldata <- tldata %>%
-  left_join(fclunits,
-            by = "fcl")
+  left_join(fclunits, by = "fcl")
 
+## na fclunits has to be set up as mt (suggest by Claudia)
+tldata$fclunit <- ifelse(is.na(tldata$fclunit),
+                         "mt",
+                         tldata$fclunit)
 
-## Units of Comtrade
-
-data("comtradeunits",
-     package = "tradeproc",
-     envir = environment())
 
 tldata <- tldata %>%
   mutate_(qunit = ~as.integer(qunit)) %>%
@@ -436,6 +473,7 @@ tldata <- tldata %>%
           ~partner,
           ~flow,
           ~fcl,
+          ~fclunit,
           ~hs,
           weight = ~qtyfcl,
           ~qty,
@@ -455,38 +493,37 @@ esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                       .parallel = multicore)
 
 ## Apply conversion EUR to USD
-load("data/EURconversionUSD.RData")
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
-tldata <- plyr::ldply(sort(unique(tldata$reporter)),
-                      function(x) {
-                        applyadj(x, year, adjustments, tldata)
-                      },
-                      .progress = ifelse(multicore, "none", "text"),
-                      .inform = FALSE,
-                      .parallel = multicore)
+tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
+                             function(x) {
+                               applyadj(x, year, adjustments, tldata)
+                               },
+                             .progress = ifelse(multicore, "none", "text"),
+                             .inform = FALSE,
+                             .parallel = multicore))
+
+# TODO Check quantity/weight
+# The notes should save the results in weight
 
 tradedata <- bind_rows(
   tldata %>%
+    mutate_(hs = ~as.character(hs)) %>%
     select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, qty = ~weight, ~value),
-  # TODO Check quantity/weight
+            ~fcl, ~fclunit, ~hs,
+            qty = ~weight, ~value),
   esdata %>%
     mutate_(uniqqty = ~ifelse(fclunit == "mt", weight, qty)) %>%
     select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, qty = ~uniqqty, ~value)
+            ~fcl, ~fclunit,~hs,
+            qty = ~uniqqty, ~value)
 )
 
 
-tradedata <- tradedata %>%
-  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~qty, ~value) %>%
-  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
-  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
-  ungroup()
 
-# Missing quantities and values
+# Detection of missing quantities and values
 
 tradedata <- tradedata %>%
   mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no NA qty, but may be changes later
@@ -503,7 +540,7 @@ tradedata <- mutate_(tradedata,
 # Outlier detection
 
 tradedata <- tradedata %>%
-  group_by_(~year, ~reporter, ~flow, ~fcl) %>%
+  group_by_(~year, ~reporter, ~flow, ~hs) %>%
   mutate_(
     uv_reporter = ~median(uv, na.rm = T),
     outlier = ~uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)$out) %>%
@@ -515,6 +552,25 @@ tradedata <- tradedata %>%
                         value / uv_reporter,
                         qty))
 
+# Aggregation by fcl
+tradedata <- tradedata %>%
+  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value) %>%
+  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
+  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
+  ungroup()
+
+# Adding CPC2 extended code
+tradedata <- tradedata %>%
+  mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl)))
+
+# Not resolve mapping fcl2cpc
+no_mapping_fcl2cpc = tradedata %>%
+  select_(~fcl, ~cpc) %>%
+  filter_(~is.na(cpc)) %>%
+  distinct_(~fcl) %>%
+  select_(~fcl) %>%
+  unlist()
+
 # Non reporting countries
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                       unique(tradedata$reporter))]
@@ -524,13 +580,70 @@ tradedatanonrep <- tradedata %>%
   filter_(~partner %in% nonreporting) %>%
   mutate_(partner_mirr = ~reporter,
           reporter = ~partner,
+          partner = ~partner_mirr,
           flow = ~ifelse(flow == 2, 1,
                          ifelse(flow == 1, 2,
-                                NA)))
+                                NA)),
+          ## Correction of CIB/FOB
+          ## For now fixed at 12%
+          ## but further analyses needed
+          value = ~ifelse(flow == 1,
+                          value/1.2,
+                          value*1.2)) %>%
+  select_(~-partner_mirr)
 
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)
 
+# Converting back to M49 for the system
+tradedata <- tradedata %>%
+  mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
+          partnerM49 = ~fs2m49(as.character(partner)))
+
+# Report of countries mapping to NA in M49
+countries_not_mapping_M49 <- bind_rows(
+  tradedata %>% select_(fc = ~reporter, m49 = ~reporterM49),
+  tradedata %>% select_(fc = ~partner, m49 = ~partnerM49)) %>%
+  distinct_() %>%
+  filter_(~is.na(m49)) %>%
+  select_(~fc) %>%
+  unlist()
+
+# Output for the SWS
+
+## Completed trade flow
+completed_trade_flow_cpc <- tradedata %>%
+  select_(~-fcl)
+
+# "reportingCountryM49", "partnerCountryM49", "measuredElementTrade",
+# "measuredItemFS", "timePointYears", "flagTrade"
+
+completed_trade_flow_fcl <- tradedata %>%
+  select_(~-cpc)
+
+
+## Total trade
+total_trade_fcl <- tradedata %>%
+  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value) %>%
+  group_by_(~year, ~reporter, ~flow, ~fcl, ~fclunit) %>%
+  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value")) %>%
+  ungroup()
+
+# "geographicAreaM49", "measuredElementTrade",
+# "measuredItemFS", "timePointYears", "flagTrade"
+
+
+### NEED TO ADD THE FLAG COLUMN
+# by default flag "", otherwise "E"
+
+
+## Flow --> MeasureElementTrade 5610 (imports), 5910 exports
+## FAO Country code to m49 fs2m49  (back) (both reporter and partner)
+## FCL --> CPC fcl2cpc
+## fcl units
+
+## Tradeflow with partners
+## TotalTrade without partners
 
 
 ## Rule 4 "order of magnitude"

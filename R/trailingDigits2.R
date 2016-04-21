@@ -1,5 +1,7 @@
 #' Other version of adding of trailing digits. We should check it.
+#'
 #' @export
+#'
 
 trailingDigits2 <- function(client, maxlength, digit) {
   if(any(is.na(maxlength))) stop("NA values in maxlength. Stopping.")

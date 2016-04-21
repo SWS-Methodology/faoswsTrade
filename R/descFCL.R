@@ -10,11 +10,9 @@ descFCL <- function(item,
   if (!is.integer(item))
     item <- as.integer(item)
 
-  if(is.SWSEnvir()) {
-    fclcodelist <- faosws::GetCodeList(swsdomain,
+  fclcodelist <- faosws::GetCodeList(swsdomain,
                                        swsdataset,
                                        swsdimension)
-  } else data("fclcodelist", package = "tradeproc", envir = environment())
 
   # It is possible to ask SWS on specific codes, but if it is absent, you
   # get a 500 error from the server. So it is easier to get full set

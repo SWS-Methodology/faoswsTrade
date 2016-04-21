@@ -12,11 +12,11 @@ convertHS2FCL <- function(tradedata, hsfclmap, parallel) {
     select_(~reporter, ~flow, ~hs) %>%
     distinct()
 
-  fcltrade <- hsfclmap::hsInRange(uniqtrade$hs,
-                                  uniqtrade$reporter,
-                                  uniqtrade$flow,
-                                  hsfclmap,
-                                  parallel = parallel)
+  fcltrade <- hsInRange(uniqtrade$hs,
+                        uniqtrade$reporter,
+                        uniqtrade$flow,
+                        hsfclmap,
+                        parallel = parallel)
 
   if(any(is.na(fcltrade$fcl)))
     message(paste0("Proportion of HS-codes not converted in FCL: ",

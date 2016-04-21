@@ -1,10 +1,13 @@
 #' Adds zeros to the end of hs column to make both columns of equal length
 #'
-#'@export
+#' @export
+#'
 
 trailingDigits <- function(from, to, digit) {
+
   from_len <- stringr::str_length(from)
   to_len   <- stringr::str_length(to)
+
   to <- ifelse(from_len > to_len,
                paste0(to,
                       vapply(from_len - to_len,
@@ -15,7 +18,9 @@ trailingDigits <- function(from, to, digit) {
                       )
                ),
                to
+
   )
   to
+
 }
 

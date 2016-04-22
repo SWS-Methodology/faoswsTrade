@@ -8,3 +8,4 @@ tldata.RData
 *.rds
 .~lock*
 tradeproc/vignettes/producingSet_new_cache
+*.zip

@@ -14,7 +14,7 @@ year <- 2009L
 out_coef <- 1.5
 
 debughsfclmap <- TRUE
-multicore <- TRUE
+multicore <- FALSE
 
 # ---- libs ----
 
@@ -36,7 +36,7 @@ if(multicore) {
 # ---- swsdebug ----
 
 # Connection to SWS
-# TODO: DEV MODE!!!!!!!!
+if(CheckDebug()){
 faosws::SetClientFiles("~/certificates/")
 ## ADDED COMMENT
  faosws::GetTestEnvironment(
@@ -47,6 +47,7 @@ faosws::SetClientFiles("~/certificates/")
    token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
  # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
  #token = token)
+}
 
 # ---- datasets ----
 ## Data sets with hs->fcl map (from mdb files)
@@ -95,7 +96,7 @@ hsfclmap <- hsfclmap2 %>%
   select_(~-yeardistance) %>%
   ## and add trailing 9 to tocode, where it is shorter
   ## TODO: check how many such cases and, if possible, move to manualCorrectoins
-  mutate_(tocode = ~hsfclmap::trailingDigits(fromcode,
+  mutate_(tocode = ~faoswsTrade::trailingDigits(fromcode,
                                              tocode,
                                              digit = 9))
 
@@ -392,52 +393,54 @@ fcl_spec_mt_conv <- tldata %>%
   distinct() %>%
   mutate_(fcldesc = ~descFCL(fcl))
 
-fcl_spec_mt_conv$convspec <- 0
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
-                            fcl_spec_mt_conv$wco == "1000u"] <- .01
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
-                            fcl_spec_mt_conv$wco == "u"] <- .0001
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                            fcl_spec_mt_conv$wco == "u"] <- .00006
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                            fcl_spec_mt_conv$wco == "2u"] <- .00012
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                            fcl_spec_mt_conv$wco == "12u"] <- .00072
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                            fcl_spec_mt_conv$wco == "1000u"] <- .006
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
-                            fcl_spec_mt_conv$wco == "u"] <- 0.000008
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
-                            fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
-                            fcl_spec_mt_conv$wco == "u"] <- 0.000008
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
-                            fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
-fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit Prepared nes" &
-                            fcl_spec_mt_conv$wco == "U (jeu/pack)"] <- 0.0208333
+if(NROW(fcl_spec_mt_conv) > 0){
+  fcl_spec_mt_conv$convspec <- 0
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
+                              fcl_spec_mt_conv$wco == "1000u"] <- .01
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
+                              fcl_spec_mt_conv$wco == "u"] <- .0001
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
+                              fcl_spec_mt_conv$wco == "u"] <- .00006
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
+                              fcl_spec_mt_conv$wco == "2u"] <- .00012
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
+                              fcl_spec_mt_conv$wco == "12u"] <- .00072
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
+                              fcl_spec_mt_conv$wco == "1000u"] <- .006
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
+                              fcl_spec_mt_conv$wco == "u"] <- 0.000008
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
+                              fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
+                              fcl_spec_mt_conv$wco == "u"] <- 0.000008
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
+                              fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
+  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit Prepared nes" &
+                              fcl_spec_mt_conv$wco == "U (jeu/pack)"] <- 0.0208333
 
-### Add commodity specific conv.factors to dataset
+  ### Add commodity specific conv.factors to dataset
 
-tldata <- tldata %>%
-  left_join(fcl_spec_mt_conv %>%
-              select_(~-fcldesc),
-            by = c("fcl", "wco"))
+  tldata <- tldata %>%
+    left_join(fcl_spec_mt_conv %>%
+                select_(~-fcldesc),
+              by = c("fcl", "wco"))
+  ########## Conversion of units
 
-## Save intermediate dataset for checks
-tldata_old = tldata
+  #### FCL specific conv
 
-########## Conversion of units
+  tldata$qtyfcl <- tldata$qty * tldata$convspec
 
-#### FCL specific conv
+  #### Common conv
+  # If no specific conv. factor, we apply general
 
-tldata$qtyfcl <- tldata$qty * tldata$convspec
+  tldata$qtyfcl <- ifelse(is.na(tldata$convspec),
+                          tldata$qty * tldata$conv,
+                          tldata$qtyfcl)
+} else {
+  tldata$qtyfcl = NA
+}
 
-#### Common conv
-# If no specific conv. factor, we apply general
 
-tldata$qtyfcl <- ifelse(is.na(tldata$convspec),
-                        tldata$qty * tldata$conv,
-                        tldata$qtyfcl)
 
 ##### No qty, but weight and target is mt: we take weight from there
 

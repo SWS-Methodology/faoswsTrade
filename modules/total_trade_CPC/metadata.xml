@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <RScript xmlns="http://www.fao.org/rScript">
-    <Name>Trade</Name>
-    <Description>Complete Trade Flow CPC</Description>
+    <Name>Total Trade CPC</Name>
+    <Description>Total Trade CPC bla bla</Description>
     <Category>Imputation</Category>
     <Authors>
         <Author>
@@ -11,14 +11,12 @@
     </Authors>
     <Datasets>
         <MainDataset>
-            <Code>complete_tf_cpc</Code>
+            <Code>total_trade_CPC</Code>
             <SelectableDimensions>
                 <SelectableDimension compulsory="true">geographicAreaM49</SelectableDimension>
                 <SelectableDimension compulsory="true">timePointYears</SelectableDimension>
                 <SelectableDimension compulsory="true">measuredItemCPC</SelectableDimension>
                 <SelectableDimension compulsory="true">measuredElementTrade</SelectableDimension>
-                <SelectableDimension compulsory="true">Value</SelectableDimension>
-                <SelectableDimension compulsory="true">flagTrade</SelectableDimension>
             </SelectableDimensions>
         </MainDataset>
     </Datasets>

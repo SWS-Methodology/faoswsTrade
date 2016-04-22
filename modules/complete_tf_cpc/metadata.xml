@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RScript xmlns="http://www.fao.org/rScript">
+    <Name>Trade</Name>
+    <Description>Complete Trade Flow CPC</Description>
+    <Category>Imputation</Category>
+    <Authors>
+        <Author>
+            <Name>Marco Garieri</Name>
+            <Mail>marco.garieri@fao.org</Mail>
+        </Author>
+    </Authors>
+    <Datasets>
+        <MainDataset>
+            <Code>complete_tf_cpc</Code>
+            <SelectableDimensions>
+                <SelectableDimension compulsory="true">reportingCountryM49</SelectableDimension>
+                <SelectableDimension compulsory="true">partnerCountryM49</SelectableDimension>
+                <SelectableDimension compulsory="true">timePointYears</SelectableDimension>
+                <SelectableDimension compulsory="true">measuredItemCPC</SelectableDimension>
+                <SelectableDimension compulsory="true">measuredElementTrade</SelectableDimension>
+                <SelectableDimension compulsory="true">Value</SelectableDimension>
+                <SelectableDimension compulsory="true">flagTrade</SelectableDimension>
+            </SelectableDimensions>
+        </MainDataset>
+    </Datasets>
+    <InteractiveValidation>false</InteractiveValidation>
+    <Background>false</Background>
+</RScript>

@@ -37,16 +37,16 @@ if(multicore) {
 
 # Connection to SWS
 if(CheckDebug()){
-faosws::SetClientFiles("~/certificates/")
-## ADDED COMMENT
- faosws::GetTestEnvironment(
-   # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
-   # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
-   baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
-   # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
-   token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
- # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
- #token = token)
+  faosws::SetClientFiles("~/.R/qa")
+  ## ADDED COMMENT
+  faosws::GetTestEnvironment(
+    # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
+    # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
+    baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
+    # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
+    token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
+  # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
+  #token = token)
 }
 
 # ---- datasets ----
@@ -61,22 +61,30 @@ hsfclmap2 <- tbl_df(ReadDatatable("hsfclmap2"))
 #data("adjustments", package = "hsfclmap", envir = environment())
 ## New procedure
 adjustments <- tbl_df(ReadDatatable("adjustments"))
+colnames(adjustments) = sapply(colnames(adjustments), function(x) gsub("adj_","",x))
+adj_cols_int <- c("year","flow","fcl","partner","reporter")
+adj_cols_dbl <- c("hs")
+adjustments = adjustments %>%
+  mutate_each_(funs(as.integer),adj_cols_int) %>%
+  mutate_each_(funs(as.double),adj_cols_dbl)
+
+###adjustments = adjustments %>%
+###  mutate_(hs = ~as.double(adjustments))
 ## Old procedure
 data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
-#unsdpartnersblocks <- ReadDatatable("unsdpartnersblocks")
+#unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
 ## Old procedure
 data("unsdpartners", package = "faoswsTrade", envir = environment())
-## New procedure
-#unsdpartners <- ReadDatatable("unsdpartners")
+#unsdpartners <- tbl_df(ReadDatatable("unsdpartners"))
 ## units for fcl old procedure
 data("fclunits", package = "faoswsTrade", envir = environment())
-#fclunits <- ReadDatatable("fclunits")
+#fclunits <- tbl_df(ReadDatatable("fclunits"))
 ## units of Comtrade old procedure
 data("comtradeunits", package = "faoswsTrade", envir = environment())
-#comtradeunits <- ReadDatatable(comtradeunits)
+#comtradeunits <- tbl_df(ReadDatatable(comtradeunits))
 ## Eur to USD
-load("data/EURconversionUSD.RData")
-#EURconversionUSD <- ReadDatatable(EURconversionUSD)
+data("EURconversionUSD", package = "faoswsTrade", envir = environment())
+#EURconversionUSD <- tbl_df(ReadDatatable(EURconversionUSD))
 
 # ---- hsfclmapsubset ----
 # HS -> FCL map
@@ -97,8 +105,8 @@ hsfclmap <- hsfclmap2 %>%
   ## and add trailing 9 to tocode, where it is shorter
   ## TODO: check how many such cases and, if possible, move to manualCorrectoins
   mutate_(tocode = ~faoswsTrade::trailingDigits(fromcode,
-                                             tocode,
-                                             digit = 9))
+                                                tocode,
+                                                digit = 9))
 
 
 
@@ -121,23 +129,34 @@ hsfclmap <- hsfclmap2 %>%
 ## Giorgio is testing the performances in the two cases
 
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                            columns=c("rep", "tyear", "flow",
-                                      "comm", "prt", "weight",
-                                      "qty", "qunit", "tvalue"),
-                            limit = 1e4) ## The limit will go away
+                        columns=c("rep", "tyear", "flow",
+                                  "comm", "prt", "weight",
+                                  "qty", "qunit", "tvalue",
+                                  "chapter"),
+                        where = "chapter IN ('01', '02', '03', '04', '05', '06', '07',
+                        '08', '09', '10', '11', '12',  '13', '14',
+                        '15', '16', '17', '18', '19', '20', '21',
+                        '22', '23', '24', '33', '35', '38', '40',
+                        '41', '42', '43', '50', '51', '52', '53')", ## Chapter provided by team B/C
+                        limit = 1e4) ## The limit will go away
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+                        columns=c("rep", "tyear", "flow",
+                                  "comm", "prt", "weight",
+                                  "qty", "qunit", "tvalue"),
+                        limit = 1e4) ## The limit will go away
 tldata <- tbl_df(tldata)
 
 ## Rename columns
 tldata <- tldata %>%
   transmute_(reporter = ~as.integer(rep),
-          partner = ~as.integer(prt),
-          hs = ~comm,
-          flow = ~as.integer(flow),
-          year = ~as.character(tyear),
-          value = ~tvalue,
-          weight = ~weight,
-          qty = ~qty,
-          qunit = ~as.integer(qunit)) %>%
+             partner = ~as.integer(prt),
+             hs = ~comm,
+             flow = ~as.integer(flow),
+             year = ~as.character(tyear),
+             value = ~tvalue,
+             weight = ~weight,
+             qty = ~qty,
+             qunit = ~as.integer(qunit)) %>%
   mutate_(hs6 = ~stringr::str_sub(hs,1,6))
 
 #### Download ES data ####
@@ -149,11 +168,11 @@ tldata <- tldata %>%
 #esdata = esdata_raw
 
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
-                                    columns = c("declarant", "partner",
-                                                "product_nc", "flow",
-                                                "period", "value_1k_euro",
-                                                "qty_ton", "sup_quantity"),
-                                    limit = 1e4)
+                        columns = c("declarant", "partner",
+                                    "product_nc", "flow",
+                                    "period", "value_1k_euro",
+                                    "qty_ton", "sup_quantity"),
+                        limit = 1e4)
 esdata <- tbl_df(esdata)
 
 esdata <- esdata %>%
@@ -490,11 +509,12 @@ esdata_old = esdata
 
 esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                       function(x) {
-                        applyadj(x, year, adjustments, esdata)
+                        applyadj(x, year, as.data.frame(adjustments), esdata)
                       },
                       .progress = ifelse(multicore, "none", "text"),
                       .inform = FALSE,
                       .parallel = multicore)
+
 
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
@@ -503,8 +523,8 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 
 tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
                              function(x) {
-                               applyadj(x, year, adjustments, tldata)
-                               },
+                               applyadj(x, year, as.data.frame(adjustments), tldata)
+                             },
                              .progress = ifelse(multicore, "none", "text"),
                              .inform = FALSE,
                              .parallel = multicore))
@@ -631,15 +651,15 @@ complete_trade_flow_cpc <- complete_trade %>%
   select_(~-fcl) %>%
   filter_(~!(is.na(cpc))) %>%
   transmute_(reportingCountryM49 = ~reporterM49,
-          partnerCountryM49 = ~partnerM49,
-          flow = ~flow,
-          timePointYears = ~year,
-          flagObservationStatus = ~flagObservationStatus,
-          flagMethod = ~flagMethod,
-          measuredItemCPC = ~cpc,
-          qty = ~qty,
-          unit = ~fclunit,
-          value = ~value)
+             partnerCountryM49 = ~partnerM49,
+             flow = ~flow,
+             timePointYears = ~year,
+             flagObservationStatus = ~flagObservationStatus,
+             flagMethod = ~flagMethod,
+             measuredItemCPC = ~cpc,
+             qty = ~qty,
+             unit = ~fclunit,
+             value = ~value)
 
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
@@ -650,8 +670,8 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                 -unit, -flow) %>%
   rowwise() %>%
   mutate_(measuredElementTrade = ~convertMeasuredElementTrade(measuredElementTrade,
-                                                             unit,
-                                                             flow)) %>%
+                                                              unit,
+                                                              flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
   select_(~-flow,~-unit) %>%

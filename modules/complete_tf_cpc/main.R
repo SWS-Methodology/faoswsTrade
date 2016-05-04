@@ -54,13 +54,13 @@ faosws::SetClientFiles("~/certificates/")
 # and UNSD area codes (M49)
 
 ## Old procedure
-data("hsfclmap2", package = "hsfclmap", envir = environment())
+#data("hsfclmap2", package = "hsfclmap", envir = environment())
 ## New procedure
-#hsfclmap2 <- ReadDatatable("hsfclmap2")
+hsfclmap2 <- tbl_df(ReadDatatable("hsfclmap2"))
 ## Old precedure
-data("adjustments", package = "hsfclmap", envir = environment())
+#data("adjustments", package = "hsfclmap", envir = environment())
 ## New procedure
-#adjustments <- ReadDatatable("adjustments")
+adjustments <- tbl_df(ReadDatatable("adjustments"))
 ## Old procedure
 data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
 #unsdpartnersblocks <- ReadDatatable("unsdpartnersblocks")

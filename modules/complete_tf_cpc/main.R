@@ -49,6 +49,8 @@ if(CheckDebug()){
   #token = token)
 }
 
+startTime = Sys.time()
+
 # ---- datasets ----
 ## Data sets with hs->fcl map (from mdb files)
 # and UNSD area codes (M49)
@@ -680,6 +682,9 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
 
 
 SaveData("trade","completed_tf_cpc",data.table::as.data.table(complete_trade_flow_cpc))
+
+paste("Module completed with in",
+      round(difftime(Sys.time(), startTime, units = "min"), 2), "minutes.")
 
 
 ### TO DO: FCL output

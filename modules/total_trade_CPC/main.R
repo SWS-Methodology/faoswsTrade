@@ -24,6 +24,8 @@ faosws::GetTestEnvironment(
 }
 
 
+startTime = Sys.time()
+
 completetrade <- ReadDatatable("completed_tf_cpc",
                                 where=paste0("timePointYears = '",year,"'")) ## The limit will go away
 
@@ -45,6 +47,8 @@ total_trade_cpc <- total_trade_cpc %>%
 
 SaveData("trade","total_trade_CPC",data.table::as.data.table(total_trade_cpc))
 
+paste("Module completed with in",
+      round(difftime(Sys.time(), startTime, units = "min"), 2), "minutes.")
 
 ### TO DO FCL
 #total_trade_fcl <- total_trade %>%

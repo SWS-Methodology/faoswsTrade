@@ -45,10 +45,20 @@ total_trade_cpc <- completetrade %>%
 total_trade_cpc <- total_trade_cpc %>%
   mutate_(flagTrade = ~ifelse(flagTrade == 1, "I", ""))
 
-SaveData("trade","total_trade_CPC",data.table::as.data.table(total_trade_cpc))
+stats <- SaveData("trade","total_trade_CPC",data.table::as.data.table(total_trade_cpc))
 
-paste("Module completed with in",
-      round(difftime(Sys.time(), startTime, units = "min"), 2), "minutes.")
+sprintf(
+  "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+  difftime(Sys.time(), startTime, units = "min"),
+  stats[["inserted"]],
+  stats[["appended"]],
+  stats[["ignored"]],
+  stats[["discarded"]]
+)
 
 ### TO DO FCL
 #total_trade_fcl <- total_trade %>%

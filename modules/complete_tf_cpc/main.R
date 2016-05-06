@@ -682,11 +682,20 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   mutate_(flagTrade = ~flagObservationStatus) %>%
   select_(~-flagMethod, ~-flagObservationStatus)
 
+stats <- SaveData("trade","completed_tf_cpc",data.table::as.data.table(complete_trade_flow_cpc))
 
-SaveData("trade","completed_tf_cpc",data.table::as.data.table(complete_trade_flow_cpc))
-
-paste("Module completed with in",
-      round(difftime(Sys.time(), startTime, units = "min"), 2), "minutes.")
+sprintf(
+"Module completed in %1.2f minutes.
+Values inserted: %s
+       appended: %s
+       ignored: %s
+       discarded: %s",
+      difftime(Sys.time(), startTime, units = "min"),
+      stats[["inserted"]],
+      stats[["appended"]],
+      stats[["ignored"]],
+      stats[["discarded"]]
+      )
 
 
 ### TO DO: FCL output

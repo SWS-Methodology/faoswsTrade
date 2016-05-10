@@ -664,17 +664,16 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -reportingCountryM49,
                 -partnerCountryM49, -measuredItemCPC,
                 -timePointYears, -flagObservationStatus,
-                -flagMethod, -flagObservationStatus,
-                -unit, -flow) %>%
+                -flagMethod, -unit, -flow) %>%
   rowwise() %>%
   mutate_(measuredElementTrade = ~convertMeasuredElementTrade(measuredElementTrade,
                                                               unit,
                                                               flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
-  select_(~-flow,~-unit) %>%
-  mutate_(flagTrade = ~flagObservationStatus) %>%
-  select_(~-flagMethod, ~-flagObservationStatus)
+  select_(~-flow,~-unit)# %>%
+  #mutate_(flagTrade = ~flagObservationStatus) %>%
+  #select_(~-flagMethod, ~-flagObservationStatus)
 
 stats <- SaveData("trade","completed_tf_cpc",data.table::as.data.table(complete_trade_flow_cpc))
 

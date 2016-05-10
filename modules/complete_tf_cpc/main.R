@@ -37,7 +37,7 @@ if(multicore) {
 
 # Connection to SWS
 if(CheckDebug()){
-  faosws::SetClientFiles("~/.R/qa")
+  faosws::SetClientFiles("~/certificates/qa")
   ## ADDED COMMENT
   faosws::GetTestEnvironment(
     # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
@@ -139,13 +139,13 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         '08', '09', '10', '11', '12',  '13', '14',
                         '15', '16', '17', '18', '19', '20', '21',
                         '22', '23', '24', '33', '35', '38', '40',
-                        '41', '42', '43', '50', '51', '52', '53')", ## Chapter provided by team B/C
-                        limit = 1e4) ## The limit will go away
+                        '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
+                        ) ## The limit will go away
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns=c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
-                                  "qty", "qunit", "tvalue"),
-                        limit = 1e4) ## The limit will go away
+                                  "qty", "qunit", "tvalue")
+                        ) ## The limit will go away
 tldata <- tbl_df(tldata)
 
 ## Rename columns
@@ -173,8 +173,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         columns = c("declarant", "partner",
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
-                                    "qty_ton", "sup_quantity"),
-                        limit = 1e4)
+                                    "qty_ton", "sup_quantity")
+                        )
 esdata <- tbl_df(esdata)
 
 esdata <- esdata %>%

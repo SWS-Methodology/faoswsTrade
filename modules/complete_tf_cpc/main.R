@@ -141,11 +141,6 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         '22', '23', '24', '33', '35', '38', '40',
                         '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
                         ) ## The limit will go away
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns=c("rep", "tyear", "flow",
-                                  "comm", "prt", "weight",
-                                  "qty", "qunit", "tvalue")
-                        ) ## The limit will go away
 tldata <- tbl_df(tldata)
 
 ## Rename columns

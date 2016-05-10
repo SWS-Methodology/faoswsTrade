@@ -188,11 +188,10 @@ esdata <- esdata %>%
 
 # ---- geonom2fao ----
 
-
-esdata <- esdata %>%
-  mutate_(reporter = ~convertGeonom2FAO(reporter),
-          partner = ~convertGeonom2FAO(partner)) %>%
-  filter_(~partner != 252)
+esdata <- as.data.table(esdata)
+esdata[, `:=`(reporter = convertGeonom2FAO(reporter), partner = convertGeonom2FAO(partner))]
+esdata <- esdata[partner != 252, ]
+esdata <- tbl_df(esdata)
 
 # ---- es_hs2fcl ----
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)

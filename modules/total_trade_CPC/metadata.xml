@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <RScript xmlns="http://www.fao.org/rScript">
     <Name>Total Trade CPC</Name>
-    <Description>Total Trade CPC bla bla</Description>
+    <Description>This module takes the output of Complete Trade Flow CPC and aggregates per reporters the information, in order to report not the flow of trade, but the total Imports and Exports (quantities and values) for each country, to be used in the computation of the Food Balanced Sheet (FBS).</Description>
     <Category>Imputation</Category>
     <Authors>
         <Author>

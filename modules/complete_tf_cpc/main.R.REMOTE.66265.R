@@ -671,7 +671,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                                                               flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
-  select_(~-flow,~-unit) %>%
+  select_(~-flow,~-unit)# %>%
   mutate_(flagTrade = ~flagObservationStatus) %>%
   select_(~-flagMethod, ~-flagObservationStatus)
 

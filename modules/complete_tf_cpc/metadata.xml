@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <RScript xmlns="http://www.fao.org/rScript">
     <Name>Complete Trade Flow CPC</Name>
-    <Description>Complete Trade Flow CPC bla bla</Description>
+    <Description> This module computes Imports and Exports quantities and valus for a specific year. The module reports the flows of trade, thus given information about reporters and partners. It takes UNSD tariffline and Eurostat data and aggregates multiple records, identifies and corrects outlier (based on unit of value per commodity) and perform mirroring for non-reporting countries.</Description>
     <Category>Imputation</Category>
     <Authors>
         <Author>

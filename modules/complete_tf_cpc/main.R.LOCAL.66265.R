@@ -664,7 +664,8 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -reportingCountryM49,
                 -partnerCountryM49, -measuredItemCPC,
                 -timePointYears, -flagObservationStatus,
-                -flagMethod, -unit, -flow) %>%
+                -flagMethod, -flagObservationStatus,
+                -unit, -flow) %>%
   rowwise() %>%
   mutate_(measuredElementTrade = ~convertMeasuredElementTrade(measuredElementTrade,
                                                               unit,

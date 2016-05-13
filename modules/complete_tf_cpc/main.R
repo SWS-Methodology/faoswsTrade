@@ -86,7 +86,7 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 #comtradeunits <- tbl_df(ReadDatatable(comtradeunits))
 ## Eur to USD
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
-#EURconversionUSD <- tbl_df(ReadDatatable(EURconversionUSD))
+#EURconversionUSD <- tbl_df(ReadDatatable(eur_conversion_usd))
 
 # ---- hsfclmapsubset ----
 # HS -> FCL map

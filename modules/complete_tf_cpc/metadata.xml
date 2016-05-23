@@ -11,10 +11,10 @@
     </Authors>
     <Datasets>
         <MainDataset>
-            <Code>completed_tf_cpc</Code>
+            <Code>completed_tf_cpc_m49</Code>
             <SelectableDimensions>
-                <SelectableDimension compulsory="true">reportingCountryM49</SelectableDimension>
-                <SelectableDimension compulsory="true">partnerCountryM49</SelectableDimension>
+                <SelectableDimension compulsory="true">geographicAreaM49Reporter</SelectableDimension>
+                <SelectableDimension compulsory="true">geographicAreaM49Partner</SelectableDimension>
                 <SelectableDimension compulsory="true">timePointYears</SelectableDimension>
                 <SelectableDimension compulsory="true">measuredItemCPC</SelectableDimension>
                 <SelectableDimension compulsory="true">measuredElementTrade</SelectableDimension>

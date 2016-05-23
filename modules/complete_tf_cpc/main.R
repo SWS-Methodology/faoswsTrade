@@ -648,8 +648,8 @@ complete_trade_flow_cpc <- complete_trade %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
   filter_(~!(is.na(cpc))) %>%
-  transmute_(reportingCountryM49 = ~reporterM49,
-             partnerCountryM49 = ~partnerM49,
+  transmute_(geographicAreaM49Reporter = ~reporterM49,
+             geographicAreaM49Partner = ~partnerM49,
              flow = ~flow,
              timePointYears = ~year,
              flagObservationStatus = ~flagObservationStatus,
@@ -661,8 +661,8 @@ complete_trade_flow_cpc <- complete_trade %>%
 
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
-  tidyr::gather(measuredElementTrade, Value, -reportingCountryM49,
-                -partnerCountryM49, -measuredItemCPC,
+  tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
+                -geographicAreaM49Partner, -measuredItemCPC,
                 -timePointYears, -flagObservationStatus,
                 -flagMethod, -unit, -flow) %>%
   rowwise() %>%
@@ -675,7 +675,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   mutate_(flagTrade = ~flagObservationStatus) %>%
   select_(~-flagMethod, ~-flagObservationStatus)
 
-stats <- SaveData("trade","completed_tf_cpc",data.table::as.data.table(complete_trade_flow_cpc))
+stats <- SaveData("trade","completed_tf_cpc_m49",data.table::as.data.table(complete_trade_flow_cpc))
 
 sprintf(
 "Module completed in %1.2f minutes.

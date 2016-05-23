@@ -1,18 +1,3 @@
-
-
-# ---- settings ----
-
-# Year for processing
-year <- 2009L
-
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
-
-
-# Coefficient for outlier detection
-# See coef argument in ?boxplot.stats
-out_coef <- 1.5
-
 debughsfclmap <- TRUE
 multicore <- FALSE
 
@@ -48,6 +33,19 @@ if(CheckDebug()){
   # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
   #token = token)
 }
+
+# ---- settings ----
+
+# Year for processing
+year <- as.integer(swsContext.computationParams$year)
+
+## List of datasets available
+#datas = faosws::FetchDatatableConfig()
+
+
+# Coefficient for outlier detection
+# See coef argument in ?boxplot.stats
+out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
 startTime = Sys.time()
 

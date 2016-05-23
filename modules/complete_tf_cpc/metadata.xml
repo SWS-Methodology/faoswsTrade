@@ -9,6 +9,23 @@
             <Mail>marco.garieri@fao.org</Mail>
         </Author>
     </Authors>
+    <Params>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>year</Code>
+            <Label>Year</Label>
+            <Description>Year on which to run trade module (session is ignored)</Description>
+            <Compulsory>true</Compulsory>
+            <Min>1990</Min>
+            <Max>2016</Max>
+      </Param>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>out_coef</Code>
+            <Label>Outlier coefficient</Label>
+            <Description>Coefficient for outlier detection (Default: 1.5)</Description>
+            <Compulsory>true</Compulsory>
+            <Min>0</Min>
+      </Param>
+    </Params>
     <Datasets>
         <MainDataset>
             <Code>completed_tf_cpc</Code>

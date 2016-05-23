@@ -188,7 +188,7 @@ esdata <- esdata %>%
 
 # ---- geonom2fao ----
 
-esdata <- as.data.table(esdata)
+esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter), partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)

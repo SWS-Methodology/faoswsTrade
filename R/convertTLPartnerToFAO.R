@@ -1,7 +1,10 @@
+#' Convert tariffline partner code to FAO code
+#'
+#'
 #' @import dplyr
 #' @export
 
-convertTLParnterToFAO <- function(partners) {
+convertTLPartnerToFAO <- function(partners) {
   partners <- data.frame(partner = as.integer(partners))
 
   data("FAOcountryProfile",

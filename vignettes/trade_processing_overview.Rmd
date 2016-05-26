@@ -34,7 +34,7 @@ Conversion of area codes into FAO standard is required for further steps of mapp
 
 Conversion of reporters' codes is done with using of countrycode R-package with matching by country names. Exceptions are stored in `convertComtradeM49ToFAO()` R-function.
 
- Conversion of partners' codes is done with country profiles table from FAOSTAT package. Exceptions are stored in `convertTLParnterToFAO()` R-function.
+ Conversion of partners' codes is done with country profiles table from FAOSTAT package. Exceptions are stored in `convertTLPartnerToFAO()` R-function.
 
  __TODO:__ to clarify should we use `swsUtils::m492fs()` function for both columns.
 

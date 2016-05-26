@@ -1,5 +1,6 @@
 #' Temporary function to convert fcl to cpc
 #'
+#' @import data.table
 #' @export
 
 fcl2cpc2  <- function(fclCodes){

@@ -7,6 +7,7 @@ multicore <- FALSE
 library(data.table)
 library(faoswsTrade)
 library(faosws)
+library(data.table)
 library(stringr)
 library(scales)
 library(faoswsUtil)

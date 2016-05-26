@@ -577,7 +577,7 @@ tradedata <- tradedata %>%
 
 # Adding CPC2 extended code
 tradedata <- tradedata %>%
-  mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl)))
+  mutate_(cpc = ~fcl2cpc2(sprintf("%04d", fcl)))
 
 # Not resolve mapping fcl2cpc
 no_mapping_fcl2cpc = tradedata %>%

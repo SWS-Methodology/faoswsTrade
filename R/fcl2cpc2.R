@@ -1,3 +1,7 @@
+#' Temporary function to convert fcl to cpc
+#'
+#' @export
+
 fcl2cpc2  <- function(fclCodes){
   warning("This function need to refers to a table in the SWS and not to a local one.")
   stopifnot(is(fclCodes, "character"))

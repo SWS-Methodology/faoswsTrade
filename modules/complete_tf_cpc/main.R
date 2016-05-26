@@ -29,7 +29,8 @@ if(CheckDebug()){
     # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
     baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
     # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
-    token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
+    token = "8e0f8fe1-1325-481a-87d8-264c8792aa08")
+    #token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
   # token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
   #token = token)
 }

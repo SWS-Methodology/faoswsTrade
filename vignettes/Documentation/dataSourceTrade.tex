@@ -297,11 +297,14 @@ The module produce the list of non-reporting countries: these are the countries 
 Upon availability of time-series data, a check of the FCL-based unit values accross the time series is performed.\\
 A check is performed to account of the CIF/FOB differences [around 12\%?] (still to be perfomed among time series).
 
-\subsubsection{Unbalanced World Trade Matrix}
+\subsubsection{Complete Trade Flow}
 The commodity balance check is computed, which will lead to the "Trade Imbalances" report (not yet implemented).
+In this first part of the routine the module produce a final table with information of Imports and Exports records (both values and quantities). Each line represents a unique combination of reporter-partner-commodity-flow.
 
 \subsection{Total Trade}
-The convertion from FCL to CPC version 2.1 expanded is added and the final output tables of trade by commodity is provided.
+This second module produce a table aggregating all the records of the partners for a specific reporter. Still Imports and Exports (both values and quantities) are reported. Each line represents a unique combination of reporter-commodity-flow.
+
+
 
 
 \section{Flow Chart Process}
@@ -311,6 +314,13 @@ Description of the entire flow
 \begin{center}\includegraphics[scale = 0.01]{"trade_1_bis"}\end{center}
 %\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_3"}\end{center}
 %\begin{center}\includegraphics[width=20mm,scale=0.1]{"trade_4"}\end{center}
+
+
+\section{Open issues}
+At the time being the two modules (Complete Trade Flow and Total Trade) report information of commodity in with CPC version 2.1 standards.\\
+The definition of the country code is still under discussion.\\
+A unique flag reporting value not official is implemented, but more discussions are still needed to define the proper flag system of the trade module.
+\newpage
 
 
 \end{document}

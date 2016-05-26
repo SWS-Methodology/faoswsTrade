@@ -36,6 +36,8 @@ if(CheckDebug()){
 
 # ---- settings ----
 
+stopifnot(!is.null(swsContext.computationParams$year), !is.null(swsContext.computationParams$out_coef))
+
 # Year for processing
 year <- as.integer(swsContext.computationParams$year)
 
@@ -673,7 +675,12 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   #mutate_(flagTrade = ~flagObservationStatus) %>%
   #select_(~-flagMethod, ~-flagObservationStatus)
 
-stats <- SaveData("trade","completed_tf_cpc_m49",data.table::as.data.table(complete_trade_flow_cpc))
+complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
+
+data.table::setcolorder(complete_trade_flow_cpc, c("geographicAreaM49Reporter", "geographicAreaM49Partner",
+                                       "measuredItemCPC", "measuredElementTrade", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
+
+stats <- SaveData("trade","completed_tf_cpc_m49", complete_trade_flow_cpc)
 
 sprintf(
 "Module completed in %1.2f minutes.

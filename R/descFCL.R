@@ -3,7 +3,7 @@
 
 descFCL <- function(item,
                     swsdomain = "trade",
-                    swsdataset = "completed_tf_fcl",
+                    swsdataset = "completed_tf_fcl_m49",
                     swsdimension = "measuredItemFS") {
 
 

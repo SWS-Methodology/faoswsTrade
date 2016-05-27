@@ -4,6 +4,7 @@ multicore <- FALSE
 # ---- libs ----
 
 #library(tradeproc)
+library(data.table)
 library(faoswsTrade)
 library(faosws)
 library(stringr)
@@ -167,9 +168,13 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
                                     "qty_ton", "sup_quantity")
-                        where = "ISNUMERIC([declarant])"
                         )
 esdata <- tbl_df(esdata)
+
+## Declarant and partner numeric
+## This probably should be part of the faoswsEnsure
+esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
+esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
 
 esdata <- esdata %>%
   transmute_(reporter = ~as.numeric(declarant),

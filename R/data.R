@@ -95,3 +95,19 @@
 #' reporter and country_name
 
 "fao_country_code"
+
+
+
+#' FAO Commodity List (FCL) to Central Product Classification (CPC)
+#' Version 2.1 extended.
+#'
+#' This table was created from a more exhaustive table provided by Giorgio
+#' and present in the data-raw (Conv_3DEC2015_E.XLSX)
+#'
+#' @format A data frame:
+#' fcl (character) - FAO Commodity List (FCL),
+#' cpc (character) - Central Product Classification (CPC2.1) extended
+
+
+"fcl_2_cpc2"
+

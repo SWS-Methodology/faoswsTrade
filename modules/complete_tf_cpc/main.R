@@ -142,6 +142,10 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         ) ## The limit will go away
 tldata <- tbl_df(tldata)
 
+## comm (hs) code has to be digit
+## This probably should be part of the faoswsEnsure
+tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
+
 ## Rename columns
 tldata <- tldata %>%
   transmute_(reporter = ~as.integer(rep),

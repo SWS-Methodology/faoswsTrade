@@ -167,6 +167,7 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
                                     "qty_ton", "sup_quantity")
+                        where = "ISNUMERIC([declarant])"
                         )
 esdata <- tbl_df(esdata)
 

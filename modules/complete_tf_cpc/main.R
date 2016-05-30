@@ -4,8 +4,10 @@ multicore <- FALSE
 # ---- libs ----
 
 #library(tradeproc)
+library(data.table)
 library(faoswsTrade)
 library(faosws)
+library(data.table)
 library(stringr)
 library(scales)
 library(faoswsUtil)
@@ -144,6 +146,10 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         ) ## The limit will go away
 tldata <- tbl_df(tldata)
 
+## comm (hs) code has to be digit
+## This probably should be part of the faoswsEnsure
+tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
+
 ## Rename columns
 tldata <- tldata %>%
   transmute_(reporter = ~as.integer(rep),
@@ -172,6 +178,11 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "qty_ton", "sup_quantity")
                         )
 esdata <- tbl_df(esdata)
+
+## Declarant and partner numeric
+## This probably should be part of the faoswsEnsure
+esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
+esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
 
 esdata <- esdata %>%
   transmute_(reporter = ~as.numeric(declarant),
@@ -580,7 +591,7 @@ tradedata <- tradedata %>%
 
 # Adding CPC2 extended code
 tradedata <- tradedata %>%
-  mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl)))
+  mutate_(cpc = ~fcl2cpc2(sprintf("%04d", fcl)))
 
 # Not resolve mapping fcl2cpc
 no_mapping_fcl2cpc = tradedata %>%

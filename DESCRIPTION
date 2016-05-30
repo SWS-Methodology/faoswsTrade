@@ -8,7 +8,7 @@ Maintainer: Marco Garieri <marco.garieri@fao.org>
 Description: Trade module
 License: FAO
 LazyData: TRUE
-Imports: dplyr, faosws, scales, stringr, lazyeval, plyr
+Imports: dplyr, faosws, scales, stringr, lazyeval, plyr, data.table
 Suggests: testthat, knitr
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

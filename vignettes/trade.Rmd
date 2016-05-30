@@ -317,7 +317,7 @@ out_tab %>%
   select(-Value, -UV, -UV_me) %>% 
   printTab(caption = "Example trade flows with corrected weight",
            col.names = c("Reporter", 
-                         "Parnter", 
+                         "Partner", 
                          "Flow",
                          "HS-code",
                          "Weight, kg",

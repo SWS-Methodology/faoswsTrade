@@ -1,3 +1,6 @@
+#' Temporary function to convert fcl to cpc
+#' @export
+
 fcl2cpc2  <- function(fclCodes){
   warning("This function need to refers to a table in the SWS and not to a local one.")
   stopifnot(is(fclCodes, "character"))
@@ -10,9 +13,9 @@ fcl2cpc2  <- function(fclCodes){
   if (any(codeLength != 4))
     stop("All FCL codes must be 4 characters long!  You probably need to ",
          "pad your current codes with zeroes.")
-  map = fcl_2_cpc2
-  out = merge(data.table(fcl = unique(fclCodes)), map, by = "fcl",
+  map = data.table::data.table(fcl_2_cpc2)
+  out = merge(data.table::data.table(fcl = unique(fclCodes)), map, by = "fcl",
               all.x = TRUE)
-  setkeyv(out, "fcl")
-  out[fclCodes, cpc, allow.cartesian = TRUE]
+  out = merge(data.frame(n=seq_along(fclCodes), fcl=fclCodes, stringsAsFactors = FALSE), out, all.x=T, by="fcl", sort=FALSE)
+  out[order(out$n), "cpc"]
 }

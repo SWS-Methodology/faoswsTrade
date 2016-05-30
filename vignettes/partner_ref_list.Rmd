@@ -88,13 +88,13 @@ tldata %>%
 tldata %>% 
   select(partner) %>% 
   distinct() %>% 
-  mutate(fao = convertTLParnterToFAO(partner)) %>% 
+  mutate(fao = convertTLPartnerToFAO(partner)) %>% 
   filter(is.na(fao))
 
 tldata %>% 
   select(reporter) %>% 
   distinct() %>% 
-  mutate(fao = convertTLParnterToFAO(reporter)) %>% 
+  mutate(fao = convertTLPartnerToFAO(reporter)) %>% 
   filter(is.na(fao)) %>% 
   arrange(reporter)
 

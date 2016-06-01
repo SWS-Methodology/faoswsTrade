@@ -519,7 +519,7 @@ esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                       function(x) {
                         applyadj(x, year, as.data.frame(adjustments), esdata)
                       },
-                      .progress = ifelse(multicore, "none", "text"),
+                      .progress = ifelse(!multicore && interactive(), "text", "none"),
                       .inform = FALSE,
                       .parallel = multicore)
 
@@ -533,7 +533,7 @@ tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
                              function(x) {
                                applyadj(x, year, as.data.frame(adjustments), tldata)
                              },
-                             .progress = ifelse(multicore, "none", "text"),
+                             .progress = ifelse(!multicore && interactive(), "text", "none"),
                              .inform = FALSE,
                              .parallel = multicore))
 

@@ -1,8 +1,8 @@
 Package: faoswsTrade
 Type: Package
 Title: FAO Trade Module
-Version: 0.1.0
-Date: 2016-04-22
+Version: 0.1.1
+Date: 2016-06-02
 Author: Marco Garieri
 Maintainer: Marco Garieri <marco.garieri@fao.org>
 Description: Trade module

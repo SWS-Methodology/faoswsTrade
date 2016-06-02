@@ -640,10 +640,6 @@ tradedatanonrep <- tradedata %>%
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)
 
-
-## Reporting back in USD$ and not in kUSD$
-tradedata$value <- tradedata$value*1000
-
 ## Flag from numeric to letters
 ## TO DO (Marco): need to discuss how to treat flags
 ##                at the moment Status I and method e

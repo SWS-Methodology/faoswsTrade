@@ -15,8 +15,6 @@ library(dplyr, warn.conflicts = F)
 if(CheckDebug()){
   library(faoswsModules)
   SETTINGS = ReadSettings("modules/total_trade_CPC/sws.yml")
-  ## If you're not on the system, your settings will overwrite any others
-  R_SWS_SHARE_PATH = SETTINGS[["share"]]
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface

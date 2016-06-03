@@ -10,18 +10,20 @@ library(scales)
 library(faoswsUtil)
 library(tidyr)
 library(dplyr, warn.conflicts = F)
+
+
 if(CheckDebug()){
-faosws::SetClientFiles("~/certificates/")
-## ADDED COMMENT
-faosws::GetTestEnvironment(
-  # baseUrl = "https://hqlprswsas1.hq.un.fao.org:8181/sws", # intranet.fao.org/sws
-  # baseUrl = "https://hqlprsws2.hq.un.fao.org:8181/sws",
-  baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", # QA?
-  # token = "349ce2c9-e6bf-485d-8eac-00f6d7183fd6") # Token for QA)
-  token = "da889579-5684-4593-aa36-2d86af5d7138") # http://hqlqasws1.hq.un.fao.org:8080/sws/
-# token = "f5e52626-a015-4bbc-86d2-6a3b9f70950a") # Second token for QA
-#token = token)
+  library(faoswsModules)
+  SETTINGS = ReadSettings("sws.yml")
+  ## If you're not on the system, your settings will overwrite any others
+  R_SWS_SHARE_PATH = SETTINGS[["share"]]
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  ## Get session information from SWS. Token must be obtained from web interface
+  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                     token = SETTINGS[["token"]])
 }
+
 
 
 startTime = Sys.time()

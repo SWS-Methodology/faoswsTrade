@@ -28,17 +28,28 @@ if(CheckDebug()){
 
 startTime = Sys.time()
 
-completetrade <- ReadDatatable("completed_tf_cpc",
-                                where=paste0("timePointYears = '",year,"'")) ## The limit will go away
+allReporterKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code]
+allPartnerKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Partner")[type == "country", code]
+allElementKeys <- c("5608", "5609", "5610", "5908", "5909", "5910")
+allItemKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "measuredItemCPC")[,code]
 
-completetrade <- tbl_df(completetrade)
+completetradekey <- DatasetKey(domain = "trade", dataset = "completed_tf_cpc_m49",
+                               dimensions = list(
+                                 geographicAreaM49Reporter = Dimension(name = "geographicAreaM49Reporter", keys = allReporterKeys),
+                                 geographicAreaM49Partner = Dimension(name = "geographicAreaM49Partner", keys = allPartnerKeys),
+                                 measuredElementTrade = Dimension(name = "measuredElementTrade", keys = allElementKeys),
+                                 measuredItemCPC = Dimension(name = "measuredItemCPC", keys = allItemKeys),
+                                 timePointYears = Dimension(name = "timePointYears", keys = as.character(year))
+                               ))
+
+completetrade <- tbl_df(GetData(completetradekey))
 
 completetrade <- completetrade %>%
   mutate_(flagTrade = ~ifelse(flagTrade == "I",1,0),
-          geographicAreaM49 = ~reportingCountryM49)
+          geographicAreaM49 = ~geographicAreaM49Reporter)
 
 total_trade_cpc <- completetrade %>%
-  select_(~geographicAreaM49, ~partnerCountryM49, ~timePointYears,
+  select_(~geographicAreaM49, ~geographicAreaM49Partner, ~timePointYears,
           ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagTrade) %>%
   group_by_(~geographicAreaM49, ~timePointYears, ~measuredItemCPC, ~measuredElementTrade) %>%
   summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("Value", "flagTrade")) %>%
@@ -47,7 +58,7 @@ total_trade_cpc <- completetrade %>%
 total_trade_cpc <- total_trade_cpc %>%
   mutate_(flagTrade = ~ifelse(flagTrade == 1, "I", ""))
 
-stats <- SaveData("trade","total_trade_CPC",data.table::as.data.table(total_trade_cpc))
+stats <- SaveData("trade","total_trade_cpc_m49",data.table::as.data.table(total_trade_cpc))
 
 sprintf(
   "Module completed in %1.2f minutes.

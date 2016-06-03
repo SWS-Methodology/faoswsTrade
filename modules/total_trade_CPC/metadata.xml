@@ -11,7 +11,7 @@
     </Authors>
     <Datasets>
         <MainDataset>
-            <Code>total_trade_CPC</Code>
+            <Code>total_trade_cpc_m49</Code>
             <SelectableDimensions>
                 <SelectableDimension compulsory="true">geographicAreaM49</SelectableDimension>
                 <SelectableDimension compulsory="true">timePointYears</SelectableDimension>

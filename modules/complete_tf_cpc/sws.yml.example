@@ -1,12 +1,5 @@
 current: qa
-all:
-  share: /media/share
 qa:
-  certdir: path/to/qa/certs
+  certdir: ~/certificates
   server: https://hqlqasws1.hq.un.fao.org:8181/sws
-  token: abcdef0123456789
-production:
-  certdir: path/to/prod/certs
-  server: https://hqlprswsas1.hq.un.fao.org:8181/sws
-  token: 9876543210fedcba
-
+  token: f5e52626-a015-4bbc-86d2-6a3b9f70950a

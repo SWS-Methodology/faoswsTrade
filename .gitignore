@@ -9,3 +9,4 @@ tldata.RData
 .~lock*
 tradeproc/vignettes/producingSet_new_cache
 *.zip
+*sws.yml

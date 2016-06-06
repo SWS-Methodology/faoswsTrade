@@ -8,6 +8,7 @@ library(faosws)
 library(stringr)
 library(scales)
 library(faoswsUtil)
+library(faoswsFlag)
 library(tidyr)
 library(dplyr, warn.conflicts = F)
 
@@ -43,18 +44,17 @@ completetradekey <- DatasetKey(domain = "trade", dataset = "completed_tf_cpc_m49
 completetrade <- tbl_df(GetData(completetradekey))
 
 completetrade <- completetrade %>%
-  mutate_(flagTrade = ~ifelse(flagTrade == "I",1,0),
-          geographicAreaM49 = ~geographicAreaM49Reporter)
+  mutate_(geographicAreaM49 = ~geographicAreaM49Reporter)
 
 total_trade_cpc <- completetrade %>%
   select_(~geographicAreaM49, ~geographicAreaM49Partner, ~timePointYears,
-          ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagTrade) %>%
+          ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagObservationStatus) %>%
   group_by_(~geographicAreaM49, ~timePointYears, ~measuredItemCPC, ~measuredElementTrade) %>%
-  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("Value", "flagTrade")) %>%
+  summarise_(Value = ~sum(Value, na.rm = TRUE),
+             flagObservationStatus = ~sumObservationFlag(flagObservationStatus)) %>%
   ungroup()
 
-total_trade_cpc <- total_trade_cpc %>%
-  mutate_(flagTrade = ~ifelse(flagTrade == 1, "I", ""))
+total_trade_cpc$flagMethod = "s"
 
 stats <- SaveData("trade","total_trade_cpc_m49",data.table::as.data.table(total_trade_cpc))
 

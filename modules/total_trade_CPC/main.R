@@ -51,7 +51,7 @@ total_trade_cpc <- completetrade %>%
           ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagObservationStatus) %>%
   group_by_(~geographicAreaM49, ~timePointYears, ~measuredItemCPC, ~measuredElementTrade) %>%
   summarise_(Value = ~sum(Value, na.rm = TRUE),
-             flagObservationStatus = ~sumObservationFlag(flagObservationStatus)) %>%
+             flagObservationStatus = ~aggregateObservationFlag(flagObservationStatus)) %>%
   ungroup()
 
 total_trade_cpc$flagMethod = "s"

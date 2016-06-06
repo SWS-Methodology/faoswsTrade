@@ -74,9 +74,6 @@ adjustments = adjustments %>%
 ## Old procedure
 data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
 #unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
-## Old procedure
-data("unsdpartners", package = "faoswsTrade", envir = environment())
-#unsdpartners <- tbl_df(ReadDatatable("unsdpartners"))
 ## units for fcl old procedure
 data("fclunits", package = "faoswsTrade", envir = environment())
 #fclunits <- tbl_df(ReadDatatable("fclunits"))

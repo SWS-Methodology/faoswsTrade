@@ -79,10 +79,10 @@ data("fclunits", package = "faoswsTrade", envir = environment())
 #fclunits <- tbl_df(ReadDatatable("fclunits"))
 ## units of Comtrade old procedure
 data("comtradeunits", package = "faoswsTrade", envir = environment())
-#comtradeunits <- tbl_df(ReadDatatable(comtradeunits))
+#comtradeunits <- tbl_df(ReadDatatable("comtradeunits"))
 ## Eur to USD
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
-#EURconversionUSD <- tbl_df(ReadDatatable(eur_conversion_usd))
+#EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
 
 # ---- hsfclmapsubset ----
 # HS -> FCL map
@@ -681,7 +681,7 @@ complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 data.table::setcolorder(complete_trade_flow_cpc, c("geographicAreaM49Reporter", "geographicAreaM49Partner",
                                        "measuredElementTrade", "measuredItemCPC", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
 
-stats <- SaveData("trade","completed_tf_cpc_m49", complete_trade_flow_cpc, waitTimeout = 6000)
+stats <- SaveData("trade","completed_tf_cpc_m49", complete_trade_flow_cpc, waitTimeout = 10800)
 
 sprintf(
 "Module completed in %1.2f minutes.

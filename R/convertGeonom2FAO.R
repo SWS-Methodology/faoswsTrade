@@ -19,7 +19,7 @@ convertGeonom2FAO <- function(geonom) {
 
   if(length(nofaorep) > 0)
     warning(paste0("These ES Geonom codes were not converted to FAO area list: ",
-                   paste0(nofaorep, collapse = ", ")))
+                   paste0(unique(nofaorep), collapse = ", ")))
 
   geonom$faorep
 

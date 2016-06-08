@@ -176,6 +176,8 @@ esdata <- tbl_df(esdata)
 ## This probably should be part of the faoswsEnsure
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
+## Removing TOTAL from product_nc column
+esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 
 esdata <- esdata %>%
   transmute_(reporter = ~as.numeric(declarant),
@@ -197,6 +199,12 @@ esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter), partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
+
+# ---- removing reporters for which we don't have mapping of commodities
+esdata_not_area_in_fcl_mapping <- esdata %>%
+  filter_(~!(reporter %in% unique(hsfclmap$area)))
+esdata <- esdata %>%
+  filter_(~reporter %in% unique(hsfclmap$area))
 
 # ---- es_hs2fcl ----
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
@@ -515,20 +523,21 @@ esdata <- plyr::ldply(sort(unique(esdata$reporter)),
                       .progress = ifelse(!multicore && interactive(), "text", "none"),
                       .inform = FALSE,
                       .parallel = multicore)
-
+esdata <- tbl_df(esdata)
 
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
-tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
-                             function(x) {
-                               applyadj(x, year, as.data.frame(adjustments), tldata)
-                             },
-                             .progress = ifelse(!multicore && interactive(), "text", "none"),
-                             .inform = FALSE,
-                             .parallel = multicore))
+tldata <- plyr::ldply(sort(unique(tldata$reporter)),
+                      function(x) {
+                        applyadj(x, year, as.data.frame(adjustments), tldata)
+                      },
+                      .progress = ifelse(!multicore && interactive(), "text", "none"),
+                      .inform = FALSE,
+                      .parallel = multicore)
+tldata <- tbl_df(tldata)
 
 # TODO Check quantity/weight
 # The notes should save the results in weight

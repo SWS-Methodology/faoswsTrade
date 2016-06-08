@@ -72,7 +72,7 @@ adjustments = adjustments %>%
 ## This cause problems with the application of the notes
 ## and the real function is unknown
 ## Just 3 cases for 2013
-adjustments <- adjustmentes %>%
+adjustments <- adjustments %>%
   filter(value != "quantity_other" | is.na(value))
 
 ###adjustments = adjustments %>%

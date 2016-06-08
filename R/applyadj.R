@@ -9,6 +9,9 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
   adjustments <- adjustments %>%
     filter_(~reporter == rep & (year == yr | is.na(year)))
 
+  adjustments <- adjustments %>%
+    filter_(~value != "quantity_other" | is.na(value))
+
   tradedata <- tradedata %>%
     filter_(~reporter == rep & year == yr)
 

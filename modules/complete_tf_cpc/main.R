@@ -69,12 +69,6 @@ adjustments = adjustments %>%
   mutate_each_(funs(as.integer),adj_cols_int) %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
 
-## This cause problems with the application of the notes
-## and the real function is unknown
-## Just 3 cases for 2013
-adjustments <- adjustments %>%
-  filter(value != "quantity_other" | is.na(value))
-
 ###adjustments = adjustments %>%
 ###  mutate_(hs = ~as.double(adjustments))
 ## Old procedure

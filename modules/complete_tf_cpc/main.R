@@ -537,6 +537,7 @@ tldata <- plyr::ldply(sort(unique(tldata$reporter)),
                       .progress = ifelse(!multicore && interactive(), "text", "none"),
                       .inform = FALSE,
                       .parallel = multicore)
+tldata$value = as.numeric(unlist(tldata$value))
 tldata <- tbl_df(tldata)
 
 # TODO Check quantity/weight

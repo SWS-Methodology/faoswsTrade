@@ -69,6 +69,12 @@ adjustments = adjustments %>%
   mutate_each_(funs(as.integer),adj_cols_int) %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
 
+## This cause problems with the application of the notes
+## and the real function is unknown
+## Just 3 cases for 2013
+adjustments <- adjustmentes %>%
+  filter(value != "quantity_other" | is.na(value))
+
 ###adjustments = adjustments %>%
 ###  mutate_(hs = ~as.double(adjustments))
 ## Old procedure
@@ -516,29 +522,27 @@ tldata_mid = tldata
 # Loading of notes/adjustments should be added here
 esdata_old = esdata
 
-esdata <- plyr::ldply(sort(unique(esdata$reporter)),
-                      function(x) {
-                        applyadj(x, year, as.data.frame(adjustments), esdata)
-                      },
-                      .progress = ifelse(!multicore && interactive(), "text", "none"),
-                      .inform = FALSE,
-                      .parallel = multicore)
-esdata <- tbl_df(esdata)
+esdata <- tbl_df(plyr::ldply(sort(unique(esdata$reporter)),
+                             function(x) {
+                               applyadj(x, year, as.data.frame(adjustments), esdata)
+                              },
+                             .progress = ifelse(!multicore && interactive(), "text", "none"),
+                             .inform = FALSE,
+                             .parallel = multicore))
 
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
-tldata <- plyr::ldply(sort(unique(tldata$reporter)),
-                      function(x) {
-                        applyadj(x, year, as.data.frame(adjustments), tldata)
-                      },
-                      .progress = ifelse(!multicore && interactive(), "text", "none"),
-                      .inform = FALSE,
-                      .parallel = multicore)
-tldata$value = as.numeric(unlist(tldata$value))
-tldata <- tbl_df(tldata)
+tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
+                             function(x) {
+                               applyadj(x, year, as.data.frame(adjustments), tldata)
+                              },
+                             .progress = ifelse(!multicore && interactive(), "text", "none"),
+                             .inform = FALSE,
+                             .parallel = multicore))
+
 
 # TODO Check quantity/weight
 # The notes should save the results in weight

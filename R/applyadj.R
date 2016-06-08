@@ -28,9 +28,6 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
   }
 
   for(i in seq_along((adjustments))) {
-
-    # cat(paste0("rep ", rep, " adj ", i, "\n"))
-    # if(is.list(tradedata$value)) stop(paste0("Stop at rep ", rep, "adj ", i))
     t <- try(tradedata %>%
                # Create logical vector where to apply current adjustment
                mutate_(.dots = adjustments[[i]]$conditions) %>%

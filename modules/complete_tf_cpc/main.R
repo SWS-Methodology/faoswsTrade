@@ -48,6 +48,8 @@ year <- as.integer(swsContext.computationParams$year)
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
+dollars = TRUE
+
 startTime = Sys.time()
 
 # ---- datasets ----
@@ -169,7 +171,7 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
                                     "qty_ton", "sup_quantity")
-                        )
+)
 esdata <- tbl_df(esdata)
 
 ## Declarant and partner numeric
@@ -481,7 +483,12 @@ tldata$qtyfcl <- ifelse(tldata$qty == 0 &
 
 
 ######### Value from USD to thousands of USD
-tldata$value <- tldata$value / 1000
+if (dollars){
+  esdata$value <- esdata$value * 1000
+} else { ## This means it is in k$
+  tldata$value <- tldata$value / 1000
+}
+
 
 ## TLDATA: aggregate by fcl
 ## Here we select column qtyfcl which contains quantity, requested by FAO
@@ -519,7 +526,7 @@ esdata_old = esdata
 esdata <- tbl_df(plyr::ldply(sort(unique(esdata$reporter)),
                              function(x) {
                                applyadj(x, year, as.data.frame(adjustments), esdata)
-                              },
+                             },
                              .progress = ifelse(!multicore && interactive(), "text", "none"),
                              .inform = FALSE,
                              .parallel = multicore))
@@ -532,7 +539,7 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
                              function(x) {
                                applyadj(x, year, as.data.frame(adjustments), tldata)
-                              },
+                             },
                              .progress = ifelse(!multicore && interactive(), "text", "none"),
                              .inform = FALSE,
                              .parallel = multicore))
@@ -681,28 +688,28 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
   select_(~-flow,~-unit)# %>%
-  #mutate_(flagTrade = ~flagObservationStatus) %>%
-  #select_(~-flagMethod, ~-flagObservationStatus)
+#mutate_(flagTrade = ~flagObservationStatus) %>%
+#select_(~-flagMethod, ~-flagObservationStatus)
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
 data.table::setcolorder(complete_trade_flow_cpc, c("geographicAreaM49Reporter", "geographicAreaM49Partner",
-                                       "measuredElementTrade", "measuredItemCPC", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
+                                                   "measuredElementTrade", "measuredItemCPC", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
 
 stats <- SaveData("trade","completed_tf_cpc_m49", complete_trade_flow_cpc, waitTimeout = 10800)
 
 sprintf(
-"Module completed in %1.2f minutes.
-Values inserted: %s
-       appended: %s
-       ignored: %s
-       discarded: %s",
-      difftime(Sys.time(), startTime, units = "min"),
-      stats[["inserted"]],
-      stats[["appended"]],
-      stats[["ignored"]],
-      stats[["discarded"]]
-      )
+  "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+  difftime(Sys.time(), startTime, units = "min"),
+  stats[["inserted"]],
+  stats[["appended"]],
+  stats[["ignored"]],
+  stats[["discarded"]]
+)
 
 
 ### TO DO: FCL output

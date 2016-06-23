@@ -14,6 +14,8 @@ convertMeasuredElementTrade <- function(element, unit, flow) {
   ##    - Exports (t): 5910
   ##    - Imports (kUS$): 5622
   ##    - Exports (kUS$): 5922
+  ##    - Imports (US$): 5621
+  ##    - Exports (US$): 5921
 
   element <- as.character(element)
   unit <- as.character(unit)
@@ -26,8 +28,8 @@ convertMeasuredElementTrade <- function(element, unit, flow) {
           "5908"} else if((element == "qty") & (unit == "1000 heads") & (flow == 1)){
             "5609"} else if((element == "qty") & (unit == "1000 heads") & (flow == 2)){
               "5909"} else if((element == "value") & (flow == 1)){
-                "5622"} else if((element == "value") & (flow == 2)){
-                  "5922"} else {"999"}
+                "5621"} else if((element == "value") & (flow == 2)){
+                  "5921"} else {"999"}
   ## Simple solution, whatever not in the case, just to NA
   ## In this way "$ value only" are NAs, and they will be filtered out
 

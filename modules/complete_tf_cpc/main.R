@@ -14,6 +14,26 @@ library(faoswsUtil)
 library(tidyr)
 library(dplyr, warn.conflicts = F)
 
+
+local({
+  min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade"),
+                             version = c('0.2.11', '0.1.1'))
+
+  for (i in nrow(min_versions)){
+
+    p <- packageVersion(min_versions[i,"package"])
+    v <- package_version(min_versions[i,"version"])
+    if(p < v){
+
+      stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
+    }
+  }
+
+})
+
+
+}
+
 if(multicore) {
   suppressPackageStartupMessages(library(doParallel))
   library(foreach)
@@ -599,7 +619,7 @@ tradedata <- tradedata %>%
 
 # Adding CPC2 extended code
 tradedata <- tradedata %>%
-  mutate_(cpc = ~fcl2cpc2(sprintf("%04d", fcl)))
+  mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl), version = "2.1"))
 
 # Not resolve mapping fcl2cpc
 no_mapping_fcl2cpc = tradedata %>%

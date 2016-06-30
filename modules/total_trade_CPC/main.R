@@ -12,6 +12,23 @@ library(faoswsFlag)
 library(tidyr)
 library(dplyr, warn.conflicts = F)
 
+local({
+  min_versions <- data.frame(package = c("faoswsFlag", "faoswsTrade"),
+                             version = c('0.2.4', '0.1.1'))
+
+  for (i in nrow(min_versions)){
+    # installed version
+    p <- packageVersion(min_versions[i,"package"])
+    # required version
+    v <- package_version(min_versions[i,"version"])
+    if(p < v){
+
+      stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
+    }
+  }
+
+})
+
 
 if(CheckDebug()){
   library(faoswsModules)

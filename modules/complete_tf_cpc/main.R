@@ -668,7 +668,7 @@ tradedatanonrep <- tradedata %>%
           value = ~ifelse(flow == 1,
                           value/1.2,
                           value*1.2)) %>%
-  select_(~-partner_mirr)
+  select_(~-partner_mirr, ~-partner_mirrM49)
 
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)

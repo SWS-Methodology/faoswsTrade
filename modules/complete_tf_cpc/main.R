@@ -68,7 +68,9 @@ year <- as.integer(swsContext.computationParams$year)
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
-dollars = TRUE
+## If true, the reported values will be in $
+## If false the reported values will be in k$
+dollars = FALSE
 
 startTime = Sys.time()
 
@@ -652,8 +654,11 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 tradedatanonrep <- tradedata %>%
   filter_(~partner %in% nonreporting) %>%
   mutate_(partner_mirr = ~reporter,
+          partner_mirrM49 = ~partnerM49,
           reporter = ~partner,
+          reporterM49 = ~partnerM49,
           partner = ~partner_mirr,
+          partnerM49 = ~partner_mirrM49,
           flow = ~ifelse(flow == 2, 1,
                          ifelse(flow == 1, 2,
                                 NA)),

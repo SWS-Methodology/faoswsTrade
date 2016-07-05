@@ -31,6 +31,7 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
   }
 
   for(i in seq_along((adjustments))) {
+
     t <- try(tradedata %>%
                # Create logical vector where to apply current adjustment
                mutate_(.dots = adjustments[[i]]$conditions) %>%

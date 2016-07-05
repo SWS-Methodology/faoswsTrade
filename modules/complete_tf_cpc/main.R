@@ -654,7 +654,7 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 tradedatanonrep <- tradedata %>%
   filter_(~partner %in% nonreporting) %>%
   mutate_(partner_mirr = ~reporter,
-          partner_mirrM49 = ~partnerM49,
+          partner_mirrM49 = ~reporterM49,
           reporter = ~partner,
           reporterM49 = ~partnerM49,
           partner = ~partner_mirr,

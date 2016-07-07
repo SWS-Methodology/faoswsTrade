@@ -32,8 +32,6 @@ local({
 })
 
 
-}
-
 if(multicore) {
   suppressPackageStartupMessages(library(doParallel))
   library(foreach)
@@ -92,6 +90,15 @@ adj_cols_dbl <- c("hs")
 adjustments = adjustments %>%
   mutate_each_(funs(as.integer),adj_cols_int) %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
+
+adjustments = adjustments %>%
+  filter_(~!(flow == 2 &
+             reporter == 231 &
+             hs %in% c(1001100090,1001902015,1001902055)))
+
+warning("Notes specific for wheat in USA have been deleted because
+        were redundant. This anyway needs additional studies.
+        This problem is reference in github as issue #35.")
 
 ###adjustments = adjustments %>%
 ###  mutate_(hs = ~as.double(adjustments))

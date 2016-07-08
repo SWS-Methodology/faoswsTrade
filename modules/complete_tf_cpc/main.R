@@ -15,13 +15,15 @@ library(tidyr)
 library(dplyr, warn.conflicts = F)
 
 
+## Check that all packages are up to date
 local({
   min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade"),
                              version = c('0.2.11', '0.1.1'))
 
   for (i in nrow(min_versions)){
-
+    # installed version
     p <- packageVersion(min_versions[i,"package"])
+    # required version
     v <- package_version(min_versions[i,"version"])
     if(p < v){
 
@@ -97,8 +99,8 @@ adjustments = adjustments %>%
              hs %in% c(1001100090,1001902015,1001902055)))
 
 warning("Notes specific for wheat in USA have been deleted because
-        were redundant. This anyway needs additional studies.
-        This problem is reference in github as issue #35.")
+        were redundant. This needs additional study anyway.
+        This problem is referenced in Github as issue #35.")
 
 ###adjustments = adjustments %>%
 ###  mutate_(hs = ~as.double(adjustments))

@@ -1,8 +1,6 @@
 ## Total trade
 
 # Year for processing
-year <- 2009L
-
 library(faoswsTrade)
 library(faosws)
 library(stringr)
@@ -40,7 +38,7 @@ if(CheckDebug()){
                      token = SETTINGS[["token"]])
 }
 
-
+year <- as.integer(swsContext.computationParams$year)
 
 startTime = Sys.time()
 

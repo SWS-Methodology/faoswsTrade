@@ -7,12 +7,23 @@ multicore <- FALSE
 library(data.table)
 library(faoswsTrade)
 library(faosws)
-library(data.table)
 library(stringr)
 library(scales)
 library(faoswsUtil)
 library(tidyr)
 library(dplyr, warn.conflicts = F)
+
+if(!CheckDebug()){
+
+  options(error = function(){
+    dump.frames()
+    SWS_USER = regmatches(swsContext.username,
+                          regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "modulename")
+    dir.create(filename, showWarnings = FALSE, recursive = TRUE)
+    save(last.dump, file=file.path(filename, "last.dump.RData"))
+  })
+}
 
 
 ## Check that all packages are up to date

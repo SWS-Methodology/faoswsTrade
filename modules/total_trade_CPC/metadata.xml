@@ -9,6 +9,16 @@
             <Mail>marco.garieri@fao.org</Mail>
         </Author>
     </Authors>
+    <Params>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>year</Code>
+            <Label>Year</Label>
+            <Description>Year on which to run trade module (session is ignored)</Description>
+            <Compulsory>true</Compulsory>
+            <Min>1990</Min>
+            <Max>2016</Max>
+      </Param>
+    </Params>
     <Datasets>
         <MainDataset>
             <Code>total_trade_cpc_m49</Code>

@@ -92,9 +92,11 @@ adjustments = adjustments %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
 
 adjustments = adjustments %>%
-  filter_(~!(flow == 2 &
-             reporter == 231 &
-             hs %in% c(1001100090,1001902015,1001902055)))
+  filter_(~!(is.na(year) &
+               weight == 1000))
+#  filter_(~!(flow == 2 &
+#             reporter == 231 &
+#             hs %in% c(1001100090,1001902015,1001902055)))
 
 warning("Notes specific for wheat in USA have been deleted because
         were redundant. This anyway needs additional studies.

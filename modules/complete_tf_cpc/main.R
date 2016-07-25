@@ -1,17 +1,22 @@
+set.seed(2507)
+
 debughsfclmap <- TRUE
 multicore <- FALSE
 
 # ---- libs ----
 
 #library(tradeproc)
-library(data.table)
-library(faoswsTrade)
-library(faosws)
-library(stringr)
-library(scales)
-library(faoswsUtil)
-library(tidyr)
-library(dplyr, warn.conflicts = F)
+
+suppressPackageStartupMessages({
+  library(data.table)
+  library(faoswsTrade)
+  library(faosws)
+  library(stringr)
+  library(scales)
+  library(faoswsUtil)
+  library(tidyr)
+  library(dplyr, warn.conflicts = F)
+})
 
 if(!CheckDebug()){
 
@@ -173,7 +178,7 @@ hsfclmap <- hsfclmap2 %>%
 
 ## This function might be faster getting the data just for the specific
 ## chapters, and not the entire tldata
-## The chapter of interest are:
+## The chapters of interest are:
 ## 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19
 ## 20 21 22 23 24 33 35 38 40 41 42 43 50 51 52 53
 ## Giorgio is testing the performances in the two cases
@@ -581,7 +586,7 @@ esdata <- tbl_df(plyr::ldply(sort(unique(esdata$reporter)),
                              function(x) {
                                applyadj(x, year, as.data.frame(adjustments), esdata)
                              },
-                             .progress = ifelse(!multicore && interactive(), "text", "none"),
+                             .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
                              .inform = FALSE,
                              .parallel = multicore))
 
@@ -596,7 +601,7 @@ tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
                              function(x) {
                                applyadj(x, year, as.data.frame(adjustments), tldata)
                              },
-                             .progress = ifelse(!multicore && interactive(), "text", "none"),
+                             .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
                              .inform = FALSE,
                              .parallel = multicore))
 

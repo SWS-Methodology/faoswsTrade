@@ -25,6 +25,7 @@ if(!CheckDebug()){
   })
 }
 
+PID <- Sys.getpid()
 
 ## Check that all packages are up to date
 local({
@@ -93,10 +94,13 @@ startTime = Sys.time()
 ## Old procedure
 #data("hsfclmap2", package = "hsfclmap", envir = environment())
 ## New procedure
+message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 hsfclmap2 <- tbl_df(ReadDatatable("hsfclmap2"))
 ## Old precedure
 #data("adjustments", package = "hsfclmap", envir = environment())
 ## New procedure
+message(sprintf("[%s] Reading in adjustments", PID))
+
 adjustments <- tbl_df(ReadDatatable("adjustments"))
 colnames(adjustments) = sapply(colnames(adjustments), function(x) gsub("adj_","",x))
 adj_cols_int <- c("year","flow","fcl","partner","reporter")
@@ -173,6 +177,7 @@ hsfclmap <- hsfclmap2 %>%
 ## 20 21 22 23 24 33 35 38 40 41 42 43 50 51 52 53
 ## Giorgio is testing the performances in the two cases
 
+message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns=c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
@@ -211,6 +216,7 @@ tldata <- tldata %>%
 #load(paste0("~/Desktop/FAO/Trade/RData/esdata_",year,".RData"))
 #esdata = esdata_raw
 
+message(sprintf("[%s] Reading in Eurostat data", PID))
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         columns = c("declarant", "partner",
                                     "product_nc", "flow",
@@ -254,6 +260,7 @@ esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 # ---- es_hs2fcl ----
+message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
 
 # ---- remove non mapped fcls ----
@@ -275,6 +282,8 @@ esdata$fclunit <- ifelse(is.na(esdata$fclunit),
 
 # ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
+
+message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 
 tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
@@ -568,6 +577,8 @@ tldata_mid = tldata
 # Loading of notes/adjustments should be added here
 esdata_old = esdata
 
+
+message(sprintf("[%s] Applying Eurostat adjustments", PID))
 esdata <- tbl_df(plyr::ldply(sort(unique(esdata$reporter)),
                              function(x) {
                                applyadj(x, year, as.data.frame(adjustments), esdata)
@@ -580,6 +591,8 @@ esdata <- tbl_df(plyr::ldply(sort(unique(esdata$reporter)),
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
+
+message(sprintf("[%s] Applying Tariffline adjustments", PID))
 
 tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
                              function(x) {
@@ -744,7 +757,11 @@ complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 data.table::setcolorder(complete_trade_flow_cpc, c("geographicAreaM49Reporter", "geographicAreaM49Partner",
                                                    "measuredElementTrade", "measuredItemCPC", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
 
+message(sprintf("[%s] Writing data to session/database", PID))
+
 stats <- SaveData("trade","completed_tf_cpc_m49", complete_trade_flow_cpc, waitTimeout = 10800)
+
+message(sprintf("[%s] Session/database write completed!", PID))
 
 sprintf(
   "Module completed in %1.2f minutes.

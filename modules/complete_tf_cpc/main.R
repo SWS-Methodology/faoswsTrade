@@ -112,8 +112,9 @@ adjustments = adjustments %>%
 #             reporter == 231 &
 #             hs %in% c(1001100090,1001902015,1001902055)))
 
-warning("Notes specific for wheat in USA have been deleted because
-        were redundant. This needs additional study anyway.
+warning("Notes without specific year and with a multiplier factor
+        of 1000 have been deleted because were redundant.
+        This needs additional study anyway.
         This problem is referenced in Github as issue #35.")
 
 ###adjustments = adjustments %>%
@@ -236,9 +237,6 @@ esdata <- esdata %>%
              weight = ~as.numeric(qty_ton),
              qty = ~as.numeric(sup_quantity)) %>%
   mutate_(hs6 = ~stringr::str_sub(hs,1,6))
-
-## To be discussed with Michael:
-## Preanalysis has to be added here or not?
 
 # ---- geonom2fao ----
 

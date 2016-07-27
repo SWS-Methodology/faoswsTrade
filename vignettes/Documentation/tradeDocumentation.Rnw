@@ -90,14 +90,14 @@
 
 \Plainauthor{M. Garieri}
 
-\Plaintitle{faoswsProduction: Data Sources}
+\Plaintitle{faoswsTrade: Documentation}
 
-\Shorttitle{Data Source}
+\Shorttitle{faoswsTrade}
 
 \Abstract{
 
 \noindent
-This vignette provides a detailed description of the various data sources and procedures used in the trade modules.
+This vignette provides a detailed description of the trade modules.
 }
 
 \Keywords{Agricultural Trade, Tariff Line, Eurostat, Mirroring}

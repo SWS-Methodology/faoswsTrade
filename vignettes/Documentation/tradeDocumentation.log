@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2009.1.10)  27 JUL 2016 09:33
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2009.1.10)  28 JUL 2016 14:44
 entering extended mode
  %&-line parsing enabled.
 **tradeDocumentation.tex
@@ -398,14 +398,6 @@ LaTeX Info: Redefining \] on input line 2667.
 \g_MT_multlinerow_int=\count121
 \l_MT_multwidth_dim=\dimen128
 )
-(/usr/local/texlive/2007/texmf-dist/tex/latex/draftwatermark/draftwatermark.sty
-Package: draftwatermark 2006/06/30 1.0 Put a gray textual watermark on document
- pages
-(/usr/local/texlive/2007/texmf-dist/tex/latex/everypage/everypage.sty
-Package: everypage 2006/06/30 1.0 Hooks to run on every page
-)
-\sc@wm@fontsize=\skip67
-)
 (/usr/local/texlive/2007/texmf-dist/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \c@float@type=\count122
@@ -430,29 +422,29 @@ Package: courier 2005/04/12 PSNFSS-v9.2a (WaS)
 (./tradeDocumentation.aux)
 \openout1 = `tradeDocumentation.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 165.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 165.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 167.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 167.
 
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 165.
-LaTeX Font Info:    ... okay on input line 165.
-LaTeX Font Info:    Try loading font information for T1+pplx on input line 165.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 167.
+LaTeX Font Info:    ... okay on input line 167.
+LaTeX Font Info:    Try loading font information for T1+pplx on input line 167.
 
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/t1pplx.fd
@@ -470,7 +462,7 @@ File: t1pplx.fd 2004/09/06 font definitions for T1/pplx.
 \MPnumerator=\count127
 \everyMPtoPDFconversion=\toks27
 )
-Package hyperref Info: Link coloring ON on input line 165.
+Package hyperref Info: Link coloring ON on input line 167.
  (/usr/local/texlive/2007/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2006/12/27 v2.28 Cross-referencing by name of section
 
@@ -479,54 +471,54 @@ Package: refcount 2006/02/20 v3.0 Data extraction from references (HO)
 )
 \c@section@level=\count128
 )
-LaTeX Info: Redefining \ref on input line 165.
-LaTeX Info: Redefining \pageref on input line 165.
+LaTeX Info: Redefining \ref on input line 167.
+LaTeX Info: Redefining \pageref on input line 167.
 
 (./tradeDocumentation.out) (./tradeDocumentation.out)
 \@outlinefile=\write4
 \openout4 = `tradeDocumentation.out'.
 
 LaTeX Font Info:    Font shape `T1/pplx/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/pplx/b/n' tried instead on input line 165.
-LaTeX Font Info:    Try loading font information for OT1+pplx on input line 165
+(Font)              Font shape `T1/pplx/b/n' tried instead on input line 167.
+LaTeX Font Info:    Try loading font information for OT1+pplx on input line 167
 .
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/ot1pplx.fd
 File: ot1pplx.fd 2004/09/06 font definitions for OT1/pplx.
 )
-LaTeX Font Info:    Try loading font information for OML+zplm on input line 165
+LaTeX Font Info:    Try loading font information for OML+zplm on input line 167
 .
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/omlzplm.fd
 File: omlzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OML/zplm.
 )
-LaTeX Font Info:    Try loading font information for OMS+zplm on input line 165
+LaTeX Font Info:    Try loading font information for OMS+zplm on input line 167
 .
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/omszplm.fd
 File: omszplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMS/zplm.
 )
-LaTeX Font Info:    Try loading font information for OMX+zplm on input line 165
+LaTeX Font Info:    Try loading font information for OMX+zplm on input line 167
 .
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/omxzplm.fd
 File: omxzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMX/zplm.
 )
-LaTeX Font Info:    Try loading font information for OT1+zplm on input line 165
+LaTeX Font Info:    Try loading font information for OT1+zplm on input line 167
 .
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/ot1zplm.fd
 File: ot1zplm.fd 2002/09/08 Fontinst v1.914 font definitions for OT1/zplm.
 )
-LaTeX Font Info:    Try loading font information for U+rsfs on input line 165.
+LaTeX Font Info:    Try loading font information for U+rsfs on input line 167.
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/jknapltx/ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 )
 LaTeX Font Info:    Font shape `T1/pplx/bx/n' in size <12> not available
-(Font)              Font shape `T1/pplx/b/n' tried instead on input line 165.
+(Font)              Font shape `T1/pplx/b/n' tried instead on input line 167.
 LaTeX Font Info:    Font shape `T1/pplx/bx/n' in size <10> not available
-(Font)              Font shape `T1/pplx/b/n' tried instead on input line 165.
+(Font)              Font shape `T1/pplx/b/n' tried instead on input line 167.
 
 -------------------- Geometry parameters
 paper: class default
@@ -567,49 +559,45 @@ driver: pdftex
 \@twosidetrue \@mparswitchtrue 
 (1in=72.27pt, 1cm=28.45pt)
 -----------------------
-[1{/usr/local/texlive/2007/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+[1
 
-]
-LaTeX Font Info:    Try loading font information for T1+pcr on input line 170.
+{/usr/local/texlive/2007/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+LaTeX Font Info:    Try loading font information for T1+pcr on input line 172.
 
 (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
-Overfull \hbox (5.04951pt too wide) in paragraph at lines 170--171
+Overfull \hbox (5.04951pt too wide) in paragraph at lines 172--173
 []\T1/pplx/m/n/10.95 The trade mod-ule is di-vided in two sub-mod-ules: \T1/pcr
 /m/n/10.95 complete_tf_cpc \T1/pplx/m/n/10.95 and \T1/pcr/m/n/10.95 total_trade
 _CPC\T1/pplx/m/n/10.95 .
  []
 
 
-Overfull \hbox (3.29376pt too wide) in paragraph at lines 170--171
+Overfull \hbox (3.29376pt too wide) in paragraph at lines 172--173
 \T1/pplx/m/n/10.95 dently for each year. In or-der to run the \T1/pcr/m/n/10.95
  total_trade_CPC\T1/pplx/m/n/10.95 , the out-put of \T1/pcr/m/n/10.95 complete_
 tf_cpc
  []
 
 LaTeX Font Info:    Font shape `T1/pplx/bx/n' in size <10.95> not available
-(Font)              Font shape `T1/pplx/b/n' tried instead on input line 172.
+(Font)              Font shape `T1/pplx/b/n' tried instead on input line 174.
 LaTeX Font Info:    Font shape `T1/pplx/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/pplx/b/n' tried instead on input line 172.
+(Font)              Font shape `T1/pplx/b/n' tried instead on input line 174.
 LaTeX Font Info:    Font shape `T1/pplx/m/sl' in size <10.95> not available
-(Font)              Font shape `T1/pplx/m/it' tried instead on input line 237.
+(Font)              Font shape `T1/pplx/m/it' tried instead on input line 209.
 
 Overfull \hbox (5.47499pt too wide) has occurred while \output is active
 []\T1/pplx/m/n/10.95 2 []
  []
 
 [2]
-Underfull \hbox (badness 10000) in paragraph at lines 243--251
-
- []
-
-LaTeX Font Info:    Try loading font information for TS1+pplx on input line 258
+LaTeX Font Info:    Try loading font information for TS1+pplx on input line 228
 .
-(/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/ts1pplx.fd
+ (/usr/local/texlive/2007/texmf-dist/tex/latex/psnfss/ts1pplx.fd
 File: ts1pplx.fd 2004/09/06 font definitions for TS1/pplx.
 )
-Underfull \hbox (badness 10000) in paragraph at lines 258--261
+Underfull \hbox (badness 10000) in paragraph at lines 228--231
 
  []
 
@@ -619,12 +607,12 @@ Overfull \hbox (5.47499pt too wide) has occurred while \output is active
  []
 
 [3]
-Underfull \hbox (badness 10000) in paragraph at lines 279--280
+Underfull \hbox (badness 10000) in paragraph at lines 249--250
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 288--289
+Underfull \hbox (badness 10000) in paragraph at lines 258--259
 
  []
 
@@ -638,7 +626,7 @@ Overfull \hbox (5.47499pt too wide) has occurred while \output is active
 [][] \T1/pplx/m/n/10.95 5
  []
 
-[5] <"trade_1".png, id=132, 706.64pt x 829.0975pt>
+[5] <"trade_1".png, id=137, 706.64pt x 829.0975pt>
 File: "trade_1".png Graphic file (type png)
  <use "trade_1".png>
 Overfull \hbox (5.47499pt too wide) has occurred while \output is active
@@ -646,7 +634,7 @@ Overfull \hbox (5.47499pt too wide) has occurred while \output is active
  []
 
 [6 <./trade_1.png (PNG copy)>]
-<"trade_1_bis".png, id=138, 651.43375pt x 886.31125pt>
+<"trade_1_bis".png, id=143, 651.43375pt x 886.31125pt>
 File: "trade_1_bis".png Graphic file (type png)
  <use "trade_1_bis".png>
 Overfull \hbox (5.47499pt too wide) has occurred while \output is active
@@ -654,12 +642,7 @@ Overfull \hbox (5.47499pt too wide) has occurred while \output is active
  []
 
 [7 <./trade_1_bis.png (PNG copy)>]
-Underfull \hbox (badness 10000) in paragraph at lines 325--327
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 329--330
+Underfull \hbox (badness 10000) in paragraph at lines 297--298
 
  []
 
@@ -674,7 +657,7 @@ Overfull \hbox (5.47499pt too wide) has occurred while \output is active
  []
 
 [9]
-Underfull \hbox (badness 10000) in paragraph at lines 382--387
+Underfull \hbox (badness 10000) in paragraph at lines 380--385
 
  []
 
@@ -688,13 +671,13 @@ Overfull \hbox (10.94998pt too wide) has occurred while \output is active
 (\end occurred when \ifx on line 111 was incomplete)
 (\end occurred when \ifx on line 111 was incomplete) 
 Here is how much of TeX's memory you used:
- 7366 strings out of 94073
- 104335 string characters out of 1162984
- 187410 words of memory out of 1500000
- 10405 multiletter control sequences out of 10000+50000
- 47943 words of font info for 83 fonts, out of 1200000 for 2000
+ 7331 strings out of 94073
+ 103344 string characters out of 1162984
+ 187603 words of memory out of 1500000
+ 10371 multiletter control sequences out of 10000+50000
+ 45313 words of font info for 80 fonts, out of 1200000 for 2000
  645 hyphenation exceptions out of 8191
- 35i,10n,34p,1550b,402s stack positions out of 5000i,500n,6000p,200000b,5000s
+ 35i,9n,34p,1550b,514s stack positions out of 5000i,500n,6000p,200000b,5000s
 {/usr/local/texlive/2007/te
 xmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2007/texmf-dist/fonts/
 type1/bluesky/cm/cmex10.pfb></usr/local/texlive/2007/texmf-dist/fonts/type1/blu
@@ -704,9 +687,9 @@ mr10.pfb></usr/local/texlive/2007/texmf-dist/fonts/type1/bluesky/cm/cmsy10.pfb>
 cal/texlive/2007/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></usr/local/tex
 live/2007/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/local/texlive/20
 07/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on tradeDocumentation.pdf (10 pages, 318856 bytes).
+Output written on tradeDocumentation.pdf (10 pages, 319767 bytes).
 PDF statistics:
- 221 PDF objects out of 1000 (max. 8388607)
- 67 named destinations out of 1000 (max. 131072)
- 187 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 230 PDF objects out of 1000 (max. 8388607)
+ 76 named destinations out of 1000 (max. 131072)
+ 179 words of extra memory for PDF output out of 10000 (max. 10000000)
 

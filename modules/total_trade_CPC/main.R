@@ -12,7 +12,8 @@ library(dplyr, warn.conflicts = F)
 
 local({
   min_versions <- data.frame(package = c("faoswsFlag", "faoswsTrade"),
-                             version = c('0.2.4', '0.1.1'))
+                             version = c('0.2.4', '0.1.1'),
+                             stringsAsFactors = FALSE)
 
   for (i in nrow(min_versions)){
     # installed version

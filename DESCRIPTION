@@ -3,8 +3,7 @@ Type: Package
 Title: FAO Trade Module
 Version: 0.1.1
 Date: 2016-06-02
-Author: Marco Garieri
-Maintainer: Marco Garieri <marco.garieri@fao.org>
+Authors@R: c(person("Marco", "Garieri", role = c("aut", "cre"), email = "marco.garieri@fao.org"))
 Description: Trade module
 License: FAO
 LazyData: TRUE

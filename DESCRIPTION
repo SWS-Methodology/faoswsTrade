@@ -1,9 +1,10 @@
 Package: faoswsTrade
 Type: Package
 Title: FAO Trade Module
-Version: 0.1.1
-Date: 2016-06-02
-Authors@R: c(person("Marco", "Garieri", role = c("aut", "cre"), email = "marco.garieri@fao.org"))
+Version: 0.1.2
+Date: 2016-07-29
+Authors@R: c(person("Marco", "Garieri", role = c("aut"), email = "marco.garieri@fao.org"),
+             person("Bo", "Werth", role = c("aut", "cre", email = "bo.werth@fao.org")))
 Description: Trade module
 License: FAO
 LazyData: TRUE

@@ -120,7 +120,8 @@ changes and updates. Version 1.
 \newpage
 
 
-The trade module is divided in two submodules: {\tt complete\_tf\_cpc} and {\tt total\_trade\_CPC}. Each module is year specific. This means that, at the time being, the trade module run indipendently for each year. In order to run the {\tt total\_trade\_CPC}, the output of {\tt complete\_tf\_cpc} is needed.
+The trade module is divided in two submodules: {\tt complete\_tf\_cpc} and {\tt total\_trade\_CPC}. Each module is year specific. This means that, at the time being, the trade module run indipendently for each year. In order to run the {\tt total\_trade\_CPC}, the output of {\tt complete\_tf\_cpc} is needed.\\
+All tables and graphs present in this documentation are just examples. More details on the data are given in the code.
 
 \section{Complete tf cpc}
 
@@ -129,10 +130,16 @@ Raw data are provided by the SWS Team (subunit of Team F) for both UNSD Tariffli
 \begin{itemize}
 \item [\bf{Eurostat}]
 \begin{itemize}
-\item code of reporter (declarant) just numeric (letters are not allowed)
+\item code of reporter (reporter) just numeric (letters are not allowed)
 \item code of partner (partner) just numeric (letters are not allowed)
-\item code of CN8 (product\_nc) just numeric (letters are not allowed)
+\item code of CN8 (hs) just numeric (letters are not allowed)
 \end{itemize}
+
+<<my-label0, eval=TRUE, echo=F, dev='png'>>=
+load("example_esdata.RData")
+esdata_example
+@
+
 \item [\bf{UNSD}]
 \begin{itemize}
 \item code of HS (comm) just numeric (letters are not allowed)
@@ -141,17 +148,38 @@ Raw data are provided by the SWS Team (subunit of Team F) for both UNSD Tariffli
 If any codes are still alphanumeric please ask team F to check, since this step is performed by them.\\
 The module downloads only records of commodities of interest for Tariffline Data. The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of interest for the division, it is important to include additional chapter in the first step of the downloading. For Eurostat Data no filtering is applied.
 
+<<my-label1, eval=TRUE, echo=F, dev='png'>>=
+load("example_tldata.RData")
+tldata_example
+@
+
+
 
 \subsection{Process}
-
 \subsubsection{Mapping UNSD Tariffline and Eurostat data}
 At this stage a standardization/mapping step is performed. The details are devided between UNSD Tariffline and Eurostat due to the nature of the differences among the two datasets.
 \begin{itemize}
 \item [\bf{UNSD Tariffline}]
 \begin{enumerate}
 \item UNSD Tariffline data reports area code with Tariffline M49 standard (which are different for official M49). The area code is converted in FAO country code using a specific convertion table provided by Team ENV. Area codes not mapping to any FAO country code or mapping to code 252 (which correpond not defined area) are separately saved and removed from further analyses.
+<<my-labelm49fao, eval=TRUE, echo=F, dev='png'>>=
+load("example_comtradefao.RData")
+comtradefao_example
+@
+
 \item Commodity codes are reported in HS codes ({\it Harmonized Commodity Description and Coding System}). The codes are converted in FCL (FAO Commodity List) codes. This step is performed using table incorporated in the SWS. In this step, all the mapping between HS and FCL code is stored. If a country is not included in the package of the mapping for that specific year, all the records for the reporting country are removed. All records without an FCL mapping are filtered out and saved in specific variables.
+<<my-labelfclmap, eval=TRUE, echo=F, dev='png'>>=
+load("example_hsfclmap.RData")
+hsfclmap_example
+@
+
+
 \item Information of the FCL units is added.
+<<my-labelfclunits, eval=TRUE, echo=F, dev='png'>>=
+load("example_fclunits.RData")
+fclunits_example
+@
+
 \item Just for UNSD Tariffline data convertion of units of measurements are applied to meet FAO standards, where all weights are reported in metric tonnes, animals in heads or 1000 heads and for some commodity just the value is provided.
 \item The flow codes of re-Import (4) are recoded into Import (1) and codes of re-Export (3) to Export (2). This procedure is applied following UNSD standards:
 \begin{quote}
@@ -163,11 +191,21 @@ Exports of a country can be distinguished as exports of domestic goods and expor
 \item [\bf{Eurostat}]
 \begin{enumerate}
 \item Eurostat classifies areas in their geonomenclature. The are code is converted in FAO country code using a specific convertion  table, stored in the SWS, provided by Team B/C.  Area codes not mapping to any FAO country code or mapping to code 252 (which correpond not defined area) is reported and the records for these area codes are removed.
+<<my-labelgeo, eval=TRUE, echo=F, dev='png'>>=
+load("example_geonom.RData")
+geonom_example
+@
+
 \item Commodity codes are reported in CN8 codes (Combined Nomenclature 8 digits). The codes are converted in FCL (FAO Commodity List) codes. This step is performed using the same package ({\tt hsfclmap}) as for UNSD Tariffline.
 If a specific record has a CN8 code not mapping to any specific FCL code, then the record is reported and removed. If a country is not included in the package of the mapping for that specific year, all the records for the reporting country are removed.\\
-Eurostat data are already provided in the correct units of measurements and do not need futher conversions.
-\item Information of the FCL units is added. This step is straighforward since for Eurostat the units are already corrected.
+Eurostat data are already provided in the correct units of measurements and do not need futher conversions. (No need of example, same as before).
+\item Information of the FCL units is added. This step is straighforward since for Eurostat the units are already corrected. (No need of example, same as before).
 \item Values are converted from EUR to USD using the table, stored in the SWS, with avarage currency for each year provided by Team B/C.
+<<my-labelexch, eval=TRUE, echo=F, dev='png'>>=
+load("example_exchange.RData")
+exchange_example
+@
+
 \end{enumerate}
 \end{itemize}
 
@@ -179,6 +217,12 @@ UNSD Tariffline and Eurostat datasets are ready to be merged togheter. From UNSD
 \item {\bf Application of Notes} Perennial and yearly specific notes are mdb files provided by the Team B/C already saved in a R friendly dataset. The notes might be of different nature. They might be a multiplicative factor, or forcing a value. More information  about the notes can be provided by team B/C. The notes might be year specific or for all years (in this case reported as NA) and might refer to HS or/and FCL codes. This notes (or adjustments) were developed during the years and they are available from 1997 to 2013. Notes of 2014 are copied from notes in 2013, as a partial solution, but this need future work in the future.\\
 Comparing results between the new and the old procedure showed that sometimes the discrepancies between the two results are due to the application of the notes.\\
 Remark: at the time being, the notes with unspecified year and with application of a factor 1000 are removed, since in the previous years UNSD was reporting some data in tonnes, while now it reports all data in kg.\\
+More details on how to read the notes can be given by team B/C.
+<<my-labelnote, eval=TRUE, echo=F, dev='png'>>=
+load("example_note.RData")
+notes_example
+@
+
 
 \item {\bf Unit Values computation} For each record having both quantity and value (thus excluding all commodity reported just as value), the unit of value ($u_v$) is computed as following:
 \begin{equation}
@@ -284,7 +328,23 @@ This section represents the most high priority task for the trade module.\\
 
 \subsection{Self Trade Analysis}
 \begin{itemize}
-\item[Progress status] For all the records having the same reporter and partner an analysis is performed on a separate script within the {\tt vignette} folder: {\tt selftrade.R}. The sum of the value is computed for both countries and commodity, in order to spot out the countries reporting massive self trade and which are the main commodity reported as self trade. Summary statistics are computed world wide.
+\item[Progress status] A script within the {\tt vignette} folder, named {\tt selftrade.R}, has been used to perform some simple analyses on the self trade. The script filter all records for which the reporter and the partner are the same. The script compute the sum of all value across all commodities per country (Figure 1), or the sum of all the value for each commodity across all countries (Figure 2). In this way we can spot out the countries reporting massive self trade as well as which are the main commodities reported in self trade.\\
+This is an example of the graphical output (still part of the script).
+\begin{center}
+\begin{figure}
+\includegraphics[scale=0.5]{../selftrade_by_country_name}
+\caption{Sum of all self trade records by country.}
+\end{figure}
+\end{center}
+
+\begin{center}
+\begin{figure}
+\includegraphics[scale=0.5]{../selftrade_by_commodity_code}
+\caption{Sum of all self trade records by commodity. Codes in FCL.}
+\end{figure}
+\end{center}
+
+
 \item[Next activities] This might be incorporated in the module and might produce suitable output within the SWS. More documentation is needed.
 \end{itemize}
 

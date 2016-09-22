@@ -24,7 +24,7 @@ if(!CheckDebug()){
     dump.frames()
     SWS_USER = regmatches(swsContext.username,
                           regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
-    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "modulename")
+    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
     save(last.dump, file=file.path(filename, "last.dump.RData"))
   })

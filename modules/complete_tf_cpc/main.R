@@ -701,12 +701,12 @@ tradedatanonrep <- tradedata %>%
           flow = ~ifelse(flow == 2, 1,
                          ifelse(flow == 1, 2,
                                 NA)),
-          ## Correction of CIB/FOB
+          ## Correction of CIF/FOB
           ## For now fixed at 12%
           ## but further analyses needed
           value = ~ifelse(flow == 1,
-                          value/1.2,
-                          value*1.2)) %>%
+                          value*1.12,
+                          value/1.12)) %>%
   select_(~-partner_mirr, ~-partner_mirrM49)
 
 tradedata <- bind_rows(tradedata,

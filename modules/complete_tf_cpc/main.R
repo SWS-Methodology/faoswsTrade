@@ -676,6 +676,7 @@ tradedata <- tradedata %>%
           partnerM49 = ~fs2m49(as.character(partner)))
 
 # Report of countries mapping to NA in M49
+# 2011: fal 252: "Unspecified" in FAOSTAT area list
 countries_not_mapping_M49 <- bind_rows(
   tradedata %>% select_(fc = ~reporter, m49 = ~reporterM49),
   tradedata %>% select_(fc = ~partner, m49 = ~partnerM49)) %>%

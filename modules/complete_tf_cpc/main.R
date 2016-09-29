@@ -176,13 +176,6 @@ hsfclmap <- hsfclmap2 %>%
 
 # tldata <- getRawAgriTL(year, agricodeslist)
 
-## This function might be faster getting the data just for the specific
-## chapters, and not the entire tldata
-## The chapters of interest are:
-## 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19
-## 20 21 22 23 24 33 35 38 40 41 42 43 50 51 52 53
-## Giorgio is testing the performances in the two cases
-
 message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns=c("rep", "tyear", "flow",
@@ -194,7 +187,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         '15', '16', '17', '18', '19', '20', '21',
                         '22', '23', '24', '33', '35', '38', '40',
                         '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
-                        ) ## The limit will go away
+                        )
 tldata <- tbl_df(tldata)
 
 ## comm (hs) code has to be digit

@@ -227,7 +227,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         columns = c("declarant", "partner",
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
-                                    "qty_ton", "sup_quantity")
+                                    "qty_ton", "sup_quantity",
+                                    "stat_regime")
 )
 esdata <- tbl_df(esdata)
 
@@ -237,6 +238,10 @@ esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
+## Only regime 4 is relevant for Eurostat data
+esdata <- esdata[esdata$stat_regime=="4",]
+## Removing stat_regime as it is not needed anymore
+esdata[,stat_regime:=NULL]
 
 esdata <- esdata %>%
   transmute_(reporter = ~as.numeric(declarant),

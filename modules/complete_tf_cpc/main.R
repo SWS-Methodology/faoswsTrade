@@ -230,7 +230,6 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "qty_ton", "sup_quantity",
                                     "stat_regime")
 )
-esdata <- tbl_df(esdata)
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
@@ -244,6 +243,7 @@ esdata <- esdata[esdata$stat_regime=="4",]
 esdata[,stat_regime:=NULL]
 
 esdata <- esdata %>%
+  tbl_df() %>%
   transmute_(reporter = ~as.numeric(declarant),
              partner = ~as.numeric(partner),
              hs = ~product_nc,

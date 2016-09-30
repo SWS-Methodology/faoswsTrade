@@ -327,7 +327,7 @@ tldata <- tldata %>%
 # { "id": "3", "text": "re-Export" }
 
 tldata <- tldata %>%
-  mutate_(flow = ~ifelse(flow == 4, 1L, ifelse(flow == 3, 2L, flow)))
+  mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
 # ---- tl_hslength ----
 
@@ -697,9 +697,7 @@ tradedatanonrep <- tradedata %>%
           reporterM49 = ~partnerM49,
           partner = ~partner_mirr,
           partnerM49 = ~partner_mirrM49,
-          flow = ~ifelse(flow == 2, 1,
-                         ifelse(flow == 1, 2,
-                                NA)),
+          flow = ~recode(flow, '2' = 1, '1' = 2),
           ## Correction of CIF/FOB
           ## For now fixed at 12%
           ## but further analyses needed

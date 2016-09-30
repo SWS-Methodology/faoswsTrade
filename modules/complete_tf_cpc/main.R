@@ -653,7 +653,7 @@ tradedata <- tradedata %>%
 tradedata <- tradedata %>%
   select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value, ~flagTrade) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
-  summarise_each_(funs(sum = sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade")) %>%
+  summarise_each_(funs(sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade")) %>%
   ungroup()
 
 # Adding CPC2 extended code

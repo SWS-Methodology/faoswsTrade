@@ -188,7 +188,28 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         '22', '23', '24', '33', '35', '38', '40',
                         '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
                         )
-tldata <- tbl_df(tldata)
+
+# Removing duplicate values for which quantity & value & weight exist
+# (in the process, removing redundant columns)
+# Note: missing or values will be handled below by imputation
+tldata_sws <- tldata %>%
+  tbl_df() %>%
+  select_(~-chapter) %>%
+  mutate_(no_quant = ~qty == 0 | is.na(qty),
+          no_weight = ~weight == 0 | is.na(weight),
+          no_tvalue = ~tvalue == 0 | is.na(tvalue))
+
+tldata <- bind_rows(
+  tldata_sws %>%
+    filter_(~!(no_quant & no_tvalue & no_weight)) %>%
+    # XXX: in the original datatable there is a hsrep variable with different values
+    group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
+    summarise_each_(funs(sum(., na.rm = TRUE)), vars = c("weight", "qty", "tvalue")) %>%
+    ungroup(),
+  tldata_sws %>%
+    filter_(~(no_quant | no_tvalue | no_weight)) %>%
+    select_(~-no_quant, ~-no_tvalue, ~-no_weight)
+)
 
 ## comm (hs) code has to be digit
 ## This probably should be part of the faoswsEnsure

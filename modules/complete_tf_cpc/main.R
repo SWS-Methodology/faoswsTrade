@@ -191,7 +191,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 
 # Removing duplicate values for which quantity & value & weight exist
 # (in the process, removing redundant columns)
-# Note: missing or values will be handled below by imputation
+# Note: missing quantity|weight or value will be handled below by imputation
 tldata_sws <- tldata %>%
   tbl_df() %>%
   select_(~-chapter) %>%

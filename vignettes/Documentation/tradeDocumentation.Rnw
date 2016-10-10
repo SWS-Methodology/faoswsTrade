@@ -156,6 +156,11 @@ tldata_example
 
 
 \subsection{Process}
+\subsubsection{Aggregate UNSD Tariffline individual Shipments}
+The tariffline data from UNSD contains multiple rows with identical combination
+of reporter / partner / commodity / flow / year / qunit. Those are separate
+registered transactions and the rows containinig non-missing values and quantities are summed.
+
 \subsubsection{Mapping UNSD Tariffline and Eurostat data}
 At this stage a standardization/mapping step is performed. The details are devided between UNSD Tariffline and Eurostat due to the nature of the differences among the two datasets.
 \begin{itemize}

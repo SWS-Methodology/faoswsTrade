@@ -12,3 +12,5 @@ tradeproc/vignettes/producingSet_new_cache
 *sws.yml
 vignettes/some_analysis.R
 vignettes/*_cpc.*
+*.log
+*.tex

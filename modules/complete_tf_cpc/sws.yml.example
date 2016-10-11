@@ -1,6 +1,7 @@
 current: qa
 all:
   share: /media/share
+  testdir: //hqlprsws1.hq.un.fao.org/sws_r_share/trade/test
 qa:
   certdir: path/to/qa/certs
   server: https://hqlqasws1.hq.un.fao.org:8181/sws

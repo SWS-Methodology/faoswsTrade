@@ -14,3 +14,4 @@ vignettes/some_analysis.R
 vignettes/*_cpc.*
 *.log
 *.tex
+*.swp

@@ -177,17 +177,7 @@ hsfclmap <- hsfclmap2 %>%
 # tldata <- getRawAgriTL(year, agricodeslist)
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns=c("rep", "tyear", "flow",
-                                  "comm", "prt", "weight",
-                                  "qty", "qunit", "tvalue",
-                                  "chapter"),
-                        where = "chapter IN ('01', '02', '03', '04', '05', '06', '07',
-                        '08', '09', '10', '11', '12',  '13', '14',
-                        '15', '16', '17', '18', '19', '20', '21',
-                        '22', '23', '24', '33', '35', '38', '40',
-                        '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
-                        )
+tldata <- getTradeData(origin = "TL", year = year)
 
 # Removing duplicate values for which quantity & value & weight exist
 # (in the process, removing redundant columns)
@@ -237,13 +227,7 @@ tldata <- tldata %>%
 #esdata = esdata_raw
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
-esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
-                        columns = c("declarant", "partner",
-                                    "product_nc", "flow",
-                                    "period", "value_1k_euro",
-                                    "qty_ton", "sup_quantity",
-                                    "stat_regime")
-)
+esdata <- getTradeData(origin = "ES", year = year)
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure

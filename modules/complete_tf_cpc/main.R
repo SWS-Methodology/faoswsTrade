@@ -303,6 +303,25 @@ esdata$fclunit <- ifelse(is.na(esdata$fclunit),
                          "mt",
                          esdata$fclunit)
 
+## Specific ES conversions: some FCL codes are reported in Eurostat
+## with different supplementary units than those reported in FAOSTAT
+es_spec_conv <- frame_data(
+  ~fcl, ~conv,
+  1057L, 0.001,
+  1069L, 0.001,
+  1072L, 0.001,
+  1079L, 0.001,
+  1083L, 0.001,
+  1140L, 0.001,
+  1181L, 1000
+)
+
+esdata <- esdata %>%
+  left_join(es_spec_conv, by='fcl') %>%
+  mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
+  select_(-~conv)
+
+
 # ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
 
@@ -462,20 +481,13 @@ ctfclunitsconv$conv <- 0
 ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "$ value only"] <- NA # Missing quantity
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "m²"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
                       ctfclunitsconv$wco == "l"] <- .001
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
                       ctfclunitsconv$wco == "u"] <- .001
-## This is just a trick
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
-                      ctfclunitsconv$wco == "kg"] <- 1
-## This one too :)
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
                       ctfclunitsconv$wco == "kg"] <- 1
-
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
@@ -503,9 +515,9 @@ fcl_spec_mt_conv <- tldata %>%
 if(NROW(fcl_spec_mt_conv) > 0){
   fcl_spec_mt_conv$convspec <- 0
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- .01
+                              fcl_spec_mt_conv$wco == "1000u"] <- .001
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
-                              fcl_spec_mt_conv$wco == "u"] <- .0001
+                              fcl_spec_mt_conv$wco == "u"] <- .000001
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
                               fcl_spec_mt_conv$wco == "u"] <- .00006
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
@@ -513,15 +525,15 @@ if(NROW(fcl_spec_mt_conv) > 0){
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
                               fcl_spec_mt_conv$wco == "12u"] <- .00072
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- .006
+                              fcl_spec_mt_conv$wco == "1000u"] <- .06
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
                               fcl_spec_mt_conv$wco == "u"] <- 0.000008
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
+                              fcl_spec_mt_conv$wco == "1000u"] <- 0.008
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
                               fcl_spec_mt_conv$wco == "u"] <- 0.000008
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- 0.0008
+                              fcl_spec_mt_conv$wco == "1000u"] <- 0.008
   fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit Prepared nes" &
                               fcl_spec_mt_conv$wco == "U (jeu/pack)"] <- 0.0208333
 

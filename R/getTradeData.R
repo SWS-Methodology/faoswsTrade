@@ -1,4 +1,13 @@
+#' Get raw trade data.
+#'
 #' Get Tariff Line (TL) or Eurostat (ES) raw data.
+#'
+#' Complete trade data (i.e., for all countries) can be downloaded from
+#' the SWS, or a test dataset can be used. In the latter case, data for
+#' a subset of countries can be obtained directly from the SWS or a
+#' "frozen" dataset can be used (this dataset should already be present
+#' in \code{SETTINGS$testdir}; if it is not there it will be downloaded
+#' and saved).
 #'
 #' @param origin String: "TL" (Tariff Line) or "ES" (Eurostat).
 #' @param year Numeric.
@@ -9,6 +18,8 @@
 
 # XXX (Christian): it would probably be better to add the following
 # parameters: "chapters", "reporters" and "partners"
+
+# XXX (Christian): some code duplication could be avoided.
 
 getTradeData <- function(origin = NA, year = NA, test = FALSE,
                          local = FALSE) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/getTradeData.R
 \name{getTradeData}
 \alias{getTradeData}
-\title{Get Tariff Line (TL) or Eurostat (ES) raw data.}
+\title{Get raw trade data.}
 \usage{
 getTradeData(origin = NA, year = NA, test = FALSE, local = FALSE)
 }
@@ -20,5 +20,13 @@ A data.table containing trade data.
 }
 \description{
 Get Tariff Line (TL) or Eurostat (ES) raw data.
+}
+\details{
+Complete trade data (i.e., for all countries) can be downloaded from
+the SWS, or a test dataset can be used. In the latter case, data for
+a subset of countries can be obtained directly from the SWS or a
+"frozen" dataset can be used (this dataset should already be present
+in \code{SETTINGS$testdir}; if it is not there it will be downloaded
+and saved).
 }
 

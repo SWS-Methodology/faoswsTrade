@@ -303,6 +303,25 @@ esdata$fclunit <- ifelse(is.na(esdata$fclunit),
                          "mt",
                          esdata$fclunit)
 
+## Specific ES conversions: some FCL codes are reported in Eurostat
+## with different supplementary units than those reported in FAOSTAT
+es_spec_conv <- frame_data(
+  ~fcl, ~conv,
+  1057L, 0.001,
+  1069L, 0.001,
+  1072L, 0.001,
+  1079L, 0.001,
+  1083L, 0.001,
+  1140L, 0.001,
+  1181L, 1000
+)
+
+esdata <- esdata %>%
+  left_join(es_spec_conv, by='fcl') %>%
+  mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
+  select_(-~conv)
+
+
 # ---- tl_m49fao ----
 ## Based on Excel file from UNSD (unsdpartners..)
 

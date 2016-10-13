@@ -319,7 +319,7 @@ es_spec_conv <- frame_data(
 esdata <- esdata %>%
   left_join(es_spec_conv, by='fcl') %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
-  select_(-~conv)
+  select_(~-conv)
 
 
 # ---- tl_m49fao ----

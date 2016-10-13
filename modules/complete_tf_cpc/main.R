@@ -462,20 +462,13 @@ ctfclunitsconv$conv <- 0
 ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "$ value only"] <- NA # Missing quantity
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "m²"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
                       ctfclunitsconv$wco == "l"] <- .001
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
                       ctfclunitsconv$wco == "u"] <- .001
-## This is just a trick
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
-                      ctfclunitsconv$wco == "kg"] <- 1
-## This one too :)
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
                       ctfclunitsconv$wco == "kg"] <- 1
-
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &

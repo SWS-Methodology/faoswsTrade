@@ -34,7 +34,7 @@ PID <- Sys.getpid()
 
 ## Check that all packages are up to date
 local({
-  min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade"
+  min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
                                          "dplyr"),
                              version = c('0.2.11', '0.1.1', '0.5.0'),
                              stringsAsFactors = FALSE)

@@ -79,7 +79,9 @@ if(CheckDebug()){
 
 # ---- settings ----
 
-stopifnot(!is.null(swsContext.computationParams$year), !is.null(swsContext.computationParams$out_coef))
+stopifnot(
+  !is.null(swsContext.computationParams$year),
+  !is.null(swsContext.computationParams$out_coef))
 
 # Year for processing
 year <- as.integer(swsContext.computationParams$year)
@@ -109,7 +111,8 @@ hsfclmap2 <- tbl_df(ReadDatatable("hsfclmap2"))
 message(sprintf("[%s] Reading in adjustments", PID))
 
 adjustments <- tbl_df(ReadDatatable("adjustments"))
-colnames(adjustments) = sapply(colnames(adjustments), function(x) gsub("adj_","",x))
+colnames(adjustments) = sapply(colnames(adjustments),
+                               function(x) gsub("adj_","",x))
 adj_cols_int <- c("year","flow","fcl","partner","reporter")
 adj_cols_dbl <- c("hs")
 adjustments = adjustments %>%
@@ -273,7 +276,8 @@ esdata <- esdata %>%
 # ---- geonom2fao ----
 
 esdata <- data.table::as.data.table(esdata)
-esdata[, `:=`(reporter = convertGeonom2FAO(reporter), partner = convertGeonom2FAO(partner))]
+esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
+              partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
 
@@ -615,13 +619,14 @@ esdata_old = esdata
 
 
 message(sprintf("[%s] Applying Eurostat adjustments", PID))
-esdata <- tbl_df(plyr::ldply(sort(unique(esdata$reporter)),
-                             function(x) {
-                               applyadj(x, year, as.data.frame(adjustments), esdata)
-                             },
-                             .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-                             .inform = FALSE,
-                             .parallel = multicore))
+esdata <- tbl_df(plyr::ldply(
+  sort(unique(esdata$reporter)),
+  function(x) {
+    applyadj(x, year, as.data.frame(adjustments), esdata)
+  },
+  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
+  .inform = FALSE,
+  .parallel = multicore))
 
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
@@ -630,13 +635,14 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 
 message(sprintf("[%s] Applying Tariffline adjustments", PID))
 
-tldata <- tbl_df(plyr::ldply(sort(unique(tldata$reporter)),
-                             function(x) {
-                               applyadj(x, year, as.data.frame(adjustments), tldata)
-                             },
-                             .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-                             .inform = FALSE,
-                             .parallel = multicore))
+tldata <- tbl_df(plyr::ldply(
+  sort(unique(tldata$reporter)),
+  function(x) {
+    applyadj(x, year, as.data.frame(adjustments), tldata)
+  },
+  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
+  .inform = FALSE,
+  .parallel = multicore))
 
 
 # TODO Check quantity/weight
@@ -658,13 +664,15 @@ tradedata <- bind_rows(
 # Detection of missing quantities and values
 
 tradedata <- tradedata %>%
-  mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no NA qty, but may be changes later
+  mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no any NA qty records,
+                                              # but may change later
           no_value = ~value == 0 | is.na(value))
 
 # UV calculation
 
 tradedata <- mutate_(tradedata,
-                     uv = ~ifelse(no_quant | no_value, # Only 0 here. Should we care about NA?
+                     uv = ~ifelse(no_quant | no_value, # Only 0 here.
+                                                       # Should we care about NA?
                                   NA,
                                   value / qty))
 
@@ -686,9 +694,18 @@ tradedata <- tradedata %>%
 
 # Aggregation by fcl
 tradedata <- tradedata %>%
-  select_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit, ~qty, ~value, ~flagTrade) %>%
+  select_(~year,
+          ~reporter,
+          ~partner,
+          ~flow,
+          ~fcl,
+          ~fclunit,
+          ~qty,
+          ~value,
+          ~flagTrade) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
-  summarise_each_(funs(sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade")) %>%
+  summarise_each_(funs(sum(., na.rm = TRUE)),
+                  vars = c("qty", "value","flagTrade")) %>%
   ungroup()
 
 # Adding CPC2 extended code
@@ -750,8 +767,11 @@ tradedata <- bind_rows(tradedata,
 ##                for both imputed and mirrored
 ##                because applying 12% change in mirroring
 complete_trade <- tradedata %>%
-  mutate_(flagObservationStatus = ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),"I",""),
-          flagMethod = ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),"e",""))
+  mutate_(
+    flagObservationStatus = ~ifelse((flagTrade > 0) &
+                                      (fclunit != "$ value only"),"I",""),
+    flagMethod = ~ifelse((flagTrade > 0) &
+                           (fclunit != "$ value only"),"e",""))
 
 # Output for the SWS
 
@@ -778,9 +798,10 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                 -timePointYears, -flagObservationStatus,
                 -flagMethod, -unit, -flow) %>%
   rowwise() %>%
-  mutate_(measuredElementTrade = ~convertMeasuredElementTrade(measuredElementTrade,
-                                                              unit,
-                                                              flow)) %>%
+  mutate_(measuredElementTrade =
+            ~convertMeasuredElementTrade(measuredElementTrade,
+                                         unit,
+                                         flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
   select_(~-flow,~-unit)# %>%
@@ -789,12 +810,22 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
-data.table::setcolorder(complete_trade_flow_cpc, c("geographicAreaM49Reporter", "geographicAreaM49Partner",
-                                                   "measuredElementTrade", "measuredItemCPC", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
+data.table::setcolorder(complete_trade_flow_cpc,
+                        c("geographicAreaM49Reporter",
+                          "geographicAreaM49Partner",
+                          "measuredElementTrade",
+                          "measuredItemCPC",
+                          "timePointYears",
+                          "Value",
+                          "flagObservationStatus",
+                          "flagMethod"))
 
 message(sprintf("[%s] Writing data to session/database", PID))
 
-stats <- SaveData("trade","completed_tf_cpc_m49", complete_trade_flow_cpc, waitTimeout = 10800)
+stats <- SaveData("trade",
+                  "completed_tf_cpc_m49",
+                  complete_trade_flow_cpc,
+                  waitTimeout = 10800)
 
 message(sprintf("[%s] Session/database write completed!", PID))
 

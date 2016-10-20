@@ -3,6 +3,11 @@ set.seed(2507)
 debughsfclmap <- TRUE
 multicore <- FALSE
 
+## If true, the reported values will be in $
+## If false the reported values will be in k$
+dollars <- FALSE
+
+
 # ---- libs ----
 
 #library(tradeproc)
@@ -86,10 +91,6 @@ year <- as.integer(swsContext.computationParams$year)
 # Coefficient for outlier detection
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
-
-## If true, the reported values will be in $
-## If false the reported values will be in k$
-dollars = FALSE
 
 startTime = Sys.time()
 

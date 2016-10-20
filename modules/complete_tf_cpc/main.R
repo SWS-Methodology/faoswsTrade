@@ -200,15 +200,17 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 tldata_sws <- tldata %>%
   tbl_df() %>%
   select_(~-chapter) %>%
-  mutate_(no_quant = ~qty == 0 | is.na(qty),
-          no_weight = ~weight == 0 | is.na(weight),
-          no_tvalue = ~tvalue == 0 | is.na(tvalue))
+  # qty and weight seem to be always >0 or NA
+  mutate_(no_quant = ~is.na(qty),
+          no_weight = ~is.na(weight),
+          no_tvalue = ~is.na(tvalue))
 
 tldata <- bind_rows(
   tldata_sws %>%
-    filter_(~!(no_quant & no_tvalue & no_weight)) %>%
+    filter_(~(!no_quant & !no_tvalue & !no_weight)) %>%
     # XXX: in the original datatable there is a hsrep variable with different values
     group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
+    # na.rm is superfluous, but it hurts no one
     summarise_each_(funs(sum(., na.rm = TRUE)), vars = c("weight", "qty", "tvalue")) %>%
     ungroup(),
   tldata_sws %>%

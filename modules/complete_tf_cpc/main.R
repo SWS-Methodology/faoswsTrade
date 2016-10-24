@@ -315,7 +315,7 @@ esdata$fclunit <- ifelse(is.na(esdata$fclunit),
 es_spec_conv <- frame_data(
   ~fcl, ~conv,
   1057L, 0.001,
-  1069L, 0.001,
+  1068L, 0.001,
   1072L, 0.001,
   1079L, 0.001,
   1083L, 0.001,

@@ -1,3 +1,17 @@
+##' ## Complete TF CPC
+##'
+##' **Author: Alex Matrunich, Marco Garieri, Bo Werth, Christian Mongeau**
+##'
+##' **Description:**
+##'
+##' The trade module is divided in two submodules: **complete\_tf\_cpc** and
+##' **total\_trade\_CPC**. Each module is year specific. This means that, at the
+##' time being, the trade module run indipendently for each year. In order to
+##' run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
+##' needed.
+
+##+ init, echo=FALSE, eval=FALSE
+
 set.seed(2507)
 
 debughsfclmap <- TRUE
@@ -8,9 +22,9 @@ multicore <- FALSE
 dollars <- FALSE
 
 
-# ---- libs ----
+##+ libs, echo=FALSE, eval=FALSE
 
-#library(tradeproc)
+## library(tradeproc)
 
 suppressPackageStartupMessages({
   library(data.table)
@@ -22,6 +36,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(dplyr, warn.conflicts = F)
 })
+
 
 if(!CheckDebug()){
 
@@ -64,8 +79,8 @@ if(multicore) {
   doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
 }
 
-# ---- swsdebug ----
 
+##+ swsdebug, echo=FALSE, eval=FALSE
 
 if(CheckDebug()){
   library(faoswsModules)
@@ -77,7 +92,8 @@ if(CheckDebug()){
                      token = SETTINGS[["token"]])
 }
 
-# ---- settings ----
+
+##+ settings, echo=FALSE, eval=FALSE
 
 stopifnot(
   !is.null(swsContext.computationParams$year),
@@ -96,9 +112,19 @@ out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
 startTime = Sys.time()
 
-# ---- datasets ----
-## Data sets with hs->fcl map (from mdb files)
-# and UNSD area codes (M49)
+##' ### Input Data
+##' 
+##' **Supplementary Datasets:**
+##'
+##' - `hsfclmap2`: hs->fcl map (from mdb files)
+##' - `adjustments`: old adjustment notes
+##' - `unsdpartnersblocks`: UNSD area codes (M49)
+##' - `fclunits`
+##' - `comtradeunits`
+##' - `EURconversionUSD`
+
+
+##+ datasets, echo=FALSE, eval=FALSE
 
 ## Old procedure
 #data("hsfclmap2", package = "hsfclmap", envir = environment())
@@ -146,7 +172,7 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 #EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
 
-# ---- hsfclmapsubset ----
+##+ hsfclmapsubset, echo=FALSE, eval=FALSE
 # HS -> FCL map
 ## Filter hs->fcl links we need (based on year)
 
@@ -168,11 +194,19 @@ hsfclmap <- hsfclmap2 %>%
                                                 tocode,
                                                 digit = 9))
 
+##' #### UNSD TL Data
+##'
+##' ##### Chapters
+##' 
+##' The module downloads only records of commodities of interest for Tariffline
+##' Data. The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,
+##' 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40,
+##' 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of
+##' interest for the division, it is important to include additional chapter in
+##' the first step of the downloading. For Eurostat Data no filtering is
+##' applied.
 
-
-# ---- data from Giorgio (from drive) ----
-
-# ---- tradeload ----
+##+ tradeload, echo=FALSE, eval=FALSE
 
 #### Get list of agri codes ####
 #agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
@@ -194,9 +228,14 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
                         )
 
-# Removing duplicate values for which quantity & value & weight exist
-# (in the process, removing redundant columns)
-# Note: missing quantity|weight or value will be handled below by imputation
+
+##' ##### Transformation of TL Data
+##'
+##' 1) Remove duplicate values for which quantity & value & weight exist
+##' (in the process, removing redundant columns). Note: missing quantity|weight
+##' or value will be handled below by imputation
+
+##+ tl-remove-duplicate, echo=FALSE, eval=FALSE
 tldata_sws <- tldata %>%
   tbl_df() %>%
   select_(~-chapter) %>%
@@ -205,6 +244,13 @@ tldata_sws <- tldata %>%
           no_weight = ~is.na(weight),
           no_tvalue = ~is.na(tvalue))
 
+
+##' 2) The tariffline data from UNSD contains multiple rows with identical
+##' combination of reporter / partner / commodity / flow / year / qunit. Those
+##' are separate registered transactions and the rows containinig non-missing
+##' values and quantities are summed.
+
+##+ tl-aggregate-shipments, echo=FALSE, eval=FALSE
 tldata <- bind_rows(
   tldata_sws %>%
     filter_(~(!no_quant & !no_tvalue & !no_weight)) %>%
@@ -218,8 +264,12 @@ tldata <- bind_rows(
     select_(~-no_quant, ~-no_tvalue, ~-no_weight)
 )
 
-## comm (hs) code has to be digit
-## This probably should be part of the faoswsEnsure
+
+##' 3) Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+##' This probably should be part of the faoswsEnsure
+
+##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
+
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 ## Rename columns
@@ -275,33 +325,43 @@ esdata <- esdata %>%
              qty = ~as.numeric(sup_quantity)) %>%
   mutate_(hs6 = ~stringr::str_sub(hs,1,6))
 
-# ---- geonom2fao ----
-
+##+ geonom2fao, echo=FALSE, eval=FALSE
 esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
 
-# ---- removing reporters for which we don't have mapping of commodities
+##' **Treat unmapped ES Data**
+##' 
+##' Removing reporters for which we dont have mapping of commodities
+##' 
+##' - convert HS to FCL
+##' - remove unmapped FCL codes
+##' - join *fclunits*
+##' - `NA` *fclunits* set to `mt`
+##' - specific ES conversions: some FCL codes are reported in Eurostat
+##' with different supplementary units than those reported in FAOSTAT
+
+
+##+ es-treat-unmapped, echo=FALSE, eval=FALSE
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-# ---- es_hs2fcl ----
+## es_hs2fcl
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
 
-# ---- remove non mapped fcls ----
-## Non mapped FCL
+## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
 
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
-# ---- es_join_fclunits ----
 
+## es join fclunits
 esdata <- esdata %>%
   left_join(fclunits, by = "fcl")
 
@@ -310,8 +370,7 @@ esdata$fclunit <- ifelse(is.na(esdata$fclunit),
                          "mt",
                          esdata$fclunit)
 
-## Specific ES conversions: some FCL codes are reported in Eurostat
-## with different supplementary units than those reported in FAOSTAT
+## specific supplementary unit conversion
 es_spec_conv <- frame_data(
   ~fcl, ~conv,
   1057L, 0.001,
@@ -329,7 +388,7 @@ esdata <- esdata %>%
   select_(~-conv)
 
 
-# ---- tl_m49fao ----
+##+ tl_m49fao, echo=FALSE, eval=FALSE
 ## Based on Excel file from UNSD (unsdpartners..)
 
 message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
@@ -348,7 +407,8 @@ tldata <- tldata %>%
           reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
-# ---- drop_es_from_tl ----
+
+##+ drop_es_from_tl, echo=FALSE, eval=FALSE
 # They will be replaced by ES data
 
 tldata <- tldata %>%
@@ -357,7 +417,7 @@ tldata <- tldata %>%
               distinct(),
             by = "reporter")
 
-# ---- drop_reps_not_in_mdb ----
+##+ drop_reps_not_in_mdb, echo=FALSE, eval=FALSE
 # We drop reporters what are absent in MDB hsfcl map
 # because in any case we can proceed their data
 
@@ -367,7 +427,8 @@ tldata_not_area_in_fcl_mapping <- tldata %>%
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-# ---- reexptoexp ----
+
+##+ reexptoexp, echo=FALSE, eval=FALSE
 
 # { "id": "1", "text": "Import" },
 # { "id": "2", "text": "Export" },
@@ -377,7 +438,8 @@ tldata <- tldata %>%
 tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
-# ---- tl_hslength ----
+
+##+ tl_hslength, echo=FALSE, eval=FALSE
 
 #### Max length of HS-codes in MDB-files ####
 
@@ -438,7 +500,7 @@ hsfclmap1 <- hsfclmap1 %>%
           tocode = ~as.numeric(trailingDigits2(tocode, maxlength, 9)))
 
 
-# ---- tl_hs2fcl ----
+##+ tl_hs2fcl, echo=FALSE, eval=FALSE
 
 tldata <- convertHS2FCL(tldata %>%
                           select_(~-hs) %>%

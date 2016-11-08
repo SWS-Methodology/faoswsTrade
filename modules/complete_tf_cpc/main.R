@@ -9,6 +9,10 @@
 ##' time being, the trade module run indipendently for each year. In order to
 ##' run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
 ##' needed.
+##' 
+##' **Flow chart:**
+##' 
+##' ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
 ##+ init, echo=FALSE, eval=FALSE
 
@@ -116,12 +120,31 @@ startTime = Sys.time()
 ##' 
 ##' **Supplementary Datasets:**
 ##'
-##' - `hsfclmap2`: hs->fcl map (from mdb files)
-##' - `adjustments`: old adjustment notes
-##' - `unsdpartnersblocks`: UNSD area codes (M49)
-##' - `fclunits`
-##' - `comtradeunits`
-##' - `EURconversionUSD`
+##' 1. `hsfclmap2`: Mmapping between HS and FCL codes extracted from MDB files
+##' used to archive information existing in the previous trade system (Shark,
+##' Jellyfish).
+##' 
+##' 2. `adjustments`: Adjustment notes containing manually added conversion
+##' factors to obtain quantities from traded values
+##' 
+##' 3. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
+##' different list of geographic are codes. The partner dimesion is more
+##' detailed than the reporter dimension. Since we can not split trade flows of
+##' the reporter dimension, trade flows of the corresponding partner dimensions
+##' have to be assigned the reporter dimension's geographic area code. For
+##' example, the code 842 is used for the United States includes Virgin Islands
+##' and Puerto Rico and thus the reported trade flows of those territories.
+##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
+##' Minor Outlying Islands.
+##' 
+##' 4. `fclunits`: For UNSD Tariffline units of measurement are converted to
+##' meet FAO standards. According to FAO standard, all weights are reported in
+##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
+##' only the value is provided.
+##' 
+##' 5. `comtradeunits`
+##' 
+##' 5. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
 
 ##+ datasets, echo=FALSE, eval=FALSE
@@ -194,11 +217,9 @@ hsfclmap <- hsfclmap2 %>%
                                                 tocode,
                                                 digit = 9))
 
-##' #### UNSD TL Data
-##'
-##' ##### Chapters
+##' #### Extract UNSD Tariffline Data
 ##' 
-##' The module downloads only records of commodities of interest for Tariffline
+##' 1. Chapters: The module downloads only records of commodities of interest for Tariffline
 ##' Data. The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,
 ##' 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40,
 ##' 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of
@@ -229,9 +250,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         )
 
 
-##' ##### Transformation of TL Data
-##'
-##' 1) Remove duplicate values for which quantity & value & weight exist
+##' 2. Remove duplicate values for which quantity & value & weight exist
 ##' (in the process, removing redundant columns). Note: missing quantity|weight
 ##' or value will be handled below by imputation
 
@@ -245,7 +264,7 @@ tldata_sws <- tldata %>%
           no_tvalue = ~is.na(tvalue))
 
 
-##' 2) The tariffline data from UNSD contains multiple rows with identical
+##' 3. The tariffline data from UNSD contains multiple rows with identical
 ##' combination of reporter / partner / commodity / flow / year / qunit. Those
 ##' are separate registered transactions and the rows containinig non-missing
 ##' values and quantities are summed.
@@ -265,7 +284,7 @@ tldata <- bind_rows(
 )
 
 
-##' 3) Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+##' 4. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
 ##' This probably should be part of the faoswsEnsure
 
 ##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
@@ -285,6 +304,20 @@ tldata <- tldata %>%
              qunit = ~as.integer(qunit)) %>%
   mutate_(hs6 = ~stringr::str_sub(hs,1,6))
 
+
+
+##' ##### Extract Eurostat Combined Nomenclature Data
+##' 
+##' 1. Remove reporters with area codes that are not included in MDB commodity
+##' mapping area list
+##' 2. Convert HS to FCL
+##' 3. Remove unmapped FCL codes
+##' 4. Join *fclunits*
+##' 5. `NA` *fclunits* set to `mt`
+##' 6. Specific ES conversions: some FCL codes are reported in Eurostat
+##' with different supplementary units than those reported in FAOSTAT
+
+##+ es-extract, echo=FALSE, eval=FALSE
 #### Download ES data ####
 
 # esdata <- getRawAgriES(year, agricodeslist)
@@ -332,17 +365,6 @@ esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
 
-##' **Treat unmapped ES Data**
-##' 
-##' Removing reporters for which we dont have mapping of commodities
-##' 
-##' - convert HS to FCL
-##' - remove unmapped FCL codes
-##' - join *fclunits*
-##' - `NA` *fclunits* set to `mt`
-##' - specific ES conversions: some FCL codes are reported in Eurostat
-##' with different supplementary units than those reported in FAOSTAT
-
 
 ##+ es-treat-unmapped, echo=FALSE, eval=FALSE
 esdata_not_area_in_fcl_mapping <- esdata %>%
@@ -387,6 +409,23 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
+##' ##### Harmonization of UNSD Tariffline Data
+##'
+##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
+##' (which are different for official M49). The area code is converted in FAO
+##' country code using a specific convertion table provided by Team ENV. Area
+##' codes not mapping to any FAO country code or mapping to code 252 (which
+##' correpond not defined area) are separately saved and removed from further
+##' analyses.
+##' 
+##' 2. Commodity Codes: Commodity codes are reported in HS
+##' codes (Harmonized Commodity Description and Coding Systpem). The codes
+##' are converted in FCL (FAO Commodity List) codes. This step is performed
+##' using table incorporated in the SWS. In this step, all the mapping between
+##' HS and FCL code is stored. If a country is not included in the package of
+##' the mapping for that specific year, all the records for the reporting
+##' country are removed. All records without an FCL mapping are filtered out and
+##' saved in specific variables.
 
 ##+ tl_m49fao, echo=FALSE, eval=FALSE
 ## Based on Excel file from UNSD (unsdpartners..)

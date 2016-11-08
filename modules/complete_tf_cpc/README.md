@@ -40,11 +40,14 @@ and Puerto Rico and thus the reported trade flows of those territories.
 Analogous steps are taken for France, Italy, Norway, Switzerland and US
 Minor Outlying Islands.
 
-4. `fclunits`
+4. `fclunits`: For UNSD Tariffline units of measurement are converted to
+meet FAO standards. According to FAO standard, all weights are reported in
+metric tonnes, animals in heads or 1000 heads and for certain commodities,
+only the value is provided.
 
 5. `comtradeunits`
 
-5. `EURconversionUSD`
+5. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
 
 
@@ -94,7 +97,7 @@ with different supplementary units than those reported in FAOSTAT
 
 
 
-##### Harmonization of TL Data
+##### Harmonization of UNSD Tariffline Data
 
 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 (which are different for official M49). The area code is converted in FAO

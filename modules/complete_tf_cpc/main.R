@@ -525,12 +525,6 @@ tldata <- tldata %>%
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
-## na fclunits has to be set up as mt (suggest by Claudia)
-tldata$fclunit <- ifelse(is.na(tldata$fclunit),
-                         "mt",
-                         tldata$fclunit)
-
-
 tldata <- tldata %>%
   mutate_(qunit = ~as.integer(qunit)) %>%
   left_join(comtradeunits %>%

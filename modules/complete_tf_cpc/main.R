@@ -86,6 +86,14 @@ if(multicore) {
 
 ##+ swsdebug, echo=FALSE, eval=FALSE
 
+## ## local data
+## install.packages("//hqfile4/ess/Team_working_folder/A/SWS/faosws_0.8.2.9901.tar.gz",
+##                  repos = NULL,
+##                  type = "source")
+## ## SWS data
+## install.packages("faosws",
+##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
+
 if(CheckDebug()){
   library(faoswsModules)
   SETTINGS = ReadSettings("modules/complete_tf_cpc/sws.yml")

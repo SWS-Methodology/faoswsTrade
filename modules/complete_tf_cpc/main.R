@@ -324,6 +324,8 @@ esdata <- esdata[esdata$stat_regime=="4",]
 ## Removing stat_regime as it is not needed anymore
 esdata[,stat_regime:=NULL]
 
+esdata <- tbl_df(esdata)
+
 ## Rename columns
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 

@@ -9,12 +9,12 @@
 ##' time being, the trade module run indipendently for each year. In order to
 ##' run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
 ##' needed.
-##' 
-##' **Flow chart:**
-##' 
-##' ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
 ##+ init, echo=FALSE, eval=FALSE
+
+## **Flow chart:**
+## 
+## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
 set.seed(2507)
 
@@ -978,7 +978,9 @@ complete_trade <- tradedata %>%
 ##'
 ##' 2. Filter observations with missing CPC codes.
 ##'
-##' 3. Rename dimensions to comply with SWS standard
+##' 3. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
+##'
+##' 4. Calculate unit value at CPC level if the quantity is larger than zero.
 
 ##+ completed_trade_flow, echo=FALSE, eval=FALSE
 
@@ -995,13 +997,16 @@ complete_trade_flow_cpc <- complete_trade %>%
              measuredItemCPC = ~cpc,
              qty = ~qty,
              unit = ~fclunit,
-             value = ~value)
+             value = ~value) %>%
+  mutate(uv = ifelse(qty > 0, value / qty, NA))
 
-##' 4. Transform dataset seperating monetary values and quantities in different
-##' rows.
+
+##' 4. Transform dataset seperating monetary values, quantities and unit values
+##' in different rows.
 ##' 
-##' 5. Convert values and quantities to corresponding SWS element codes. For
-##' example, a qunatity import with unit "mt" is assigned `5610`.
+##' 5. Convert monetary values, quantities and unit values to corresponding SWS
+##' element codes. For example, a quantity import measured in metric tons is
+##' assigned `5610`.
 
 ##+ convert_element, echo=FALSE, eval=FALSE
 

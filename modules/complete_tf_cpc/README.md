@@ -10,10 +10,6 @@ time being, the trade module run indipendently for each year. In order to
 run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
 needed.
 
-**Flow chart:**
-
-![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
-
 
 
 
@@ -214,15 +210,18 @@ with `flagTrade` unless the FCL unit is categorized as `$ value only`.
 
 2. Filter observations with missing CPC codes.
 
-3. Rename dimensions to comply with SWS standard
+3. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
+
+4. Calculate unit value at CPC level if the quantity is larger than zero.
 
 
 
-4. Transform dataset seperating monetary values and quantities in different
-rows.
+4. Transform dataset seperating monetary values, quantities and unit values
+in different rows.
 
-5. Convert values and quantities to corresponding SWS element codes. For
-example, a qunatity import with unit "mt" is assigned `5610`.
+5. Convert monetary values, quantities and unit values to corresponding SWS
+element codes. For example, a quantity import measured in metric tons is
+assigned `5610`.
 
 
 

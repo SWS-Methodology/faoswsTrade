@@ -357,11 +357,6 @@ esdata <- esdata %>%
 ## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
-## na fclunits has to be set up as mt (suggest by Claudia)
-esdata$fclunit <- ifelse(is.na(esdata$fclunit),
-                         "mt",
-                         esdata$fclunit)
-
 ## specific supplementary unit conversion
 es_spec_conv <- frame_data(
   ~fcl, ~conv,

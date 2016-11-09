@@ -199,23 +199,7 @@ data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 # HS -> FCL map
 ## Filter hs->fcl links we need (based on year)
 
-hsfclmap <- hsfclmap2 %>%
-  # Filter out all records from future years
-  filter_(~mdbyear <= year) %>%
-  # Distance from year of interest to year in the map
-  mutate_(yeardistance = ~year - mdbyear) %>%
-  # Select nearest year for every reporter
-  # if year == 2011 and mdbyear == 2011, then distance is 0
-  # if year == 2011 and mdbyear == 2010, distance is 1
-  group_by_(~area) %>%
-  filter_(~yeardistance == min(yeardistance)) %>%
-  ungroup() %>%
-  select_(~-yeardistance) %>%
-  ## and add trailing 9 to tocode, where it is shorter
-  ## TODO: check how many such cases and, if possible, move to manualCorrectoins
-  mutate_(tocode = ~faoswsTrade::trailingDigits(fromcode,
-                                                tocode,
-                                                digit = 9))
+hsfclmap <- hsfclmapSubset(hsfclmap2, year = year)
 
 ##' #### Extract UNSD Tariffline Data
 ##' 

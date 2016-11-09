@@ -97,7 +97,7 @@ with different supplementary units than those reported in FAOSTAT
 
 
 
-##### Harmonization of UNSD Tariffline Data
+##### Harmonize UNSD Tariffline Data
 
 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 (which are different for official M49). The area code is converted in FAO
@@ -119,6 +119,36 @@ saved in specific variables.
 
 
 
+
+
+
+3. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
+which contains weight in tons (requested by FAO).
+
+
+
+##### Combine Trade Data Sources
+
+1. The adjustment notes developed for national data received from countries
+are not applied to HS data any more (see instructions 2016-08-10). Data
+harvested from UNSD are standardised and therefore many (if not most) of the
+quantity adjustment notes (those with no year) need not be applied. The
+"notes" refer to the "raw" non-standardised files that we used to regularly
+receive from UNSD and/or the countries. Furthermore, some data differences
+will also arise due to more recent data revisions in these latest files that
+have been harvested.
+
+
+
+2. Convert currency of monetary values from EUR to USD using the
+`EURconversionUSD` table (see above).
+
+
+
+3. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
+ to single data set.
+ - TL: assign `weight` to `qty`
+ - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
 
 
 

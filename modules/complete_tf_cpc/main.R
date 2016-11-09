@@ -424,7 +424,7 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
-##' ##### Harmonization of UNSD Tariffline Data
+##' ##### Harmonize UNSD Tariffline Data
 ##'
 ##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 ##' (which are different for official M49). The area code is converted in FAO
@@ -701,9 +701,10 @@ if (dollars){
   tldata$value <- tldata$value / 1000
 }
 
+##' 3. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
+##' which contains weight in tons (requested by FAO).
 
-## TLDATA: aggregate by fcl
-## Here we select column qtyfcl which contains quantity, requested by FAO
+##+ tl_aggregate, echo=FALSE, eval=FALSE
 
 # tldata <- tldata %>%
 #   select_(~year,
@@ -732,39 +733,63 @@ tldata <- tldata %>%
 
 tldata_mid = tldata
 
-# Loading of notes/adjustments should be added here
-esdata_old = esdata
+
+##' ##### Combine Trade Data Sources
+##' 
+##' 1. The adjustment notes developed for national data received from countries
+##' are not applied to HS data any more (see instructions 2016-08-10). Data
+##' harvested from UNSD are standardised and therefore many (if not most) of the
+##' quantity adjustment notes (those with no year) need not be applied. The
+##' "notes" refer to the "raw" non-standardised files that we used to regularly
+##' receive from UNSD and/or the countries. Furthermore, some data differences
+##' will also arise due to more recent data revisions in these latest files that
+##' have been harvested.
+
+##+ apply_adjustment, echo=FALSE, eval=FALSE
+
+## Loading of notes/adjustments should be added here
+## esdata_old = esdata
+
+## message(sprintf("[%s] Applying Eurostat adjustments", PID))
+## esdata <- tbl_df(plyr::ldply(
+##   sort(unique(esdata$reporter)),
+##   function(x) {
+##     applyadj(x, year, as.data.frame(adjustments), esdata)
+##   },
+##   .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
+##   .inform = FALSE,
+##   .parallel = multicore))
+
+## message(sprintf("[%s] Applying Tariffline adjustments", PID))
+## tldata <- tbl_df(plyr::ldply(
+##   sort(unique(tldata$reporter)),
+##   function(x) {
+##     applyadj(x, year, as.data.frame(adjustments), tldata)
+##   },
+##   .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
+##   .inform = FALSE,
+##   .parallel = multicore))
+
+# TODO Check quantity/weight
+# The notes should save the results in weight
 
 
-message(sprintf("[%s] Applying Eurostat adjustments", PID))
-esdata <- tbl_df(plyr::ldply(
-  sort(unique(esdata$reporter)),
-  function(x) {
-    applyadj(x, year, as.data.frame(adjustments), esdata)
-  },
-  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-  .inform = FALSE,
-  .parallel = multicore))
+##' 2. Convert currency of monetary values from EUR to USD using the
+##' `EURconversionUSD` table (see above).
 
+##+ es_convcur, echo=FALSE, eval=FALSE
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
-message(sprintf("[%s] Applying Tariffline adjustments", PID))
 
-tldata <- tbl_df(plyr::ldply(
-  sort(unique(tldata$reporter)),
-  function(x) {
-    applyadj(x, year, as.data.frame(adjustments), tldata)
-  },
-  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-  .inform = FALSE,
-  .parallel = multicore))
+##' 3. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
+##'  to single data set.
+##'  - TL: assign `weight` to `qty`
+##'  - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
 
-
-# TODO Check quantity/weight
-# The notes should save the results in weight
+##+ combine_es_tl, echo=FALSE, eval=FALSE
 
 tradedata <- bind_rows(
   tldata %>%

@@ -355,8 +355,7 @@ esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
 ## es join fclunits
-esdata <- esdata %>%
-  left_join(fclunits, by = "fcl")
+esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ## na fclunits has to be set up as mt (suggest by Claudia)
 esdata$fclunit <- ifelse(is.na(esdata$fclunit),
@@ -528,10 +527,8 @@ tldata <- tldata %>%
 #############Units of measurment in TL ####
 
 ## Add target fclunit
-# What units does FAO expects for given FCL codes
 
-tldata <- tldata %>%
-  left_join(fclunits, by = "fcl")
+tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
 ## na fclunits has to be set up as mt (suggest by Claudia)
 tldata$fclunit <- ifelse(is.na(tldata$fclunit),

@@ -777,25 +777,8 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                       unique(tradedata$reporter))]
 
 ## Mirroring for non reporting countries
-tradedatanonrep <- tradedata %>%
-  filter_(~partner %in% nonreporting) %>%
-  mutate_(partner_mirr = ~reporter,
-          partner_mirrM49 = ~reporterM49,
-          reporter = ~partner,
-          reporterM49 = ~partnerM49,
-          partner = ~partner_mirr,
-          partnerM49 = ~partner_mirrM49,
-          flow = ~recode(flow, '2' = 1, '1' = 2),
-          ## Correction of CIF/FOB
-          ## For now fixed at 12%
-          ## but further analyses needed
-          value = ~ifelse(flow == 1,
-                          value*1.12,
-                          value/1.12)) %>%
-  select_(~-partner_mirr, ~-partner_mirrM49)
-
-tradedata <- bind_rows(tradedata,
-                       tradedatanonrep)
+tradedata <- mirrorNonReporters(tradedata = tradedata,
+                                nonreporters = nonreporting)
 
 ## Flag from numeric to letters
 ## TO DO (Marco): need to discuss how to treat flags

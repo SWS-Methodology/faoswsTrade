@@ -721,12 +721,8 @@ tradedata <- mutate_(tradedata,
 
 # Outlier detection
 
-tradedata <- tradedata %>%
-  group_by_(~year, ~reporter, ~flow, ~hs) %>%
-  mutate_(
-    uv_reporter = ~median(uv, na.rm = T),
-    outlier = ~uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)$out) %>%
-  ungroup()
+tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
+                            parameters = list(out_coef=out_coef))
 
 # Imputation of missings and outliers
 tradedata <- tradedata %>%

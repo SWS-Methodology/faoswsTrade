@@ -177,9 +177,16 @@ dividing the reported monetary value with the calculated median unit value.
 are also assigned to monetary values. This may need to be revised (monetary
 values are not supposed to be modified).
 
+6. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
+codes to around 800 commodity codes.
+
+7. Map FCL codes to CPC, remove observations that have not been mapped to
+CPC.
+
 
 
 #### Mirror Trade Estimation
+
 1. Obtain list of non-reporting countries as difference between the list of
 reporter countries and the list of partner countries.
 
@@ -198,6 +205,24 @@ created before are copied to new records.
 
 6. Assign SWS ObservationStatus flag `I` and flagMethod `e` to records with
 with `flagTrade` unless the FCL unit is categorized as `$ value only`.
+
+
+
+#### Output for SWS
+
+1. Filter observations with FCL code `1181` (bees).
+
+2. Filter observations with missing CPC codes.
+
+3. Rename dimensions to comply with SWS standard
+
+
+
+4. Transform dataset seperating monetary values and quantities in different
+rows.
+
+5. Convert values and quantities to corresponding SWS element codes. For
+example, a qunatity import with unit "mt" is assigned `5610`.
 
 
 

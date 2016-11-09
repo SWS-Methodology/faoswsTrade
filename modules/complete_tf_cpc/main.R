@@ -853,6 +853,12 @@ tradedata <- tradedata %>%
 ##' 5. Assign `flagTrade` to observations with imputed quantities. These flags
 ##' are also assigned to monetary values. This may need to be revised (monetary
 ##' values are not supposed to be modified).
+##'
+##' 6. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
+##' codes to around 800 commodity codes.
+##' 
+##' 7. Map FCL codes to CPC, remove observations that have not been mapped to
+##' CPC.
 
 ##+ impute_qty_uv, echo=FALSE, eval=FALSE
 
@@ -907,7 +913,7 @@ countries_not_mapping_M49 <- bind_rows(
 
 
 ##' #### Mirror Trade Estimation
-
+##' 
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
 ##'
@@ -966,9 +972,16 @@ complete_trade <- tradedata %>%
     flagMethod = ~ifelse((flagTrade > 0) &
                            (fclunit != "$ value only"),"e",""))
 
-# Output for the SWS
+##' #### Output for SWS
+##'
+##' 1. Filter observations with FCL code `1181` (bees).
+##'
+##' 2. Filter observations with missing CPC codes.
+##'
+##' 3. Rename dimensions to comply with SWS standard
 
-## Completed trade flow
+##+ completed_trade_flow, echo=FALSE, eval=FALSE
+
 complete_trade_flow_cpc <- complete_trade %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
@@ -984,6 +997,13 @@ complete_trade_flow_cpc <- complete_trade %>%
              unit = ~fclunit,
              value = ~value)
 
+##' 4. Transform dataset seperating monetary values and quantities in different
+##' rows.
+##' 
+##' 5. Convert values and quantities to corresponding SWS element codes. For
+##' example, a qunatity import with unit "mt" is assigned `5610`.
+
+##+ convert_element, echo=FALSE, eval=FALSE
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,

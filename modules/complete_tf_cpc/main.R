@@ -281,21 +281,8 @@ tldata <- tbl_df(tldata)
 # Note: missing quantity|weight or value will be handled below by imputation
 tldata <- preAggregateMultipleTLRows(tldata)
 
-
 ## Rename columns
-tldata <- tldata %>%
-  transmute_(reporter = ~as.integer(rep),
-             partner = ~as.integer(prt),
-             hs = ~comm,
-             flow = ~as.integer(flow),
-             year = ~as.character(tyear),
-             value = ~tvalue,
-             weight = ~weight,
-             qty = ~qty,
-             qunit = ~as.integer(qunit)) %>%
-  mutate_(hs6 = ~stringr::str_sub(hs,1,6))
-
-
+tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 ##' ##### Extract Eurostat Combined Nomenclature Data
 ##' 
@@ -337,17 +324,8 @@ esdata <- esdata[esdata$stat_regime=="4",]
 ## Removing stat_regime as it is not needed anymore
 esdata[,stat_regime:=NULL]
 
-esdata <- esdata %>%
-  tbl_df() %>%
-  transmute_(reporter = ~as.numeric(declarant),
-             partner = ~as.numeric(partner),
-             hs = ~product_nc,
-             flow = ~as.integer(flow),
-             year = ~as.character(str_sub(period,1,4)),
-             value = ~as.numeric(value_1k_euro),
-             weight = ~as.numeric(qty_ton),
-             qty = ~as.numeric(sup_quantity)) %>%
-  mutate_(hs6 = ~stringr::str_sub(hs,1,6))
+## Rename columns
+esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
 ##+ geonom2fao, echo=FALSE, eval=FALSE
 esdata <- data.table::as.data.table(esdata)

@@ -725,11 +725,8 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
                             parameters = list(out_coef=out_coef))
 
 # Imputation of missings and outliers
-tradedata <- tradedata %>%
-  mutate_(qty = ~ifelse(no_quant | outlier,
-                        value / uv_reporter,
-                        qty),
-          flagTrade = ~ifelse(no_quant | outlier, 1, 0))
+
+tradedata <- doImputation(tradedata = tradedata)
 
 # Aggregation by fcl
 tradedata <- tradedata %>%

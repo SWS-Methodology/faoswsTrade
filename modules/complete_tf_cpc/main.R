@@ -275,6 +275,13 @@ tldata <- bind_rows(
 
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
+tldata <- tbl_df(tldata)
+
+# Aggregate multiple TL rows.
+# Note: missing quantity|weight or value will be handled below by imputation
+tldata <- preAggregateMultipleTLRows(tldata)
+
+
 ## Rename columns
 tldata <- tldata %>%
   transmute_(reporter = ~as.integer(rep),

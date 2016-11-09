@@ -245,16 +245,22 @@ hsfclmap <- hsfclmap2 %>%
 # tldata <- getRawAgriTL(year, agricodeslist)
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
+
+## Chapter provided by team B/C
+## creating object to provision re-use with Eurostat data
+hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
+hs_chapters_str <-
+  formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
+  as.character %>%
+  sQuote %>%
+  paste(collapse = ", ")
+
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns=c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
                                   "chapter"),
-                        where = "chapter IN ('01', '02', '03', '04', '05', '06', '07',
-                        '08', '09', '10', '11', '12',  '13', '14',
-                        '15', '16', '17', '18', '19', '20', '21',
-                        '22', '23', '24', '33', '35', '38', '40',
-                        '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
+                        where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
 
@@ -340,7 +346,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
                                     "qty_ton", "sup_quantity",
-                                    "stat_regime")
+                                    "stat_regime"),
+                        where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
 ## Declarant and partner numeric

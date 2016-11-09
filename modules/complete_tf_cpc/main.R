@@ -677,33 +677,16 @@ tldata_mid = tldata
 # Loading of notes/adjustments should be added here
 esdata_old = esdata
 
+esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
+                         adjustments = adjustments, parallel = multicore)
 
-message(sprintf("[%s] Applying Eurostat adjustments", PID))
-esdata <- tbl_df(plyr::ldply(
-  sort(unique(esdata$reporter)),
-  function(x) {
-    applyadj(x, year, as.data.frame(adjustments), esdata)
-  },
-  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-  .inform = FALSE,
-  .parallel = multicore))
+tldata <- useAdjustments(tradedata = tldata, year = year,
+                         adjustments = adjustments, parallel = multicore)
 
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
-
-message(sprintf("[%s] Applying Tariffline adjustments", PID))
-
-tldata <- tbl_df(plyr::ldply(
-  sort(unique(tldata$reporter)),
-  function(x) {
-    applyadj(x, year, as.data.frame(adjustments), tldata)
-  },
-  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-  .inform = FALSE,
-  .parallel = multicore))
-
 
 # TODO Check quantity/weight
 # The notes should save the results in weight

@@ -25,6 +25,9 @@ multicore <- FALSE
 ## If false the reported values will be in k$
 dollars <- FALSE
 
+## If TRUE, use adjustments (AKA "conversion notes")
+use_adjustments <- FALSE
+
 
 ##+ libs, echo=FALSE, eval=FALSE
 
@@ -648,11 +651,13 @@ tldata_mid = tldata
 # Loading of notes/adjustments should be added here
 esdata_old = esdata
 
-esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
-                         adjustments = adjustments, parallel = multicore)
+if (use_adjustments == TRUE) {
+  esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
+                           adjustments = adjustments, parallel = multicore)
 
-tldata <- useAdjustments(tradedata = tldata, year = year,
-                         adjustments = adjustments, parallel = multicore)
+  tldata <- useAdjustments(tradedata = tldata, year = year,
+                           adjustments = adjustments, parallel = multicore)
+}
 
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%

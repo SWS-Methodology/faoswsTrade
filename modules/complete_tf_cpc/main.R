@@ -234,41 +234,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         )
 
 
-##' 2. Remove duplicate values for which quantity & value & weight exist
-##' (in the process, removing redundant columns). Note: missing quantity|weight
-##' or value will be handled below by imputation
-
-##+ tl-remove-duplicate, echo=FALSE, eval=FALSE
-tldata_sws <- tldata %>%
-  tbl_df() %>%
-  select_(~-chapter) %>%
-  # qty and weight seem to be always >0 or NA
-  mutate_(no_quant = ~is.na(qty),
-          no_weight = ~is.na(weight),
-          no_tvalue = ~is.na(tvalue))
-
-
-##' 3. The tariffline data from UNSD contains multiple rows with identical
-##' combination of reporter / partner / commodity / flow / year / qunit. Those
-##' are separate registered transactions and the rows containinig non-missing
-##' values and quantities are summed.
-
-##+ tl-aggregate-shipments, echo=FALSE, eval=FALSE
-tldata <- bind_rows(
-  tldata_sws %>%
-    filter_(~(!no_quant & !no_tvalue & !no_weight)) %>%
-    # XXX: in the original datatable there is a hsrep variable with different values
-    group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-    # na.rm is superfluous, but it hurts no one
-    summarise_each_(funs(sum(., na.rm = TRUE)), vars = c("weight", "qty", "tvalue")) %>%
-    ungroup(),
-  tldata_sws %>%
-    filter_(~(no_quant | no_tvalue | no_weight)) %>%
-    select_(~-no_quant, ~-no_tvalue, ~-no_weight)
-)
-
-
-##' 4. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+##' 2. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
 ##' This probably should be part of the faoswsEnsure
 
 ##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
@@ -277,8 +243,13 @@ tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-# Aggregate multiple TL rows.
-# Note: missing quantity|weight or value will be handled below by imputation
+##' 3. The tariffline data from UNSD contains multiple rows with identical
+##' combination of reporter / partner / commodity / flow / year / qunit. Those
+##' are separate registered transactions and the rows containinig non-missing
+##' values and quantities are summed.
+
+##+ Aggregate multiple TL rows.
+##+ Note: missing quantity|weight or value will be handled below by imputation
 tldata <- preAggregateMultipleTLRows(tldata)
 
 ## Rename columns

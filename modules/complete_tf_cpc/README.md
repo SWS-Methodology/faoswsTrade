@@ -82,7 +82,7 @@ This probably should be part of the faoswsEnsure
 
 
 
-##### Extract Eurostat Combined Nomenclature Data
+#### Extract Eurostat Combined Nomenclature Data
 
 1. Remove reporters with area codes that are not included in MDB commodity
 mapping area list
@@ -97,7 +97,7 @@ with different supplementary units than those reported in FAOSTAT
 
 
 
-##### Harmonize UNSD Tariffline Data
+#### Harmonize UNSD Tariffline Data
 
 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 (which are different for official M49). The area code is converted in FAO
@@ -127,7 +127,7 @@ which contains weight in tons (requested by FAO).
 
 
 
-##### Combine Trade Data Sources
+#### Combine Trade Data Sources
 
 1. The adjustment notes developed for national data received from countries
 are not applied to HS data any more (see instructions 2016-08-10). Data
@@ -149,6 +149,55 @@ have been harvested.
  to single data set.
  - TL: assign `weight` to `qty`
  - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
+
+
+
+#### Outlier Detection and Imputation
+1. Unit values are calculated for each observation at the HS level as ratio
+of monetary value over weight `value / qty`.
+
+2. Median unit-values are calculated across the partner dimension by year,
+reporter, flow and HS. This can be problematic if only few records exist for
+the a specific combination of dimensions.
+
+
+
+3. Observations are classified as outliers if the calculated unit value for
+a some partner country is below or above the median unit value. More
+specifically, the measure defined as median inter-quartile-range (IQR)
+multiplied by the outlier coefficient (default value: 1.5) is used to
+categorize outlier observations.
+
+
+
+4. Impute missing quantities and quantities categorized as outliers by
+dividing the reported monetary value with the calculated median unit value.
+
+5. Assign `flagTrade` to observations with imputed quantities. These flags
+are also assigned to monetary values. This may need to be revised (monetary
+values are not supposed to be modified).
+
+
+
+#### Mirror Trade Estimation
+1. Obtain list of non-reporting countries as difference between the list of
+reporter countries and the list of partner countries.
+
+2. Swap the reporter and partner dimensions: the value previously appearing
+as reporter country code becomes the partner country code (and vice versa).
+
+3. Invert the flow direction: an import becomes an export (and vice versa).
+
+4. Calculate monetary mirror value by adding a 12% mark-up on imports to
+account for the difference between CIF and FOB prices.
+
+5. In this step, no new flags are assigned explicitly. Imputation flags
+created before are copied to new records.
+
+
+
+6. Assign SWS ObservationStatus flag `I` and flagMethod `e` to records with
+with `flagTrade` unless the FCL unit is categorized as `$ value only`.
 
 
 

@@ -10,6 +10,11 @@ time being, the trade module run indipendently for each year. In order to
 run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
 needed.
 
+Change Log:
+
+- add unit values to output
+- remove adjustment factors
+
 
 
 

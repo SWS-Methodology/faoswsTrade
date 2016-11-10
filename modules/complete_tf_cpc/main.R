@@ -257,7 +257,7 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
 hs_chapters_str <-
   formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
   as.character %>%
-  shQuote %>%
+  shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),

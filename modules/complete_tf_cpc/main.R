@@ -30,6 +30,9 @@ multicore <- FALSE
 ## If false the reported values will be in k$
 dollars <- FALSE
 
+## If TRUE, use adjustments (AKA "conversion notes")
+use_adjustments <- FALSE
+
 
 ##+ libs, echo=FALSE, eval=FALSE
 
@@ -212,23 +215,7 @@ data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 # HS -> FCL map
 ## Filter hs->fcl links we need (based on year)
 
-hsfclmap <- hsfclmap2 %>%
-  # Filter out all records from future years
-  filter_(~mdbyear <= year) %>%
-  # Distance from year of interest to year in the map
-  mutate_(yeardistance = ~year - mdbyear) %>%
-  # Select nearest year for every reporter
-  # if year == 2011 and mdbyear == 2011, then distance is 0
-  # if year == 2011 and mdbyear == 2010, distance is 1
-  group_by_(~area) %>%
-  filter_(~yeardistance == min(yeardistance)) %>%
-  ungroup() %>%
-  select_(~-yeardistance) %>%
-  ## and add trailing 9 to tocode, where it is shorter
-  ## TODO: check how many such cases and, if possible, move to manualCorrectoins
-  mutate_(tocode = ~faoswsTrade::trailingDigits(fromcode,
-                                                tocode,
-                                                digit = 9))
+hsfclmap <- hsfclmapSubset(hsfclmap2, year = year)
 
 ##' #### Extract UNSD Tariffline Data
 ##' 
@@ -269,61 +256,26 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         )
 
 
-##' 2. Remove duplicate values for which quantity & value & weight exist
-##' (in the process, removing redundant columns). Note: missing quantity|weight
-##' or value will be handled below by imputation
-
-##+ tl-remove-duplicate, echo=FALSE, eval=FALSE
-tldata_sws <- tldata %>%
-  tbl_df() %>%
-  select_(~-chapter) %>%
-  # qty and weight seem to be always >0 or NA
-  mutate_(no_quant = ~is.na(qty),
-          no_weight = ~is.na(weight),
-          no_tvalue = ~is.na(tvalue))
-
-
-##' 3. The tariffline data from UNSD contains multiple rows with identical
-##' combination of reporter / partner / commodity / flow / year / qunit. Those
-##' are separate registered transactions and the rows containinig non-missing
-##' values and quantities are summed.
-
-##+ tl-aggregate-shipments, echo=FALSE, eval=FALSE
-tldata <- bind_rows(
-  tldata_sws %>%
-    filter_(~(!no_quant & !no_tvalue & !no_weight)) %>%
-    # XXX: in the original datatable there is a hsrep variable with different values
-    group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-    # na.rm is superfluous, but it hurts no one
-    summarise_each_(funs(sum(., na.rm = TRUE)), vars = c("weight", "qty", "tvalue")) %>%
-    ungroup(),
-  tldata_sws %>%
-    filter_(~(no_quant | no_tvalue | no_weight)) %>%
-    select_(~-no_quant, ~-no_tvalue, ~-no_weight)
-)
-
-
-##' 4. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+##' 2. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
 ##' This probably should be part of the faoswsEnsure
 
 ##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
 
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
+tldata <- tbl_df(tldata)
+
+##' 3. The tariffline data from UNSD contains multiple rows with identical
+##' combination of reporter / partner / commodity / flow / year / qunit. Those
+##' are separate registered transactions and the rows containinig non-missing
+##' values and quantities are summed.
+
+##+ Aggregate multiple TL rows.
+##+ Note: missing quantity|weight or value will be handled below by imputation
+tldata <- preAggregateMultipleTLRows(tldata)
+
 ## Rename columns
-tldata <- tldata %>%
-  transmute_(reporter = ~as.integer(rep),
-             partner = ~as.integer(prt),
-             hs = ~comm,
-             flow = ~as.integer(flow),
-             year = ~as.character(tyear),
-             value = ~tvalue,
-             weight = ~weight,
-             qty = ~qty,
-             qunit = ~as.integer(qunit)) %>%
-  mutate_(hs6 = ~stringr::str_sub(hs,1,6))
-
-
+tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 ##' #### Extract Eurostat Combined Nomenclature Data
 ##' 
@@ -366,17 +318,10 @@ esdata <- esdata[esdata$stat_regime=="4",]
 ## Removing stat_regime as it is not needed anymore
 esdata[,stat_regime:=NULL]
 
-esdata <- esdata %>%
-  tbl_df() %>%
-  transmute_(reporter = ~as.numeric(declarant),
-             partner = ~as.numeric(partner),
-             hs = ~product_nc,
-             flow = ~as.integer(flow),
-             year = ~as.character(str_sub(period,1,4)),
-             value = ~as.numeric(value_1k_euro),
-             weight = ~as.numeric(qty_ton),
-             qty = ~as.numeric(sup_quantity)) %>%
-  mutate_(hs6 = ~stringr::str_sub(hs,1,6))
+esdata <- tbl_df(esdata)
+
+## Rename columns
+esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
 ##+ geonom2fao, echo=FALSE, eval=FALSE
 esdata <- data.table::as.data.table(esdata)
@@ -404,13 +349,7 @@ esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
 ## es join fclunits
-esdata <- esdata %>%
-  left_join(fclunits, by = "fcl")
-
-## na fclunits has to be set up as mt (suggest by Claudia)
-esdata$fclunit <- ifelse(is.na(esdata$fclunit),
-                         "mt",
-                         esdata$fclunit)
+esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ## specific supplementary unit conversion
 es_spec_conv <- frame_data(
@@ -577,16 +516,8 @@ tldata <- tldata %>%
 #############Units of measurment in TL ####
 
 ## Add target fclunit
-# What units does FAO expects for given FCL codes
 
-tldata <- tldata %>%
-  left_join(fclunits, by = "fcl")
-
-## na fclunits has to be set up as mt (suggest by Claudia)
-tldata$fclunit <- ifelse(is.na(tldata$fclunit),
-                         "mt",
-                         tldata$fclunit)
-
+tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
 tldata <- tldata %>%
   mutate_(qunit = ~as.integer(qunit)) %>%
@@ -738,7 +669,6 @@ tldata <- tldata %>%
 
 tldata_mid = tldata
 
-
 ##' #### Combine Trade Data Sources
 ##' 
 ##' 1. The adjustment notes developed for national data received from countries
@@ -752,32 +682,16 @@ tldata_mid = tldata
 
 ##+ apply_adjustment, echo=FALSE, eval=FALSE
 
-## Loading of notes/adjustments should be added here
-## esdata_old = esdata
-
-## message(sprintf("[%s] Applying Eurostat adjustments", PID))
-## esdata <- tbl_df(plyr::ldply(
-##   sort(unique(esdata$reporter)),
-##   function(x) {
-##     applyadj(x, year, as.data.frame(adjustments), esdata)
-##   },
-##   .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-##   .inform = FALSE,
-##   .parallel = multicore))
-
-## message(sprintf("[%s] Applying Tariffline adjustments", PID))
-## tldata <- tbl_df(plyr::ldply(
-##   sort(unique(tldata$reporter)),
-##   function(x) {
-##     applyadj(x, year, as.data.frame(adjustments), tldata)
-##   },
-##   .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-##   .inform = FALSE,
-##   .parallel = multicore))
-
 # TODO Check quantity/weight
 # The notes should save the results in weight
 
+if (use_adjustments == TRUE) {
+  esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
+                           adjustments = adjustments, parallel = multicore)
+
+  tldata <- useAdjustments(tradedata = tldata, year = year,
+                           adjustments = adjustments, parallel = multicore)
+}
 
 ##' 2. Convert currency of monetary values from EUR to USD using the
 ##' `EURconversionUSD` table (see above).
@@ -787,7 +701,6 @@ tldata_mid = tldata
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
-
 
 ##' 3. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
 ##'  to single data set.
@@ -834,7 +747,6 @@ tradedata <- mutate_(tradedata,
                                   NA,
                                   value / qty))
 
-
 ##' 3. Observations are classified as outliers if the calculated unit value for
 ##' a some partner country is below or above the median unit value. More
 ##' specifically, the measure defined as median inter-quartile-range (IQR)
@@ -844,13 +756,9 @@ tradedata <- mutate_(tradedata,
 ##+ boxplot_uv, echo=FALSE, eval=FALSE
 
 ## Outlier detection
-tradedata <- tradedata %>%
-  group_by_(~year, ~reporter, ~flow, ~hs) %>%
-  mutate_(
-    uv_reporter = ~median(uv, na.rm = T),
-    outlier = ~uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)$out) %>%
-  ungroup()
 
+tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
+                            parameters = list(out_coef=out_coef))
 
 ##' 4. Impute missing quantities and quantities categorized as outliers by
 ##' dividing the reported monetary value with the calculated median unit value.
@@ -867,11 +775,9 @@ tradedata <- tradedata %>%
 
 ##+ impute_qty_uv, echo=FALSE, eval=FALSE
 
-tradedata <- tradedata %>%
-  mutate_(qty = ~ifelse(no_quant | outlier,
-                        value / uv_reporter,
-                        qty),
-          flagTrade = ~ifelse(no_quant | outlier, 1, 0))
+# Imputation of missings and outliers
+
+tradedata <- doImputation(tradedata = tradedata)
 
 # Aggregation by fcl
 tradedata <- tradedata %>%
@@ -940,25 +846,8 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                       unique(tradedata$reporter))]
 
 ## Mirroring for non reporting countries
-tradedatanonrep <- tradedata %>%
-  filter_(~partner %in% nonreporting) %>%
-  mutate_(partner_mirr = ~reporter,
-          partner_mirrM49 = ~reporterM49,
-          reporter = ~partner,
-          reporterM49 = ~partnerM49,
-          partner = ~partner_mirr,
-          partnerM49 = ~partner_mirrM49,
-          flow = ~recode(flow, '2' = 1, '1' = 2),
-          ## Correction of CIF/FOB
-          ## For now fixed at 12%
-          ## but further analyses needed
-          value = ~ifelse(flow == 1,
-                          value*1.12,
-                          value/1.12)) %>%
-  select_(~-partner_mirr, ~-partner_mirrM49)
-
-tradedata <- bind_rows(tradedata,
-                       tradedatanonrep)
+tradedata <- mirrorNonReporters(tradedata = tradedata,
+                                nonreporters = nonreporting)
 
 ##' 6. Assign SWS ObservationStatus flag `I` and flagMethod `e` to records with
 ##' with `flagTrade` unless the FCL unit is categorized as `$ value only`.

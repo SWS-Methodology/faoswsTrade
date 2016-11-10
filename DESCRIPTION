@@ -1,7 +1,7 @@
 Package: faoswsTrade
 Type: Package
 Title: FAO Trade Module
-Version: 0.1.2
+Version: 0.1.3
 Date: 2016-07-29
 Authors@R: c(person("Marco", "Garieri", role = c("aut"), email = "marco.garieri@fao.org"),
              person("Bo", "Werth", role = c("aut", "cre"), email = "bo.werth@fao.org"))

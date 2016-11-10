@@ -21,15 +21,38 @@ convertMeasuredElementTrade <- function(element, unit, flow) {
   unit <- as.character(unit)
   flow <- as.numeric(flow)
 
-  newElement <- if((element == "qty") & (unit == "mt") & (flow == 1)){
-    "5610"} else if((element == "qty") & (unit == "mt") & (flow == 2)){
-      "5910"} else if((element == "qty") & (unit == "heads") & (flow == 1)){
-        "5608"} else if((element == "qty") & (unit == "heads") & (flow == 2)){
-          "5908"} else if((element == "qty") & (unit == "1000 heads") & (flow == 1)){
-            "5609"} else if((element == "qty") & (unit == "1000 heads") & (flow == 2)){
-              "5909"} else if((element == "value") & (flow == 1)){
-                "5622"} else if((element == "value") & (flow == 2)){
-                  "5922"} else {"999"}
+  newElement <-
+           if((element == "qty") & (unit == "mt") & (flow == 1)) {
+      "5610"
+    } else if((element == "qty") & (unit == "mt") & (flow == 2)) {
+      "5910"
+    } else if((element == "qty") & (unit == "heads") & (flow == 1)) {
+      "5608"
+    } else if((element == "qty") & (unit == "heads") & (flow == 2)) {
+      "5908"
+    } else if((element == "qty") & (unit == "1000 heads") & (flow == 1)) {
+      "5609"
+    } else if((element == "qty") & (unit == "1000 heads") & (flow == 2)) {
+      "5909"
+      ## begin add unit values
+    } else if((element == "uv") & (unit == "mt") & (flow == 1)) {
+      "5630"
+    } else if((element == "uv") & (unit == "mt") & (flow == 2)) {
+      "5930"
+    } else if((element == "uv") & (unit == "heads") & (flow == 1)) {
+      "5638"
+    } else if((element == "uv") & (unit == "heads") & (flow == 2)) {
+      "5938"
+    } else if((element == "uv") & (unit == "1000 heads") & (flow == 1)) {
+      "5639"
+    } else if((element == "uv") & (unit == "1000 heads") & (flow == 2)) {
+      "5939"
+      ## end add unit values
+    } else if((element == "value") & (flow == 1)) {
+      "5622"
+    } else if((element == "value") & (flow == 2)) {
+      "5922"
+    } else {"999"}
   ## Simple solution, whatever not in the case, just to NA
   ## In this way "$ value only" are NAs, and they will be filtered out
 

@@ -9,12 +9,12 @@
 ##' time being, the trade module run indipendently for each year. In order to
 ##' run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
 ##' needed.
-##' 
-##' **Flow chart:**
-##' 
-##' ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
 ##+ init, echo=FALSE, eval=FALSE
+
+## **Flow chart:**
+## 
+## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
 set.seed(2507)
 
@@ -85,6 +85,14 @@ if(multicore) {
 
 
 ##+ swsdebug, echo=FALSE, eval=FALSE
+
+## ## local data
+## install.packages("//hqfile4/ess/Team_working_folder/A/SWS/faosws_0.8.2.9901.tar.gz",
+##                  repos = NULL,
+##                  type = "source")
+## ## SWS data
+## install.packages("faosws",
+##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
 if(CheckDebug()){
   library(faoswsModules)
@@ -237,16 +245,22 @@ hsfclmap <- hsfclmap2 %>%
 # tldata <- getRawAgriTL(year, agricodeslist)
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
+
+## Chapter provided by team B/C
+## creating object to provision re-use with Eurostat data
+hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
+hs_chapters_str <-
+  formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
+  as.character %>%
+  sQuote %>%
+  paste(collapse = ", ")
+
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns=c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
                                   "chapter"),
-                        where = "chapter IN ('01', '02', '03', '04', '05', '06', '07',
-                        '08', '09', '10', '11', '12',  '13', '14',
-                        '15', '16', '17', '18', '19', '20', '21',
-                        '22', '23', '24', '33', '35', '38', '40',
-                        '41', '42', '43', '50', '51', '52', '53')" ## Chapter provided by team B/C
+                        where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
 
@@ -306,7 +320,7 @@ tldata <- tldata %>%
 
 
 
-##' ##### Extract Eurostat Combined Nomenclature Data
+##' #### Extract Eurostat Combined Nomenclature Data
 ##' 
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
 ##' mapping area list
@@ -332,7 +346,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "product_nc", "flow",
                                     "period", "value_1k_euro",
                                     "qty_ton", "sup_quantity",
-                                    "stat_regime")
+                                    "stat_regime"),
+                        where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
 ## Declarant and partner numeric
@@ -409,7 +424,7 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
-##' ##### Harmonization of UNSD Tariffline Data
+##' #### Harmonize UNSD Tariffline Data
 ##'
 ##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 ##' (which are different for official M49). The area code is converted in FAO
@@ -686,9 +701,10 @@ if (dollars){
   tldata$value <- tldata$value / 1000
 }
 
+##' 3. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
+##' which contains weight in tons (requested by FAO).
 
-## TLDATA: aggregate by fcl
-## Here we select column qtyfcl which contains quantity, requested by FAO
+##+ tl_aggregate, echo=FALSE, eval=FALSE
 
 # tldata <- tldata %>%
 #   select_(~year,
@@ -717,39 +733,63 @@ tldata <- tldata %>%
 
 tldata_mid = tldata
 
-# Loading of notes/adjustments should be added here
-esdata_old = esdata
+
+##' #### Combine Trade Data Sources
+##' 
+##' 1. The adjustment notes developed for national data received from countries
+##' are not applied to HS data any more (see instructions 2016-08-10). Data
+##' harvested from UNSD are standardised and therefore many (if not most) of the
+##' quantity adjustment notes (those with no year) need not be applied. The
+##' "notes" refer to the "raw" non-standardised files that we used to regularly
+##' receive from UNSD and/or the countries. Furthermore, some data differences
+##' will also arise due to more recent data revisions in these latest files that
+##' have been harvested.
+
+##+ apply_adjustment, echo=FALSE, eval=FALSE
+
+## Loading of notes/adjustments should be added here
+## esdata_old = esdata
+
+## message(sprintf("[%s] Applying Eurostat adjustments", PID))
+## esdata <- tbl_df(plyr::ldply(
+##   sort(unique(esdata$reporter)),
+##   function(x) {
+##     applyadj(x, year, as.data.frame(adjustments), esdata)
+##   },
+##   .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
+##   .inform = FALSE,
+##   .parallel = multicore))
+
+## message(sprintf("[%s] Applying Tariffline adjustments", PID))
+## tldata <- tbl_df(plyr::ldply(
+##   sort(unique(tldata$reporter)),
+##   function(x) {
+##     applyadj(x, year, as.data.frame(adjustments), tldata)
+##   },
+##   .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
+##   .inform = FALSE,
+##   .parallel = multicore))
+
+# TODO Check quantity/weight
+# The notes should save the results in weight
 
 
-message(sprintf("[%s] Applying Eurostat adjustments", PID))
-esdata <- tbl_df(plyr::ldply(
-  sort(unique(esdata$reporter)),
-  function(x) {
-    applyadj(x, year, as.data.frame(adjustments), esdata)
-  },
-  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-  .inform = FALSE,
-  .parallel = multicore))
+##' 2. Convert currency of monetary values from EUR to USD using the
+##' `EURconversionUSD` table (see above).
 
+##+ es_convcur, echo=FALSE, eval=FALSE
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
-message(sprintf("[%s] Applying Tariffline adjustments", PID))
 
-tldata <- tbl_df(plyr::ldply(
-  sort(unique(tldata$reporter)),
-  function(x) {
-    applyadj(x, year, as.data.frame(adjustments), tldata)
-  },
-  .progress = ifelse(!multicore && CheckDebug(), "text", "none"),
-  .inform = FALSE,
-  .parallel = multicore))
+##' 3. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
+##'  to single data set.
+##'  - TL: assign `weight` to `qty`
+##'  - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
 
-
-# TODO Check quantity/weight
-# The notes should save the results in weight
+##+ combine_es_tl, echo=FALSE, eval=FALSE
 
 tradedata <- bind_rows(
   tldata %>%
@@ -764,23 +804,41 @@ tradedata <- bind_rows(
             qty = ~uniqqty, ~value)
 )
 
-# Detection of missing quantities and values
+
+##' #### Outlier Detection and Imputation
+
+##' 1. Unit values are calculated for each observation at the HS level as ratio
+##' of monetary value over weight `value / qty`.
+##'
+##' 2. Median unit-values are calculated across the partner dimension by year,
+##' reporter, flow and HS. This can be problematic if only few records exist for
+##' the a specific combination of dimensions.
+
+##+ calculate_median_uv, echo=FALSE, eval=FALSE
 
 tradedata <- tradedata %>%
   mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no any NA qty records,
                                               # but may change later
           no_value = ~value == 0 | is.na(value))
 
-# UV calculation
 
+## UV calculation
 tradedata <- mutate_(tradedata,
                      uv = ~ifelse(no_quant | no_value, # Only 0 here.
                                                        # Should we care about NA?
                                   NA,
                                   value / qty))
 
-# Outlier detection
 
+##' 3. Observations are classified as outliers if the calculated unit value for
+##' a some partner country is below or above the median unit value. More
+##' specifically, the measure defined as median inter-quartile-range (IQR)
+##' multiplied by the outlier coefficient (default value: 1.5) is used to
+##' categorize outlier observations.
+
+##+ boxplot_uv, echo=FALSE, eval=FALSE
+
+## Outlier detection
 tradedata <- tradedata %>%
   group_by_(~year, ~reporter, ~flow, ~hs) %>%
   mutate_(
@@ -788,7 +846,22 @@ tradedata <- tradedata %>%
     outlier = ~uv %in% boxplot.stats(uv, coef = out_coef, do.conf = F)$out) %>%
   ungroup()
 
-# Imputation of missings and outliers
+
+##' 4. Impute missing quantities and quantities categorized as outliers by
+##' dividing the reported monetary value with the calculated median unit value.
+##'
+##' 5. Assign `flagTrade` to observations with imputed quantities. These flags
+##' are also assigned to monetary values. This may need to be revised (monetary
+##' values are not supposed to be modified).
+##'
+##' 6. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
+##' codes to around 800 commodity codes.
+##' 
+##' 7. Map FCL codes to CPC, remove observations that have not been mapped to
+##' CPC.
+
+##+ impute_qty_uv, echo=FALSE, eval=FALSE
+
 tradedata <- tradedata %>%
   mutate_(qty = ~ifelse(no_quant | outlier,
                         value / uv_reporter,
@@ -839,6 +912,24 @@ countries_not_mapping_M49 <- bind_rows(
   unlist()
 
 
+##' #### Mirror Trade Estimation
+##' 
+##' 1. Obtain list of non-reporting countries as difference between the list of
+##' reporter countries and the list of partner countries.
+##'
+##' 2. Swap the reporter and partner dimensions: the value previously appearing
+##' as reporter country code becomes the partner country code (and vice versa).
+##' 
+##' 3. Invert the flow direction: an import becomes an export (and vice versa).
+##'
+##' 4. Calculate monetary mirror value by adding a 12% mark-up on imports to
+##' account for the difference between CIF and FOB prices.
+##'
+##' 5. In this step, no new flags are assigned explicitly. Imputation flags
+##' created before are copied to new records.
+
+##+ mirror_estimation, echo=FALSE, eval=FALSE
+
 # Non reporting countries
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                       unique(tradedata$reporter))]
@@ -864,6 +955,11 @@ tradedatanonrep <- tradedata %>%
 tradedata <- bind_rows(tradedata,
                        tradedatanonrep)
 
+##' 6. Assign SWS ObservationStatus flag `I` and flagMethod `e` to records with
+##' with `flagTrade` unless the FCL unit is categorized as `$ value only`.
+
+##+ sws_flag, echo=FALSE, eval=FALSE
+
 ## Flag from numeric to letters
 ## TO DO (Marco): need to discuss how to treat flags
 ##                at the moment Status I and method e
@@ -876,9 +972,18 @@ complete_trade <- tradedata %>%
     flagMethod = ~ifelse((flagTrade > 0) &
                            (fclunit != "$ value only"),"e",""))
 
-# Output for the SWS
+##' #### Output for SWS
+##'
+##' 1. Filter observations with FCL code `1181` (bees).
+##'
+##' 2. Filter observations with missing CPC codes.
+##'
+##' 3. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
+##'
+##' 4. Calculate unit value at CPC level if the quantity is larger than zero.
 
-## Completed trade flow
+##+ completed_trade_flow, echo=FALSE, eval=FALSE
+
 complete_trade_flow_cpc <- complete_trade %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
@@ -892,8 +997,18 @@ complete_trade_flow_cpc <- complete_trade %>%
              measuredItemCPC = ~cpc,
              qty = ~qty,
              unit = ~fclunit,
-             value = ~value)
+             value = ~value) %>%
+  mutate(uv = ifelse(qty > 0, value / qty, NA))
 
+
+##' 4. Transform dataset seperating monetary values, quantities and unit values
+##' in different rows.
+##' 
+##' 5. Convert monetary values, quantities and unit values to corresponding SWS
+##' element codes. For example, a quantity import measured in metric tons is
+##' assigned `5610`.
+
+##+ convert_element, echo=FALSE, eval=FALSE
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,

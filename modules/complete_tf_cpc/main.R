@@ -1003,7 +1003,8 @@ complete_trade_flow_cpc <- complete_trade %>%
              qty = ~qty,
              unit = ~fclunit,
              value = ~value) %>%
-  mutate(uv = ifelse(qty > 0, value / qty, NA))
+  ## unit of monetary values is "1000 $"
+  mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
 
 ##' 4. Transform dataset seperating monetary values, quantities and unit values

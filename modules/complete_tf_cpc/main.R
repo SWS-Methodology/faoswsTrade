@@ -742,10 +742,10 @@ tradedata <- tradedata %>%
 
 ## UV calculation
 tradedata <- mutate_(tradedata,
-                     uv = ~ifelse(no_quant | no_value, # Only 0 here.
-                                                       # Should we care about NA?
-                                  NA,
-                                  value / qty))
+                     uv = ~ifelse(no_quant | no_value, NA, value / qty))
+
+## Round UV in order to avoid floating point number problems (see issue #54)
+tradedata$uv <- round(tradedata$uv, 10)
 
 ##' 3. Observations are classified as outliers if the calculated unit value for
 ##' a some partner country is below or above the median unit value. More

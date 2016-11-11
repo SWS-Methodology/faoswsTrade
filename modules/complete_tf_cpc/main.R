@@ -711,7 +711,8 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 
 tradedata <- bind_rows(
   tldata %>%
-    mutate_(hs = ~as.character(hs)) %>%
+    # Not using as.character() as it will retain scientific notation
+    mutate_(hs = ~format(hs, scientific = FALSE, trim = TRUE)) %>%
     select_(~year, ~reporter, ~partner, ~flow,
             ~fcl, ~fclunit, ~hs,
             qty = ~weight, ~value),

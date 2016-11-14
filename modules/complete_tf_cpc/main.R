@@ -622,7 +622,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
 
 ##### No qty, but weight and target is mt: we take weight from there
 
-tldata$qtyfcl <- ifelse(tldata$qty == 0 &
+tldata$qtyfcl <- ifelse(near(tldata$qty, 0) &
                           tldata$fclunit == "mt" &
                           is.na(tldata$qtyfcl) &
                           tldata$weight > 0,
@@ -736,9 +736,9 @@ tradedata <- bind_rows(
 ##+ calculate_median_uv, echo=FALSE, eval=FALSE
 
 tradedata <- tradedata %>%
-  mutate_(no_quant = ~qty == 0 | is.na(qty),  # There are no any NA qty records,
+  mutate_(no_quant = ~near(qty, 0) | is.na(qty),  # There are no any NA qty records,
                                               # but may change later
-          no_value = ~value == 0 | is.na(value))
+          no_value = ~near(value, 0) | is.na(value))
 
 
 ## UV calculation

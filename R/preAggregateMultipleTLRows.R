@@ -19,7 +19,7 @@ preAggregateMultipleTLRows <- function(rawdata = NA) {
 
   if (missing(rawdata)) stop('"rawdata" is required')
 
-  rawdata_orig <- tldata %>%
+  rawdata_orig <- rawdata %>%
     tbl_df() %>%
     select_(~-chapter) %>%
     # qty and weight seem to be always >0 or NA

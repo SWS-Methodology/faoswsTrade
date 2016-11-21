@@ -14,7 +14,7 @@ This module aggregates total trade flow by reporting country for partners
 countries to a single total trade for each unique CPC commodity code. The
 module save the ouput into the dataset **total\_trade\_cpc\_m49**,
 within the **Trade** domain.
-##' 
+
 Change Log:
 
 - add unit values to output

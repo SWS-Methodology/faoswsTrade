@@ -874,7 +874,7 @@ complete_trade <- tradedata %>%
 ##'
 ##' 3. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
 ##'
-##' 4. Calculate unit value at CPC level if the quantity is larger than zero.
+##' 4. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
 ##+ completed_trade_flow, echo=FALSE, eval=FALSE
 

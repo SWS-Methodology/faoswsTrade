@@ -121,6 +121,8 @@ total_trade_cpc_wo_uv <- completetrade %>%
 ##' 4. `5930`: Export Unit Value (US$ / tonne)
 ##' 5. `5938`: Export Unit Value (US$ / heads)
 ##' 6. `5939`: Export Unit Value (US$ / 1000 heads)
+##'
+##' - use `observationsStatusFlag` from quantity measures
 
 ##+ unit-value, echo=FALSE, eval=FALSE
 
@@ -163,7 +165,10 @@ addUV <- function(data) {
   
 }
 
-total_trade_cpc_uv <- addUV(total_trade_cpc_wo_uv)
+total_trade_cpc_uv <-
+  addUV(total_trade_cpc_wo_uv) %>%
+  filter(!is.na(Value))
+
 
 total_trade_cpc_w_uv <- 
   total_trade_cpc_wo_uv %>%

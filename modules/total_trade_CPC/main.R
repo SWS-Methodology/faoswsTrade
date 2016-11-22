@@ -163,16 +163,16 @@ addUV <- function(data) {
   
 }
 
-total_trade_cpc_uv <- addUV(total_trade_cpc)
+total_trade_cpc_uv <- addUV(total_trade_cpc_wo_uv)
 
 total_trade_cpc_w_uv <- 
   total_trade_cpc_wo_uv %>%
   bind_rows(total_trade_cpc_uv)
 
 
-total_trade_cpc$flagMethod = "s"
+total_trade_cpc_w_uv$flagMethod = "s"
 
-stats <- SaveData("trade","total_trade_cpc_m49",data.table::as.data.table(total_trade_cpc))
+stats <- SaveData("trade","total_trade_cpc_m49",data.table::as.data.table(total_trade_cpc_w_uv))
 
 sprintf(
   "Module completed in %1.2f minutes.

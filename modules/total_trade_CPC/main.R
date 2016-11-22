@@ -17,7 +17,7 @@
 ##'
 ##' Change Log:
 ##'
-##' - add unit values to output
+##' - add unit values using **flagMethod** `i`
 
 
 ##+ setup, echo=FALSE, eval=FALSE

@@ -17,7 +17,7 @@ within the **Trade** domain.
 
 Change Log:
 
-- add unit values to output
+- add unit values using **flagMethod** `i`
 
 
 

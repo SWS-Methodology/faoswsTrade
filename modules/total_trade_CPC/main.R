@@ -98,6 +98,17 @@ completetradekey <- DatasetKey(domain = "trade", dataset = "completed_tf_cpc_m49
 
 completetrade <- tbl_df(GetData(completetradekey))
 
+##' ### Aggregate values across partner dimension
+##'
+##' - ignore missing values in aggregation
+##' - aggregate observation flags using the `flagWeightTable`
+##' - set `flagMethod` to `s` for $US values and quantity measures calculated as sum
+
+##+ flagWeightTable, echo=FALSE, eval=TRUE, results='asis'
+knitr::kable(faoswsFlag::flagWeightTable)
+
+##+ aggregate, echo=FALSE, eval=FALSE
+
 completetrade <- completetrade %>%
   mutate_(geographicAreaM49 = ~geographicAreaM49Reporter)
 
@@ -107,7 +118,8 @@ total_trade_cpc_wo_uv <- completetrade %>%
   group_by_(~geographicAreaM49, ~timePointYears, ~measuredItemCPC, ~measuredElementTrade) %>%
   summarise_(Value = ~sum(Value, na.rm = TRUE),
              flagObservationStatus = ~aggregateObservationFlag(flagObservationStatus)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(flagMethod = "s")
 
 
 ##' ### Calculate Unit Values
@@ -122,7 +134,8 @@ total_trade_cpc_wo_uv <- completetrade %>%
 ##' 5. `5938`: Export Unit Value (US$ / heads)
 ##' 6. `5939`: Export Unit Value (US$ / 1000 heads)
 ##'
-##' - use `observationsStatusFlag` from quantity measures
+##' - use `flagObservationsStatus` from quantity measures
+##' - set `flagMethod` to `i` for unit values calculated as identity
 
 ##+ unit-value, echo=FALSE, eval=FALSE
 
@@ -137,13 +150,13 @@ addUV <- function(data) {
   copyData_quantity <-
     copyData %>%
     filter(unit == "quantity") %>%
-    select(-unit, measuredElementTrade.qty = measuredElementTrade)
+    select(-unit, measuredElementTrade.qty = measuredElementTrade, -flagMethod)
     ## select(-unit) # must keep to assign proper elemnt code to unit value
 
   copyData_monetary <-
     copyData %>%
     filter(unit == "monetary") %>%
-    select(-unit, -measuredElementTrade, -flagObservationStatus)
+    select(-unit, -measuredElementTrade, -flagObservationStatus, -flagMethod)
 
   me_qty_uv <- data.frame(flow = c(rep("import", 3), rep("export", 3)),
                           measuredElementTrade.qty = c("5608", "5609", "5610", "5908", "5909", "5910"),
@@ -159,7 +172,8 @@ addUV <- function(data) {
            ) %>%
     left_join(me_qty_uv) %>%
     ## ## only keep columns already present in input data set
-      subset(., select = names(data))
+    mutate(flagMethod = "i") %>%
+    subset(., select = names(data))
   
   return(copyData_uv)
   
@@ -175,7 +189,7 @@ total_trade_cpc_w_uv <-
   bind_rows(total_trade_cpc_uv)
 
 
-total_trade_cpc_w_uv$flagMethod = "s"
+## total_trade_cpc_w_uv$flagMethod = "s"
 
 stats <- SaveData("trade","total_trade_cpc_m49",data.table::as.data.table(total_trade_cpc_w_uv))
 

@@ -18,7 +18,7 @@
 ##+ init, echo=FALSE, eval=FALSE
 
 ## **Flow chart:**
-## 
+##
 ## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
 set.seed(2507)
@@ -133,16 +133,16 @@ out_coef <- as.numeric(swsContext.computationParams$out_coef)
 startTime = Sys.time()
 
 ##' ### Input Data
-##' 
+##'
 ##' **Supplementary Datasets:**
 ##'
 ##' 1. `hsfclmap2`: Mmapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system (Shark,
 ##' Jellyfish).
-##' 
+##'
 ##' 2. `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to obtain quantities from traded values
-##' 
+##'
 ##' 3. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
 ##' detailed than the reporter dimension. Since we can not split trade flows of
@@ -152,16 +152,15 @@ startTime = Sys.time()
 ##' and Puerto Rico and thus the reported trade flows of those territories.
 ##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
 ##' Minor Outlying Islands.
-##' 
+##'
 ##' 4. `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
 ##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
-##' 
-##' 5. `comtradeunits`
-##' 
-##' 5. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
-
+##'
+##' 5. `comtradeunits`:
+##'
+##' 6. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
 ##+ datasets, echo=FALSE, eval=FALSE
 
@@ -218,7 +217,7 @@ data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 hsfclmap <- hsfclmapSubset(hsfclmap2, year = year)
 
 ##' #### Extract UNSD Tariffline Data
-##' 
+##'
 ##' 1. Chapters: The module downloads only records of commodities of interest for Tariffline
 ##' Data. The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,
 ##' 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40,
@@ -269,16 +268,20 @@ tldata <- tbl_df(tldata)
 ##' combination of reporter / partner / commodity / flow / year / qunit. Those
 ##' are separate registered transactions and the rows containinig non-missing
 ##' values and quantities are summed.
+##'
+##' 4. **Note:** missing quantity|weight or value will be handled below by imputation
 
-##+ Aggregate multiple TL rows.
-##+ Note: missing quantity|weight or value will be handled below by imputation
+##+ tl-aggregate-multiple-rows, echo=FALSE, eval=FALSE
+
+## Aggregate multiple TL rows.
+## Note: missing quantity|weight or value will be handled below by imputation
 tldata <- preAggregateMultipleTLRows(tldata)
 
 ## Rename columns
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 ##' #### Extract Eurostat Combined Nomenclature Data
-##' 
+##'
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
 ##' mapping area list
 ##' 2. Convert HS to FCL
@@ -376,7 +379,7 @@ esdata <- esdata %>%
 ##' codes not mapping to any FAO country code or mapping to code 252 (which
 ##' correpond not defined area) are separately saved and removed from further
 ##' analyses.
-##' 
+##'
 ##' 2. Commodity Codes: Commodity codes are reported in HS
 ##' codes (Harmonized Commodity Description and Coding Systpem). The codes
 ##' are converted in FCL (FAO Commodity List) codes. This step is performed
@@ -670,7 +673,7 @@ tldata <- tldata %>%
 tldata_mid = tldata
 
 ##' #### Combine Trade Data Sources
-##' 
+##'
 ##' 1. The adjustment notes developed for national data received from countries
 ##' are not applied to HS data any more (see instructions 2016-08-10). Data
 ##' harvested from UNSD are standardised and therefore many (if not most) of the
@@ -770,7 +773,7 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 ##'
 ##' 6. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
 ##' codes to around 800 commodity codes.
-##' 
+##'
 ##' 7. Map FCL codes to CPC, remove observations that have not been mapped to
 ##' CPC.
 
@@ -825,20 +828,17 @@ countries_not_mapping_M49 <- bind_rows(
 
 
 ##' #### Mirror Trade Estimation
-##' 
+##'
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
 ##'
 ##' 2. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
-##' 
+##'
 ##' 3. Invert the flow direction: an import becomes an export (and vice versa).
 ##'
 ##' 4. Calculate monetary mirror value by adding a 12% mark-up on imports to
 ##' account for the difference between CIF and FOB prices.
-##'
-##' 5. In this step, no new flags are assigned explicitly. Imputation flags
-##' created before are copied to new records.
 
 ##+ mirror_estimation, echo=FALSE, eval=FALSE
 
@@ -850,8 +850,13 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
 
-##' 6. Assign SWS ObservationStatus flag `I` and flagMethod `e` to records with
-##' with `flagTrade` unless the FCL unit is categorized as `$ value only`.
+##' 5. Reporting countries: Assign SWS **observationStatus** flag `I` and
+##' **flagMethod** `e` to records with with `flagTrade` unless the FCL unit is
+##' categorized as `$ value only`.
+##'
+##' 6. Non-reporting countries: Assign SWS **observationStatus** flag `E` and
+##' **flagMethod** `e` to both quantities and values. Overwrite **flagMethod**
+##' `e` with `c` for quantities when transforming to normalized format below.
 
 ##+ sws_flag, echo=FALSE, eval=FALSE
 
@@ -860,12 +865,47 @@ tradedata <- mirrorNonReporters(tradedata = tradedata,
 ##                at the moment Status I and method e
 ##                for both imputed and mirrored
 ##                because applying 12% change in mirroring
-complete_trade <- tradedata %>%
-  mutate_(
-    flagObservationStatus = ~ifelse((flagTrade > 0) &
-                                      (fclunit != "$ value only"),"I",""),
-    flagMethod = ~ifelse((flagTrade > 0) &
-                           (fclunit != "$ value only"),"e",""))
+
+addFlagsAfterMirror <- function(data=stop("'data' must be defined'"),
+                                nonreporting=NULL) {
+
+  ## data <- tradedata
+  copyData <- data
+
+  outData <-
+    copyData %>%
+    mutate_(
+      flagObservationStatus =
+        ## ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),
+        ~ifelse(reporter %in% nonreporting,
+                "E",
+                ifelse((flagTrade > 0) & (fclunit != "$ value only"),
+                       "I",
+                       "X")
+                ),
+      flagMethod =
+        ~ifelse(reporter %in% nonreporting,
+                "e", # both measures in same row; need to overwrite with "c"
+                     # flag for quantities when transforming to normalized
+                     # format
+                ifelse((flagTrade > 0) & (fclunit != "$ value only"),
+                       "e",
+                       "")
+                )
+    )
+
+    return(outData)
+}
+
+## complete_trade <- tradedata %>%
+##   mutate_(
+##     flagObservationStatus = ~ifelse((flagTrade > 0) &
+##                                       (fclunit != "$ value only"),"I",""),
+##     flagMethod = ~ifelse((flagTrade > 0) &
+##                            (fclunit != "$ value only"),"e",""))
+
+complete_trade <-
+  tradedata %>% addFlagsAfterMirror(nonreporting = nonreporting)
 
 ##' #### Output for SWS
 ##'
@@ -899,7 +939,7 @@ complete_trade_flow_cpc <- complete_trade %>%
 
 ##' 4. Transform dataset seperating monetary values, quantities and unit values
 ##' in different rows.
-##' 
+##'
 ##' 5. Convert monetary values, quantities and unit values to corresponding SWS
 ##' element codes. For example, a quantity import measured in metric tons is
 ##' assigned `5610`.
@@ -921,6 +961,52 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   select_(~-flow,~-unit)# %>%
 #mutate_(flagTrade = ~flagObservationStatus) %>%
 #select_(~-flagMethod, ~-flagObservationStatus)
+
+##' 6. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
+
+##+ overwrite_mirror_method_flag, echo=FALSE, eval=FALSE
+
+overwriteFlagMethodMirrorQuantities <- function(data=stop("'data' cannot be empty"),
+                                                quantityElements=c("5608", "5609", "5610", "5908", "5909", "5910")) {
+  copyData <- data
+  outData <-
+    copyData %>%
+    mutate_(flagMethod =
+              ~ifelse(flagObservationStatus == "E" & measuredElementTrade %in% quantityElements,
+                      "c",
+                      flagMethod)
+            )
+  return(outData)
+}
+
+complete_trade_flow_cpc <-
+  complete_trade_flow_cpc %>%
+  overwriteFlagMethodMirrorQuantities()
+
+
+##' 7. Add **flagMethod** `i` to unit values
+
+##+ add_uv_method_flag, echo=FALSE, eval=FALSE
+
+addFlagUnitValues <- function(data=stop("'data' cannot be empty'"),
+                              uvElements=c("5638", "5639", "5630", "5938", "5939", "5930")) {
+  copyData <- data
+  outData <-
+    copyData %>%
+    mutate_(flagMethod =
+              ~ifelse(measuredElementTrade %in% uvElements,
+                      "i",
+                      flagMethod))
+  return(outData)
+}
+
+complete_trade_flow_cpc <-
+  complete_trade_flow_cpc %>%
+  addFlagUnitValues()
+
+## table(complete_trade_flow_cpc$flagObservationStatus,
+##       complete_trade_flow_cpc$flagMethod)
+
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 

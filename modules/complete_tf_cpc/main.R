@@ -14,6 +14,7 @@
 ##'
 ##' - add unit values to output
 ##' - remove adjustment factors
+##' - revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
 
 ##+ init, echo=FALSE, eval=FALSE
 

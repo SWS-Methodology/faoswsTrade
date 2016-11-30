@@ -41,7 +41,7 @@ useAdjustments <- function(tradedata = NA,
 
   tbl_df(plyr::ldply(sort(unique(tradedata$reporter)),
                                function(x) {
-                                 applyadj(x, year, adj, tradedata)
+                                 applyadj(x, year, adj, tradedata, dbg)
                                },
                                .progress = ifelse(prog, "text", "none"),
                                .inform = FALSE,

@@ -51,7 +51,7 @@ applyadj <- function(rep, yr, adjustments, tradedata, dbg = FALSE) {
   # 2011|2|21021010|1232|29|value|NA|NA|0.05443361|150 @ 2011|2|21021010|1232|NA|value|NA|NA|0.05443361|150
   #
   # WARNING: This is used (and always should be used) only in debug mode as it slows the module.
-  if (dbg) {
+  if (dbg & length(adjustments) > 0) {
     adj <- attributes(adjustments)$split_labels
     tradedata$adjustments <- apply(matching_adjustments, 1, function(x) paste(apply(adj[x,], 1, paste, collapse='|'), collapse=' @ '))
   }

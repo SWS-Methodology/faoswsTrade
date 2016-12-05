@@ -545,8 +545,6 @@ ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
                       ctfclunitsconv$wco == "u"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
-                      ctfclunitsconv$wco == "kg"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
                       ctfclunitsconv$wco == "u"] <- 1
 ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &

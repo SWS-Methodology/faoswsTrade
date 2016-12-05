@@ -570,29 +570,18 @@ fcl_spec_mt_conv <- tldata %>%
   mutate_(fcldesc = ~descFCL(fcl))
 
 if(NROW(fcl_spec_mt_conv) > 0){
-  fcl_spec_mt_conv$convspec <- 0
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- .001
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigarettes" &
-                              fcl_spec_mt_conv$wco == "u"] <- .000001
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                              fcl_spec_mt_conv$wco == "u"] <- .00006
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                              fcl_spec_mt_conv$wco == "2u"] <- .00012
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                              fcl_spec_mt_conv$wco == "12u"] <- .00072
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Hen Eggs" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- .06
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
-                              fcl_spec_mt_conv$wco == "u"] <- 0.000008
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Cigars Cheroots" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- 0.008
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
-                              fcl_spec_mt_conv$wco == "u"] <- 0.000008
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Tobacco Products nes" &
-                              fcl_spec_mt_conv$wco == "1000u"] <- 0.008
-  fcl_spec_mt_conv$convspec[fcl_spec_mt_conv$fcldesc == "Fruit Prepared nes" &
-                              fcl_spec_mt_conv$wco == "U (jeu/pack)"] <- 0.0208333
+
+  conversion_factors_fcl <- tldata %>%
+    filter(!is.na(weight) & !is.na(qty)) %>%
+    mutate(qw=(weight/qty)/1000) %>%
+    group_by(fcl, wco) %>%
+    summarise(convspec=median(qw, na.rm=TRUE)) %>%
+    ungroup()
+  
+  fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
+    left_join(conversion_factors_fcl)
+    
+  fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
 
   ### Add commodity specific conv.factors to dataset
 

@@ -609,13 +609,17 @@ if(NROW(fcl_spec_mt_conv) > 0){
 
 ##### No qty, but weight and target is mt: we take weight from there
 
-tldata$qtyfcl <- ifelse(near(tldata$qty, 0) &
+tldata$qtyfcl <- ifelse((tldata$qty == 0 | is.na(tldata$qty)) &
                           tldata$fclunit == "mt" &
                           is.na(tldata$qtyfcl) &
                           tldata$weight > 0,
                         tldata$weight,
                         tldata$qtyfcl)
 
+# Always use weight if available and fclunit is mt
+tldata$qtyfcl <- ifelse(tldata$fclunit=='mt' & !is.na(tldata$weight) & tldata$weight>0,
+                       tldata$weight*0.001,
+                       tldata$qtyfcl)
 
 ######### Value from USD to thousands of USD
 if (dollars){

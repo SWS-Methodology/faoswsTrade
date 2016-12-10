@@ -1,8 +1,8 @@
 sourcedata_dir: ~/Documents/FAOpackages/faoswsTrade/testdata
 destdata_dir: ~/Documents/FAOpackages/faoswsTrade/outdata
 params:
-out_coef: 2.5
-year: 2009
+  out_coef: 2.5
+  year: 2009
 class_overrides:
   adjustments:
     file: adjustments.csv

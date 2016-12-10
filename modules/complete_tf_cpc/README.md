@@ -14,6 +14,7 @@ Change Log:
 
 - add unit values to output
 - remove adjustment factors
+- revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
 
 
 
@@ -46,9 +47,9 @@ meet FAO standards. According to FAO standard, all weights are reported in
 metric tonnes, animals in heads or 1000 heads and for certain commodities,
 only the value is provided.
 
-5. `comtradeunits`
+5. `comtradeunits`:
 
-5. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
+6. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
 
 
@@ -65,9 +66,8 @@ applied.
 
 
 
-2. Remove duplicate values for which quantity & value & weight exist
-(in the process, removing redundant columns). Note: missing quantity|weight
-or value will be handled below by imputation
+2. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+This probably should be part of the faoswsEnsure
 
 
 
@@ -76,10 +76,7 @@ combination of reporter / partner / commodity / flow / year / qunit. Those
 are separate registered transactions and the rows containinig non-missing
 values and quantities are summed.
 
-
-
-4. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
-This probably should be part of the faoswsEnsure
+4. **Note:** missing quantity|weight or value will be handled below by imputation
 
 
 
@@ -199,13 +196,15 @@ as reporter country code becomes the partner country code (and vice versa).
 4. Calculate monetary mirror value by adding a 12% mark-up on imports to
 account for the difference between CIF and FOB prices.
 
-5. In this step, no new flags are assigned explicitly. Imputation flags
-created before are copied to new records.
 
 
+5. Reporting countries: Assign SWS **observationStatus** flag `I` and
+**flagMethod** `e` to records with with `flagTrade` unless the FCL unit is
+categorized as `$ value only`.
 
-6. Assign SWS ObservationStatus flag `I` and flagMethod `e` to records with
-with `flagTrade` unless the FCL unit is categorized as `$ value only`.
+6. Non-reporting countries: Assign SWS **observationStatus** flag `E` and
+**flagMethod** `e` to both quantities and values. Overwrite **flagMethod**
+`e` with `c` for quantities when transforming to normalized format below.
 
 
 
@@ -217,7 +216,7 @@ with `flagTrade` unless the FCL unit is categorized as `$ value only`.
 
 3. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
 
-4. Calculate unit value at CPC level if the quantity is larger than zero.
+4. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
 
 
@@ -227,6 +226,14 @@ in different rows.
 5. Convert monetary values, quantities and unit values to corresponding SWS
 element codes. For example, a quantity import measured in metric tons is
 assigned `5610`.
+
+
+
+6. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
+
+
+
+7. Add **flagMethod** `i` to unit values
 
 
 

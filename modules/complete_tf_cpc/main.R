@@ -281,7 +281,10 @@ esdata <- esdata %>%
 
 ## es_hs2fcl
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
-esdata <- convertHS2FCL(esdata, hsfclmap, parallel = multicore)
+
+esdata <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
+                        hsfclmap3,
+                        parallel = multicore))
 
 ## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
@@ -430,72 +433,12 @@ tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
 
-##+ tl_hslength, echo=FALSE, eval=FALSE
-
-#### Max length of HS-codes in MDB-files ####
-
-mapmaxlength <- hsfclmap %>%
-  group_by_(~area, ~flow) %>%
-  summarise_(mapmaxlength = ~max(stringr::str_length(fromcode))) %>%
-  ungroup()
-
-###  Calculate length of hs codes in TL
-
-tldata <- tldata %>%
-  group_by_(~reporter, ~flow) %>%
-  mutate_(tlmaxlength = ~max(stringr::str_length(hs), na.rm = TRUE)) %>%
-  ungroup()
-
-## Dataset with max length in TL ####
-
-tlmaxlength <- tldata %>%
-  select_(~reporter, ~flow, ~tlmaxlength) %>%
-  group_by_(~reporter, ~flow) %>%
-  summarize_(tlmaxlength = ~max(tlmaxlength, na.rm = TRUE)) %>%
-  ungroup()
-
-## Common max length between TL and map ####
-
-maxlengthdf <- tlmaxlength %>%
-  left_join(mapmaxlength,
-            by = c("reporter" = "area", "flow")) %>%
-  group_by_(~reporter, ~flow) %>%
-  mutate_(maxlength = ~max(tlmaxlength, mapmaxlength, na.rm = TRUE)) %>%
-  # na.rm here: some reporters are absent in map
-  #  122 145 180 224 276
-  ungroup()
-
-### Extension of HS-codes in TL ####
-
-tldata <- tldata %>%
-  select_(~-tlmaxlength) %>%
-  left_join(maxlengthdf %>%
-              select_(~-tlmaxlength, ~-mapmaxlength),
-            by = c("reporter", "flow")) %>%
-  mutate_(hsext = ~as.numeric(trailingDigits2(hs,
-                                              maxlength = maxlength,
-                                              digit = 0)))
-
-### Extension of HS ranges in map ####
-
-hsfclmap1 <- hsfclmap %>%
-  left_join(maxlengthdf %>%
-              select_(~-tlmaxlength, ~-mapmaxlength),
-            by = c("area" = "reporter", "flow")) %>%
-  filter_(~!is.na(maxlength))                                         ## Attention!!!
-
-hsfclmap1 <- hsfclmap1 %>%
-  mutate_(fromcode = ~as.numeric(trailingDigits2(fromcode, maxlength, 0)),
-          tocode = ~as.numeric(trailingDigits2(tocode, maxlength, 9)))
-
-
 ##+ tl_hs2fcl, echo=FALSE, eval=FALSE
 
-tldata <- convertHS2FCL(tldata %>%
-                          select_(~-hs) %>%
-                          rename_(hs = ~hsext),
-                        hsfclmap1, parallel = multicore)
-
+tldata <- tldata %>%
+  do(hsInRange(.$hs, .$reporter, .$flow,
+               hsfclmap3,
+               parallel = multicore))
 
 ## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
@@ -568,10 +511,10 @@ if(NROW(fcl_spec_mt_conv) > 0){
     group_by(fcl, wco) %>%
     summarise(convspec=median(qw, na.rm=TRUE)) %>%
     ungroup()
-  
+
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
     left_join(conversion_factors_fcl)
-    
+
   fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
 
   ### Add commodity specific conv.factors to dataset

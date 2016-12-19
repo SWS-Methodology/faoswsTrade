@@ -449,9 +449,7 @@ tldata <- tldata %>%
 ## Dataset with max length in TL ####
 
 tlmaxlength <- tldata %>%
-  select_(~reporter,
-          ~flow,
-          ~tlmaxlength) %>%
+  select_(~reporter, ~flow, ~tlmaxlength) %>%
   group_by_(~reporter, ~flow) %>%
   summarize_(tlmaxlength = ~max(tlmaxlength, na.rm = TRUE)) %>%
   ungroup()

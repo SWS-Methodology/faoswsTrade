@@ -169,7 +169,7 @@ startTime = Sys.time()
 #data("hsfclmap2", package = "hsfclmap", envir = environment())
 ## New procedure
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-hsfclmap2 <- tbl_df(ReadDatatable("hsfclmap2"))
+data("hsfclmap3", package = "hsfclmap", envir = environment())
 ## Old precedure
 #data("adjustments", package = "hsfclmap", envir = environment())
 ## New procedure
@@ -196,12 +196,6 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 ## Eur to USD
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 #EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
-
-##+ hsfclmapsubset, echo=FALSE, eval=FALSE
-# HS -> FCL map
-## Filter hs->fcl links we need (based on year)
-
-hsfclmap <- hsfclmapSubset(hsfclmap2, year = year)
 
 ##' 1. Chapters: The module downloads only records of commodities of interest.
 ##' The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,

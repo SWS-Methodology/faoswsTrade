@@ -708,8 +708,7 @@ tradedata <- bind_rows(
 ##+ calculate_median_uv, echo=FALSE, eval=FALSE
 
 tradedata <- tradedata %>%
-  mutate_(no_quant = ~near(qty, 0) | is.na(qty),  # There are no any NA qty records,
-                                              # but may change later
+  mutate_(no_quant = ~near(qty, 0) | is.na(qty),
           no_value = ~near(value, 0) | is.na(value))
 
 

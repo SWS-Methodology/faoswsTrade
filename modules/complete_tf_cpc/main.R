@@ -184,8 +184,6 @@ adjustments = adjustments %>%
   mutate_each_(funs(as.integer),adj_cols_int) %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
 
-###adjustments = adjustments %>%
-###  mutate_(hs = ~as.double(adjustments))
 ## Old procedure
 data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
 #unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))

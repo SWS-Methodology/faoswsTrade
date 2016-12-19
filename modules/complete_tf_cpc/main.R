@@ -203,27 +203,6 @@ data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 
 hsfclmap <- hsfclmapSubset(hsfclmap2, year = year)
 
-##' #### Extract UNSD Tariffline Data
-##'
-##' 1. Chapters: The module downloads only records of commodities of interest for Tariffline
-##' Data. The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,
-##' 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40,
-##' 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of
-##' interest for the division, it is important to include additional chapter in
-##' the first step of the downloading. For Eurostat Data no filtering is
-##' applied.
-
-##+ tradeload, echo=FALSE, eval=FALSE
-
-#### Get list of agri codes ####
-#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
-
-### Download TL data ####
-
-# tldata <- getRawAgriTL(year, agricodeslist)
-
-message(sprintf("[%s] Reading in Tariffline data", PID))
-
 ## Chapter provided by team B/C
 ## creating object to provision re-use with Eurostat data
 hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
@@ -232,40 +211,6 @@ hs_chapters_str <-
   as.character %>%
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
-
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns=c("rep", "tyear", "flow",
-                                  "comm", "prt", "weight",
-                                  "qty", "qunit", "tvalue",
-                                  "chapter"),
-                        where = paste0("chapter IN (", hs_chapters_str, ")")
-                        )
-
-
-##' 2. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
-##' This probably should be part of the faoswsEnsure
-
-##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
-
-tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
-
-tldata <- tbl_df(tldata)
-
-##' 3. The tariffline data from UNSD contains multiple rows with identical
-##' combination of reporter / partner / commodity / flow / year / qunit. Those
-##' are separate registered transactions and the rows containinig non-missing
-##' values and quantities are summed.
-##'
-##' 4. **Note:** missing quantity|weight or value will be handled below by imputation
-
-##+ tl-aggregate-multiple-rows, echo=FALSE, eval=FALSE
-
-## Aggregate multiple TL rows.
-## Note: missing quantity|weight or value will be handled below by imputation
-tldata <- preAggregateMultipleTLRows(tldata)
-
-## Rename columns
-tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 ##' #### Extract Eurostat Combined Nomenclature Data
 ##'
@@ -358,6 +303,36 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
+##' #### Extract UNSD Tariffline Data
+##'
+##' 1. Chapters: The module downloads only records of commodities of interest for Tariffline
+##' Data. The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,
+##' 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40,
+##' 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of
+##' interest for the division, it is important to include additional chapter in
+##' the first step of the downloading. For Eurostat Data no filtering is
+##' applied.
+
+##+ tradeload, echo=FALSE, eval=FALSE
+
+#### Get list of agri codes ####
+#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
+
+### Download TL data ####
+
+# tldata <- getRawAgriTL(year, agricodeslist)
+
+message(sprintf("[%s] Reading in Tariffline data", PID))
+
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+                        columns=c("rep", "tyear", "flow",
+                                  "comm", "prt", "weight",
+                                  "qty", "qunit", "tvalue",
+                                  "chapter"),
+                        where = paste0("chapter IN (", hs_chapters_str, ")")
+                        )
+
+
 ##' #### Harmonize UNSD Tariffline Data
 ##'
 ##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
@@ -378,6 +353,33 @@ esdata <- esdata %>%
 
 ##+ tl_m49fao, echo=FALSE, eval=FALSE
 ## Based on Excel file from UNSD (unsdpartners..)
+
+##' 2. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+##' This probably should be part of the faoswsEnsure
+
+##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
+
+tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
+
+tldata <- tbl_df(tldata)
+
+##' 3. The tariffline data from UNSD contains multiple rows with identical
+##' combination of reporter / partner / commodity / flow / year / qunit. Those
+##' are separate registered transactions and the rows containinig non-missing
+##' values and quantities are summed.
+##'
+##' 4. **Note:** missing quantity|weight or value will be handled below by imputation
+
+##+ tl-aggregate-multiple-rows, echo=FALSE, eval=FALSE
+
+## Aggregate multiple TL rows.
+## Note: missing quantity|weight or value will be handled below by imputation
+tldata <- preAggregateMultipleTLRows(tldata)
+
+## Rename columns
+tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+
 
 message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 

@@ -626,18 +626,6 @@ if (dollars){
 
 ##+ tl_aggregate, echo=FALSE, eval=FALSE
 
-# tldata <- tldata %>%
-#   select_(~year,
-#           ~reporter,
-#           ~partner,
-#           ~flow,
-#           ~fcl,
-#           qty = ~qtyfcl, # <----
-#           ~value) %>%
-#   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
-#   summarise_each_(funs(sum(., na.rm = T)), vars = c("qty", "value")) %>%
-#   ungroup()
-
 # Replace weight (first quantity column) by newly produced qtyfcl column
 tldata <- tldata %>%
   select_(~year,

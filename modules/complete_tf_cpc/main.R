@@ -273,12 +273,15 @@ esdata_not_area_in_fcl_mapping <- esdata %>%
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-## es_hs2fcl
+## es_hs2fcl ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-esdata <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
+esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
                         hsfclmap3,
                         parallel = multicore))
+
+esdata <- esdata %>%
+  left_join(esdatalinks, by = c("reporter", "flow", "hs"))
 
 ## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
@@ -429,10 +432,13 @@ tldata <- tldata %>%
 
 ##+ tl_hs2fcl, echo=FALSE, eval=FALSE
 
-tldata <- tldata %>%
+tldatalinks <- tldata %>%
   do(hsInRange(.$hs, .$reporter, .$flow,
                hsfclmap3,
                parallel = multicore))
+
+tldata <- tldata %>%
+  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
 ## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%

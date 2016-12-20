@@ -170,6 +170,12 @@ startTime = Sys.time()
 ## New procedure
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 data("hsfclmap3", package = "hsfclmap", envir = environment())
+hsfclmap3 <- hsfclmap3 %>%
+  filter_(~startyear <= year &
+            endyear >= year)
+
+stopifnot(nrow(hsfclmap3) > 0)
+
 ## Old precedure
 #data("adjustments", package = "hsfclmap", envir = environment())
 ## New procedure
@@ -279,6 +285,10 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
                         hsfclmap3,
                         parallel = multicore))
+
+stopifnot(all(c("reporter", "flow", "hs") %in%
+                colnames(esdatalinks)))
+stopifnot(nrow(esdatalinks) > 0)
 
 esdata <- esdata %>%
   left_join(esdatalinks, by = c("reporter", "flow", "hs"))

@@ -52,12 +52,24 @@ suppressPackageStartupMessages({
 })
 
 
+SWS_USER <- regmatches(
+  swsContext.username,
+  regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+stopifnot(!any(is.na(SWS_USER),
+              SWS_USER == ""))
+
+reportdir <- file.path(
+  Sys.getenv("R_SWS_SHARE_PATH"),
+  SWS_USER,
+  paste0("tradereport_",
+         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
+stopifnot(!file.exists(reportdir))
+dir.create(reportdir, recursive = TRUE)
+
 if(!CheckDebug()){
 
   options(error = function(){
     dump.frames()
-    SWS_USER = regmatches(swsContext.username,
-                          regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
     save(last.dump, file=file.path(filename, "last.dump.RData"))

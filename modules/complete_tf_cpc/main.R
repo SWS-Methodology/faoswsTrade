@@ -135,7 +135,7 @@ stopifnot(
 
 # Year for processing
 year <- as.integer(swsContext.computationParams$year)
-
+flog.info("Working year: %s", year)
 ## List of datasets available
 #datas = faosws::FetchDatatableConfig()
 
@@ -143,6 +143,7 @@ year <- as.integer(swsContext.computationParams$year)
 # Coefficient for outlier detection
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
+flog.info("Coefficient for outlier detection: %s", out_coef)
 
 startTime = Sys.time()
 
@@ -184,11 +185,16 @@ startTime = Sys.time()
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 data("hsfclmap3", package = "hsfclmap", envir = environment())
 
+flog.info("Rows in HS->FCL mapping table: %s", nrow(hsfclmap3))
+
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
             endyear >= year)
 
 stopifnot(nrow(hsfclmap) > 0)
+
+flog.info("Rows in mapping table after filtering by year: %s",
+          nrow(hsfclmap))
 
 ## Old precedure
 #data("adjustments", package = "hsfclmap", envir = environment())

@@ -41,13 +41,14 @@ use_adjustments <- FALSE
 
 suppressPackageStartupMessages({
   library(data.table)
-  library(faoswsTrade)
-  library(faosws)
   library(stringr)
   library(scales)
-  library(faoswsUtil)
   library(tidyr)
-  library(dplyr, warn.conflicts = F)
+  library(futile.logger)
+  library(dplyr, warn.conflicts = FALSE)
+  library(faoswsTrade)
+  library(faosws)
+  library(faoswsUtil)
 })
 
 

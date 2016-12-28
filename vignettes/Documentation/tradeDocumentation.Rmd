@@ -29,11 +29,8 @@ prefiltered in the following way:
 
 - **Eurostat**
 
-  - code of reporter (reporter) just numeric (letters are not
-    allowed)
-
-  - code of partner (partner) just numeric (letters are not
-    allowed)
+  - code of reporters and partners should only be numeric (letters
+    are not allowed)
 
   - code of CN8 (hs) just numeric (letters are not allowed)
 

@@ -102,28 +102,6 @@ the nature of the differences among the two datasets.
     ## 38  471 252
     ## 106  51   1
 
-1. Commodity codes are reported in HS codes (*Harmonized Commodity
-   Description and Coding System*). The codes are converted in FCL
-   (*FAO Commodity List*) codes. This step is performed using a
-   table incorporated in the SWS. In this step, all the mapping
-   between HS and FCL code is stored. If a country is not included
-   in the package of the mapping for that specific year, all the
-   records for the reporting country are removed. All records
-   without an FCL mapping are filtered out and saved in specific
-   variables.
-
-    ##    validyear area flow   fromcode     tocode  fcl
-    ## 1         NA   81    2 0407001900 0407001900 1062
-    ## 2         NA  154    2 2009291100 2009291100  510
-    ## 3       2009  157    1 0714200090 0714200090  122
-    ## 4         NA  211    1   20059910   20059910  472
-    ## 5         NA   84    2   02073685   02073685 1075
-    ## 6         NA  101    2  230610000  230619999  332
-    ## 7         NA   13    2   19052000   19052999   22
-    ## 8         NA  236    2 0204210000 0204210000  977
-    ## 9         NA  134    1   04069019   04069019  904
-    ## 10        NA    9    1   09012100   09012199  657
-
 1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).
    This procedure is applied following UNSD standards:
@@ -159,6 +137,28 @@ the nature of the differences among the two datasets.
    http://unstats.un.org/unsd/tradekb/Knowledgebase/Reexports-and-Reimports
 
 1. Set all HS codes to the maximum length (by reporter / flow).
+
+1. Commodity codes are reported in HS codes (*Harmonized Commodity
+   Description and Coding System*). The codes are converted in FCL
+   (*FAO Commodity List*) codes. This step is performed using a
+   table incorporated in the SWS. In this step, all the mapping
+   between HS and FCL code is stored. If a country is not included
+   in the package of the mapping for that specific year, all the
+   records for the reporting country are removed. All records
+   without an FCL mapping are filtered out and saved in specific
+   variables.
+
+    ##    validyear area flow   fromcode     tocode  fcl
+    ## 1         NA   81    2 0407001900 0407001900 1062
+    ## 2         NA  154    2 2009291100 2009291100  510
+    ## 3       2009  157    1 0714200090 0714200090  122
+    ## 4         NA  211    1   20059910   20059910  472
+    ## 5         NA   84    2   02073685   02073685 1075
+    ## 6         NA  101    2  230610000  230619999  332
+    ## 7         NA   13    2   19052000   19052999   22
+    ## 8         NA  236    2 0204210000 0204210000  977
+    ## 9         NA  134    1   04069019   04069019  904
+    ## 10        NA    9    1   09012100   09012199  657
 
 1. Information of the FCL units is added.
 

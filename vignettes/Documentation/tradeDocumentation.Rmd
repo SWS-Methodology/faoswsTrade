@@ -134,10 +134,10 @@ the nature of the differences among the two datasets.
     ## 5  19      mt
     ## 6  20      mt
 
-1. Just for UNSD Tariffline data convertion of units of
-   measurements are applied to meet FAO standards, where all
-   weights are reported in metric tonnes, animals in heads or 1000
-   heads and for some commodity just the value is provided.
+1. Data convertion of units of measurements are applied to meet
+   FAO standards, where all weights are reported in metric tonnes,
+   animals in heads or 1000 heads and for some commodity just the
+   value is provided.
 
 1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).

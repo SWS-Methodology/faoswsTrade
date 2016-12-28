@@ -8,7 +8,8 @@ output:
   pdf_document:
     pandoc_args: [
     --tab-stop=2
-  ]
+    ]
+    number_sections: true
 ---
 
 The trade module is divided in two submodules: `complete_tf_cpc`
@@ -82,7 +83,7 @@ At this stage a standardization/mapping step is performed. The
 details are divided between UNSD Tariffline and Eurostat due to
 the nature of the differences among the two datasets.
 
-#### UNSD Tariffline
+#### UNSD Tariffline {-}
 
 1. UNSD Tariffline data reports area code with Tariffline M49
    standard (which are different for official M49). The area code
@@ -171,7 +172,7 @@ the nature of the differences among the two datasets.
    See:
    http://unstats.un.org/unsd/tradekb/Knowledgebase/Reexports-and-Reimports
 
-#### Eurostat
+#### Eurostat {-}
 
 1. Eurostat classifies areas in their geonomenclature. These codes
    are converted in FAO country codes using a specific convertion
@@ -225,7 +226,7 @@ removed and the final tables has all the countries worldwide.
 
 ### Standardization, editing and outlier detection
 
-#### Application of Notes
+#### Application of Notes {-}
 
 Perennial and yearly specific notes are mdb files provided by the
 Team B/C already saved in a R friendly dataset. The notes might be
@@ -252,7 +253,7 @@ More details on how to read the notes can be given by team B/C.
   ## 5 2011    1      NA 1061      NA    0.1 <NA>  <NA>    <NA>       37
   ## 6 2013    2 9030000  671     231     10 <NA>  <NA>    <NA>       33
 
-#### Unit Values computation
+#### Unit Values computation {-}
 
 For each record having both quantity and value (thus excluding all
 commodity reported just as value), the unit of value ($u_v$) is
@@ -260,7 +261,7 @@ computed as following:
 
   $$u_v = \frac{qty}{value}$$
 
-#### Outlier Detection and Imputation
+#### Outlier Detection and Imputation {-}
 
 Based on the units of measurement we might have cases of anomalous
 observations (outliers). The target variables are traded
@@ -300,7 +301,7 @@ is the outlier coefficient. By default this is set up to 1.5.
 More info regaring the outlier coefficient is given in the Future
 Work section.
 
-#### Missing Quantities Detection and Imputation
+#### Missing Quantities Detection and Imputation {-}
 
 For records in which the commodity has to be reported in quantity
 and the quantity is missing and the value is present, the

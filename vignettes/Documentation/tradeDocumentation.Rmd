@@ -25,48 +25,49 @@ given in the code.
 ## Data
 
 Raw data are provided by the SWS Team (subunit of Team F) for both
-UNSD Tariffline and Eurostat Data. The data have been already
-prefiltered in the following way:
+UNSD Tariffline and Eurostat Data. The data is prefiltered as
+shown below. In all cases, the module downloads only records of
+commodities of interest. The HS chapters are the following:
 
-- **Eurostat**
+  01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16,
+  17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 42, 43, 50,
+  51, 52, 53.
 
-  - only numeric codes of reporters and partners are kept (letters
-    are not allowed).
+In the future, if other commodities become of interest for
+the division, it is important to include additional chapters in
+the first step of the downloading.
 
-  - only numeric CN8 codes (`hs`) are kept (letters are not
-    allowed)
+  ##   reporter partner       hs flow year     value weight qty qunit    hs6
+  ## 1       90     458     3303    1 2009  54.75252     NA  NA     1   3303
+  ## 2      184      36 07121000    1 2009 634.93650     NA  NA     1 071210
+  ## 3      184      36 09011200    1 2009 470.57794     NA  NA     1 090112
+  ## 4      184     554 12100000    1 2009 544.94550     NA  NA     1 121000
+  ## 5      184     504 21050020    1 2009 379.96200     NA  NA     1 210500
+  ## 6       90      36     5203    1 2009  36.37752     NA  NA     1   5203
 
-      ##   reporter partner       hs flow year  value weight   qty    hs6
-      ## 1       11      10 85193000    2 2009  83.96    2.2  1010 851930
-      ## 2       11      10 85198121    1 2009  17.89    0.2  5023 851981
-      ## 3       11      10 85198121    2 2009 243.69    7.3 13894 851981
-      ## 4       11      10 85198125    1 2009   1.06    0.0     5 851981
-      ## 5       11      10 85198125    2 2009  17.07    0.0   171 851981
-      ## 6       11      10 85198131    1 2009   9.90    0.0   159 851981
+### Eurostat
 
-  - only `stat_regime` equal to 4 is kept.
+- only numeric codes of reporters and partners are kept (letters
+  are not allowed).
 
-- **UNSD**
+- only numeric CN8 codes (`hs`) are kept (letters are not
+  allowed)
 
-  - only numeric HS (`hs`) codes are kept (letters are not
-    allowed). If any codes are still alphanumeric please ask team
-    F to check, since this step is performed by them.
+    ##   reporter partner       hs flow year  value weight   qty    hs6
+    ## 1       11      10 85193000    2 2009  83.96    2.2  1010 851930
+    ## 2       11      10 85198121    1 2009  17.89    0.2  5023 851981
+    ## 3       11      10 85198121    2 2009 243.69    7.3 13894 851981
+    ## 4       11      10 85198125    1 2009   1.06    0.0     5 851981
+    ## 5       11      10 85198125    2 2009  17.07    0.0   171 851981
+    ## 6       11      10 85198131    1 2009   9.90    0.0   159 851981
 
-    The module downloads only records of commodities of interest
-    for Tariffline Data. The HS chapters are the following: 01,
-    02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16,
-    17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 42, 43,
-    50, 51, 52, 53. In the future, if other commodities become of
-    interest for the division, it is important to include
-    additional chapters in the first step of the downloading.
+- only `stat_regime` equal to 4 is kept.
 
-      ##   reporter partner       hs flow year     value weight qty qunit    hs6
-      ## 1       90     458     3303    1 2009  54.75252     NA  NA     1   3303
-      ## 2      184      36 07121000    1 2009 634.93650     NA  NA     1 071210
-      ## 3      184      36 09011200    1 2009 470.57794     NA  NA     1 090112
-      ## 4      184     554 12100000    1 2009 544.94550     NA  NA     1 121000
-      ## 5      184     504 21050020    1 2009 379.96200     NA  NA     1 210500
-      ## 6       90      36     5203    1 2009  36.37752     NA  NA     1   5203
+### UNSD
+
+- only numeric HS (`hs`) codes are kept (letters are not
+  allowed). If any codes are still alphanumeric please ask team
+  F to check, since this step is performed by them.
 
 ## Process
 

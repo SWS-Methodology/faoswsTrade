@@ -211,6 +211,9 @@ the nature of the differences among the two datasets.
    straighforward since for Eurostat the units are already
    correct. (No need of example, same as before).
 
+1. Some commodity specific conversions are needed as Eurostat
+   reports the figures in a different unit with respect to FAO.
+
 1. Values are converted from EUR to USD using the table, stored in
    the SWS, with avarage EUR/USD exchange rate for each year
    provided by Team B/C.

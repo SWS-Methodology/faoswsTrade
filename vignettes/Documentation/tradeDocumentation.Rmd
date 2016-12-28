@@ -124,21 +124,6 @@ the nature of the differences among the two datasets.
     ## 9         NA  134    1   04069019   04069019  904
     ## 10        NA    9    1   09012100   09012199  657
 
-1. Information of the FCL units is added.
-
-    ##   fcl fclunit
-    ## 1  15      mt
-    ## 2  16      mt
-    ## 3  17      mt
-    ## 4  18      mt
-    ## 5  19      mt
-    ## 6  20      mt
-
-1. Data convertion of units of measurements are applied to meet
-   FAO standards, where all weights are reported in metric tonnes,
-   animals in heads or 1000 heads and for some commodity just the
-   value is provided.
-
 1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).
    This procedure is applied following UNSD standards:
@@ -172,6 +157,22 @@ the nature of the differences among the two datasets.
 
    See:
    http://unstats.un.org/unsd/tradekb/Knowledgebase/Reexports-and-Reimports
+
+
+1. Information of the FCL units is added.
+
+    ##   fcl fclunit
+    ## 1  15      mt
+    ## 2  16      mt
+    ## 3  17      mt
+    ## 4  18      mt
+    ## 5  19      mt
+    ## 6  20      mt
+
+1. Data convertion of units of measurements are applied to meet
+   FAO standards, where all weights are reported in metric tonnes,
+   animals in heads or 1000 heads and for some commodity just the
+   value is provided.
 
 #### Eurostat {-}
 

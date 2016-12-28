@@ -102,7 +102,7 @@ the nature of the differences among the two datasets.
     ## 38  471 252
     ## 106  51   1
 
-2. Commodity codes are reported in HS codes (*Harmonized Commodity
+1. Commodity codes are reported in HS codes (*Harmonized Commodity
    Description and Coding System*). The codes are converted in FCL
    (*FAO Commodity List*) codes. This step is performed using a
    table incorporated in the SWS. In this step, all the mapping
@@ -124,7 +124,7 @@ the nature of the differences among the two datasets.
     ## 9         NA  134    1   04069019   04069019  904
     ## 10        NA    9    1   09012100   09012199  657
 
-3. Information of the FCL units is added.
+1. Information of the FCL units is added.
 
     ##   fcl fclunit
     ## 1  15      mt
@@ -134,12 +134,12 @@ the nature of the differences among the two datasets.
     ## 5  19      mt
     ## 6  20      mt
 
-4. Just for UNSD Tariffline data convertion of units of
+1. Just for UNSD Tariffline data convertion of units of
    measurements are applied to meet FAO standards, where all
    weights are reported in metric tonnes, animals in heads or 1000
    heads and for some commodity just the value is provided.
 
-5. The flow codes of re-Import (code 4) are recoded into Import
+1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).
    This procedure is applied following UNSD standards:
 
@@ -190,7 +190,7 @@ the nature of the differences among the two datasets.
     ## 5      5 106 Italy       
     ## 6      6 229 Utd. Kingdom
 
-2. Commodity codes are reported in CN8 codes (*Combined
+1. Commodity codes are reported in CN8 codes (*Combined
    Nomenclature 8 digits*). The codes are converted in FCL (*FAO
    Commodity List*) codes. This step is performed using the same
    package (`hsfclmap`) as for UNSD Tariffline. If a specific
@@ -203,11 +203,11 @@ the nature of the differences among the two datasets.
    measurements and do not need futher conversions. (No need of
    example, same as before).
 
-3. Information of the FCL units is added. This step is
+1. Information of the FCL units is added. This step is
    straighforward since for Eurostat the units are already
    correct. (No need of example, same as before).
 
-4. Values are converted from EUR to USD using the table, stored in
+1. Values are converted from EUR to USD using the table, stored in
    the SWS, with avarage EUR/USD exchange rate for each year
    provided by Team B/C.
 

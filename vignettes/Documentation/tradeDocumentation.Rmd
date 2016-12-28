@@ -158,6 +158,7 @@ the nature of the differences among the two datasets.
    See:
    http://unstats.un.org/unsd/tradekb/Knowledgebase/Reexports-and-Reimports
 
+1. Set all HS codes to the maximum length (by reporter / flow).
 
 1. Information of the FCL units is added.
 

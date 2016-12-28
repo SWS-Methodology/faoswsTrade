@@ -175,6 +175,8 @@ the nature of the differences among the two datasets.
    animals in heads or 1000 heads and for some commodity just the
    value is provided.
 
+1. Commodity specific conversions are added.
+
 #### Eurostat {-}
 
 1. Eurostat classifies areas in their geonomenclature. These codes

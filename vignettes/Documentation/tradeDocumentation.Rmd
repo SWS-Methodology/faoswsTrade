@@ -299,10 +299,45 @@ seed). The outlier are detecting using the Tukey's procedure:
 where $iqr$ is the interquartile range.
 
 The traded quantities that are identified as outliers are then
-corrected using the corresponding value (which remain fixed) and
-dividing it by the median unit of value of that specific
-commodity, country, flow and year. In this way only few official
-quantity data are corrected.
+corrected by dividing the corresponding value (which remain fixed)
+by an appropriate median unit value, which is calculated in a
+specific-to-generic fashion (in all cases, the unit values are
+calsulated separately for imports and exports). A first attempt is
+done by calculating unit values at the most specific HS level
+(i.e., the one at which the quantity is expressed). If the number
+of partners for which this unit value can be calculated is greater
+than a certain threshold (currently 10) the median unit value
+across partner is calculated and used for imputation. If the first
+attempt fails (i.e., it is not possible to calculate a unit value
+at the most specific HS level), then the same approach is used by
+taking into account more generic HS levels, in particular at eight
+and six digits, and the most specific level for which a sufficient
+number of partners is available is used for calculating the median
+unit value. Usually a suitable median can be calculated at the
+8-digit level or, at least, at the 6-digit level. However, if the
+previous strategies fail, which implies that there is not a
+sufficient number of partners in order to calculate the median,
+two attempts at calculating a non reporter specific median unit
+values (i.e., median unit values valid for all reporters) are
+sequentially undertaken: by HS and by FCL. In the most difficult
+cases it should be possible to calculate the median unit value by
+HS, thus that at the FCL level is used as the strategy of last
+resort. Actually, for completeness sake, the very last fallback is
+the median unit value by flow. This is the most generic unit value
+that can be used for imputation and is calculated just for
+precaution as it is very unlikely that an appropriate more
+specific median unit value can not be calculated.
+
+In short, the first one of the following median unit values that
+can be calculated is used for imputation (import and export unit
+values are always calculated separately):
+
+1. most specific HS code, across partners;
+1. 8-digit HS level, across partners;
+1. 6-digit HS level, across partners;
+1. most specific HS code, across reporters;
+1. FCL code of the most specific HS code, across reporters;
+1. by flow (whithout taking into account any commodity code).
 
 **Remark**: in the module, one of the input parameter for the user
 is the outlier coefficient. By default this is set up to 1.5.

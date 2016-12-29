@@ -274,31 +274,27 @@ computed as following:
 Based on the units of measurement we might have cases of anomalous
 observations (outliers). The target variables are traded
 quantities so the outlier test on the unit values is a tool to
-correct quantity data. The outlier are calculated based on the
-distribution of the unit of value for the same country, year and
-flow at the HS level (tariffline level). The reason to identify
-the outlier at the HS level is due to the fact that, under the
-same FCL code, different commodity might fall (i.e. maize seed and
-seed). The outlier are detecting using the Tukey's procedure:
+correct quantity data. Outliers are calculated based on the
+distribution of the logarithm of the unit of value for the same
+country, year and flow at the HS level (tariffline level). The
+reason to identify the outlier at the HS level is due to the fact
+that, under the same FCL code, different commodity might fall
+(i.e. maize seed and seed).
 
-- The Tukey's five number summary are calculated: minimum (m),
-  lower-hinge ($lh$), median ($med$), upper-hinge ($uh$) and
-  maximum ($M$).
+Outliers are detected using Tukey's procedure:
 
-- The coefficient for the outlier detection is set up as suggested
-  by Tukey to 1.5 ($coef$).
+$$\text{x is outlier if} \begin{cases}
+    x < Q1 - k * IQR, & \text{lower outlier},\\
+    x > Q3 + k * IQR, & \text{upper outlier}.
+  \end{cases}$$
 
-- For each value is calculated a specific distance from the lower
-  or the upper-hinge in the following way:
+where $Q1$ and $Q3$ are the first and third quartile,
+respectively, $IQR$ is the interquartile range ($IQR = Q3 - Q1$),
+and $k$ is a coefficient for the outlier detection (set to 1.5 as
+suggested by Tukey). See: Tukey, John W., (1977), Exploratory Data
+Analysis, Addison-Wesley. 
 
-  $$\text{x is outlier if} \begin{cases}
-      x < lh - coef * iqr, & \text{lower outlier},\\
-      x > up + coef * iqr, & \text{upper outlier}.
-    \end{cases}$$
-
-where $iqr$ is the interquartile range.
-
-The traded quantities that are identified as outliers are then
+Traded quantities that are identified as outliers are then
 corrected by dividing the corresponding value (which remain fixed)
 by an appropriate median unit value, which is calculated in a
 specific-to-generic fashion (in all cases, the unit values are

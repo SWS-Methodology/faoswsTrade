@@ -552,6 +552,16 @@ module.
     2. In case of official figure the methodology has to be 'h' and
        not empty.
 
+## Outlier identification
+
+- Outliers are identified by using the median unit value by the
+  most specific HS code. There is a problem in this procedure as
+  sometimes the number of reporters for the specific HS code can
+  be low. This is what led to the reimplementation of the
+  imputation procedure that now uses a specific-to-generic median
+  unit value calculation. Thus, a similar procedure should be
+  implemented for *detecting* outliers.
+
 ## Outlier coefficient
 
 - The outlier coefficient is set up to 1.5. The outlier

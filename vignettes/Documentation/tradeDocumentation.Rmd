@@ -302,7 +302,7 @@ The traded quantities that are identified as outliers are then
 corrected by dividing the corresponding value (which remain fixed)
 by an appropriate median unit value, which is calculated in a
 specific-to-generic fashion (in all cases, the unit values are
-calsulated separately for imports and exports). A first attempt is
+calculated separately for imports and exports). A first attempt is
 done by calculating unit values at the most specific HS level
 (i.e., the one at which the quantity is expressed). If the number
 of partners for which this unit value can be calculated is greater

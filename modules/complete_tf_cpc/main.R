@@ -140,10 +140,10 @@ startTime = Sys.time()
 ##' 1. `hsfclmap2`: Mmapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system (Shark,
 ##' Jellyfish).
-##'
+
 ##' 1. `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to obtain quantities from traded values
-##'
+
 ##' 1. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
 ##' detailed than the reporter dimension. Since we can not split trade flows of
@@ -153,14 +153,14 @@ startTime = Sys.time()
 ##' and Puerto Rico and thus the reported trade flows of those territories.
 ##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
 ##' Minor Outlying Islands.
-##'
+
 ##' 1. `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
 ##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
-##'
+
 ##' 1. `comtradeunits`:
-##'
+
 ##' 1. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
 ##+ datasets, echo=FALSE, eval=FALSE
@@ -209,6 +209,7 @@ hsfclmap <- hsfclmapSubset(hsfclmap2, year = year)
 ##' 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of
 ##' interest for the division, it is important to include additional chapter in
 ##' the first step of the downloading.
+
 ## Chapter provided by team B/C
 ## creating object to provision re-use with Eurostat data
 
@@ -223,10 +224,15 @@ hs_chapters_str <-
 ##'
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
 ##' mapping area list
+
 ##' 1. Convert HS to FCL
+
 ##' 1. Remove unmapped FCL codes
+
 ##' 1. Join *fclunits*
+
 ##' 1. `NA` *fclunits* set to `mt`
+
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
 ##' with different supplementary units than those reported in FAOSTAT
 
@@ -336,14 +342,14 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 
 
 ##' #### Harmonize UNSD Tariffline Data
-##'
+
 ##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 ##' (which are different for official M49). The area code is converted in FAO
 ##' country code using a specific convertion table provided by Team ENV. Area
 ##' codes not mapping to any FAO country code or mapping to code 252 (which
 ##' correpond not defined area) are separately saved and removed from further
 ##' analyses.
-##'
+
 ##' 1. Commodity Codes: Commodity codes are reported in HS
 ##' codes (Harmonized Commodity Description and Coding Systpem). The codes
 ##' are converted in FCL (FAO Commodity List) codes. This step is performed
@@ -369,7 +375,7 @@ tldata <- tbl_df(tldata)
 ##' combination of reporter / partner / commodity / flow / year / qunit. Those
 ##' are separate registered transactions and the rows containinig non-missing
 ##' values and quantities are summed.
-##'
+
 ##' 1. **Note:** missing quantity|weight or value will be handled below by imputation
 
 ##+ tl-aggregate-multiple-rows, echo=FALSE, eval=FALSE
@@ -619,7 +625,7 @@ if (dollars){
   tldata$value <- tldata$value / 1000
 }
 
-##' 3. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
+##' 1. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
 ##' which contains weight in tons (requested by FAO).
 
 ##+ tl_aggregate, echo=FALSE, eval=FALSE
@@ -640,7 +646,7 @@ tldata <- tldata %>%
 tldata_mid = tldata
 
 ##' #### Combine Trade Data Sources
-##'
+
 ##' 1. The adjustment notes developed for national data received from countries
 ##' are not applied to HS data any more (see instructions 2016-08-10). Data
 ##' harvested from UNSD are standardised and therefore many (if not most) of the
@@ -673,9 +679,9 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             select(ExchangeRate))
 
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
-##'  to single data set.
-##'  - TL: assign `weight` to `qty`
-##'  - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
+##' to single data set.
+##'     - TL: assign `weight` to `qty`
+##'     - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
 
 ##+ combine_es_tl, echo=FALSE, eval=FALSE
 
@@ -698,7 +704,7 @@ tradedata <- bind_rows(
 
 ##' 1. Unit values are calculated for each observation at the HS level as ratio
 ##' of monetary value over weight `value / qty`.
-##'
+
 ##' 1. Median unit-values are calculated across the partner dimension by year,
 ##' reporter, flow and HS. This can be problematic if only few records exist for
 ##' the a specific combination of dimensions.
@@ -732,14 +738,14 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 
 ##' 1. Impute missing quantities and quantities categorized as outliers by
 ##' dividing the reported monetary value with the calculated median unit value.
-##'
+
 ##' 1. Assign `flagTrade` to observations with imputed quantities. These flags
 ##' are also assigned to monetary values. This may need to be revised (monetary
 ##' values are not supposed to be modified).
-##'
+
 ##' 1. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
 ##' codes to around 800 commodity codes.
-##'
+
 ##' 1. Map FCL codes to CPC, remove observations that have not been mapped to
 ##' CPC.
 
@@ -794,15 +800,15 @@ countries_not_mapping_M49 <- bind_rows(
 
 
 ##' #### Mirror Trade Estimation
-##'
+
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
-##'
+
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
-##'
+
 ##' 1. Invert the flow direction: an import becomes an export (and vice versa).
-##'
+
 ##' 1. Calculate monetary mirror value by adding a 12% mark-up on imports to
 ##' account for the difference between CIF and FOB prices.
 
@@ -819,7 +825,7 @@ tradedata <- mirrorNonReporters(tradedata = tradedata,
 ##' 1. Reporting countries: Assign SWS **observationStatus** flag `I` and
 ##' **flagMethod** `e` to records with with `flagTrade` unless the FCL unit is
 ##' categorized as `$ value only`.
-##'
+
 ##' 1. Non-reporting countries: Assign SWS **observationStatus** flag `E` and
 ##' **flagMethod** `e` to both quantities and values. Overwrite **flagMethod**
 ##' `e` with `c` for quantities when transforming to normalized format below.
@@ -874,13 +880,13 @@ complete_trade <-
   tradedata %>% addFlagsAfterMirror(nonreporting = nonreporting)
 
 ##' #### Output for SWS
-##'
+
 ##' 1. Filter observations with FCL code `1181` (bees).
-##'
+
 ##' 1. Filter observations with missing CPC codes.
-##'
+
 ##' 1. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
-##'
+
 ##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
 ##+ completed_trade_flow, echo=FALSE, eval=FALSE
@@ -905,7 +911,7 @@ complete_trade_flow_cpc <- complete_trade %>%
 
 ##' 1. Transform dataset seperating monetary values, quantities and unit values
 ##' in different rows.
-##'
+
 ##' 1. Convert monetary values, quantities and unit values to corresponding SWS
 ##' element codes. For example, a quantity import measured in metric tons is
 ##' assigned `5610`.

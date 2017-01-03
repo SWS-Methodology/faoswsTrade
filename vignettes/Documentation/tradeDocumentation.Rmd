@@ -77,6 +77,9 @@ The tariffline data from UNSD contains multiple rows with
 identical combination of reporter / partner / commodity / flow /
 year / qunit. Those are separate registered transactions and the
 rows containinig non-missing values and quantities are summed.
+Missing variables of the same type are also summed, as they will
+produce a missing aggregated value for missing disaggregated
+values while correctly summing the remaining variables.
 
 ### Mapping UNSD Tariffline and Eurostat data
 

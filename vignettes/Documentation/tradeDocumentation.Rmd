@@ -67,8 +67,7 @@ the first step of the downloading.
 ### UNSD
 
 - only numeric HS (`hs`) codes are kept (letters are not
-  allowed). If any codes are still alphanumeric please ask team
-  F to check, since this step is performed by them.
+  allowed).
 
 ## Process
 

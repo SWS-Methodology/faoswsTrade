@@ -1,9 +1,20 @@
 ---
 title: "faoswsTrade"
-author: |
-  Marco Garieri\
-  Food and Agriculture Organization\
+author:
+- Marco Garieri
+- Christian A. Mongeau Ospina\
+  
+  Food and Agriculture Organization
   of the United Nations
+abstract: |
+  The trade module is divided in two submodules: `complete_tf_cpc`
+  and `total_trade_CPC`. Each module is year specific. This means
+  that, at the time being, the trade module runs indipendently for
+  each year. In order to run the `total_trade_CPC`, the output of
+  `complete_tf_cpc` is needed. All tables and graphs present in this
+  documentation are just examples. More details on the data are
+  given in the code.
+date: "`r format(Sys.time(), '%e %B %Y')`"
 output:
   pdf_document:
     pandoc_args: [
@@ -11,14 +22,6 @@ output:
     ]
     number_sections: true
 ---
-
-The trade module is divided in two submodules: `complete_tf_cpc`
-and `total_trade_CPC`. Each module is year specific. This means
-that, at the time being, the trade module runs indipendently for
-each year. In order to run the `total_trade_CPC`, the output of
-`complete_tf_cpc` is needed. All tables and graphs present in this
-documentation are just examples. More details on the data are
-given in the code.
 
 # Complete tf cpc
 
@@ -52,17 +55,20 @@ the first step of the downloading.
 - only numeric CN8 codes (`hs`) are kept (letters are not
   allowed).
 
-- only `stat_regime` equal to 4 is kept: "In this system, the
-  recorded aggregates include all goods entering or leaving the
-  economic territory of a country with the exception of simple
-  transit trade. In particular, all goods received into customs
-  warehouses are recorded as imports, regardless of whether they
-  subsequently go into free circulation in the Member State of
-  receipt. Similarly, outgoing goods from customs warehouses are
-  included in the general trade aggregates, at the time they leave
-  the Member State" (see pag. 9 in *DG Trade Statistical Guide*,
-  June 2016,
-  http://trade.ec.europa.eu/doclib/docs/2013/may/tradoc_151348.pdf).
+- only `stat_regime` equal to 4 is kept.
+
+  > In this system ["Statistical regime 4" or "Total trade"], the
+  > recorded aggregates include all goods entering or leaving the
+  > economic territory of a country with the exception of simple
+  > transit trade. In particular, all goods received into customs
+  > warehouses are recorded as imports, regardless of whether they
+  > subsequently go into free circulation in the Member State of
+  > receipt. Similarly, outgoing goods from customs warehouses are
+  > included in the general trade aggregates, at the time they
+  > leave the Member State.
+
+  See pag. 9 in *DG Trade Statistical Guide*, June 2016,
+  http://trade.ec.europa.eu/doclib/docs/2013/may/tradoc_151348.pdf
 
 ### UNSD
 

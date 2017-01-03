@@ -141,10 +141,10 @@ startTime = Sys.time()
 ##' used to archive information existing in the previous trade system (Shark,
 ##' Jellyfish).
 ##'
-##' 2. `adjustments`: Adjustment notes containing manually added conversion
+##' 1. `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to obtain quantities from traded values
 ##'
-##' 3. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
+##' 1. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
 ##' detailed than the reporter dimension. Since we can not split trade flows of
 ##' the reporter dimension, trade flows of the corresponding partner dimensions
@@ -154,14 +154,14 @@ startTime = Sys.time()
 ##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
 ##' Minor Outlying Islands.
 ##'
-##' 4. `fclunits`: For UNSD Tariffline units of measurement are converted to
+##' 1. `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
 ##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
 ##'
-##' 5. `comtradeunits`:
+##' 1. `comtradeunits`:
 ##'
-##' 6. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
+##' 1. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
 ##+ datasets, echo=FALSE, eval=FALSE
 
@@ -223,11 +223,11 @@ hs_chapters_str <-
 ##'
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
 ##' mapping area list
-##' 2. Convert HS to FCL
-##' 3. Remove unmapped FCL codes
-##' 4. Join *fclunits*
-##' 5. `NA` *fclunits* set to `mt`
-##' 6. Specific ES conversions: some FCL codes are reported in Eurostat
+##' 1. Convert HS to FCL
+##' 1. Remove unmapped FCL codes
+##' 1. Join *fclunits*
+##' 1. `NA` *fclunits* set to `mt`
+##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
 ##' with different supplementary units than those reported in FAOSTAT
 
 ##+ es-extract, echo=FALSE, eval=FALSE
@@ -344,7 +344,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 ##' correpond not defined area) are separately saved and removed from further
 ##' analyses.
 ##'
-##' 2. Commodity Codes: Commodity codes are reported in HS
+##' 1. Commodity Codes: Commodity codes are reported in HS
 ##' codes (Harmonized Commodity Description and Coding Systpem). The codes
 ##' are converted in FCL (FAO Commodity List) codes. This step is performed
 ##' using table incorporated in the SWS. In this step, all the mapping between
@@ -356,7 +356,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 ##+ tl_m49fao, echo=FALSE, eval=FALSE
 ## Based on Excel file from UNSD (unsdpartners..)
 
-##' 2. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
+##' 1. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
 ##' This probably should be part of the faoswsEnsure
 
 ##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
@@ -365,12 +365,12 @@ tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-##' 3. The tariffline data from UNSD contains multiple rows with identical
+##' 1. The tariffline data from UNSD contains multiple rows with identical
 ##' combination of reporter / partner / commodity / flow / year / qunit. Those
 ##' are separate registered transactions and the rows containinig non-missing
 ##' values and quantities are summed.
 ##'
-##' 4. **Note:** missing quantity|weight or value will be handled below by imputation
+##' 1. **Note:** missing quantity|weight or value will be handled below by imputation
 
 ##+ tl-aggregate-multiple-rows, echo=FALSE, eval=FALSE
 
@@ -663,7 +663,7 @@ if (use_adjustments == TRUE) {
                            adjustments = adjustments, parallel = multicore)
 }
 
-##' 2. Convert currency of monetary values from EUR to USD using the
+##' 1. Convert currency of monetary values from EUR to USD using the
 ##' `EURconversionUSD` table (see above).
 
 ##+ es_convcur, echo=FALSE, eval=FALSE
@@ -672,7 +672,7 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
-##' 3. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
+##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
 ##'  to single data set.
 ##'  - TL: assign `weight` to `qty`
 ##'  - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
@@ -699,7 +699,7 @@ tradedata <- bind_rows(
 ##' 1. Unit values are calculated for each observation at the HS level as ratio
 ##' of monetary value over weight `value / qty`.
 ##'
-##' 2. Median unit-values are calculated across the partner dimension by year,
+##' 1. Median unit-values are calculated across the partner dimension by year,
 ##' reporter, flow and HS. This can be problematic if only few records exist for
 ##' the a specific combination of dimensions.
 
@@ -717,7 +717,7 @@ tradedata <- mutate_(tradedata,
 ## Round UV in order to avoid floating point number problems (see issue #54)
 tradedata$uv <- round(tradedata$uv, 10)
 
-##' 3. Observations are classified as outliers if the calculated unit value for
+##' 1. Observations are classified as outliers if the calculated unit value for
 ##' a some partner country is below or above the median unit value. More
 ##' specifically, the measure defined as median inter-quartile-range (IQR)
 ##' multiplied by the outlier coefficient (default value: 1.5) is used to
@@ -730,17 +730,17 @@ tradedata$uv <- round(tradedata$uv, 10)
 tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
                             parameters = list(out_coef=out_coef))
 
-##' 4. Impute missing quantities and quantities categorized as outliers by
+##' 1. Impute missing quantities and quantities categorized as outliers by
 ##' dividing the reported monetary value with the calculated median unit value.
 ##'
-##' 5. Assign `flagTrade` to observations with imputed quantities. These flags
+##' 1. Assign `flagTrade` to observations with imputed quantities. These flags
 ##' are also assigned to monetary values. This may need to be revised (monetary
 ##' values are not supposed to be modified).
 ##'
-##' 6. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
+##' 1. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
 ##' codes to around 800 commodity codes.
 ##'
-##' 7. Map FCL codes to CPC, remove observations that have not been mapped to
+##' 1. Map FCL codes to CPC, remove observations that have not been mapped to
 ##' CPC.
 
 ##+ impute_qty_uv, echo=FALSE, eval=FALSE
@@ -798,12 +798,12 @@ countries_not_mapping_M49 <- bind_rows(
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
 ##'
-##' 2. Swap the reporter and partner dimensions: the value previously appearing
+##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
 ##'
-##' 3. Invert the flow direction: an import becomes an export (and vice versa).
+##' 1. Invert the flow direction: an import becomes an export (and vice versa).
 ##'
-##' 4. Calculate monetary mirror value by adding a 12% mark-up on imports to
+##' 1. Calculate monetary mirror value by adding a 12% mark-up on imports to
 ##' account for the difference between CIF and FOB prices.
 
 ##+ mirror_estimation, echo=FALSE, eval=FALSE
@@ -816,11 +816,11 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
 
-##' 5. Reporting countries: Assign SWS **observationStatus** flag `I` and
+##' 1. Reporting countries: Assign SWS **observationStatus** flag `I` and
 ##' **flagMethod** `e` to records with with `flagTrade` unless the FCL unit is
 ##' categorized as `$ value only`.
 ##'
-##' 6. Non-reporting countries: Assign SWS **observationStatus** flag `E` and
+##' 1. Non-reporting countries: Assign SWS **observationStatus** flag `E` and
 ##' **flagMethod** `e` to both quantities and values. Overwrite **flagMethod**
 ##' `e` with `c` for quantities when transforming to normalized format below.
 
@@ -877,11 +877,11 @@ complete_trade <-
 ##'
 ##' 1. Filter observations with FCL code `1181` (bees).
 ##'
-##' 2. Filter observations with missing CPC codes.
+##' 1. Filter observations with missing CPC codes.
 ##'
-##' 3. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
+##' 1. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
 ##'
-##' 4. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
+##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
 ##+ completed_trade_flow, echo=FALSE, eval=FALSE
 
@@ -903,10 +903,10 @@ complete_trade_flow_cpc <- complete_trade %>%
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
 
-##' 4. Transform dataset seperating monetary values, quantities and unit values
+##' 1. Transform dataset seperating monetary values, quantities and unit values
 ##' in different rows.
 ##'
-##' 5. Convert monetary values, quantities and unit values to corresponding SWS
+##' 1. Convert monetary values, quantities and unit values to corresponding SWS
 ##' element codes. For example, a quantity import measured in metric tons is
 ##' assigned `5610`.
 
@@ -926,7 +926,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   filter_(~measuredElementTrade != "999") %>%
   select_(~-flow,~-unit)
 
-##' 6. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
+##' 1. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
 
 ##+ overwrite_mirror_method_flag, echo=FALSE, eval=FALSE
 
@@ -948,7 +948,7 @@ complete_trade_flow_cpc <-
   overwriteFlagMethodMirrorQuantities()
 
 
-##' 7. Add **flagMethod** `i` to unit values
+##' 1. Add **flagMethod** `i` to unit values
 
 ##+ add_uv_method_flag, echo=FALSE, eval=FALSE
 

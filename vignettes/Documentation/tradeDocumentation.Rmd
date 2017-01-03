@@ -244,13 +244,15 @@ forcing a value. More information about the notes can be provided
 by team B/C. The notes might be year specific or for all years (in
 this case reported as NA) and might refer to HS or/and FCL codes.
 This notes (or adjustments) were developed during the years and
-they are available from 1997 to 2013. Notes of 2014 are copied
-from notes in 2013, as a partial solution, but this need future
-work in the future.
+they are available from 1997 to 2013.
 
-Comparing results between the new and the old procedure showed
-that sometimes the discrepancies between the two results are due
-to the application of the notes.
+**Remark**: There is currently a revision of the adjustments
+table. This revision is needed as notes were developed when trade
+data was obtained from countries and was not standardised. Now
+given that trade data comes from international organisations
+(Eurostat and UNSD) the standardisation *should* be almost
+complete but sometimes it seems that the procedure was not applied
+(and in this case the application of a note is required).
 
 More details on how to read the notes can be given by team B/C.
 

@@ -136,9 +136,9 @@ out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
 startTime = Sys.time()
 
-##' ### Input Data
+##' # Input Data
 ##'
-##' **Supplementary Datasets:**
+##' ## Supplementary Datasets
 ##'
 ##' 1. `hsfclmap2`: Mmapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system (Shark,
@@ -224,7 +224,7 @@ hs_chapters_str <-
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
-##' #### Extract Eurostat Combined Nomenclature Data
+##' # Extract Eurostat Combined Nomenclature Data
 ##'
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
 ##' mapping area list
@@ -330,7 +330,7 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
-##' #### Extract UNSD Tariffline Data
+##' # Extract UNSD Tariffline Data
 ##'
 ##' Tariff line data is obtained from SWS datatables. Data is
 ##' filtered for chapters of interest.
@@ -355,7 +355,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         )
 
 
-##' #### Harmonize UNSD Tariffline Data
+##' # Harmonize UNSD Tariffline Data
 
 ##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
 ##' (which are different for official M49). The area code is converted in FAO
@@ -602,7 +602,7 @@ tldata <- tldata %>%
 
 tldata_mid = tldata
 
-##' #### Combine Trade Data Sources
+##' # Combine Trade Data Sources
 
 ##' 1. The adjustment notes developed for national data received from countries
 ##' are not applied to HS data any more (see instructions 2016-08-10). Data
@@ -657,7 +657,7 @@ tradedata <- bind_rows(
 )
 
 
-##' #### Outlier Detection and Imputation
+##' # Outlier Detection and Imputation
 
 ##' 1. Unit values are calculated for each observation at the HS level as ratio
 ##' of monetary value over weight `value / qty`.
@@ -756,7 +756,7 @@ countries_not_mapping_M49 <- bind_rows(
   unlist()
 
 
-##' #### Mirror Trade Estimation
+##' # Mirror Trade Estimation
 
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
@@ -836,7 +836,7 @@ addFlagsAfterMirror <- function(data=stop("'data' must be defined'"),
 complete_trade <-
   tradedata %>% addFlagsAfterMirror(nonreporting = nonreporting)
 
-##' #### Output for SWS
+##' # Output for SWS
 
 ##' 1. Filter observations with FCL code `1181` (bees).
 

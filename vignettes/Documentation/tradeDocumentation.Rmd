@@ -210,8 +210,8 @@ the nature of the differences among the two datasets.
    all the records for the reporting country are removed.
    
 1. Information of the FCL units is added. This step is
-   straighforward since for Eurostat the units are already
-   correct. (No need of example, same as before).
+   straighforward since for Eurostat the units are for the vast
+   majority correct.
 
 1. Some commodity specific conversions are needed as Eurostat
    reports the figures in a different unit with respect to FAO.

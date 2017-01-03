@@ -209,10 +209,6 @@ the nature of the differences among the two datasets.
    included in the package of the mapping for that specific year,
    all the records for the reporting country are removed.
    
-   Eurostat data are already provided in the correct units of
-   measurements and do not need futher conversions. (No need of
-   example, same as before).
-
 1. Information of the FCL units is added. This step is
    straighforward since for Eurostat the units are already
    correct. (No need of example, same as before).

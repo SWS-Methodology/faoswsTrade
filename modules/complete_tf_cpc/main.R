@@ -1,22 +1,25 @@
 ##' ---
-##' title: Appendix Complete TF CPC
+##' title: "Appendix: `complete_tf_cpc` module"
 ##' author:
 ##'   - Marco Garieri
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
-##'   - Bo Werth
+##'   - Bo Werth\
+##'  
+##'     Food and Agriculture Organization
+##'     of the United Nations
 ##' date: "`r format(Sys.time(), '%e %B %Y')`"
 ##' output:
 ##'    pdf_document
 ##' ---
-##'
-##' Change Log:
-##'
-##' - Add unit values to output
-##' - Remove adjustment factors
-##' - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
 
 ##+ init, echo=FALSE, eval=FALSE
+
+## Change Log:
+##
+## - Add unit values to output
+## - Remove adjustment factors
+## - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
 
 ## **Flow chart:**
 ##

@@ -282,7 +282,7 @@ distribution of the logarithm of the unit of value for the same
 country, year and flow at the HS level (tariffline level). The
 reason to identify the outlier at the HS level is due to the fact
 that, under the same FCL code, different commodity might fall
-(i.e. maize seed and seed).
+in it (i.e. maize seed and seed).
 
 Outliers are detected using Tukey's procedure:
 
@@ -348,15 +348,14 @@ Work section.
 For records in which the commodity has to be reported in quantity
 and the quantity is missing and the value is present, the
 corresponding quantity is imputed dividing the corresponding value
-by the median of the units of value of the corresponding commodity
-(HS level/country/flow/year)
+by the median of the units of value obtained as explained above.
 
 ### Mirroring and Balancing
 
 The module produce the list of non-reporting countries: these are
 the countries present as partners but absent as reporters. For
 these countries the mirroring routine is applied: the
-corrisponding trade of the non-reporting countries are extracted
+corresponding trade of the non-reporting countries are extracted
 from the partners inverting the flows. The quantities are the same
 while the values are corrected by a factor of 12% due to the
 CIF/FOB conversion. This need more work, details in the Future
@@ -374,7 +373,7 @@ have a special flag:
 
 For all the other records empty string flags are saved.
 
-More information on the Flag is given in the Future Work section.
+More information on the Flag is given in the *Future Work section*.
 
 ## Convertion to FAO SWS standards
 
@@ -520,20 +519,14 @@ module.
   record. If a specific record has a HS code not mapping to any
   specific FCL code, then the record is reported and removed.
 
-## Mapping from HS to FCL
+## Mapping from HS to FCL/CPC
 
 - In the module for commodities we have 2 different mappings. From
   HS to FCL, using mapping produced by team B/C and then from FCL
-  to CPC 2.1. This mapping is available for the following years:
-  1997, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-  2010, 2011, 2012, 2013. The following years are missing: 1998,
-  1999, 2000. The mapping for 2014 has been copied from year 2013,
-  but the results need to be checked.
-
-- In the future direct mapping from HS to CPC has been asked from
-  management. A possible solution, where adding the column with the
-  one-to-one CPC codes has been sent to Carola (09.06.2016), but
-  anyway this needs revision
+  to CPC 2.1. In the future direct mapping from HS to CPC has been
+  asked from management. A possible solution, where adding the
+  column with the one-to-one CPC codes has been sent to Carola
+  (09.06.2016), but anyway this needs revision
   ([link](https://drive.google.com/drive/folders/0B_Z6srBtmyJRUmtaaXphTllZUDA))
 
 ## Mapping from Comtrade M49 and Geonomenclature directly to M49

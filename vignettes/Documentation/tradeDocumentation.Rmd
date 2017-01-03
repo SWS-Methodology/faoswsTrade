@@ -538,15 +538,9 @@ module.
 - A direct map from Comtrade M49 (Tariffline UNSD) to M49 and from
   Geonomenclature (Eurostat) to M49 would be ideal.
 
-## Flag correction
+## Flag management
 
-- This activities have high priority
-
-    1. When mirroring is performed, the quantity will stay official,
-       while the value will change flag (high priority)
-
-    2. In case of official figure the methodology has to be 'h' and
-       not empty.
+- This activity has high priority and is currently in progress.
 
 ## Outlier identification
 

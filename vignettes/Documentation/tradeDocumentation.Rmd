@@ -15,6 +15,7 @@ abstract: |
   documentation are just examples. More details on the data are
   given in the code.
 date: "`r format(Sys.time(), '%e %B %Y')`"
+geometry: margin=1in
 output:
   pdf_document:
     pandoc_args: [

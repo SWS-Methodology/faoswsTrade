@@ -1,20 +1,20 @@
-##' ## Complete TF CPC
-##'
-##' **Author: Alex Matrunich, Marco Garieri, Bo Werth, Christian Mongeau**
-##'
-##' **Description:**
-##'
-##' The trade module is divided in two submodules: **complete\_tf\_cpc** and
-##' **total\_trade\_CPC**. Each module is year specific. This means that, at the
-##' time being, the trade module run indipendently for each year. In order to
-##' run the **tt total\_trade\_CPC**, the output of **complete\_tf\_cpc** is
-##' needed.
+##' ---
+##' title: Appendix Complete TF CPC
+##' author:
+##'   - Marco Garieri
+##'   - Alexander Matrunich
+##'   - Christian A. Mongeau Ospina
+##'   - Bo Werth
+##' date: "`r format(Sys.time(), '%e %B %Y')`"
+##' output:
+##'    pdf_document
+##' ---
 ##'
 ##' Change Log:
 ##'
-##' - add unit values to output
-##' - remove adjustment factors
-##' - revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
+##' - Add unit values to output
+##' - Remove adjustment factors
+##' - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
 
 ##+ init, echo=FALSE, eval=FALSE
 

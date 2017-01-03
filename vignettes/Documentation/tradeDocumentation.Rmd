@@ -92,18 +92,21 @@ the nature of the differences among the two datasets.
 1. UNSD Tariffline data reports area code with Tariffline M49
    standard (which are different for official M49). The area code
    is converted in FAO country code using a specific convertion
-   table provided by Team ENV. Area codes not mapping to any FAO
-   country code or mapping to code 252 (which correponds to
-   undefined areas) are separately saved and removed from further
-   analyses.
+   table provided by Team ENV.
 
-    ##     m49 fao
-    ## 164 270  75
-    ## 26  280  79
-    ## 294 716 181
-    ## 241 634 179
-    ## 38  471 252
-    ## 106  51   1
+1. European countries are removed.
+
+1.  Area codes not mapping to any FAO country code or mapping to
+    code 252 (which correponds to undefined areas) are separately
+    saved and removed from further analyses.
+
+     ##     m49 fao
+     ## 164 270  75
+     ## 26  280  79
+     ## 294 716 181
+     ## 241 634 179
+     ## 38  471 252
+     ## 106  51   1
 
 1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).
@@ -232,8 +235,7 @@ the nature of the differences among the two datasets.
 ### Unified Official Trade Flows Dataset
 
 UNSD Tariffline and Eurostat datasets are ready to be merged
-togheter. From UNSD Tariffline all the European countries are
-removed and the final tables has all the countries worldwide.
+togheter. The final tables has all the countries worldwide.
 
 ### Standardization, editing and outlier detection
 

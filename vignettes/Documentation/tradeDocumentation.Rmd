@@ -64,14 +64,6 @@ the first step of the downloading.
   June 2016,
   http://trade.ec.europa.eu/doclib/docs/2013/may/tradoc_151348.pdf).
 
-    ##   reporter partner       hs flow year  value weight   qty    hs6
-    ## 1       11      10 85193000    2 2009  83.96    2.2  1010 851930
-    ## 2       11      10 85198121    1 2009  17.89    0.2  5023 851981
-    ## 3       11      10 85198121    2 2009 243.69    7.3 13894 851981
-    ## 4       11      10 85198125    1 2009   1.06    0.0     5 851981
-    ## 5       11      10 85198125    2 2009  17.07    0.0   171 851981
-    ## 6       11      10 85198131    1 2009   9.90    0.0   159 851981
-
 ### UNSD
 
 - only numeric HS (`hs`) codes are kept (letters are not

@@ -420,9 +420,13 @@ within the trade domain.
 
 # Flow Chart Process
 
-![image](trade_1.png)
+```{r, echo = FALSE, out.height = "600px"}
+knitr::include_graphics("assets/trade_1.png")
+```
 
-![image](trade_1_bis.png)
+```{r, echo = FALSE, out.height = "600px"}
+knitr::include_graphics("assets/trade_2.png")
+```
 
 # Future work
 

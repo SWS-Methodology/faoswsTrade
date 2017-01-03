@@ -568,10 +568,10 @@ if(NROW(fcl_spec_mt_conv) > 0){
     group_by(fcl, wco) %>%
     summarise(convspec=median(qw, na.rm=TRUE)) %>%
     ungroup()
-  
+
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
     left_join(conversion_factors_fcl)
-    
+
   fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
 
   ### Add commodity specific conv.factors to dataset

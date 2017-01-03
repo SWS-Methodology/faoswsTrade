@@ -13,7 +13,10 @@
 ##'    pdf_document
 ##' ---
 
-##+ init, echo=FALSE, eval=FALSE
+##+ setup, include=FALSE
+knitr::opts_chunk$set(echo=FALSE)
+
+##+ init, eval=FALSE
 
 ## Change Log:
 ##
@@ -38,7 +41,7 @@ dollars <- FALSE
 use_adjustments <- FALSE
 
 
-##+ libs, echo=FALSE, eval=FALSE
+##+ libs, eval=FALSE
 
 ## library(tradeproc)
 
@@ -96,7 +99,7 @@ if(multicore) {
 }
 
 
-##+ swsdebug, echo=FALSE, eval=FALSE
+##+ swsdebug, eval=FALSE
 
 ## ## local data
 ## install.packages("//hqfile4/ess/Team_working_folder/A/SWS/faosws_0.8.2.9901.tar.gz",
@@ -117,7 +120,7 @@ if(CheckDebug()){
 }
 
 
-##+ settings, echo=FALSE, eval=FALSE
+##+ settings, eval=FALSE
 
 stopifnot(
   !is.null(swsContext.computationParams$year),
@@ -166,7 +169,7 @@ startTime = Sys.time()
 
 ##' 1. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
 
-##+ datasets, echo=FALSE, eval=FALSE
+##+ datasets, eval=FALSE
 
 ## Old procedure
 #data("hsfclmap2", package = "hsfclmap", envir = environment())
@@ -240,7 +243,7 @@ hs_chapters_str <-
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
 ##' with different supplementary units than those reported in FAOSTAT
 
-##+ es-extract, echo=FALSE, eval=FALSE
+##+ es-extract, eval=FALSE
 #### Download ES data ####
 
 # esdata <- getRawAgriES(year, agricodeslist)
@@ -275,7 +278,7 @@ esdata <- tbl_df(esdata)
 ## Rename columns
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
-##+ geonom2fao, echo=FALSE, eval=FALSE
+##+ geonom2fao, eval=FALSE
 esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]
@@ -283,7 +286,7 @@ esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
 
 
-##+ es-treat-unmapped, echo=FALSE, eval=FALSE
+##+ es-treat-unmapped, eval=FALSE
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 esdata <- esdata %>%
@@ -335,7 +338,7 @@ esdata <- esdata %>%
 ##' Tariff line data is obtained from SWS datatables. Data is
 ##' filtered for chapters of interest.
 
-##+ tradeload, echo=FALSE, eval=FALSE
+##+ tradeload, eval=FALSE
 
 #### Get list of agri codes ####
 #agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
@@ -373,13 +376,13 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 ##' country are removed. All records without an FCL mapping are filtered out and
 ##' saved in specific variables.
 
-##+ tl_m49fao, echo=FALSE, eval=FALSE
+##+ tl_m49fao, eval=FALSE
 ## Based on Excel file from UNSD (unsdpartners..)
 
 ##' 1. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
 ##' This probably should be part of the faoswsEnsure
 
-##+ tl-force-numeric-comm, echo=FALSE, eval=FALSE
+##+ tl-force-numeric-comm, eval=FALSE
 
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
@@ -392,7 +395,7 @@ tldata <- tbl_df(tldata)
 
 ##' 1. **Note:** missing quantity|weight or value will be handled below by imputation
 
-##+ tl-aggregate-multiple-rows, echo=FALSE, eval=FALSE
+##+ tl-aggregate-multiple-rows, eval=FALSE
 
 ## Aggregate multiple TL rows.
 ## Note: missing quantity|weight or value will be handled below by imputation
@@ -419,7 +422,7 @@ tldata <- tldata %>%
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
 
-##+ drop_es_from_tl, echo=FALSE, eval=FALSE
+##+ drop_es_from_tl, eval=FALSE
 # They will be replaced by ES data
 
 tldata <- tldata %>%
@@ -428,7 +431,7 @@ tldata <- tldata %>%
               distinct(),
             by = "reporter")
 
-##+ drop_reps_not_in_mdb, echo=FALSE, eval=FALSE
+##+ drop_reps_not_in_mdb, eval=FALSE
 # We drop reporters what are absent in MDB hsfcl map
 # because in any case we can proceed their data
 
@@ -439,7 +442,7 @@ tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
-##+ reexptoexp, echo=FALSE, eval=FALSE
+##+ reexptoexp, eval=FALSE
 
 # { "id": "1", "text": "Import" },
 # { "id": "2", "text": "Export" },
@@ -450,7 +453,7 @@ tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
 
-##+ tl_hs2fcl, echo=FALSE, eval=FALSE
+##+ tl_hs2fcl, eval=FALSE
 
 tldatalinks <- tldata %>%
   do(hsInRange(.$hs, .$reporter, .$flow,
@@ -585,7 +588,7 @@ if (dollars){
 ##' 1. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
 ##' which contains weight in tons (requested by FAO).
 
-##+ tl_aggregate, echo=FALSE, eval=FALSE
+##+ tl_aggregate, eval=FALSE
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
 tldata <- tldata %>%
@@ -613,7 +616,7 @@ tldata_mid = tldata
 ##' will also arise due to more recent data revisions in these latest files that
 ##' have been harvested.
 
-##+ apply_adjustment, echo=FALSE, eval=FALSE
+##+ apply_adjustment, eval=FALSE
 
 # TODO Check quantity/weight
 # The notes should save the results in weight
@@ -629,7 +632,7 @@ if (use_adjustments == TRUE) {
 ##' 1. Convert currency of monetary values from EUR to USD using the
 ##' `EURconversionUSD` table (see above).
 
-##+ es_convcur, echo=FALSE, eval=FALSE
+##+ es_convcur, eval=FALSE
 ## Apply conversion EUR to USD
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
@@ -640,7 +643,7 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 ##'     - TL: assign `weight` to `qty`
 ##'     - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
 
-##+ combine_es_tl, echo=FALSE, eval=FALSE
+##+ combine_es_tl, eval=FALSE
 
 tradedata <- bind_rows(
   tldata %>%
@@ -666,7 +669,7 @@ tradedata <- bind_rows(
 ##' reporter, flow and HS. This can be problematic if only few records exist for
 ##' the a specific combination of dimensions.
 
-##+ calculate_median_uv, echo=FALSE, eval=FALSE
+##+ calculate_median_uv, eval=FALSE
 
 tradedata <- tradedata %>%
   mutate_(no_quant = ~near(qty, 0) | is.na(qty),
@@ -686,7 +689,7 @@ tradedata$uv <- round(tradedata$uv, 10)
 ##' multiplied by the outlier coefficient (default value: 1.5) is used to
 ##' categorize outlier observations.
 
-##+ boxplot_uv, echo=FALSE, eval=FALSE
+##+ boxplot_uv, eval=FALSE
 
 ## Outlier detection
 
@@ -706,7 +709,7 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 ##' 1. Map FCL codes to CPC, remove observations that have not been mapped to
 ##' CPC.
 
-##+ impute_qty_uv, echo=FALSE, eval=FALSE
+##+ impute_qty_uv, eval=FALSE
 
 # Imputation of missings and outliers
 
@@ -769,7 +772,7 @@ countries_not_mapping_M49 <- bind_rows(
 ##' 1. Calculate monetary mirror value by adding a 12% mark-up on imports to
 ##' account for the difference between CIF and FOB prices.
 
-##+ mirror_estimation, echo=FALSE, eval=FALSE
+##+ mirror_estimation, eval=FALSE
 
 # Non reporting countries
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
@@ -787,7 +790,7 @@ tradedata <- mirrorNonReporters(tradedata = tradedata,
 ##' **flagMethod** `e` to both quantities and values. Overwrite **flagMethod**
 ##' `e` with `c` for quantities when transforming to normalized format below.
 
-##+ sws_flag, echo=FALSE, eval=FALSE
+##+ sws_flag, eval=FALSE
 
 ## Flag from numeric to letters
 ## TO DO (Marco): need to discuss how to treat flags
@@ -846,7 +849,7 @@ complete_trade <-
 
 ##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
-##+ completed_trade_flow, echo=FALSE, eval=FALSE
+##+ completed_trade_flow, eval=FALSE
 
 complete_trade_flow_cpc <- complete_trade %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
@@ -873,7 +876,7 @@ complete_trade_flow_cpc <- complete_trade %>%
 ##' element codes. For example, a quantity import measured in metric tons is
 ##' assigned `5610`.
 
-##+ convert_element, echo=FALSE, eval=FALSE
+##+ convert_element, eval=FALSE
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
@@ -891,7 +894,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
 
 ##' 1. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
 
-##+ overwrite_mirror_method_flag, echo=FALSE, eval=FALSE
+##+ overwrite_mirror_method_flag, eval=FALSE
 
 overwriteFlagMethodMirrorQuantities <- function(data=stop("'data' cannot be empty"),
                                                 quantityElements=c("5608", "5609", "5610", "5908", "5909", "5910")) {
@@ -913,7 +916,7 @@ complete_trade_flow_cpc <-
 
 ##' 1. Add **flagMethod** `i` to unit values
 
-##+ add_uv_method_flag, echo=FALSE, eval=FALSE
+##+ add_uv_method_flag, eval=FALSE
 
 addFlagUnitValues <- function(data=stop("'data' cannot be empty'"),
                               uvElements=c("5638", "5639", "5630", "5938", "5939", "5930")) {

@@ -144,16 +144,16 @@ startTime = Sys.time()
 ##'
 ##' ## Supplementary Datasets
 ##'
-##' 1. `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
+##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
 
-##' 1. `adjustments`: Adjustment notes containing manually added conversion
+##' - `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to transform from non-standard units of measurement to standard
 ##' ones or to obtain quantities from traded values.
 
-##' 1. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
+##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
 ##' detailed than the reporter dimension. Since we can not split trade flows of
 ##' the reporter dimension, trade flows of the corresponding partner dimensions
@@ -163,18 +163,18 @@ startTime = Sys.time()
 ##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
 ##' Minor Outlying Islands.
 
-##' 1. `fclunits`: For UNSD Tariffline units of measurement are converted to
+##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
 ##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
 
-##' 1. `comtradeunits`: Translation of the `qunit` variable (supplementary
+##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
 ##' quantity units) in Tariffline data into intelligible unit of measurement,
 ##' which correspond to bthe standards of quantity recommended by the *World
 ##' Customs Organization* (WCO) (e.g., `qunit`=8 correspond to *kg*).
 ##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
-##' 1. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
+##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
 ##+ datasets
 

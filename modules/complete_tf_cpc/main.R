@@ -151,40 +151,13 @@ startTime = Sys.time()
 ##' # Input Data
 ##'
 ##' ## Supplementary Datasets
-##'
+
+##+ datasets
+
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
-
-##' - `adjustments`: Adjustment notes containing manually added conversion
-##' factors to transform from non-standard units of measurement to standard
-##' ones or to obtain quantities from traded values.
-
-##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
-##' different list of geographic are codes. The partner dimesion is more
-##' detailed than the reporter dimension. Since we can not split trade flows of
-##' the reporter dimension, trade flows of the corresponding partner dimensions
-##' have to be assigned the reporter dimension's geographic area code. For
-##' example, the code 842 is used for the United States includes Virgin Islands
-##' and Puerto Rico and thus the reported trade flows of those territories.
-##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
-##' Minor Outlying Islands.
-
-##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
-##' meet FAO standards. According to FAO standard, all weights are reported in
-##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
-##' only the value is provided.
-
-##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
-##' quantity units) in Tariffline data into intelligible unit of measurement,
-##' which correspond to bthe standards of quantity recommended by the *World
-##' Customs Organization* (WCO) (e.g., `qunit`=8 correspond to *kg*).
-##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
-
-##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
-
-##+ datasets
 
 ## Old procedure
 #data("hsfclmap2", package = "hsfclmap", envir = environment())
@@ -197,6 +170,10 @@ hsfclmap <- hsfclmap3 %>%
             endyear >= year)
 
 stopifnot(nrow(hsfclmap) > 0)
+
+##' - `adjustments`: Adjustment notes containing manually added conversion
+##' factors to transform from non-standard units of measurement to standard
+##' ones or to obtain quantities from traded values.
 
 ## Old precedure
 #data("adjustments", package = "hsfclmap", envir = environment())
@@ -212,16 +189,38 @@ adjustments = adjustments %>%
   mutate_each_(funs(as.integer),adj_cols_int) %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
 
-## Old procedure
+##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
+##' different list of geographic are codes. The partner dimesion is more
+##' detailed than the reporter dimension. Since we can not split trade flows of
+##' the reporter dimension, trade flows of the corresponding partner dimensions
+##' have to be assigned the reporter dimension's geographic area code. For
+##' example, the code 842 is used for the United States includes Virgin Islands
+##' and Puerto Rico and thus the reported trade flows of those territories.
+##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
+##' Minor Outlying Islands.
+
 data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
 #unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
-## units for fcl old procedure
+
+##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
+##' meet FAO standards. According to FAO standard, all weights are reported in
+##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
+##' only the value is provided.
+
 data("fclunits", package = "faoswsTrade", envir = environment())
 #fclunits <- tbl_df(ReadDatatable("fclunits"))
-## units of Comtrade old procedure
+
+##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
+##' quantity units) in Tariffline data into intelligible unit of measurement,
+##' which correspond to bthe standards of quantity recommended by the *World
+##' Customs Organization* (WCO) (e.g., `qunit`=8 correspond to *kg*).
+##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
+
 data("comtradeunits", package = "faoswsTrade", envir = environment())
 #comtradeunits <- tbl_df(ReadDatatable("comtradeunits"))
-## Eur to USD
+
+##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
+
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 #EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
 

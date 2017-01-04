@@ -138,7 +138,7 @@ year <- as.integer(swsContext.computationParams$year)
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
-##' - `chapters`: specific HS chapters that are downloaded (this parameter
+##' - `hs_chapters`: specific HS chapters that are downloaded (this parameter
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 

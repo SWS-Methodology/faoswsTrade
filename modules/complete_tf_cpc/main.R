@@ -231,23 +231,11 @@ hs_chapters_str <-
   paste(collapse = ", ")
 
 ##' # Extract Eurostat Combined Nomenclature Data
-##'
-##' 1. Remove reporters with area codes that are not included in MDB commodity
-##' mapping area list
-
-##' 1. Convert HS to FCL
-
-##' 1. Remove unmapped FCL codes
-
-##' 1. Join *fclunits*
-
-##' 1. `NA` *fclunits* set to `mt`
-
-##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
-##' with different supplementary units than those reported in FAOSTAT
 
 ##+ es-extract
 #### Download ES data ####
+
+##' 1. Download raw data from SWS, filtering by chapters.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
@@ -282,6 +270,8 @@ esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
 
+##' 1. Remove reporters with area codes that are not included in MDB commodity
+##' mapping area list
 
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
@@ -291,6 +281,8 @@ esdata <- esdata %>%
 
 ## es_hs2fcl ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
+
+##' 1. Convert HS to FCL
 
 esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
                         hsfclmap,
@@ -303,6 +295,8 @@ stopifnot(nrow(esdatalinks) > 0)
 esdata <- esdata %>%
   left_join(esdatalinks, by = c("reporter", "flow", "hs"))
 
+##' 1. Remove unmapped FCL codes
+
 ## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
@@ -310,8 +304,13 @@ esdata_fcl_not_mapped <- esdata %>%
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
+##' 1. Join *fclunits*
+
 ## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
+
+##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
+##' with different supplementary units than those reported in FAOSTAT
 
 ## specific supplementary unit conversion
 es_spec_conv <- frame_data(

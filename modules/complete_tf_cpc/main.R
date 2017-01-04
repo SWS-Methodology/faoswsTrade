@@ -250,12 +250,6 @@ hs_chapters_str <-
 ##+ es-extract
 #### Download ES data ####
 
-# esdata <- getRawAgriES(year, agricodeslist)
-#load("../esdata_raw_from_db.RData")
-#load("~/Dropbox/tradeproc/esdata_raw_from_db.RData")
-#load(paste0("~/Desktop/FAO/Trade/RData/esdata_",year,".RData"))
-#esdata = esdata_raw
-
 message(sprintf("[%s] Reading in Eurostat data", PID))
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         columns = c("declarant", "partner",

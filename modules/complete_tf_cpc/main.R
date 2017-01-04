@@ -144,12 +144,13 @@ startTime = Sys.time()
 ##'
 ##' ## Supplementary Datasets
 ##'
-##' 1. `hsfclmap2`: Mmapping between HS and FCL codes extracted from MDB files
-##' used to archive information existing in the previous trade system (Shark,
-##' Jellyfish).
+##' 1. `hsfclmap2`: Mapping between HS and FCL codes extracted from MDB files
+##' used to archive information existing in the previous trade system
+##' (Shark/Jellyfish).
 
 ##' 1. `adjustments`: Adjustment notes containing manually added conversion
-##' factors to obtain quantities from traded values
+##' factors to transform from non-standard units of measurement to standard
+##' ones or to obtain quantities from traded values
 
 ##' 1. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more

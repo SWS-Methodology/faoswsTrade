@@ -16,6 +16,10 @@
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
+##' This document gives a faithful step-by-step sequence of the operations
+##' performed in the `complete_tf_cpc` module. For a narrative version of
+##' the module's approach, please see its main document.
+
 ##+ init
 
 ## Change Log:
@@ -204,7 +208,7 @@ data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
 
 ##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
-##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
+##' tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
 
 data("fclunits", package = "faoswsTrade", envir = environment())
@@ -267,7 +271,6 @@ esdata <- tbl_df(esdata)
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
-## Rename columns
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
@@ -291,7 +294,7 @@ esdata <- esdata %>%
 ## es_hs2fcl ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-##' 1. Convert HS to FCL.
+##' 1. Map HS to FCL.
 
 esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
                         hsfclmap,
@@ -319,7 +322,8 @@ esdata <- esdata %>%
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
-##' with different supplementary units than those reported in FAOSTAT
+##' with different supplementary units than those reported in FAOSTAT,
+##' thus a conversion is done.
 
 ## specific supplementary unit conversion
 es_spec_conv <- frame_data(
@@ -339,21 +343,17 @@ esdata <- esdata %>%
   select_(~-conv)
 
 ##' # Extract UNSD Tariffline Data
-##'
-##' Tariff line data is obtained from SWS datatables. Data is
-##' filtered for chapters of interest.
 
 ##+ tradeload
 
 #### Get list of agri codes ####
 #agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
 
-### Download TL data ####
-
 # tldata <- getRawAgriTL(year, agricodeslist)
 
-message(sprintf("[%s] Reading in Tariffline data", PID))
+##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
+message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns=c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
@@ -362,53 +362,32 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
-
-##' # Harmonize UNSD Tariffline Data
-
-##' 1. Geographic Area: UNSD Tariffline data reports area code with Tariffline M49 standard
-##' (which are different for official M49). The area code is converted in FAO
-##' country code using a specific convertion table provided by Team ENV. Area
-##' codes not mapping to any FAO country code or mapping to code 252 (which
-##' correpond not defined area) are separately saved and removed from further
-##' analyses.
-
-##' 1. Commodity Codes: Commodity codes are reported in HS
-##' codes (Harmonized Commodity Description and Coding Systpem). The codes
-##' are converted in FCL (FAO Commodity List) codes. This step is performed
-##' using table incorporated in the SWS. In this step, all the mapping between
-##' HS and FCL code is stored. If a country is not included in the package of
-##' the mapping for that specific year, all the records for the reporting
-##' country are removed. All records without an FCL mapping are filtered out and
-##' saved in specific variables.
-
 ##+ tl_m49fao
 ## Based on Excel file from UNSD (unsdpartners..)
 
-##' 1. Remove non-numeric comm (hs) code; comm (hs) code has to be digit.
-##' This probably should be part of the faoswsEnsure
+##' 1. Remove non-numeric commodity codes.
 
 ##+ tl-force-numeric-comm
 
+# This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-##' 1. The tariffline data from UNSD contains multiple rows with identical
-##' combination of reporter / partner / commodity / flow / year / qunit. Those
-##' are separate registered transactions and the rows containinig non-missing
-##' values and quantities are summed.
-
-##' 1. **Note:** missing quantity|weight or value will be handled below by imputation
-
 ##+ tl-aggregate-multiple-rows
 
-## Aggregate multiple TL rows.
-## Note: missing quantity|weight or value will be handled below by imputation
+##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
+##' are aggregated.
+
 tldata <- preAggregateMultipleTLRows(tldata)
 
-## Rename columns
+##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
+
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
+##' 1. Tariffline M49 codes (which are different from official M49)
+##' are converted in FAO country codes using a specific convertion
+##' table provided by Team ENV.
 
 message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 
@@ -428,6 +407,9 @@ tldata <- tldata %>%
 
 
 ##+ drop_es_from_tl
+
+##' 1. European countries are removed (will be replaced by ES data).
+
 # They will be replaced by ES data
 
 tldata <- tldata %>%
@@ -437,6 +419,9 @@ tldata <- tldata %>%
             by = "reporter")
 
 ##+ drop_reps_not_in_mdb
+
+##' 1. Area codes not mapping to any FAO country code are removed.
+
 # We drop reporters what are absent in MDB hsfcl map
 # because in any case we can proceed their data
 
@@ -449,6 +434,8 @@ tldata <- tldata %>%
 
 ##+ reexptoexp
 
+##' 1. Re-imports become imports and re-exports become exports.
+
 # { "id": "1", "text": "Import" },
 # { "id": "2", "text": "Export" },
 # { "id": "4", "text": "re-Import" },
@@ -457,6 +444,7 @@ tldata <- tldata %>%
 tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
+##' 1. Map HS to FCL.
 
 ##+ tl_hs2fcl
 
@@ -468,6 +456,8 @@ tldatalinks <- tldata %>%
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
+##' 1. Remove unmapped FCL codes.
+
 ## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
   filter_(~is.na(fcl))
@@ -477,7 +467,7 @@ tldata <- tldata %>%
 
 #############Units of measurment in TL ####
 
-## Add target fclunit
+##' 1. Add FCL units.
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
@@ -497,6 +487,10 @@ ctfclunitsconv <- tldata %>%
 
 
 ##### Table for conv. factor
+
+##' 1. General TL conversions: some FCL codes are reported in Tariffline
+##' with different units than those reported in FAOSTAT, thus a conversion
+##' is done.
 
 ctfclunitsconv$conv <- 0
 ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
@@ -522,6 +516,8 @@ ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
 tldata <- tldata %>%
   left_join(ctfclunitsconv,
             by = c("qunit", "wco", "fclunit"))
+
+##' 1. Specific TL conversions: some commodities need a specific conversion.
 
 #### Commodity specific conversion
 
@@ -568,8 +564,8 @@ if(NROW(fcl_spec_mt_conv) > 0){
 }
 
 
-
-##### No qty, but weight and target is mt: we take weight from there
+##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
+##' the final unit of measurement is tonnes the `weight` is used as `quantity`
 
 tldata$qtyfcl <- ifelse((tldata$qty == 0 | is.na(tldata$qty)) &
                           tldata$fclunit == "mt" &
@@ -590,8 +586,7 @@ if (dollars){
   tldata$value <- tldata$value / 1000
 }
 
-##' 1. Aggregate UNSD Tariffline Data to FCL: here we select column `qtyfcl`
-##' which contains weight in tons (requested by FAO).
+##' 1. Aggregate UNSD Tariffline Data to FCL.
 
 ##+ tl_aggregate
 
@@ -612,14 +607,7 @@ tldata_mid = tldata
 
 ##' # Combine Trade Data Sources
 
-##' 1. The adjustment notes developed for national data received from countries
-##' are not applied to HS data any more (see instructions 2016-08-10). Data
-##' harvested from UNSD are standardised and therefore many (if not most) of the
-##' quantity adjustment notes (those with no year) need not be applied. The
-##' "notes" refer to the "raw" non-standardised files that we used to regularly
-##' receive from UNSD and/or the countries. Furthermore, some data differences
-##' will also arise due to more recent data revisions in these latest files that
-##' have been harvested.
+##' 1. Application of "adjustment notes" to both ES and TL data.
 
 ##+ apply_adjustment
 
@@ -634,11 +622,11 @@ if (use_adjustments == TRUE) {
                            adjustments = adjustments, parallel = multicore)
 }
 
-##' 1. Convert currency of monetary values from EUR to USD using the
-##' `EURconversionUSD` table (see above).
-
 ##+ es_convcur
-## Apply conversion EUR to USD
+
+##' 1. Convert currency of monetary values from EUR to USD using the
+##' `EURconversionUSD` table.
+
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
@@ -664,15 +652,7 @@ tradedata <- bind_rows(
             qty = ~uniqqty, ~value)
 )
 
-
 ##' # Outlier Detection and Imputation
-
-##' 1. Unit values are calculated for each observation at the HS level as ratio
-##' of monetary value over weight `value / qty`.
-
-##' 1. Median unit-values are calculated across the partner dimension by year,
-##' reporter, flow and HS. This can be problematic if only few records exist for
-##' the a specific combination of dimensions.
 
 ##+ calculate_median_uv
 
@@ -680,45 +660,34 @@ tradedata <- tradedata %>%
   mutate_(no_quant = ~near(qty, 0) | is.na(qty),
           no_value = ~near(value, 0) | is.na(value))
 
+##' 1. Unit values are calculated for each observation at the HS level as ratio
+##' of monetary value over quantity `value / qty`.
 
-## UV calculation
 tradedata <- mutate_(tradedata,
                      uv = ~ifelse(no_quant | no_value, NA, value / qty))
 
 ## Round UV in order to avoid floating point number problems (see issue #54)
 tradedata$uv <- round(tradedata$uv, 10)
 
-##' 1. Observations are classified as outliers if the calculated unit value for
-##' a some partner country is below or above the median unit value. More
-##' specifically, the measure defined as median inter-quartile-range (IQR)
-##' multiplied by the outlier coefficient (default value: 1.5) is used to
-##' categorize outlier observations.
-
 ##+ boxplot_uv
 
-## Outlier detection
+##' 1. Outlier detection by using the logarithm of the unit value.
 
 tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
                             parameters = list(out_coef=out_coef))
 
-##' 1. Impute missing quantities and quantities categorized as outliers by
-##' dividing the reported monetary value with the calculated median unit value.
-
-##' 1. Assign `flagTrade` to observations with imputed quantities. These flags
-##' are also assigned to monetary values. This may need to be revised (monetary
-##' values are not supposed to be modified).
-
-##' 1. Aggregate by FCL over HS dimension: reduce from around 15000 commodity
-##' codes to around 800 commodity codes.
-
-##' 1. Map FCL codes to CPC, remove observations that have not been mapped to
-##' CPC.
-
 ##+ impute_qty_uv
 
-# Imputation of missings and outliers
+##' 1. Imputation of missing quantities and quantities categorized as outliers by
+##' applying the method presented in the *Outlier Detection and Imputation* section.
+##' The `flagTrade` variable is given a value of 1 if an imputation was performed.
+
+## These flags are also assigned to monetary values. This may need to be revised
+## (monetary values are not supposed to be modified).
 
 tradedata <- doImputation(tradedata = tradedata)
+
+##' 1. Aggregate values and quantities by FCL codes.
 
 # Aggregation by fcl
 tradedata <- tradedata %>%
@@ -736,6 +705,8 @@ tradedata <- tradedata %>%
                   vars = c("qty", "value","flagTrade")) %>%
   ungroup()
 
+##' 1. Map FCL codes to CPC.
+
 # Adding CPC2 extended code
 tradedata <- tradedata %>%
   mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl), version = "2.1"))
@@ -747,6 +718,8 @@ no_mapping_fcl2cpc = tradedata %>%
   distinct_(~fcl) %>%
   select_(~fcl) %>%
   unlist()
+
+##' 1. Map FAO area codes to M49.
 
 # Converting back to M49 for the system
 tradedata <- tradedata %>%
@@ -763,37 +736,42 @@ countries_not_mapping_M49 <- bind_rows(
   select_(~fc) %>%
   unlist()
 
+##+ mirror_estimation
 
 ##' # Mirror Trade Estimation
 
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
 
+nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
+                                                      unique(tradedata$reporter))]
+
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
 
 ##' 1. Invert the flow direction: an import becomes an export (and vice versa).
 
-##' 1. Calculate monetary mirror value by adding a 12% mark-up on imports to
-##' account for the difference between CIF and FOB prices.
-
-##+ mirror_estimation
-
-# Non reporting countries
-nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
-                                                      unique(tradedata$reporter))]
+##' 1. Calculate monetary mirror value by adding (removing) a 12% mark-up on
+##' imports (exports) to account for the difference between CIF and FOB prices.
 
 ## Mirroring for non reporting countries
 tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
+##' ## Flag management
 
-##' 1. Reporting countries: Assign SWS **observationStatus** flag `I` and
-##' **flagMethod** `e` to records with with `flagTrade` unless the FCL unit is
-##' categorized as `$ value only`.
-
-##' 1. Non-reporting countries: Assign SWS **observationStatus** flag `E` and
-##' **flagMethod** `e` to both quantities and values. Overwrite **flagMethod**
-##' `e` with `c` for quantities when transforming to normalized format below.
+##' **Note**: work on this section is currently in progress.
+##'
+##' - observationStatus:
+##'     - Reporting countries:
+##'         - `X` if `flagTrade` is zero (i.e., no imputation) and FCL unit != "$ value only"
+##'         - `I` if `flagTrade` is non-zero (i.e., imputation) and FCL unit != "$ value only"
+##'   - Non-reporting countries: `E`
+##'
+##' - flagMethod:
+##'     - Reporting countries:
+##'         - `<BLANK>` if `flagTrade` is zero (i.e., no imputation) and FCL unit != "$ value only"
+##'         - `e` if `flagTrade` is non-zero (i.e., imputation) and FCL unit != "$ value only"
+##'   - Non-reporting countries: `e`
 
 ##+ sws_flag
 
@@ -844,17 +822,17 @@ addFlagsAfterMirror <- function(data=stop("'data' must be defined'"),
 complete_trade <-
   tradedata %>% addFlagsAfterMirror(nonreporting = nonreporting)
 
+##+ completed_trade_flow
+
 ##' # Output for SWS
 
 ##' 1. Filter observations with FCL code `1181` (bees).
 
 ##' 1. Filter observations with missing CPC codes.
 
-##' 1. Rename dimensions to comply with SWS standard, e.g. `geographicAreaM49Reporter`
+##' 1. Rename dimensions to comply with SWS standard, e.g., `geographicAreaM49Reporter`
 
 ##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
-
-##+ completed_trade_flow
 
 complete_trade_flow_cpc <- complete_trade %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
@@ -874,7 +852,7 @@ complete_trade_flow_cpc <- complete_trade %>%
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
 
-##' 1. Transform dataset seperating monetary values, quantities and unit values
+##' 1. Transform dataset separating monetary values, quantities and unit values
 ##' in different rows.
 
 ##' 1. Convert monetary values, quantities and unit values to corresponding SWS
@@ -938,10 +916,6 @@ addFlagUnitValues <- function(data=stop("'data' cannot be empty'"),
 complete_trade_flow_cpc <-
   complete_trade_flow_cpc %>%
   addFlagUnitValues()
-
-## table(complete_trade_flow_cpc$flagObservationStatus,
-##       complete_trade_flow_cpc$flagMethod)
-
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 

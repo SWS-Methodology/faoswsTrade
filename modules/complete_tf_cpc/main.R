@@ -151,7 +151,7 @@ startTime = Sys.time()
 
 ##' 1. `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to transform from non-standard units of measurement to standard
-##' ones or to obtain quantities from traded values
+##' ones or to obtain quantities from traded values.
 
 ##' 1. `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
@@ -168,9 +168,13 @@ startTime = Sys.time()
 ##' metric tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
 
-##' 1. `comtradeunits`:
+##' 1. `comtradeunits`: Translation of the `qunit` variable (supplementary
+##' quantity units) in Tariffline data into intelligible unit of measurement,
+##' which correspond to bthe standards of quantity recommended by the *World
+##' Customs Organization* (WCO) (e.g., `qunit`=8 correspond to *kg*).
+##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
-##' 1. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS
+##' 1. `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
 ##+ datasets
 

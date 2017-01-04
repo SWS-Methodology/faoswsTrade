@@ -247,12 +247,17 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
+##' 1. Remove non-numeric codes for reporters/partners/commodities.
+
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
+
+##' 1. Keep only `stat_regime`=4.
+
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata[esdata$stat_regime=="4",]
 ## Removing stat_regime as it is not needed anymore
@@ -260,8 +265,12 @@ esdata[,stat_regime:=NULL]
 
 esdata <- tbl_df(esdata)
 
+##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
+
 ## Rename columns
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+
+##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
 esdata <- data.table::as.data.table(esdata)
@@ -271,7 +280,7 @@ esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
 
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
-##' mapping area list
+##' mapping area list.
 
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
@@ -282,7 +291,7 @@ esdata <- esdata %>%
 ## es_hs2fcl ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-##' 1. Convert HS to FCL
+##' 1. Convert HS to FCL.
 
 esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
                         hsfclmap,
@@ -295,7 +304,7 @@ stopifnot(nrow(esdatalinks) > 0)
 esdata <- esdata %>%
   left_join(esdatalinks, by = c("reporter", "flow", "hs"))
 
-##' 1. Remove unmapped FCL codes
+##' 1. Remove unmapped FCL codes.
 
 ## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
@@ -304,7 +313,7 @@ esdata_fcl_not_mapped <- esdata %>%
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
-##' 1. Join *fclunits*
+##' 1. Add FCL units.
 
 ## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)

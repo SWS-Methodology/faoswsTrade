@@ -138,6 +138,14 @@ year <- as.integer(swsContext.computationParams$year)
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
+##' - `chapters`: specific HS chapters that are downloaded (this parameter
+##'   can not be set by the user as it is provided by Team B/C and harcoded).
+##'   The HS chapters are the following:
+
+hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
+
+##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse=' ')`
+
 startTime = Sys.time()
 
 ##' # Input Data
@@ -217,17 +225,6 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 #EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
 
-##' 1. Chapters: The module downloads only records of commodities of interest.
-##' The HS chapters are the following: 01, 02, 03, 04, 05, 06, 07, 08, 09,
-##' 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40,
-##' 41, 42, 43, 50, 51, 52, 53. In the future, if other commotidy are of
-##' interest for the division, it is important to include additional chapter in
-##' the first step of the downloading.
-
-## Chapter provided by team B/C
-## creating object to provision re-use with Eurostat data
-
-hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
 hs_chapters_str <-
   formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
   as.character %>%

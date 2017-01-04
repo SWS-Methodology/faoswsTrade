@@ -119,6 +119,8 @@ if(CheckDebug()){
                      token = SETTINGS[["token"]])
 }
 
+## List of datasets available
+#datas = faosws::FetchDatatableConfig()
 
 ##+ settings
 
@@ -126,14 +128,13 @@ stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
-# Year for processing
+##' # Parameters
+
+##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
-
-
-# Coefficient for outlier detection
+##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
+##' the *Outlier Detection and Imputation* section.
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 

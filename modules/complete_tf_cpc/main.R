@@ -235,7 +235,7 @@ hs_chapters_str <-
 ##+ es-extract
 #### Download ES data ####
 
-##' 1. Download raw data from SWS, filtering by chapters.
+##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),

@@ -144,9 +144,10 @@ startTime = Sys.time()
 ##'
 ##' ## Supplementary Datasets
 ##'
-##' 1. `hsfclmap2`: Mapping between HS and FCL codes extracted from MDB files
+##' 1. `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
-##' (Shark/Jellyfish).
+##' (Shark/Jellyfish). This mapping is provided by a separate package:
+##' https://github.com/SWS-Methodology/hsfclmap
 
 ##' 1. `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to transform from non-standard units of measurement to standard

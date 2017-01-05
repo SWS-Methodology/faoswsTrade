@@ -167,7 +167,8 @@ startTime = Sys.time()
 #data("hsfclmap2", package = "hsfclmap", envir = environment())
 ## New procedure
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-data("hsfclmap3", package = "hsfclmap", envir = environment())
+#data("hsfclmap3", package = "hsfclmap", envir = environment())
+hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &

@@ -24,44 +24,23 @@ preAggregateMultipleTLRows <- function(rawdata = NA) {
 
   if (missing(rawdata)) stop('"rawdata" is required')
 
-  rawdata_orig <- rawdata %>%
+  raw <- rawdata %>%
     tbl_df() %>%
     select(-chapter) %>%
     mutate(no_quant = is.na(qty),
             no_weight = is.na(weight))
 
-  step1 <- rawdata_orig %>%
-        filter(!no_quant, !no_weight) %>%
-        group_by(tyear, rep, prt, flow, comm, qunit) %>%
-        summarise_each(
+  raw$cases <- case_when(
+                         !raw$no_quant & !raw$no_weight ~ 1L,
+                         !raw$no_quant &  raw$no_weight ~ 2L,
+                          raw$no_quant & !raw$no_weight ~ 3L,
+                          raw$no_quant &  raw$no_weight ~ 4L
+                         )
+  raw %>%
+        group_by(tyear, rep, prt, flow, comm, qunit, cases) %>%
+        summarise_each_(
                         funs(sum(.)),
-                        vars = c(weight, qty, tvalue)) %>%
+                        vars = c('weight', 'qty', 'tvalue')) %>%
         ungroup()
 
-  step2 <- rawdata_orig %>%
-        filter(no_quant, !no_weight) %>%
-        group_by(tyear, rep, prt, flow, comm, qunit) %>%
-        summarise_each(
-                        funs(sum(.)),
-                        vars = c(weight, qty, tvalue)) %>%
-        ungroup()
-
-  step3 <- rawdata_orig %>%
-        filter(!no_quant, no_weight) %>%
-        group_by(tyear, rep, prt, flow, comm, qunit) %>%
-        summarise_each(
-                        funs(sum(.)),
-                        vars = c(weight, qty, tvalue)) %>%
-        ungroup()
-
-  step4 <- rawdata_orig %>%
-        filter(no_quant, no_weight) %>%
-        group_by(tyear, rep, prt, flow, comm, qunit) %>%
-        summarise_each(
-                        funs(sum(.)),
-                        vars = c(weight, qty, tvalue)) %>%
-        ungroup()
-      
-
-  bind_rows(step1, step2, step3, step4)
 }

@@ -343,7 +343,7 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv))
 
 esdata <- esdata %>%
-  setFlag(is.na(conv), type='method', flag='h', variable='quantity')
+  setFlag(!is.na(conv), type='method', flag='h', variable='quantity')
 
 esdata <- esdata %>% select_(~-conv)
 
@@ -385,6 +385,9 @@ tldata <- tbl_df(tldata)
 ##' are aggregated.
 
 tldata <- preAggregateMultipleTLRows(tldata)
+
+tldata <- tldata %>%
+  setFlag(nrows>1, type='method', flag='s', variable='all')
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 

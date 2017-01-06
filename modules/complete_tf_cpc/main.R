@@ -340,8 +340,11 @@ es_spec_conv <- frame_data(
 
 esdata <- esdata %>%
   left_join(es_spec_conv, by='fcl') %>%
-  mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
-  select_(~-conv)
+  mutate_(qty=~ifelse(is.na(conv), qty, qty*conv))
+
+esdata <- setFlag(is.na(conv), type='method', flag='h', variable='quantity')
+
+esdata <- esdata %>% select_(~-conv)
 
 ##' # Extract UNSD Tariffline Data
 

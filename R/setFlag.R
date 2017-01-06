@@ -8,10 +8,23 @@
 #' @import dplyr
 #' @export
 
-setFlag <- function(type = NA, flag = NA, variable = NA) {
+setFlag <- function(data = NA, condition = NA, type = NA, flag = NA, variable = NA) {
 
-  if (missing(type) | !(type %in% c('value', 'quantity', 'weight', 'all'))) {
-    stop("'type' should be one of c('value', 'quantity', 'weight', 'all').")
+  if (missing(data)) stop("'tradedata' is required.")
+
+  if (missing(condition)) stop("'condition' is required.")
+
+  # http://adv-r.had.co.nz/Computing-on-the-language.html
+  condition_call <- substitute(condition)
+  env <- list2env(data, parent = parent.frame())
+  condition <- eval(condition_call, env)
+
+  if (!is.logical(condition)) {
+    stop("A logical 'condition' is required.")
+  }
+
+  if (missing(type) | !(type %in% c('status', 'method'))) {
+    stop("'type' should be one of c('status', 'method').")
   }
 
   if (missing(flag)) {
@@ -22,12 +35,23 @@ setFlag <- function(type = NA, flag = NA, variable = NA) {
     stop(paste("'flag' should be one of 'c', 'i', 'e', 's', 'h'"))
   }
 
-  if (missing(variable) | !(variable %in% c('value', 'quantity', 'weight'))) {
-    stop("Please, set 'variable' to 'value', 'quantity', or 'weight'")
+  if (missing(variable) | !(variable %in% c('value', 'weight', 'quantity', 'all'))) {
+    stop("Please, set 'variable' to 'value', 'weight', 'quantity', or 'all'")
   }
 
   if (type == 'status') flag <- paste0('flag_status_', flag)
 
   if (type == 'method') flag <- paste0('flag_method_', flag)
 
+  if (variable == 'all') {
+    res <- '1-1-1'
+  } else {
+    res <- paste(1*(variable=='value'), 1*(variable=='weight'), 1*(variable=='quantity'), sep='-')
+  }
+
+  res <- factor(res, levels = c("0-0-0", "0-0-1", "0-1-0", "0-1-1", "1-0-0", "1-0-1", "1-1-0", "1-1-1"))
+
+  data[[flag]] <- dplyr::if_else(condition, res, as.factor('0-0-0'))
+
+  return(data)
 }

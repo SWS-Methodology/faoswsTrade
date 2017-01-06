@@ -930,6 +930,10 @@ data.table::setcolorder(complete_trade_flow_cpc,
                           "flagObservationStatus",
                           "flagMethod"))
 
+# XXX Temporary workaround: some NAs are given flags and given
+# that NAs cannot have flags the system refuses to save them.
+complete_trade_flow_cpc <- complete_trade_flow_cpc[!is.na(Value),]
+
 message(sprintf("[%s] Writing data to session/database", PID))
 
 stats <- SaveData("trade",

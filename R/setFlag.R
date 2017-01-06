@@ -1,6 +1,6 @@
 #' Set flags in trade data.
 #'
-#' @param type The type of flag to set: "observation" or "status".
+#' @param type The type of flag to set: "observation" or "method".
 #' @param flag The value of the flag to set (e.g., "e" for estimated data).
 #' @param variable The variable that gets the flag: "value", "weight",
 #'   "quantity".
@@ -18,7 +18,7 @@ setFlag <- function(type = NA, flag = NA, variable = NA) {
     stop("Please, set 'flag' to one flag value.")
   } else if (type == 'observation' & !(flag %in% c('E', 'I', 'X'))) {
     stop(paste("'flag' should be one of 'E', 'I', 'X'"))
-  } else if (type == 'status' & !(flag %in% c('c', 'i', 'e', 's', 'h'))) {
+  } else if (type == 'method' & !(flag %in% c('c', 'i', 'e', 's', 'h'))) {
     stop(paste("'flag' should be one of 'c', 'i', 'e', 's', 'h'"))
   }
 

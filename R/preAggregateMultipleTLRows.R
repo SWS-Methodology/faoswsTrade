@@ -41,6 +41,6 @@ preAggregateMultipleTLRows <- function(rawdata = NA) {
         summarise_each_(
                         funs(sum(.)),
                         vars = c('weight', 'qty', 'tvalue')) %>%
-        ungroup()
-
+        ungroup() %>%
+        select(-cases)
 }

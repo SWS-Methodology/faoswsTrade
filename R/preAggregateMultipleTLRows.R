@@ -17,46 +17,49 @@
 
 preAggregateMultipleTLRows <- function(rawdata = NA) {
 
+  # TODO (Christian) there are some countries that have
+  # a non-unique length of HS:
+  # s <- table(tldata$rep, nchar(tldata$comm))
+  # sort(apply(s!=0, 1, sum))
+
   if (missing(rawdata)) stop('"rawdata" is required')
 
   rawdata_orig <- rawdata %>%
     tbl_df() %>%
-    select_(~-chapter) %>%
-    # qty and weight seem to be always >0 or NA
-    # no missing value
-    mutate_(no_quant = ~is.na(qty),
-            no_weight = ~is.na(weight))
+    select(-chapter) %>%
+    mutate(no_quant = is.na(qty),
+            no_weight = is.na(weight))
 
   step1 <- rawdata_orig %>%
-        filter_(~(!no_quant & !no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
+        filter(!no_quant, !no_weight) %>%
+        group_by(tyear, rep, prt, flow, comm, qunit) %>%
+        summarise_each(
                         funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
+                        vars = c(weight, qty, tvalue)) %>%
         ungroup()
 
   step2 <- rawdata_orig %>%
-        filter_(~(no_quant & !no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
+        filter(no_quant, !no_weight) %>%
+        group_by(tyear, rep, prt, flow, comm, qunit) %>%
+        summarise_each(
                         funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
+                        vars = c(weight, qty, tvalue)) %>%
         ungroup()
 
   step3 <- rawdata_orig %>%
-        filter_(~(!no_quant & no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
+        filter(!no_quant, no_weight) %>%
+        group_by(tyear, rep, prt, flow, comm, qunit) %>%
+        summarise_each(
                         funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
+                        vars = c(weight, qty, tvalue)) %>%
         ungroup()
 
   step4 <- rawdata_orig %>%
-        filter_(~(no_quant & no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
+        filter(no_quant, no_weight) %>%
+        group_by(tyear, rep, prt, flow, comm, qunit) %>%
+        summarise_each(
                         funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
+                        vars = c(weight, qty, tvalue)) %>%
         ungroup()
       
 

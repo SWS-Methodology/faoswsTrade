@@ -69,7 +69,7 @@ if(!CheckDebug()){
                           regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
-    save(last.dump, file=file.path(filename, "last.dump.RData"))
+    save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
 
@@ -99,7 +99,7 @@ local({
 if(multicore) {
   suppressPackageStartupMessages(library(doParallel))
   library(foreach)
-  doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
+  doParallel::registerDoParallel(cores = detectCores(all.tests = TRUE))
 }
 
 
@@ -148,7 +148,7 @@ out_coef <- as.numeric(swsContext.computationParams$out_coef)
 
 hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
 
-##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse=' ')`
+##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
 startTime = Sys.time()
 
@@ -264,9 +264,9 @@ esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 ##' 1. Keep only `stat_regime`=4.
 
 ## Only regime 4 is relevant for Eurostat data
-esdata <- esdata[esdata$stat_regime=="4",]
+esdata <- esdata[esdata$stat_regime == "4",]
 ## Removing stat_regime as it is not needed anymore
-esdata[,stat_regime:=NULL]
+esdata[,stat_regime := NULL]
 
 esdata <- tbl_df(esdata)
 
@@ -278,7 +278,7 @@ esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
 ##+ geonom2fao
 esdata <- data.table::as.data.table(esdata)
-esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
+esdata[, `:=` (reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
 esdata <- tbl_df(esdata)
@@ -339,11 +339,11 @@ es_spec_conv <- frame_data(
 )
 
 esdata <- esdata %>%
-  left_join(es_spec_conv, by='fcl') %>%
-  mutate_(qty=~ifelse(is.na(conv), qty, qty*conv))
+  left_join(es_spec_conv, by = 'fcl') %>%
+  mutate_(qty = ~ifelse(is.na(conv), qty, qty*conv))
 
 esdata <- esdata %>%
-  setFlag(!is.na(conv), type='method', flag='h', variable='quantity')
+  setFlag(!is.na(conv), type = 'method', flag = 'h', variable = 'quantity')
 
 esdata <- esdata %>% select_(~-conv)
 
@@ -352,7 +352,7 @@ esdata <- esdata %>% select_(~-conv)
 ##+ tradeload
 
 #### Get list of agri codes ####
-#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
+#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse = ", ")
 
 # tldata <- getRawAgriTL(year, agricodeslist)
 
@@ -360,7 +360,7 @@ esdata <- esdata %>% select_(~-conv)
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns=c("rep", "tyear", "flow",
+                        columns = c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
                                   "chapter"),
@@ -387,7 +387,7 @@ tldata <- tbl_df(tldata)
 tldata <- preAggregateMultipleTLRows(tldata)
 
 tldata <- tldata %>%
-  setFlag(nrows>1, type='method', flag='s', variable='all')
+  setFlag(nrows>1, type = 'method', flag = 's', variable = 'all')
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
@@ -539,9 +539,9 @@ if(NROW(fcl_spec_mt_conv) > 0){
 
   conversion_factors_fcl <- tldata %>%
     filter(!is.na(weight) & !is.na(qty)) %>%
-    mutate(qw=(weight/qty)/1000) %>%
+    mutate(qw = (weight/qty)/1000) %>%
     group_by(fcl, wco) %>%
-    summarise(convspec=median(qw, na.rm=TRUE)) %>%
+    summarise(convspec = median(qw, na.rm = TRUE)) %>%
     ungroup()
 
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
@@ -583,7 +583,7 @@ tldata$qtyfcl <- ifelse((tldata$qty == 0 | is.na(tldata$qty)) &
                         tldata$qtyfcl)
 
 # Always use weight if available and fclunit is mt
-tldata$qtyfcl <- ifelse(tldata$fclunit=='mt' & !is.na(tldata$weight) & tldata$weight>0,
+tldata$qtyfcl <- ifelse(tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight>0,
                        tldata$weight*0.001,
                        tldata$qtyfcl)
 
@@ -682,7 +682,7 @@ tradedata$uv <- round(tradedata$uv, 10)
 ##' 1. Outlier detection by using the logarithm of the unit value.
 
 tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
-                            parameters = list(out_coef=out_coef))
+                            parameters = list(out_coef = out_coef))
 
 ##+ impute_qty_uv
 
@@ -789,8 +789,8 @@ tradedata <- mirrorNonReporters(tradedata = tradedata,
 ##                for both imputed and mirrored
 ##                because applying 12% change in mirroring
 
-addFlagsAfterMirror <- function(data=stop("'data' must be defined'"),
-                                nonreporting=NULL) {
+addFlagsAfterMirror <- function(data = stop("'data' must be defined'"),
+                                nonreporting = NULL) {
 
   ## data <- tradedata
   copyData <- data
@@ -887,8 +887,8 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
 
 ##+ overwrite_mirror_method_flag
 
-overwriteFlagMethodMirrorQuantities <- function(data=stop("'data' cannot be empty"),
-                                                quantityElements=c("5608", "5609", "5610", "5908", "5909", "5910")) {
+overwriteFlagMethodMirrorQuantities <- function(data = stop("'data' cannot be empty"),
+                                                quantityElements = c("5608", "5609", "5610", "5908", "5909", "5910")) {
   copyData <- data
   outData <-
     copyData %>%
@@ -909,8 +909,8 @@ complete_trade_flow_cpc <-
 
 ##+ add_uv_method_flag
 
-addFlagUnitValues <- function(data=stop("'data' cannot be empty'"),
-                              uvElements=c("5638", "5639", "5630", "5938", "5939", "5930")) {
+addFlagUnitValues <- function(data = stop("'data' cannot be empty'"),
+                              uvElements = c("5638", "5639", "5630", "5938", "5939", "5930")) {
   copyData <- data
   outData <-
     copyData %>%

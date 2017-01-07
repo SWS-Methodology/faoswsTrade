@@ -22,28 +22,34 @@ adaptTradeDataNames <- function(tradedata = NA, origin = NA) {
   }
 
   if (origin == "TL") {
-    tradedata %>%
-      transmute_(reporter = ~as.integer(rep),
-                 partner = ~as.integer(prt),
-                 hs = ~comm,
-                 flow = ~as.integer(flow),
-                 year = ~as.character(tyear),
-                 value = ~tvalue,
-                 weight = ~weight,
-                 qty = ~qty,
-                 qunit = ~as.integer(qunit)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs,1,6))
-    
+    tradedata <- tradedata %>%
+      mutate(qunit = as.integer(qunit)) %>%
+      rename(reporter = rep,
+             partner  = prt,
+             hs       = comm,
+             year     = tyear,
+             value    = tvalue)
   } else { 
-    tradedata %>%
-      transmute_(reporter = ~as.numeric(declarant),
-                 partner = ~as.numeric(partner),
-                 hs = ~product_nc,
-                 flow = ~as.integer(flow),
-                 year = ~as.character(str_sub(period,1,4)),
-                 value = ~as.numeric(value_1k_euro),
-                 weight = ~as.numeric(qty_ton),
-                 qty = ~as.numeric(sup_quantity)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs,1,6))
+    tradedata <- tradedata %>%
+      mutate(period = str_sub(period,1,4)) %>%
+      rename(reporter = declarant,
+             partner  = partner,
+             hs       = product_nc,
+             year     = period,
+             value    = value_1k_euro,
+             weight   = qty_ton,
+             qty      = sup_quantity)
   }
+
+  tradedata %>%
+    mutate(
+           reporter = as.integer(reporter),
+           partner  = as.integer(partner),
+           flow     = as.integer(flow),
+           year     = as.character(year),
+           value    = as.numeric(value),
+           weight   = as.numeric(weight),
+           qty      = as.numeric(qty),
+           hs6      = stringr::str_sub(hs,1,6)
+           )
 }

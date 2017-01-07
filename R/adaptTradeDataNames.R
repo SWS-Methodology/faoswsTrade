@@ -33,7 +33,6 @@ adaptTradeDataNames <- function(tradedata = NA, origin = NA) {
     tradedata <- tradedata %>%
       mutate(period = str_sub(period,1,4)) %>%
       rename(reporter = declarant,
-             partner  = partner,
              hs       = product_nc,
              year     = period,
              value    = value_1k_euro,

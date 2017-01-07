@@ -601,17 +601,10 @@ if (dollars){
 ##+ tl_aggregate
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
+# XXX "notes" are applied to weight that is transformed below from qtyfcl
 tldata <- tldata %>%
-  select_(~year,
-          ~reporter,
-          ~partner,
-          ~flow,
-          ~fcl,
-          ~fclunit,
-          ~hs,
-          weight = ~qtyfcl,
-          ~qty,
-          ~value)
+  select(-weight) %>%
+  rename(weight = qtyfcl)
 
 tldata_mid = tldata
 

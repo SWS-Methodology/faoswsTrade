@@ -12,20 +12,14 @@
 #' @import dplyr
 #' @export
 
-useAdjustments <- function(tradedata = NA,
-                           year = NA,
-                           adjustments = NA,
+useAdjustments <- function(tradedata = stop('"tradedata" is missing.'),
+                           year = stop('"year" is missing.'),
+                           adjustments = stop('"adjustments" is missing.'),
                            parallel = FALSE,
                            dbg = faosws::CheckDebug(),
                            PID = NA,
                            verbose = TRUE) {
   
-  if (missing(tradedata)) stop('"tradedata" is missing.')
-
-  if (missing(year)) stop('"year" is missing.')
-
-  if (missing(adjustments)) stop('"adjustments" is missing.')
-
   if (!is.logical(parallel)) stop('"parallel" should be TRUE or FALSE.')
 
   if (!is.logical(dbg)) stop('"dbg" should be TRUE or FALSE.')

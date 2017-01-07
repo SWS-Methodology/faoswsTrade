@@ -51,7 +51,12 @@ setFlag <- function(data = NA, condition = NA, type = NA, flag = NA, variable = 
 
   res <- factor(res, levels = c("0-0-0", "0-0-1", "0-1-0", "0-1-1", "1-0-0", "1-0-1", "1-1-0", "1-1-1"))
 
-  data[[flag]] <- dplyr::if_else(condition, res, as.factor('0-0-0'))
+  # Using if_else instead of ifelse as the latter changes data type
+  if (flag %in% colnames(data)) {
+    data[[flag]] <- dplyr::if_else(condition, res, data[[flag]])
+  } else {
+    data[[flag]] <- dplyr::if_else(condition, res, as.factor('0-0-0'))
+  }
 
   return(data)
 }

@@ -617,6 +617,9 @@ tldata_mid = tldata
 # TODO Check quantity/weight
 # The notes should save the results in weight
 
+# TODO (Christian) Check this (some ES partners are not TL partners):
+# unique(esdata$partner)[!(unique(esdata$partner) %in% unique(tldata$partner))]
+
 # We need to set the flags one by one as adjustments not necessarily
 # (probably never?) adjust all the three variables at the same time
 if (use_adjustments == TRUE) {

@@ -39,6 +39,22 @@ setFlag <- function(data = NA, condition = NA, type = NA, flag = NA, variable = 
     stop("Please, set 'variable' to 'value', 'weight', 'quantity', or 'all'")
   }
 
+  # This function adds 1 to X or Y or Z in a string of the type
+  # X-Y-Z where X, Y or Z are 0 or 1. If another 1 was already
+  # present, it won't change
+  .addFlag <- function(.newFlag, .oldFlag) {
+
+    tmp1 <- .oldFlag %>%
+      strsplit('-') %>%
+      do.call(rbind, .) %>%
+      apply(2, as.numeric) %>%
+      t()
+
+    tmp2 <- as.numeric(strsplit(.newFlag, '-')[[1]])
+
+    apply(1*(t(tmp1 + tmp2) > 0), 1, paste, collapse='-', sep='')
+  }
+
   if (type == 'status') flag <- paste0('flag_status_', flag)
 
   if (type == 'method') flag <- paste0('flag_method_', flag)
@@ -49,14 +65,17 @@ setFlag <- function(data = NA, condition = NA, type = NA, flag = NA, variable = 
     res <- paste(1*(variable=='value'), 1*(variable=='weight'), 1*(variable=='quantity'), sep='-')
   }
 
+  if (flag %in% colnames(data)) {
+    res <- .addFlag(res, as.character(data[[flag]]))
+    alt <- data[[flag]]
+  } else {
+    alt <- as.factor('0-0-0')
+  }
+
   res <- factor(res, levels = c("0-0-0", "0-0-1", "0-1-0", "0-1-1", "1-0-0", "1-0-1", "1-1-0", "1-1-1"))
 
   # Using if_else instead of ifelse as the latter changes data type
-  if (flag %in% colnames(data)) {
-    data[[flag]] <- dplyr::if_else(condition, res, data[[flag]])
-  } else {
-    data[[flag]] <- dplyr::if_else(condition, res, as.factor('0-0-0'))
-  }
+  data[[flag]] <- dplyr::if_else(condition, res, alt)
 
   return(data)
 }

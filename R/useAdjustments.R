@@ -52,17 +52,14 @@ useAdjustments <- function(tradedata = NA,
   tradedata <- tradedata %>%
                  rename(orig_value=value, orig_weight=weight, orig_qty=qty)
 
-  tradedata_adj <- tradedata_adj %>%
-                     left_join(tradedata) %>%
-                     mutate(
-                            # Using coalesce to replace NAs with -1 as a NAs will expand
-                            eq_value=near(coalesce(value, -1), coalesce(orig_value, -1)),
-                            eq_weight=near(coalesce(weight, -1), coalesce(orig_weight, -1)),
-                            eq_qty=near(coalesce(qty, -1), coalesce(orig_qty, -1))
-                            )
-                     
   tradedata_adj %>%
-    mutate(adjusted = !eq_value | !eq_weight | !eq_qty) %>%
-    select(-orig_value, -orig_weight, -orig_quantity,
-           -eq_value, -eq_weight, -eq_qty)
+    left_join(tradedata) %>%
+    mutate(
+           # Using coalesce to replace NAs with -1 as NAs will expand
+           adj_value  = !(near(coalesce(value, -1),  coalesce(orig_value, -1))),
+           adj_weight = !(near(coalesce(weight, -1), coalesce(orig_weight, -1))),
+           adj_qty    = !(near(coalesce(qty, -1),    coalesce(orig_qty, -1))),
+           adjusted   = adj_value | adj_weight | adj_qty
+           ) %>%
+    select(-orig_value, -orig_weight, -orig_quantity)
 }

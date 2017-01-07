@@ -28,7 +28,8 @@ preAggregateMultipleTLRows <- function(rawdata = NA) {
     tbl_df() %>%
     select(-chapter) %>%
     mutate(no_quant = is.na(qty),
-            no_weight = is.na(weight))
+            no_weight = is.na(weight),
+            nrows = 1)
 
   raw$cases <- case_when(
                          !raw$no_quant & !raw$no_weight ~ 1L,
@@ -40,7 +41,7 @@ preAggregateMultipleTLRows <- function(rawdata = NA) {
         group_by(tyear, rep, prt, flow, comm, qunit, cases) %>%
         summarise_each_(
                         funs(sum(.)),
-                        vars = c('weight', 'qty', 'tvalue')) %>%
+                        vars = c('weight', 'qty', 'tvalue', 'nrows')) %>%
         ungroup() %>%
         select(-cases)
 }

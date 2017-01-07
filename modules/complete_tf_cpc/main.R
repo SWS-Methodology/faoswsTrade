@@ -568,6 +568,11 @@ if(NROW(fcl_spec_mt_conv) > 0){
   tldata$qtyfcl = NA
 }
 
+# If 'qtyfcl' is non NA then it underwent a change and given that
+# it will be used below for 'weight', then we give 'weight' a flag.
+
+tldata <- tldata %>%
+  setFlag(!is.na(qtyfcl), type = 'method', flag = 'i', variable = 'weight')
 
 ##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
 ##' the final unit of measurement is tonnes the `weight` is used as `quantity`
@@ -619,12 +624,20 @@ tldata_mid = tldata
 # TODO Check quantity/weight
 # The notes should save the results in weight
 
+# We need to set the flags one by one as adjustments not necessarily
+# (probably never?) adjust all the three variables at the same time
 if (use_adjustments == TRUE) {
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
-                           adjustments = adjustments, parallel = multicore)
+                           adjustments = adjustments, parallel = multicore) %>%
+    setFlag(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
+    setFlag(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
+    setFlag(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
 
   tldata <- useAdjustments(tradedata = tldata, year = year,
-                           adjustments = adjustments, parallel = multicore)
+                           adjustments = adjustments, parallel = multicore) %>%
+    setFlag(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
+    setFlag(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
+    setFlag(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
 }
 
 ##+ es_convcur
@@ -635,6 +648,9 @@ if (use_adjustments == TRUE) {
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
+
+esdata <- esdata %>%
+    setFlag(value > 0, type = 'method', flag = 'i', variable = 'value')
 
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
 ##' to single data set.
@@ -656,6 +672,20 @@ tradedata <- bind_rows(
             ~fcl, ~fclunit,~hs,
             qty = ~uniqqty, ~value)
 )
+
+
+
+
+
+###########################################
+####### XXXXX simplify flags ##############
+###########################################
+
+
+
+
+
+
 
 ##' # Outlier Detection and Imputation
 
@@ -691,6 +721,10 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 ## (monetary values are not supposed to be modified).
 
 tradedata <- doImputation(tradedata = tradedata)
+
+tradedata <- tradedata %>%
+    setFlag(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
+    setFlag(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
 
 ##' 1. Aggregate values and quantities by FCL codes.
 

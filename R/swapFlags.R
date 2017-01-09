@@ -13,9 +13,11 @@ swapFlags <- function(variable = stop("'variable' is required."),
     return(variable)
   }
 
-  lev <- levels(variable)
+  new_val <- sub('([01])-([01])-([01])', swap, as.character(variable))
 
-  res <- factor(sub('([01])-([01])-([01])', swap, variable), levels = lev)
+  lev <- sort(unique(new_val))
+
+  res <- factor(new_val, levels = lev)
 
   if (is.null(condition)) {
     return(res)

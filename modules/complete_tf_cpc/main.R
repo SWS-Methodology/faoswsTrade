@@ -669,12 +669,14 @@ tradedata <- bind_rows(
     mutate(hs = format(hs, scientific = FALSE, trim = TRUE)) %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
-            qty = weight, value),
+            qty = weight, value,
+            starts_with('flag_')),
   esdata %>%
     mutate(uniqqty = ifelse(fclunit == "mt", weight, qty)) %>%
     select(year, reporter, partner, flow,
-            fcl, fclunit,hs,
-            qty = uniqqty, value)
+            fcl, fclunit, hs,
+            qty = uniqqty, value,
+            starts_with('flag_'))
 )
 
 

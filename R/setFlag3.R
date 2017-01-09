@@ -8,7 +8,7 @@
 #' @import dplyr
 #' @export
 
-setFlag <- function(data = NA, condition = NA, type = NA, flag = NA, variable = NA) {
+setFlag3 <- function(data = NA, condition = NA, type = NA, flag = NA, variable = NA) {
 
   if (missing(data)) stop("'tradedata' is required.")
 

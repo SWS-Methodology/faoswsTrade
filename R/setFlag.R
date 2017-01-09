@@ -65,7 +65,7 @@ setFlag <- function(data = NA, condition = NA, type = NA, flag = NA, variable = 
     res <- paste(1*(variable=='value'), 1*(variable=='weight'), 1*(variable=='quantity'), sep='-')
   }
 
-  if (flag %in% colnames(data)) {
+  if (flag %in% colnames(data) & is.factor(data$flag)) {
     res <- .addFlag(res, as.character(data[[flag]]))
     alt <- data[[flag]]
   } else {

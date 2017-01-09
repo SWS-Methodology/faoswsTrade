@@ -274,6 +274,10 @@ esdata <- tbl_df(esdata)
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
+##' 1. Add variables that will contain flags.
+
+esdata <- generateFlagVars(data = esdata)
+
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
@@ -389,6 +393,10 @@ tldata <- tldata %>%
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+##' 1. Add variables that will contain flags.
+
+tldata <- generateFlagVars(data = tldata)
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion

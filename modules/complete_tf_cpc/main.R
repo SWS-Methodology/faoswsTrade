@@ -392,7 +392,7 @@ tldata <- preAggregateMultipleTLRows(tldata)
 tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%
-  setFlag(nrows > 1, type = 'method', flag = 's', variable = 'all')
+  setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
@@ -580,7 +580,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
 # it will be used below for 'weight', then we give 'weight' a flag.
 
 tldata <- tldata %>%
-  setFlag(!is.na(qtyfcl), type = 'method', flag = 'i', variable = 'weight')
+  setFlag3(!is.na(qtyfcl), type = 'method', flag = 'i', variable = 'weight')
 
 ##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
 ##' the final unit of measurement is tonnes the `weight` is used as `quantity`
@@ -633,15 +633,15 @@ tldata_mid = tldata
 if (use_adjustments == TRUE) {
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
                            adjustments = adjustments, parallel = multicore) %>%
-    setFlag(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
-    setFlag(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
-    setFlag(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
+    setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
+    setFlag3(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
+    setFlag3(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
 
   tldata <- useAdjustments(tradedata = tldata, year = year,
                            adjustments = adjustments, parallel = multicore) %>%
-    setFlag(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
-    setFlag(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
-    setFlag(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
+    setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
+    setFlag3(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
+    setFlag3(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
 }
 
 ##+ es_convcur
@@ -654,12 +654,24 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             select(ExchangeRate))
 
 esdata <- esdata %>%
-    setFlag(value > 0, type = 'method', flag = 'i', variable = 'value')
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
+
+##' 1. Assign 'weight' flags to 'qty' flags in TL.
+
+tldata <- tldata %>%
+  mutate_each_(funs(swapFlags(., swap='\\1-\\2-\\2')), ~starts_with('flag_'))
+
+##' 1. Assign 'weight' flags to 'qty' flags in ES but
+##' only when 'fclunit' is 'mt'.
+
+esdata <- esdata %>%
+  mutate_each_(funs(swapFlags(., swap='\\1-\\2-\\2', fclunit == "mt")),
+               ~starts_with('flag_'))
 
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
 ##' to single data set.
 ##'     - TL: assign `weight` to `qty`
-##'     - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
+##'     - ES: assign `weight` to `qty` if `fclunit` is `mt`, else keep `qty`
 
 ##+ combine_es_tl
 
@@ -729,8 +741,8 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 tradedata <- doImputation(tradedata = tradedata)
 
 tradedata <- tradedata %>%
-    setFlag(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
-    setFlag(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
+    setFlag3(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
+    setFlag3(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
 
 ##' 1. Aggregate values and quantities by FCL codes.
 

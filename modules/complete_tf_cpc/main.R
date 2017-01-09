@@ -666,15 +666,15 @@ esdata <- esdata %>%
 tradedata <- bind_rows(
   tldata %>%
     # Not using as.character() as it will retain scientific notation
-    mutate_(hs = ~format(hs, scientific = FALSE, trim = TRUE)) %>%
-    select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, ~fclunit, ~hs,
-            qty = ~weight, ~value),
+    mutate(hs = format(hs, scientific = FALSE, trim = TRUE)) %>%
+    select(year, reporter, partner, flow,
+            fcl, fclunit, hs,
+            qty = weight, value),
   esdata %>%
-    mutate_(uniqqty = ~ifelse(fclunit == "mt", weight, qty)) %>%
-    select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, ~fclunit,~hs,
-            qty = ~uniqqty, ~value)
+    mutate(uniqqty = ifelse(fclunit == "mt", weight, qty)) %>%
+    select(year, reporter, partner, flow,
+            fcl, fclunit,hs,
+            qty = uniqqty, value)
 )
 
 

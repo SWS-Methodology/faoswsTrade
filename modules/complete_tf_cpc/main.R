@@ -392,7 +392,7 @@ tldata <- preAggregateMultipleTLRows(tldata)
 tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%
-  setFlag(nrows>1, type = 'method', flag = 's', variable = 'all')
+  setFlag(nrows > 1, type = 'method', flag = 's', variable = 'all')
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 

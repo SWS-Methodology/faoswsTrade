@@ -691,19 +691,9 @@ tradedata <- bind_rows(
             starts_with('flag_'))
 )
 
-
-
-
-
-###########################################
-####### XXXXX simplify flags ##############
-###########################################
-
-
-
-
-
-
+# XXX this is fine, but probably the name of the function should be changed
+tradedata <- tradedata %>%
+  mutate_each_(funs(swapFlags(., swap='\\1-\\2')), ~starts_with('flag_'))
 
 ##' # Outlier Detection and Imputation
 

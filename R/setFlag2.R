@@ -64,17 +64,14 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
     res <- paste(1*(variable=='value'), 1*(variable=='quantity'), sep='-')
   }
 
-  if (flag %in% colnames(data) & is.factor(data[[flag]])) {
+  if (flag %in% colnames(data) & all(!is.na(data[[flag]]))) {
     res <- .addFlag(res, as.character(data[[flag]]))
     alt <- data[[flag]]
   } else {
-    alt <- as.factor('0-0')
+    alt <- '0-0'
   }
 
-  res <- factor(res, levels = c("0-0", "0-1", "1-0", "1-1"))
-
-  # Using if_else instead of ifelse as the latter changes data type
-  data[[flag]] <- dplyr::if_else(condition, res, alt)
+  data[[flag]] <- ifelse(condition, res, alt)
 
   return(data)
 }

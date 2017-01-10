@@ -731,8 +731,18 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 tradedata <- doImputation(tradedata = tradedata)
 
 tradedata <- tradedata %>%
-    setFlag3(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
-    setFlag3(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
+    setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
+    setFlag2(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
+
+##' Separate flags.
+
+###### TODO (Christian) Rethink/refactor
+flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
+for (var in flag_vars) {
+  tradedata <- separate_(tradedata, var, '-', into = paste0(var, '_', c('v', 'q')))
+  tradedata[[paste0(var, '_v')]] <- as.integer(tradedata[[paste0(var, '_v')]])
+  tradedata[[paste0(var, '_q')]] <- as.integer(tradedata[[paste0(var, '_q')]])
+}
 
 ##' 1. Aggregate values and quantities by FCL codes.
 
@@ -746,11 +756,25 @@ tradedata <- tradedata %>%
           ~fclunit,
           ~qty,
           ~value,
-          ~flagTrade) %>%
+          ~flagTrade,
+          ~starts_with('flag_')) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   summarise_each_(funs(sum(., na.rm = TRUE)),
-                  vars = c("qty", "value","flagTrade")) %>%
+                  vars = c("qty", "value","flagTrade",
+                           ~starts_with('flag_'))) %>%
   ungroup()
+
+###### TODO (Christian) Rethink/refactor
+flag_vars <- sort(unique(sub('_[vq]$', '', colnames(tradedata)[grep('flag_', colnames(tradedata))])))
+for (var in flag_vars) {
+  var_v <- paste0(var, '_v')
+  var_q <- paste0(var, '_q')
+  newvar <- apply(cbind((tradedata[[var_v]]>0)*1, (tradedata[[var_q]]>0)*1), 1, paste, collapse='-')
+  lev <- sort(unique(newvar))
+  tradedata[[var]] <- factor(newvar, levels = lev)
+}
+tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
+
 
 ##' 1. Map FCL codes to CPC.
 
@@ -804,60 +828,18 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 ## Mirroring for non reporting countries
 tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
+
+##' 1. Set flags.
+
+tradedata <- tradedata %>%
+    setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
+    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
+    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'c', var = 'quantity')
+
+
 ##' ## Flag management
 
 ##' **Note**: work on this section is currently in progress.
-##'
-##' - observationStatus:
-##'     - Reporting countries:
-##'         - `X` if `flagTrade` is zero (i.e., no imputation) and FCL unit != "$ value only"
-##'         - `I` if `flagTrade` is non-zero (i.e., imputation) and FCL unit != "$ value only"
-##'   - Non-reporting countries: `E`
-##'
-##' - flagMethod:
-##'     - Reporting countries:
-##'         - `<BLANK>` if `flagTrade` is zero (i.e., no imputation) and FCL unit != "$ value only"
-##'         - `e` if `flagTrade` is non-zero (i.e., imputation) and FCL unit != "$ value only"
-##'   - Non-reporting countries: `e`
-
-##+ sws_flag
-
-## Flag from numeric to letters
-## TO DO (Marco): need to discuss how to treat flags
-##                at the moment Status I and method e
-##                for both imputed and mirrored
-##                because applying 12% change in mirroring
-
-addFlagsAfterMirror <- function(data = stop("'data' must be defined'"),
-                                nonreporting = NULL) {
-
-  ## data <- tradedata
-  copyData <- data
-
-  outData <-
-    copyData %>%
-    mutate_(
-      flagObservationStatus =
-        ## ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),
-        ~ifelse(reporter %in% nonreporting,
-                "E",
-                ifelse((flagTrade > 0) & (fclunit != "$ value only"),
-                       "I",
-                       "X")
-                ),
-      flagMethod =
-        ~ifelse(reporter %in% nonreporting,
-                "e", # both measures in same row; need to overwrite with "c"
-                     # flag for quantities when transforming to normalized
-                     # format
-                ifelse((flagTrade > 0) & (fclunit != "$ value only"),
-                       "e",
-                       "")
-                )
-    )
-
-    return(outData)
-}
 
 ## complete_trade <- tradedata %>%
 ##   mutate_(
@@ -865,9 +847,6 @@ addFlagsAfterMirror <- function(data = stop("'data' must be defined'"),
 ##                                       (fclunit != "$ value only"),"I",""),
 ##     flagMethod = ~ifelse((flagTrade > 0) &
 ##                            (fclunit != "$ value only"),"e",""))
-
-complete_trade <-
-  tradedata %>% addFlagsAfterMirror(nonreporting = nonreporting)
 
 ##+ completed_trade_flow
 

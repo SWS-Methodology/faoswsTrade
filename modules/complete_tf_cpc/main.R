@@ -5,7 +5,7 @@
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
 ##'   - Bo Werth\
-##'  
+##'
 ##'     Food and Agriculture Organization
 ##'     of the United Nations
 ##' date: "`r format(Sys.time(), '%e %B %Y')`"
@@ -229,6 +229,9 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 #EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
 
+# Get list of agri codes for further filtering
+hs6faointerest <- getAgriHSCodes()
+
 hs_chapters_str <-
   formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
   as.character %>%
@@ -273,6 +276,16 @@ esdata <- tbl_df(esdata)
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+
+# Fiter out HS codes which don't participate in futher processing
+# Such solution drops all HS codes shorter than 6 digits.
+
+esdata <- esdata %>%
+  mutate_(hs6 = ~str_extract(hs, "^\\d{6}")) %>%
+  filter_(~!is.na(hs6)) %>%
+  filter_(~hs6 %in% hs6faointerest) %>%
+  select_(~-hs6)
+
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
@@ -346,11 +359,6 @@ esdata <- esdata %>%
 ##' # Extract UNSD Tariffline Data
 
 ##+ tradeload
-
-#### Get list of agri codes ####
-#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
-
-# tldata <- getRawAgriTL(year, agricodeslist)
 
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 

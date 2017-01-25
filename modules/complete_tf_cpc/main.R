@@ -68,6 +68,8 @@ SWS_USER <- regmatches(
 stopifnot(!any(is.na(SWS_USER),
               SWS_USER == ""))
 
+# Preparing of a directory for reports
+
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
   SWS_USER,

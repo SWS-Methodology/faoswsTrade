@@ -62,23 +62,6 @@ suppressPackageStartupMessages({
 })
 
 
-SWS_USER <- regmatches(
-  swsContext.username,
-  regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
-stopifnot(!any(is.na(SWS_USER),
-              SWS_USER == ""))
-
-reportdir <- file.path(
-  Sys.getenv("R_SWS_SHARE_PATH"),
-  SWS_USER,
-  paste0("tradereport_",
-         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-stopifnot(!file.exists(reportdir))
-dir.create(reportdir, recursive = TRUE)
-
-flog.appender(appender.file(file.path(reportdir,
-                                      "report.txt"))
-
 if(!CheckDebug()){
 
   options(error = function(){
@@ -137,7 +120,26 @@ if(CheckDebug()){
   ## Get session information from SWS. Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])
+
+  reportdir <- Sys.getenv('HOMEPATH')
+} else {
+  USER <- regmatches(
+    swsContext.username,
+    regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+
+  stopifnot(!any(is.na(USER), USER == ""))
+
+  reportdir <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), USER)
 }
+
+reportdir <- file.path(reportdir,
+  paste0("tradereport_", format(Sys.time(), "%Y%m%d%H%M%S%Z")))
+
+#stopifnot(!file.exists(reportdir))
+
+dir.create(reportdir, recursive = TRUE)
+
+flog.appender(appender.file(file.path(reportdir, "report.txt")))
 
 ## List of datasets available
 #datas = faosws::FetchDatatableConfig()

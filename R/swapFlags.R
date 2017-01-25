@@ -8,7 +8,7 @@ swapFlags <- function(variable = stop("'variable' is required."),
 
   # example of swap: swap = '\\2-\\1-\\3'
 
-  if (all(is.na(x))) {
+  if (all(is.na(variable))) {
     warning("All NAs: no need to swap.", call. = TRUE)
     return(variable)
   }

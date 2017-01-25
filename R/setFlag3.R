@@ -50,7 +50,7 @@ setFlag3 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
       apply(2, as.numeric) %>%
       t()
 
-    tmp2 <- as.numeric(strsplit(.newFlag, '-')[[1]])
+    tmp2 <<- as.numeric(strsplit(.newFlag, '-')[[1]])
 
     apply(1*(t(tmp1 + tmp2) > 0), 1, paste, collapse='-', sep='')
   }
@@ -66,7 +66,7 @@ setFlag3 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
   }
 
   if (flag %in% colnames(data) & all(!is.na(data[[flag]]))) {
-    res <- .addFlag(res, as.character(data[[flag]]))
+    res <- .addFlag(res, data[[flag]])
     alt <- data[[flag]]
   } else {
     alt <- '0-0-0'

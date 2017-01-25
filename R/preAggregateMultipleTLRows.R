@@ -27,9 +27,9 @@ preAggregateMultipleTLRows <- function(rawdata = NA) {
   raw <- rawdata %>%
     tbl_df() %>%
     select(-chapter) %>%
-    mutate(no_quant = is.na(qty),
-            no_weight = is.na(weight),
-            nrows = 1)
+    mutate(no_quant  = is.na(qty),
+           no_weight = is.na(weight),
+           nrows = 1)
 
   raw$cases <- case_when(
                          !raw$no_quant & !raw$no_weight ~ 1L,

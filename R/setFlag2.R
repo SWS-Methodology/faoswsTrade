@@ -65,7 +65,7 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
   }
 
   if (flag %in% colnames(data) & all(!is.na(data[[flag]]))) {
-    res <- .addFlag(res, as.character(data[[flag]]))
+    res <- .addFlag(res, data[[flag]])
     alt <- data[[flag]]
   } else {
     alt <- '0-0'

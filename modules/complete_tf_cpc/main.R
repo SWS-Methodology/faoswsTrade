@@ -57,6 +57,7 @@ suppressPackageStartupMessages({
   library(scales)
   library(faoswsUtil)
   library(tidyr)
+  library(faoswsFlag)
   library(dplyr, warn.conflicts = F)
 })
 
@@ -278,6 +279,15 @@ esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
 esdata <- generateFlagVars(data = esdata)
 
+##' 1. Generate Observation Status X flag.
+esdata <- esdata %>%
+  setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'status', flag = 'X', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
+
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
@@ -344,9 +354,9 @@ es_spec_conv <- frame_data(
 
 esdata <- esdata %>%
   left_join(es_spec_conv, by = 'fcl') %>%
-  mutate_(qty = ~ifelse(is.na(conv), qty, qty*conv))
-
-esdata <- esdata %>% select_(~-conv)
+  mutate_(qty = ~ifelse(is.na(conv), qty, qty*conv)) %>%
+  setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
+  select_(~-conv)
 
 ##' # Extract UNSD Tariffline Data
 
@@ -397,6 +407,15 @@ tldata <- tldata %>%
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+##' 1. Generate Observation Status X flag.
+tldata <- tldata %>%
+  setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'status', flag = 'X', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion
@@ -576,32 +595,38 @@ if(NROW(fcl_spec_mt_conv) > 0){
   tldata$qtyfcl = NA
 }
 
-# If 'qtyfcl' is non NA then it underwent a change and given that
-# it will be used below for 'weight', then we give 'weight' a flag.
-
-tldata <- tldata %>%
-  setFlag3(!is.na(qtyfcl), type = 'method', flag = 'i', variable = 'weight')
-
 ##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
 ##' the final unit of measurement is tonnes the `weight` is used as `quantity`
 
-tldata$qtyfcl <- ifelse((tldata$qty == 0 | is.na(tldata$qty)) &
+cond <- (tldata$qty == 0 | is.na(tldata$qty)) &
                           tldata$fclunit == "mt" &
                           is.na(tldata$qtyfcl) &
-                          tldata$weight > 0,
-                        tldata$weight,
-                        tldata$qtyfcl)
+                          tldata$weight > 0
+
+tldata$qtyfcl <- ifelse(cond, tldata$weight, tldata$qtyfcl)
+
+# Flag on weight as qty (which underwent a change) will populate weight
+tldata <- tldata %>%
+  setFlag3(!cond, type = 'method', flag = 'i', variable = 'weight')
 
 # Always use weight if available and fclunit is mt
-tldata$qtyfcl <- ifelse(tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight>0,
-                       tldata$weight*0.001,
-                       tldata$qtyfcl)
+
+cond <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
+
+tldata$qtyfcl <- ifelse(cond, tldata$weight*0.001, tldata$qtyfcl)
+
+tldata <- tldata %>%
+  setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
 
 ######### Value from USD to thousands of USD
 if (dollars){
-  esdata$value <- esdata$value * 1000
+  esdata <- esdata %>%
+    mutate(value = value * 1000) %>%
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 } else { ## This means it is in k$
-  tldata$value <- tldata$value / 1000
+  tldata <- tldata %>%
+    mutate(value = value / 1000) %>%
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 }
 
 ##' 1. Aggregate UNSD Tariffline Data to FCL.
@@ -656,16 +681,19 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 esdata <- esdata %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 
-##' 1. Assign 'weight' flags to 'qty' flags in TL.
+###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
+#
+# NO: this isn't needed as below qty = weight and it has already its own flag
+#
+#tldata <- tldata %>%
+#  mutate_each_(funs(swapFlags(., swap='\\1-\\2-\\2'), !is.na(weight)),
+#               ~starts_with('flag_'))
 
-tldata <- tldata %>%
-  mutate_each_(funs(swapFlags(., swap='\\1-\\2-\\2')), ~starts_with('flag_'))
-
-##' 1. Assign 'weight' flags to 'qty' flags in ES but
-##' only when 'fclunit' is 'mt'.
+##' 1. Assign 'qty' flags to 'weight' flags in ES but
+##' only when 'fclunit' is different from 'mt'.
 
 esdata <- esdata %>%
-  mutate_each_(funs(swapFlags(., swap='\\1-\\2-\\2', fclunit == "mt")),
+  mutate_each_(funs(swapFlags(., swap='\\1-\\3-\\3', fclunit != "mt")),
                ~starts_with('flag_'))
 
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
@@ -730,6 +758,7 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 
 tradedata <- doImputation(tradedata = tradedata)
 
+# XXX using flagTrade for the moment, but should go away
 tradedata <- tradedata %>%
     setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
     setFlag2(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
@@ -737,12 +766,14 @@ tradedata <- tradedata %>%
 ##' Separate flags.
 
 ###### TODO (Christian) Rethink/refactor
+# separate flag_method and flag_status into 2 variables each one: _v and _q
 flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
 for (var in flag_vars) {
-  tradedata <- separate_(tradedata, var, '-', into = paste0(var, '_', c('v', 'q')))
-  tradedata[[paste0(var, '_v')]] <- as.integer(tradedata[[paste0(var, '_v')]])
-  tradedata[[paste0(var, '_q')]] <- as.integer(tradedata[[paste0(var, '_q')]])
+  tradedata <- separate_(tradedata, var, '-',
+                         into = paste0(var, '_', c('v', 'q')),
+                         convert = TRUE)
 }
+
 
 ##' 1. Aggregate values and quantities by FCL codes.
 
@@ -758,24 +789,28 @@ tradedata <- tradedata %>%
           ~value,
           ~flagTrade,
           ~starts_with('flag_')) %>%
+  mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   summarise_each_(funs(sum(., na.rm = TRUE)),
-                  vars = c("qty", "value","flagTrade",
+                  vars = c("qty", "value","flagTrade", "nfcl",
                            ~starts_with('flag_'))) %>%
   ungroup()
 
 ###### TODO (Christian) Rethink/refactor
+# unite _v and _q into one variable
 flag_vars <- sort(unique(sub('_[vq]$', '', colnames(tradedata)[grep('flag_', colnames(tradedata))])))
 for (var in flag_vars) {
   var_v <- paste0(var, '_v')
   var_q <- paste0(var, '_q')
-  newvar <- apply(cbind((tradedata[[var_v]]>0)*1, (tradedata[[var_q]]>0)*1), 1, paste, collapse='-')
-  lev <- sort(unique(newvar))
-  tradedata[[var]] <- factor(newvar, levels = lev)
+  tradedata[[var]] <- apply(cbind((tradedata[[var_v]]>0)*1, (tradedata[[var_q]]>0)*1), 1, paste, collapse='-')
 }
 tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
 
+##' 1. Se flags for aggregated values/quantities XXX.
 
+tradedata <- tradedata %>%
+  setFlag2(nfcl > 1,  type = 'method', flag = 's', variable = 'all')
+  
 ##' 1. Map FCL codes to CPC.
 
 # Adding CPC2 extended code
@@ -829,26 +864,36 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
 
-##' 1. Set flags.
+##' 1. Set flags XXX.
 
 tradedata <- tradedata %>%
     setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
     setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
     setFlag2(reporter %in% nonreporting, type = 'method', flag = 'c', var = 'quantity')
 
-
 ##' ## Flag management
 
 ##' **Note**: work on this section is currently in progress.
 
-## complete_trade <- tradedata %>%
-##   mutate_(
-##     flagObservationStatus = ~ifelse((flagTrade > 0) &
-##                                       (fclunit != "$ value only"),"I",""),
-##     flagMethod = ~ifelse((flagTrade > 0) &
-##                            (fclunit != "$ value only"),"e",""))
+################################################
+# TODO Rethink/refactor: clean flags for fclunit != "$ value only"
+################################################
 
 ##+ completed_trade_flow
+
+###### TODO (Christian) Rethink/refactor
+# separate flag_method and flag_status into 2 variables each one: _v and _q
+flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
+for (var in flag_vars) {
+  tradedata <- separate_(tradedata, var, '-', into = paste0(var, '_', c('v', 'q')))
+  tradedata[[paste0(var, '_v')]] <- as.integer(tradedata[[paste0(var, '_v')]])
+  tradedata[[paste0(var, '_q')]] <- as.integer(tradedata[[paste0(var, '_q')]])
+}
+
+
+
+
+
 
 ##' # Output for SWS
 
@@ -860,7 +905,43 @@ tradedata <- tradedata %>%
 
 ##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
-complete_trade_flow_cpc <- complete_trade %>%
+flagWeightTable_status <- frame_data(
+  ~flagObservationStatus, ~flagObservationWeights,
+  'X',                   1.00,
+  '',                    0.99,
+  'T',                   0.80,
+  'E',                   0.75,
+  'I',                   0.50,
+  'M',                   0.00
+)
+
+flagWeightTable_method <- frame_data(
+  ~flagObservationStatus, ~flagObservationWeights,
+  'h',                   1.00,
+  'c',                   0.80,
+  'i',                   0.60,
+  'e',                   0.40,
+  's',                   0.20
+)
+
+for (i in c('status', 'method')) {
+  for (j in c('v', 'q')) {
+    var <- paste0('flag_', i, '_(.)_', j)
+    flags <- sub(var, '\\1', colnames(tradedata)[grep(var, colnames(tradedata))])
+    dummies <- tradedata[,colnames(tradedata)[grep(var, colnames(tradedata))]]
+
+    if (i == 'status') {
+      flagWeightTable <- flagWeightTable_status
+    } else {
+      flagWeightTable <- flagWeightTable_method
+    }
+
+    var <- paste0('flag', toupper(i), '_', j)
+    tradedata[[var]] <- apply(dummies, 1, function(x) ifelse(sum(x)==0, NA, aggregateObservationFlag(flags[x==1])))
+  }
+}
+
+complete_trade_flow_cpc <- tradedata %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
   filter_(~!(is.na(cpc))) %>%
@@ -868,8 +949,10 @@ complete_trade_flow_cpc <- complete_trade %>%
              geographicAreaM49Partner = ~partnerM49,
              flow = ~flow,
              timePointYears = ~year,
-             flagObservationStatus = ~flagObservationStatus,
-             flagMethod = ~flagMethod,
+             flagObservationStatus_v = ~flagSTATUS_v,
+             flagObservationStatus_q = ~flagSTATUS_q,
+             flagMethod_v = ~flagMETHOD_v,
+             flagMethod_q = ~flagMETHOD_q,
              measuredItemCPC = ~cpc,
              qty = ~qty,
              unit = ~fclunit,
@@ -890,8 +973,9 @@ complete_trade_flow_cpc <- complete_trade %>%
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
                 -geographicAreaM49Partner, -measuredItemCPC,
-                -timePointYears, -flagObservationStatus,
-                -flagMethod, -unit, -flow) %>%
+                -timePointYears,
+                -flagObservationStatus_v, -flagObservationStatus_q,
+                -flagMethod_v, -flagMethod_q, -unit, -flow) %>%
   rowwise() %>%
   mutate_(measuredElementTrade =
             ~convertMeasuredElementTrade(measuredElementTrade,
@@ -901,47 +985,27 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   filter_(~measuredElementTrade != "999") %>%
   select_(~-flow,~-unit)
 
-##' 1. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
+quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
+uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
 
-##+ overwrite_mirror_method_flag
+complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
+  mutate(flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
+                                        flagObservationStatus_q,
+                                        flagObservationStatus_v),
+         flagMethod = ifelse(measuredElementTrade %in% quantityElements,
+                                        flagMethod_q,
+                                        flagMethod_v)) %>%
+         # The Status flag will be equal to the weakest flag between
+         # the numerator and the denominator, in this case the denominator.
+         mutate(flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
+                                               flagObservationStatus_q,
+                                               flagObservationStatus),
+                flagMethod = ifelse(measuredElementTrade %in% uvElements,
+                                    'i',
+                                    flagMethod)) %>%
+         select(-flagObservationStatus_v, -flagObservationStatus_q,
+                -flagMethod_v, -flagMethod_q)
 
-overwriteFlagMethodMirrorQuantities <- function(data = stop("'data' cannot be empty"),
-                                                quantityElements = c("5608", "5609", "5610", "5908", "5909", "5910")) {
-  copyData <- data
-  outData <-
-    copyData %>%
-    mutate_(flagMethod =
-              ~ifelse(flagObservationStatus == "E" & measuredElementTrade %in% quantityElements,
-                      "c",
-                      flagMethod)
-            )
-  return(outData)
-}
-
-complete_trade_flow_cpc <-
-  complete_trade_flow_cpc %>%
-  overwriteFlagMethodMirrorQuantities()
-
-
-##' 1. Add **flagMethod** `i` to unit values
-
-##+ add_uv_method_flag
-
-addFlagUnitValues <- function(data = stop("'data' cannot be empty'"),
-                              uvElements = c("5638", "5639", "5630", "5938", "5939", "5930")) {
-  copyData <- data
-  outData <-
-    copyData %>%
-    mutate_(flagMethod =
-              ~ifelse(measuredElementTrade %in% uvElements,
-                      "i",
-                      flagMethod))
-  return(outData)
-}
-
-complete_trade_flow_cpc <-
-  complete_trade_flow_cpc %>%
-  addFlagUnitValues()
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
@@ -965,6 +1029,8 @@ stats <- SaveData("trade",
                   "completed_tf_cpc_m49",
                   complete_trade_flow_cpc,
                   waitTimeout = 10800)
+
+## remove value only
 
 message(sprintf("[%s] Session/database write completed!", PID))
 

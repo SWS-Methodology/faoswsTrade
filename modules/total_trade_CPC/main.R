@@ -113,12 +113,14 @@ knitr::kable(faoswsFlag::flagWeightTable)
 completetrade <- completetrade %>%
   mutate_(geographicAreaM49 = ~geographicAreaM49Reporter)
 
+newFlagTable = readRDS(file='C:/Users/mongeau/Dropbox/FAO/R/flagWeightTable.rds')
+
 total_trade_cpc_wo_uv <- completetrade %>%
   select_(~geographicAreaM49, ~geographicAreaM49Partner, ~timePointYears,
           ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagObservationStatus) %>%
   group_by_(~geographicAreaM49, ~timePointYears, ~measuredItemCPC, ~measuredElementTrade) %>%
   summarise_(Value = ~sum(Value, na.rm = TRUE),
-             flagObservationStatus = ~aggregateObservationFlag(flagObservationStatus)) %>%
+             flagObservationStatus = ~aggregateObservationFlag(flagObservationStatus, flagTable = newFlagTable)) %>%
   ungroup() %>%
   mutate(flagMethod = "s")
 

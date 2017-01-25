@@ -5,7 +5,7 @@
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
 ##'   - Bo Werth\
-##'  
+##'
 ##'     Food and Agriculture Organization
 ##'     of the United Nations
 ##' date: "`r format(Sys.time(), '%e %B %Y')`"
@@ -51,22 +51,38 @@ use_adjustments <- FALSE
 
 suppressPackageStartupMessages({
   library(data.table)
-  library(faoswsTrade)
-  library(faosws)
   library(stringr)
   library(scales)
-  library(faoswsUtil)
   library(tidyr)
-  library(dplyr, warn.conflicts = F)
+  library(futile.logger)
+  library(dplyr, warn.conflicts = FALSE)
+  library(faoswsTrade)
+  library(faosws)
+  library(faoswsUtil)
 })
 
+
+SWS_USER <- regmatches(
+  swsContext.username,
+  regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+stopifnot(!any(is.na(SWS_USER),
+              SWS_USER == ""))
+
+reportdir <- file.path(
+  Sys.getenv("R_SWS_SHARE_PATH"),
+  SWS_USER,
+  paste0("tradereport_",
+         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
+stopifnot(!file.exists(reportdir))
+dir.create(reportdir, recursive = TRUE)
+
+flog.appender(appender.file(file.path(reportdir,
+                                      "report.txt"))
 
 if(!CheckDebug()){
 
   options(error = function(){
     dump.frames()
-    SWS_USER = regmatches(swsContext.username,
-                          regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
     save(last.dump, file=file.path(filename, "last.dump.RData"))
@@ -133,14 +149,17 @@ stopifnot(
   !is.null(swsContext.computationParams$out_coef))
 
 ##' # Parameters
-
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
+flog.info("Working year: %s", year)
+## List of datasets available
+#datas = faosws::FetchDatatableConfig()
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
+flog.info("Coefficient for outlier detection: %s", out_coef)
 
 ##' - `hs_chapters`: specific HS chapters that are downloaded (this parameter
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
@@ -170,12 +189,16 @@ message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
+flog.info("Rows in HS->FCL mapping table: %s", nrow(hsfclmap3))
+
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
             endyear >= year)
 
 stopifnot(nrow(hsfclmap) > 0)
 
+flog.info("Rows in mapping table after filtering by year: %s",
+          nrow(hsfclmap))
 ##' - `adjustments`: Adjustment notes containing manually added conversion
 ##' factors to transform from non-standard units of measurement to standard
 ##' ones or to obtain quantities from traded values.

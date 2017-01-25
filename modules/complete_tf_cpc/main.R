@@ -68,6 +68,8 @@ SWS_USER <- regmatches(
 stopifnot(!any(is.na(SWS_USER),
               SWS_USER == ""))
 
+# Preparing of a directory for reports
+
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
   SWS_USER,
@@ -77,7 +79,7 @@ stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 
 flog.appender(appender.file(file.path(reportdir,
-                                      "report.txt"))
+                                      "report.txt")))
 
 if(!CheckDebug()){
 
@@ -297,6 +299,11 @@ esdata <- tbl_df(esdata)
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
+# Fiter out HS codes which don't participate in futher processing
+# Such solution drops all HS codes shorter than 6 digits.
+
+esdata <- filterHS6FAOinterest(esdata)
+
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
@@ -370,11 +377,6 @@ esdata <- esdata %>%
 
 ##+ tradeload
 
-#### Get list of agri codes ####
-#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
-
-# tldata <- getRawAgriTL(year, agricodeslist)
-
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
@@ -408,6 +410,8 @@ tldata <- preAggregateMultipleTLRows(tldata)
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+tldata <- filterHS6FAOinterest(tldata)
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion

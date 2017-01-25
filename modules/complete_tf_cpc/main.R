@@ -229,9 +229,6 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 data("EURconversionUSD", package = "faoswsTrade", envir = environment())
 #EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
 
-# Get list of agri codes for further filtering
-hs6faointerest <- getAgriHSCodes()
-
 hs_chapters_str <-
   formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
   as.character %>%
@@ -280,12 +277,7 @@ esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.
 
-esdata <- esdata %>%
-  mutate_(hs6 = ~str_extract(hs, "^\\d{6}")) %>%
-  filter_(~!is.na(hs6)) %>%
-  filter_(~hs6 %in% hs6faointerest) %>%
-  select_(~-hs6)
-
+esdata <- filterHS6FAOinterest(esdata)
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
@@ -393,6 +385,8 @@ tldata <- preAggregateMultipleTLRows(tldata)
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+tldata <- filterHS6FAOinterest(tldata)
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion

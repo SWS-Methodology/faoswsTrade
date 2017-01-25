@@ -77,7 +77,7 @@ stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 
 flog.appender(appender.file(file.path(reportdir,
-                                      "report.txt"))
+                                      "report.txt")))
 
 if(!CheckDebug()){
 

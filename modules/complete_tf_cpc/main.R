@@ -81,6 +81,8 @@ dir.create(reportdir, recursive = TRUE)
 flog.appender(appender.file(file.path(reportdir,
                                       "report.txt")))
 
+flog.info("SWS user: %s", SWS_USER)
+
 if(!CheckDebug()){
 
   options(error = function(){
@@ -276,19 +278,32 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
+flog.info("Records in raw Eurostat data: %s", nrow(esdata))
+
 ##' 1. Remove non-numeric codes for reporters/partners/commodities.
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
+
+flog.info("Records after removing non-numeric reporter codes: %s", nrow(esdata))
+
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
+
+flog.info("Records after removing non-numeric partner codes: %s", nrow(esdata))
+
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
+
+flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
 
 ##' 1. Keep only `stat_regime`=4.
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata[esdata$stat_regime=="4",]
+
+flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
+
 ## Removing stat_regime as it is not needed anymore
 esdata[,stat_regime:=NULL]
 
@@ -310,6 +325,9 @@ esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
+
+flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
+
 esdata <- tbl_df(esdata)
 
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
@@ -318,8 +336,16 @@ esdata <- tbl_df(esdata)
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
+
+write.csv(esdata_not_area_in_fcl_mapping,
+          file = file.path(reportdir,
+                           "esdata_not_area_in_fcl_mapping.csv"))
+
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
+
+flog.info("Records after removing areas absent in HS->FCL map: %s",
+          nrow(esdata))
 
 ## es_hs2fcl ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
@@ -337,14 +363,24 @@ stopifnot(nrow(esdatalinks) > 0)
 esdata <- esdata %>%
   left_join(esdatalinks, by = c("reporter", "flow", "hs"))
 
+flog.info("Records after HS-FCL mapping: %s",
+          nrow(esdata))
+
 ##' 1. Remove unmapped FCL codes.
 
 ## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
 
+write.csv(esdata_fcl_not_mapped,
+          file = file.path(reportdir,
+                           "esdata_fcl_not_mapped.csv"))
+
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
+
+flog.info("Records after removing non-mapped HS codes: %s",
+          nrow(esdata))
 
 ##' 1. Add FCL units.
 

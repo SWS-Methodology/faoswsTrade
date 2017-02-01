@@ -73,7 +73,7 @@ stopifnot(!any(is.na(SWS_USER),
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
   SWS_USER,
-  paste0("tradereport_",
+  paste0("complete_tf_cpc_",
          format(Sys.time(), "%Y%m%d%H%M%S%Z")))
 stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
@@ -85,9 +85,8 @@ if(!CheckDebug()){
 
   options(error = function(){
     dump.frames()
-    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
-    dir.create(filename, showWarnings = FALSE, recursive = TRUE)
-    save(last.dump, file=file.path(filename, "last.dump.RData"))
+    save(last.dump,
+         file = file.path(reportdir, "last.dump.RData"))
   })
 }
 

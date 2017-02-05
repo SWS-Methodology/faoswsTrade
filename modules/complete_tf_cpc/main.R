@@ -21,17 +21,15 @@ use_adjustments <- FALSE
 
 ## library(tradeproc)
 
-suppressPackageStartupMessages({
-  library(data.table)
-  library(stringr)
-  library(scales)
-  library(tidyr)
-  library(futile.logger)
-  library(dplyr, warn.conflicts = FALSE)
-  library(faoswsTrade)
-  library(faosws)
-  library(faoswsUtil)
-})
+suppressPackageStartupMessages(library(data.table))
+library(stringr)
+library(scales)
+library(tidyr)
+library(futile.logger)
+suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
+library(faosws)
+library(faoswsUtil)
+library(faoswsTrade)
 
 
 SWS_USER <- regmatches(

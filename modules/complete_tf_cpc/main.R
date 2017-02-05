@@ -27,11 +27,13 @@ library(faoswsUtil)
 library(faoswsTrade)
 
 
+# Remove domain from username
 SWS_USER <- regmatches(
   swsContext.username,
   regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+
 stopifnot(!any(is.na(SWS_USER),
-              SWS_USER == ""))
+               SWS_USER == ""))
 
 # Preparing of a directory for reports
 
@@ -106,11 +108,6 @@ if(faosws::CheckDebug()){
                              token = SETTINGS[["token"]])
 }
 
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
-
-##+ settings
-
 stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
@@ -119,8 +116,6 @@ stopifnot(
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 flog.info("Working year: %s", year)
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
@@ -133,8 +128,6 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 ##'   The HS chapters are the following:
 
 hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
-
-##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse=' ')`
 
 startTime = Sys.time()
 
@@ -149,9 +142,6 @@ startTime = Sys.time()
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
 
-## Old procedure
-#data("hsfclmap2", package = "hsfclmap", envir = environment())
-## New procedure
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
@@ -176,11 +166,11 @@ flog.info("Rows in mapping table after filtering by year: %s",
 message(sprintf("[%s] Reading in adjustments", PID))
 
 adjustments <- tbl_df(ReadDatatable("adjustments"))
-colnames(adjustments) = sapply(colnames(adjustments),
+colnames(adjustments) <- sapply(colnames(adjustments),
                                function(x) gsub("adj_","",x))
 adj_cols_int <- c("year","flow","fcl","partner","reporter")
 adj_cols_dbl <- c("hs")
-adjustments = adjustments %>%
+adjustments <- adjustments %>%
   mutate_each_(funs(as.integer),adj_cols_int) %>%
   mutate_each_(funs(as.double),adj_cols_dbl)
 
@@ -260,8 +250,6 @@ flog.info("Records after removing non-numeric partner codes: %s", nrow(esdata))
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 
 flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
-
-##' 1. Keep only `stat_regime`=4.
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata[esdata$stat_regime=="4",]

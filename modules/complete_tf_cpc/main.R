@@ -97,14 +97,13 @@ if(multicore) {
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
-if(CheckDebug()){
-  library(faoswsModules)
-  SETTINGS = ReadSettings("modules/complete_tf_cpc/sws.yml")
+if(faosws::CheckDebug()){
+  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
-  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                     token = SETTINGS[["token"]])
+  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                             token = SETTINGS[["token"]])
 }
 
 ## List of datasets available

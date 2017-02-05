@@ -16,11 +16,6 @@ dollars <- FALSE
 ## If TRUE, use adjustments (AKA "conversion notes")
 use_adjustments <- FALSE
 
-
-##+ libs
-
-## library(tradeproc)
-
 suppressPackageStartupMessages(library(data.table))
 library(stringr)
 library(scales)

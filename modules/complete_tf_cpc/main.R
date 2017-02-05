@@ -35,8 +35,12 @@ if(faosws::CheckDebug()){
   faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                              token = SETTINGS[["token"]])
   # Fall-back R_SWS_SHARE_PATH var
-  if(is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA)))
+  if(is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
+    flog.debug("R_SWS_SHARE_PATH system variable not found.")
     Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
+    flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
+               temdir())
+  }
 }
 
 
@@ -48,7 +52,6 @@ SWS_USER <- regmatches(
 stopifnot(!any(is.na(SWS_USER),
                SWS_USER == ""))
 
-flog.info("SWS user: %s", SWS_USER)
 
 # Preparing of a directory for reports
 
@@ -63,6 +66,7 @@ dir.create(reportdir, recursive = TRUE)
 flog.appender(appender.file(file.path(reportdir,
                                       "report.txt")))
 
+flog.info("SWS user: %s", SWS_USER)
 
 if(!CheckDebug()){
 

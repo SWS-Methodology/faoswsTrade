@@ -26,6 +26,16 @@ library(faosws)
 library(faoswsUtil)
 library(faoswsTrade)
 
+# Settings for development (not SWS-inside) mode
+if(faosws::CheckDebug()){
+  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  ## Get session information from SWS. Token must be obtained from web interface
+  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                             token = SETTINGS[["token"]])
+}
+
 
 # Remove domain from username
 SWS_USER <- regmatches(
@@ -98,15 +108,6 @@ if(multicore) {
 ## ## SWS data
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
-
-if(faosws::CheckDebug()){
-  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
-  ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
-  ## Get session information from SWS. Token must be obtained from web interface
-  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                             token = SETTINGS[["token"]])
-}
 
 stopifnot(
   !is.null(swsContext.computationParams$year),

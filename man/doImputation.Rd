@@ -17,7 +17,9 @@ Use a median unit value to impute missing quantities or outliers.
 }
 \details{
 The median unit value is calculated in a specific-to-generic fashion:
-1) by HS-reporter; 2) by FCL-reporter; 3) by HS; 4) by FCL; 5) by flow.
-The first available of these options will be used.
+1) by HS-reporter; 2) by HS8-reporter; by HS6-reporter; 3) by HS;
+4) by FCL; 5) by flow.
+The first available of these options will be used (for HS, HS8 and HS6
+only when there are at least 10 flows).
 }
 

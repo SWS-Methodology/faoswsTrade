@@ -5,10 +5,33 @@
 \title{Looks for corresponding FCL codes in country-specific
 mapping tables from MDB files}
 \usage{
-hsInRange(hs, areacode, flowname, mapdataset, parallel = F)
+hsInRange(hs, areacode, flowname, mapdataset, parallel = FALSE)
+}
+\arguments{
+\item{hs}{Numeric or character vector with HS codes to convert to FCL.}
+
+\item{areacode}{Numeric or character vector with reporters' codes.}
+
+\item{flowname}{Numeric or character vector of trade direction.}
+
+\item{mapdataset}{Data frame with HS->FCL mapping with columns area,
+flow, fromcode, tocode, fcl
+registered with doParallel package.}
+}
+\value{
+Data frame with columns id, area, flow, hsorig, hsext, fcl.
+  id holds row numbers of original dataset. hsorig is input hs. hsext is
+  input hs with additional zeros if requires. If there are multiple
+  HS->FCL matchings, all of them are returned with similar id. If
+  there were no matching FCL codes, NA in fcl column is returned.
 }
 \description{
 Looks for corresponding FCL codes in country-specific
 mapping tables from MDB files
+}
+\details{
+Input hs, areacode and flowname columns are used to build
+  data frame with hs-codes to convert. Probably it is easier to
+  pass a data frame, then separate vectors.
 }
 

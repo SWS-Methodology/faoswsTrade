@@ -8,8 +8,18 @@ Authors@R: c(person("Marco", "Garieri", role = c("aut"), email = "marco.garieri@
 Description: Trade module
 License: FAO
 LazyData: TRUE
-Imports: dplyr, faosws, scales, stringr, lazyeval, plyr, data.table
-Suggests: testthat, knitr
+Imports: 
+    data.table,
+    dplyr, 
+    faosws, 
+    lazyeval, 
+    plyr, 
+    scales, 
+    stringr, 
+    tidyr
+Suggests: 
+    knitr,
+    testthat
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 NeedsCompilation: no

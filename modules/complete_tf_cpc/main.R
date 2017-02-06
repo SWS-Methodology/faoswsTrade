@@ -24,7 +24,7 @@ library(faoswsTrade)
 
 # Development (not SWS-inside) mode addons ####
 if(faosws::CheckDebug()){
-  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
+  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml.example")
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
@@ -37,6 +37,9 @@ if(faosws::CheckDebug()){
     flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
                temdir())
   }
+
+  swsContext.computationParams$year <- "2014"
+  swsContext.computationParams$out_coef <- "1.5"
 }
 
 # SWS user name ####
@@ -161,23 +164,27 @@ stopifnot(nrow(hsfclmap) > 0)
 
 flog.info("Rows in mapping table after filtering by year: %s",
           nrow(hsfclmap))
-##' - `adjustments`: Adjustment notes containing manually added conversion
-##' factors to transform from non-standard units of measurement to standard
-##' ones or to obtain quantities from traded values.
 
-## Old precedure
-#data("adjustments", package = "hsfclmap", envir = environment())
-## New procedure
-message(sprintf("[%s] Reading in adjustments", PID))
+if(use_adjustments) {
 
-adjustments <- tbl_df(ReadDatatable("adjustments"))
-colnames(adjustments) <- sapply(colnames(adjustments),
-                               function(x) gsub("adj_","",x))
-adj_cols_int <- c("year","flow","fcl","partner","reporter")
-adj_cols_dbl <- c("hs")
-adjustments <- adjustments %>%
-  mutate_each_(funs(as.integer),adj_cols_int) %>%
-  mutate_each_(funs(as.double),adj_cols_dbl)
+  ##' - `adjustments`: Adjustment notes containing manually added conversion
+  ##' factors to transform from non-standard units of measurement to standard
+  ##' ones or to obtain quantities from traded values.
+
+  ## Old precedure
+  #data("adjustments", package = "hsfclmap", envir = environment())
+  ## New procedure
+  message(sprintf("[%s] Reading in adjustments", PID))
+
+  adjustments <- tbl_df(ReadDatatable("adjustments"))
+  colnames(adjustments) <- sapply(colnames(adjustments),
+                                  function(x) gsub("adj_","",x))
+  adj_cols_int <- c("year","flow","fcl","partner","reporter")
+  adj_cols_dbl <- c("hs")
+  adjustments <- adjustments %>%
+    mutate_each_(funs(as.integer),adj_cols_int) %>%
+    mutate_each_(funs(as.double),adj_cols_dbl)
+}
 
 ##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more

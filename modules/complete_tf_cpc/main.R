@@ -1,7 +1,4 @@
-##' This document gives a faithful step-by-step sequence of the operations
-##' performed in the `complete_tf_cpc` module. For a narrative version of
-##' the module's approach, please see its main document.
-
+# Settings ####
 set.seed(2507)
 debughsfclmap <- TRUE
 multicore <- FALSE
@@ -13,6 +10,7 @@ dollars <- FALSE
 ## If TRUE, use adjustments (AKA "conversion notes")
 use_adjustments <- FALSE
 
+# Libraries ####
 suppressPackageStartupMessages(library(data.table))
 library(stringr)
 library(scales)
@@ -23,7 +21,8 @@ library(faosws)
 library(faoswsUtil)
 library(faoswsTrade)
 
-# Settings for development (not SWS-inside) mode
+
+# Development (not SWS-inside) mode addons ####
 if(faosws::CheckDebug()){
   SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
   ## Define where your certificates are stored
@@ -40,7 +39,7 @@ if(faosws::CheckDebug()){
   }
 }
 
-
+# SWS user name ####
 # Remove domain from username
 SWS_USER <- regmatches(
   swsContext.username,
@@ -50,7 +49,7 @@ stopifnot(!any(is.na(SWS_USER),
                SWS_USER == ""))
 
 
-# Preparing of a directory for reports
+# Reporting directory ####
 
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
@@ -76,7 +75,7 @@ if(!CheckDebug()){
 
 PID <- Sys.getpid()
 
-## Check that all packages are up to date
+# Check that all packages are up to date ####
 local({
   min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
                                          "dplyr"),
@@ -96,7 +95,7 @@ local({
 
 })
 
-
+# Register CPU cores ####
 if(multicore) {
   suppressPackageStartupMessages(library(doParallel))
   library(foreach)

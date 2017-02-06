@@ -2,9 +2,6 @@
 ##' performed in the `complete_tf_cpc` module. For a narrative version of
 ##' the module's approach, please see its main document.
 
-## **Flow chart:**
-## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
-
 set.seed(2507)
 debughsfclmap <- TRUE
 multicore <- FALSE

@@ -634,14 +634,12 @@ tldata_mid = tldata
 
 ##' # Combine Trade Data Sources
 
+if (use_adjustments) {
 ##' 1. Application of "adjustment notes" to both ES and TL data.
-
-##+ apply_adjustment
 
 # TODO Check quantity/weight
 # The notes should save the results in weight
 
-if (use_adjustments == TRUE) {
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
                            adjustments = adjustments, parallel = multicore)
 

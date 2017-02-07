@@ -105,10 +105,12 @@ local({
 if(multicore) {
   if(all(c("doParallel", "foreach") %in%
          rownames(installed.packages()))) {
-  suppressPackageStartupMessages(library(doParallel))
-  library(foreach)
-  doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
-  }
+    flog.debug("Multicore backend is available.")
+    cpucores <- parallel::detectCores(all.tests = TRUE)
+    flog.debug("CPU cores detected: %s.", cpucores)
+    doParallel::registerDoParallel(cores = cpucores)
+  } else
+    flog.debug("Multicore backend is not available.")
 }
 
 

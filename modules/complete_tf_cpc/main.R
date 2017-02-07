@@ -1,7 +1,10 @@
 # Settings ####
 set.seed(2507)
 debughsfclmap <- TRUE
-multicore <- FALSE
+
+# Parallel backend will be used only if required packages
+# are installed
+multicore <- TRUE
 
 ## If true, the reported values will be in $
 ## If false the reported values will be in k$
@@ -100,9 +103,12 @@ local({
 
 # Register CPU cores ####
 if(multicore) {
+  if(all(c("doParallel", "foreach") %in%
+         rownames(installed.packages()))) {
   suppressPackageStartupMessages(library(doParallel))
   library(foreach)
   doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
+  }
 }
 
 

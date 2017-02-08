@@ -559,8 +559,7 @@ tldata <- tldata %>%
 fcl_spec_mt_conv <- tldata %>%
   filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
-  distinct() %>%
-  mutate_(fcldesc = ~descFCL(fcl))
+  distinct
 
 if(NROW(fcl_spec_mt_conv) > 0){
 
@@ -579,8 +578,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
   ### Add commodity specific conv.factors to dataset
 
   tldata <- tldata %>%
-    left_join(fcl_spec_mt_conv %>%
-                select_(~-fcldesc),
+    left_join(fcl_spec_mt_conv,
               by = c("fcl", "wco"))
   ########## Conversion of units
 

@@ -40,13 +40,6 @@ if(faosws::CheckDebug()){
     flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
                temdir())
   }
-
-  # Workaround to provide SWS computation params
-  # probably it is possible with faoswsModules::ReadSettings
-  if(!exists("year", where = swsContext.computationParams))
-    swsContext.computationParams$year <- "2014"
-  if(!exists("out_coef", where = swsContext.computationParams))
-    swsContext.computationParams$out_coef <- "1.5"
 }
 
 # SWS user name ####

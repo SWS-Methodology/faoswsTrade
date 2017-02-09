@@ -4,6 +4,7 @@ debughsfclmap <- TRUE
 
 # Parallel backend will be used only if required packages
 # are installed
+# It will be switched to FALSE if packages are not available
 multicore <- TRUE
 
 ## If true, the reported values will be in $
@@ -72,7 +73,7 @@ reportdir <- file.path(
 stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 
-flog.appender(appender.file(file.path(reportdir,
+flog.appender(appender.tee(file.path(reportdir,
                                       "report.txt")))
 
 flog.info("SWS-session is run by user %s", SWS_USER)
@@ -116,8 +117,10 @@ if(multicore) {
     cpucores <- parallel::detectCores(all.tests = TRUE)
     flog.debug("CPU cores detected: %s.", cpucores)
     doParallel::registerDoParallel(cores = cpucores)
-  } else
+  } else {
     flog.debug("Multicore backend is not available.")
+    multicore <- FALSE
+  }
 }
 
 

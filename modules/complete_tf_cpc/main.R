@@ -24,10 +24,17 @@ library(faosws)
 library(faoswsUtil)
 library(faoswsTrade)
 
+flog.threshold(TRACE)
 
 # Development (not SWS-inside) mode addons ####
 if(faosws::CheckDebug()){
-  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml.example")
+  localsettingspath <- "modules/complete_tf_cpc/sws.yml.example"
+  SETTINGS <- faoswsModules::ReadSettings(localsettingspath)
+  flog.debug("Local settings read from %s",
+             localsettingspath)
+  flog.debug("Local settings read:",
+             SETTINGS,
+             capture = TRUE)
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
@@ -38,9 +45,12 @@ if(faosws::CheckDebug()){
     flog.debug("R_SWS_SHARE_PATH system variable not found.")
     Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
     flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-               temdir())
+               tempdir())
   }
 }
+
+flog.debug("User's computation parameters:",
+           swsContext.computationParams, capture = TRUE)
 
 # SWS user name ####
 # Remove domain from username
@@ -65,7 +75,7 @@ dir.create(reportdir, recursive = TRUE)
 flog.appender(appender.file(file.path(reportdir,
                                       "report.txt")))
 
-flog.info("SWS user: %s", SWS_USER)
+flog.info("SWS-session is run by user %s", SWS_USER)
 
 if(!CheckDebug()){
 

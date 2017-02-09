@@ -177,7 +177,8 @@ flog.debug("Reading in hs-fcl mapping")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
-flog.info("Rows in HS->FCL mapping table: %s", nrow(hsfclmap3))
+flog.info("HS->FCL mapping table preview:",
+          glimpse0(hsfclmap3), capture = TRUE)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &

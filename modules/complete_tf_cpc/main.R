@@ -268,7 +268,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
-flog.info("Records in raw Eurostat data: %s", nrow(esdata))
+flog.info("Raw Eurostat data preview:",
+          glimpse0(esdata), capture = TRUE)
 
 ##' 1. Remove non-numeric codes for reporters/partners/commodities.
 

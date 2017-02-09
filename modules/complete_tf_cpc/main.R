@@ -41,8 +41,12 @@ if(faosws::CheckDebug()){
                temdir())
   }
 
-  swsContext.computationParams$year <- "2014"
-  swsContext.computationParams$out_coef <- "1.5"
+  # Workaround to provide SWS computation params
+  # probably it is possible with faoswsModules::ReadSettings
+  if(!exists("year", where = swsContext.computationParams))
+    swsContext.computationParams$year <- "2014"
+  if(!exists("out_coef", where = swsContext.computationParams))
+    swsContext.computationParams$out_coef <- "1.5"
 }
 
 # SWS user name ####

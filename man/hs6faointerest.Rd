@@ -15,4 +15,3 @@ Version of December 2016. Consists of 1061 codes.
 https://github.com/SWS-Methodology/faoswsTrade/issues/66
 }
 \keyword{datasets}
-

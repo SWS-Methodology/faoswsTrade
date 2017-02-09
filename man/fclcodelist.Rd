@@ -12,4 +12,3 @@ fclcodelist
 Local replacement for table with fcl codes and descriptions from SWS
 }
 \keyword{datasets}
-

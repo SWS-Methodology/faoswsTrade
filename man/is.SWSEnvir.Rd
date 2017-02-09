@@ -13,4 +13,3 @@ logical value. TRUE if there
 Detecting existence of SWS Envir in calling env
 by looking for swsContext.datasets
 }
-

@@ -21,4 +21,3 @@ detectOutliers(tradedata = NA, method = NA, parameters = NA)
 \description{
 An anomalous unit value will be indicated as "outlier".
 }
-

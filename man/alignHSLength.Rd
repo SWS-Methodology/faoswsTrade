@@ -30,4 +30,3 @@ Alignes length of hs codes in three places: vector from trade
   on right-hand side: trade data hs code and mapping 
   fromcode are extended by 0, mapping tocode is extended by 9.
 }
-

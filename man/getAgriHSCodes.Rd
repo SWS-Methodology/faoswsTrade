@@ -12,4 +12,3 @@ Character vector
 \description{
 List of agricultural commodities provided by Cladia DeVita.
 }
-

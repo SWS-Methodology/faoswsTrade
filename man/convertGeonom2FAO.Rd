@@ -9,4 +9,3 @@ convertGeonom2FAO(geonom)
 \description{
 Convertion of EuroStat Geonomenclature to FAO area codes
 }
-

@@ -9,4 +9,3 @@ applyadj(rep, yr, adjustments, tradedata, dbg = FALSE)
 \description{
 Apply adjustments to trade data
 }
-

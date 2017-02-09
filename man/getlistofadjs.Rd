@@ -9,4 +9,3 @@ getlistofadjs(rep, yr, adjustments)
 \description{
 Generate list of adjustments from a table extracted from MDB notes
 }
-

@@ -38,7 +38,7 @@ if(faosws::CheckDebug()){
     flog.debug("R_SWS_SHARE_PATH system variable not found.")
     Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
     flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-               temdir())
+               tempdir())
   }
 }
 

@@ -63,7 +63,7 @@ reportdir <- file.path(
 stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 
-flog.appender(appender.file(file.path(reportdir,
+flog.appender(appender.tee(file.path(reportdir,
                                       "report.txt")))
 
 flog.info("SWS user: %s", SWS_USER)

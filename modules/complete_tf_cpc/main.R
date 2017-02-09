@@ -279,6 +279,7 @@ esdata <- esdata %>%
 
 flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 
+# TODO: do we need this piece?
 esdata <- tbl_df(esdata)
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).

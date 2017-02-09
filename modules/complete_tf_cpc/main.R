@@ -294,6 +294,8 @@ esdata <- filterHS6FAOinterest(esdata)
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
+# TODO now we turn esdata back from data.frame to data.table
+# do we need it?
 esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]

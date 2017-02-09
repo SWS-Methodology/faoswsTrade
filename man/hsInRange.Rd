@@ -34,4 +34,3 @@ Input hs, areacode and flowname columns are used to build
   data frame with hs-codes to convert. Probably it is easier to
   pass a data frame, then separate vectors.
 }
-

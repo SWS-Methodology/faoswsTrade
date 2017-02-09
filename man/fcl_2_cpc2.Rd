@@ -16,4 +16,3 @@ This table was created from a more exhaustive table provided by Giorgio
 and present in the data-raw (Conv_3DEC2015_E.XLSX)
 }
 \keyword{datasets}
-

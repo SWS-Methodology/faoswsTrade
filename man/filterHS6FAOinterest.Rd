@@ -10,4 +10,3 @@ filterHS6FAOinterest(tradedata)
 Fiter out HS codes which don't participate in futher processing
 Such solution drops all HS codes shorter than 6 digits.
 }
-

@@ -24,4 +24,3 @@ aggregation when weight is always missing, but quantity is always present
 and vice versa. When aggregation is not possible the record will be left
 untouched as the missing variable will be imputed in the imputation step.
 }
-

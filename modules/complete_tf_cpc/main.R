@@ -289,13 +289,14 @@ esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
 
 ## Only regime 4 is relevant for Eurostat data
-esdata <- esdata[esdata$stat_regime=="4",]
+esdata <- esdata %>%
+  filter_(~stat_regime == "4") %>%
+## Removing stat_regime as it is not needed anymore
+  select_(~-stat_regime)
 
 flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 
-## Removing stat_regime as it is not needed anymore
-esdata[,stat_regime:=NULL]
-
+# TODO: do we need this piece?
 esdata <- tbl_df(esdata)
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
@@ -310,6 +311,8 @@ esdata <- filterHS6FAOinterest(esdata)
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
+# TODO now we turn esdata back from data.frame to data.table
+# do we need it?
 esdata <- data.table::as.data.table(esdata)
 esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]

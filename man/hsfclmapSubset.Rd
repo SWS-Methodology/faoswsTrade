@@ -18,4 +18,3 @@ A tbl which is a subset of \code{map}.
 Remove irrelevant years in the HS to FCL mapping. When there is not
 a specific year for the mapping, take the nearest year.
 }
-

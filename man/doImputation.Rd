@@ -22,4 +22,3 @@ The median unit value is calculated in a specific-to-generic fashion:
 The first available of these options will be used (for HS, HS8 and HS6
 only when there are at least 10 flows).
 }
-

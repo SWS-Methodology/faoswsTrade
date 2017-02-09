@@ -26,4 +26,3 @@ international shipping costs, a CIF (Cost, Insurance, Freight) / FOB
 is set at 12% (imports are increased by 12% the values of reporters'
 exports).
 }
-

@@ -4,6 +4,7 @@ debughsfclmap <- TRUE
 
 # Parallel backend will be used only if required packages
 # are installed
+# It will be switched to FALSE if packages are not available
 multicore <- TRUE
 
 ## If true, the reported values will be in $
@@ -106,8 +107,10 @@ if(multicore) {
     cpucores <- parallel::detectCores(all.tests = TRUE)
     flog.debug("CPU cores detected: %s.", cpucores)
     doParallel::registerDoParallel(cores = cpucores)
-  } else
+  } else {
     flog.debug("Multicore backend is not available.")
+    multicore <- FALSE
+  }
 }
 
 

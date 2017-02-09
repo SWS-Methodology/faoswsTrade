@@ -78,6 +78,8 @@ flog.appender(appender.tee(file.path(reportdir,
 
 flog.info("SWS-session is run by user %s", SWS_USER)
 
+flog.debug("R session environment: ",
+           sessionInfo(), capture = TRUE)
 if(!CheckDebug()){
 
   options(error = function(){
@@ -155,6 +157,8 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 
 hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
 
+flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
+
 startTime = Sys.time()
 
 ##' # Input Data
@@ -169,6 +173,7 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
+flog.debug("Reading in hs-fcl mapping")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 

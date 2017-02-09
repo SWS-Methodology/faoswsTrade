@@ -272,12 +272,12 @@ esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
 
 ## Only regime 4 is relevant for Eurostat data
-esdata <- esdata[esdata$stat_regime=="4",]
+esdata <- esdata %>%
+  filter_(~stat_regime == "4") %>%
+## Removing stat_regime as it is not needed anymore
+  select_(~-stat_regime)
 
 flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
-
-## Removing stat_regime as it is not needed anymore
-esdata[,stat_regime:=NULL]
 
 esdata <- tbl_df(esdata)
 

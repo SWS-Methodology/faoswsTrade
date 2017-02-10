@@ -509,26 +509,63 @@ tldata <- tldata %>%
 tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
-##' 1. Map HS to FCL.
-
-##+ tl_hs2fcl
+# TF: Map HS to FCL ####
 
 tldatalinks <- tldata %>%
   do(hsInRange(.$hs, .$reporter, .$flow,
                hsfclmap,
                parallel = multicore))
 
-tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
+             {flog.info("Tariffline nonmapped unique links by reporter:",
+                        group_by_(., ~reporter) %>% 
+                          summarise_(nolink_count = ~sum(nolink),
+                                     nolink_prop  = ~sum(nolink) / n()) %>% 
+                          ungroup %>% 
+                          arrange_(~desc(nolink_prop)) %>% 
+                          mutate_(nolink_prop = ~percent(nolink_prop)) %>% 
+                          filter_(~nolink_count > 0) %>% 
+                          as.data.frame,
+                        capture = TRUE)} 
+  
+            
+tldata <- tldata %>%
+  left_join(tldatalinks %>% 
+              mutate_(nolink = ~is.na(fcl)) %>% 
+              group_by_(~reporter) %>% 
+              mutate_(uniq_nolink_count = ~sum(nolink),
+                         uniq_nolink_prop  = ~sum(nolink) / n()) %>% 
+              ungroup, 
+            by = c("reporter", "flow", "hs")) %T>% 
+            {flog.info("Tariffline nonmapped links:",
+                       group_by_(., 
+                                 ~reporter, 
+                                 ~uniq_nolink_count,
+                                 ~uniq_nolink_prop) %>% 
+                         summarise_(nolink_count = ~sum(nolink),
+                                    nolink_prop  = ~sum(nolink) / n()) %>% 
+                         ungroup %>% 
+                         filter_(~nolink_count > 0) %>% 
+                         arrange_(~desc(uniq_nolink_prop)) %>% 
+                         mutate_at(vars(ends_with("_prop")), percent) %>% 
+                           as.data.frame,
+                         capture = TRUE)} %>% 
+  select_(~-starts_with("uniq_nolink_")) 
+            
 ##' 1. Remove unmapped FCL codes.
 
 ## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
-  filter_(~is.na(fcl))
+  filter_(~nolink) %>% 
+  select_(~-nolink)
 
 tldata <- tldata %>%
-  filter_(~!(is.na(fcl)))
+  filter_(~!nolink) %>% 
+  select_(~-nolink)
+
+write.csv(tldata_fcl_not_mapped,
+          file = file.path(reportdir,
+                           "tldata_fcl_not_mapped.csv"))
 
 #############Units of measurment in TL ####
 

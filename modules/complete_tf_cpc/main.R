@@ -259,6 +259,8 @@ hs_chapters_str <-
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
+flog.info(toupper("##### Eurostat trade data #####"))
+
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         columns = c("declarant", "partner",
                                     "product_nc", "flow",

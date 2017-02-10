@@ -17,6 +17,7 @@ use_adjustments <- FALSE
 # Libraries ####
 suppressPackageStartupMessages(library(data.table))
 library(stringr)
+library(magrittr)
 library(scales)
 library(tidyr)
 library(futile.logger)
@@ -277,13 +278,20 @@ flog.info("Raw Eurostat data preview:",
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
-esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
 
-flog.info("Records after removing non-numeric reporter codes: %s", nrow(esdata))
+esdata <- esdata %>% 
+  mutate_at(vars(declarant, partner),
+            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %T>%
+            {flog.info("Non-numeric area codes: ",
+             summarize_at(.,
+                          .cols = vars(ends_with("non_numeric")),
+                          .funs = funs(total = sum,
+                                       prop = percent(sum(.) / n()))),
+             capture = TRUE)} %>%
+  filter_(~!declarant_non_numeric & !partner_non_numeric) %>% 
+  select(-ends_with("non_numeric"))
 
-esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
-
-flog.info("Records after removing non-numeric partner codes: %s", nrow(esdata))
+flog.info("Records after removing non-numeric area codes: %s", nrow(esdata))
 
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]

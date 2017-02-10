@@ -519,28 +519,26 @@ tldatalinks <- tldata %>%
                hsfclmap,
                parallel = multicore))
 
-
-             {flog.info("Tariffline nonmapped unique links by reporter:",
-                        group_by_(., ~reporter) %>%
-                          summarise_(nolink_count = ~sum(nolink),
-                                     nolink_prop  = ~sum(nolink) / n()) %>%
-                          ungroup %>%
-                          arrange_(~desc(nolink_prop)) %>%
-                          mutate_(nolink_prop = ~percent(nolink_prop)) %>%
-                          filter_(~nolink_count > 0) %>%
-                          as.data.frame,
-                        capture = TRUE)}
-
-
+# Join links with main dataset and simultaneously create and write statistics
+# to report
+# Probably it is better to split data hadling and report production
 tldata <- tldata %>%
   left_join(tldatalinks %>%
               mutate_(nolink = ~is.na(fcl)) %>%
+              # prepare data for report
+              # it is unique links statistic
               group_by_(~reporter) %>%
               mutate_(uniq_nolink_count = ~sum(nolink),
                          uniq_nolink_prop  = ~sum(nolink) / n()) %>%
               ungroup,
-            by = c("reporter", "flow", "hs")) %T>%
+            by = c("reporter", "flow", "hs")) %T>% # <== magrittr's tee operator!
+  # We pass tldata with unique links statistics
+  # to next piece of code with tee operator.
+  # Tee op allows to evaluate the piece
+  # but further the previous chunk is passed
+  # So we use tee op for its side effect (of writing to report file)
             {flog.info("Tariffline nonmapped links:",
+                       # Non-mapped not unique links statistics
                        group_by_(.,
                                  ~reporter,
                                  ~uniq_nolink_count,
@@ -553,6 +551,8 @@ tldata <- tldata %>%
                          mutate_at(vars(ends_with("_prop")), percent) %>%
                            as.data.frame,
                          capture = TRUE)} %>%
+  # Everything between tee op and next pipe op is sent to the report
+  # and was forgotten
   select_(~-starts_with("uniq_nolink_"))
 
 ##' 1. Remove unmapped FCL codes.

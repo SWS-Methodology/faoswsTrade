@@ -44,6 +44,8 @@ dollars <- FALSE
 ## If TRUE, use adjustments (AKA "conversion notes")
 use_adjustments <- FALSE
 
+# If TRUE, use impute outliers
+detect_outliers <- FALSE
 
 ##+ libs
 
@@ -745,8 +747,12 @@ tradedata$uv <- round(tradedata$uv, 10)
 
 ##' 1. Outlier detection by using the logarithm of the unit value.
 
-tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
-                            parameters = list(out_coef = out_coef))
+if (detect_outliers) {
+  tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
+                              parameters = list(out_coef = out_coef))
+} else {
+  tradedata$outlier <- FALSE
+}
 
 ##+ impute_qty_uv
 

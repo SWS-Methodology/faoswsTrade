@@ -605,6 +605,7 @@ cond <- (tldata$qty == 0 | is.na(tldata$qty)) &
 
 tldata$qtyfcl <- ifelse(cond, tldata$weight, tldata$qtyfcl)
 
+# XXX
 # Flag on weight as qty (which underwent a change) will populate weight
 tldata <- tldata %>%
   setFlag3(!cond, type = 'method', flag = 'i', variable = 'weight')
@@ -918,9 +919,9 @@ flagWeightTable_status <- frame_data(
 flagWeightTable_method <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
   'h',                   1.00,
-  'c',                   0.80,
-  'i',                   0.60,
-  'e',                   0.40,
+  'i',                   0.80,
+  'e',                   0.60,
+  'c',                   0.40,
   's',                   0.20
 )
 
@@ -1021,7 +1022,15 @@ data.table::setcolorder(complete_trade_flow_cpc,
 
 # XXX Temporary workaround: some NAs are given flags and given
 # that NAs cannot have flags the system refuses to save them.
-complete_trade_flow_cpc <- complete_trade_flow_cpc[!is.na(Value),]
+# These NAs are unit values computed on a zero quantity. Setting
+# Value to zero.
+complete_trade_flow_cpc[is.na(Value), Value := 0]
+
+# FIXME "official" flagObservationStatus should be <BLANK>
+# instead of X (this was a choice made after X was chosen
+# as official flag)
+complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
+
 
 message(sprintf("[%s] Writing data to session/database", PID))
 

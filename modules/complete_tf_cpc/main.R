@@ -74,6 +74,9 @@ reportdir <- file.path(
 stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 
+# Open report directory in system default file browser
+if(interactive()) browseURL(reportdir)
+
 flog.appender(appender.tee(file.path(reportdir,
                                       "report.txt")))
 
@@ -279,7 +282,7 @@ flog.info("Raw Eurostat data preview:",
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
 
-esdata <- esdata %>% 
+esdata <- esdata %>%
   mutate_at(vars(declarant, partner),
             funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %T>%
             {flog.info("Non-numeric area codes: ",
@@ -288,7 +291,7 @@ esdata <- esdata %>%
                           .funs = funs(total = sum,
                                        prop = percent(sum(.) / n()))),
              capture = TRUE)} %>%
-  filter_(~!declarant_non_numeric & !partner_non_numeric) %>% 
+  filter_(~!declarant_non_numeric & !partner_non_numeric) %>%
   select(-ends_with("non_numeric"))
 
 flog.info("Records after removing non-numeric area codes: %s", nrow(esdata))
@@ -518,49 +521,49 @@ tldatalinks <- tldata %>%
 
 
              {flog.info("Tariffline nonmapped unique links by reporter:",
-                        group_by_(., ~reporter) %>% 
+                        group_by_(., ~reporter) %>%
                           summarise_(nolink_count = ~sum(nolink),
-                                     nolink_prop  = ~sum(nolink) / n()) %>% 
-                          ungroup %>% 
-                          arrange_(~desc(nolink_prop)) %>% 
-                          mutate_(nolink_prop = ~percent(nolink_prop)) %>% 
-                          filter_(~nolink_count > 0) %>% 
+                                     nolink_prop  = ~sum(nolink) / n()) %>%
+                          ungroup %>%
+                          arrange_(~desc(nolink_prop)) %>%
+                          mutate_(nolink_prop = ~percent(nolink_prop)) %>%
+                          filter_(~nolink_count > 0) %>%
                           as.data.frame,
-                        capture = TRUE)} 
-  
-            
+                        capture = TRUE)}
+
+
 tldata <- tldata %>%
-  left_join(tldatalinks %>% 
-              mutate_(nolink = ~is.na(fcl)) %>% 
-              group_by_(~reporter) %>% 
+  left_join(tldatalinks %>%
+              mutate_(nolink = ~is.na(fcl)) %>%
+              group_by_(~reporter) %>%
               mutate_(uniq_nolink_count = ~sum(nolink),
-                         uniq_nolink_prop  = ~sum(nolink) / n()) %>% 
-              ungroup, 
-            by = c("reporter", "flow", "hs")) %T>% 
+                         uniq_nolink_prop  = ~sum(nolink) / n()) %>%
+              ungroup,
+            by = c("reporter", "flow", "hs")) %T>%
             {flog.info("Tariffline nonmapped links:",
-                       group_by_(., 
-                                 ~reporter, 
+                       group_by_(.,
+                                 ~reporter,
                                  ~uniq_nolink_count,
-                                 ~uniq_nolink_prop) %>% 
+                                 ~uniq_nolink_prop) %>%
                          summarise_(nolink_count = ~sum(nolink),
-                                    nolink_prop  = ~sum(nolink) / n()) %>% 
-                         ungroup %>% 
-                         filter_(~nolink_count > 0) %>% 
-                         arrange_(~desc(uniq_nolink_prop)) %>% 
-                         mutate_at(vars(ends_with("_prop")), percent) %>% 
+                                    nolink_prop  = ~sum(nolink) / n()) %>%
+                         ungroup %>%
+                         filter_(~nolink_count > 0) %>%
+                         arrange_(~desc(uniq_nolink_prop)) %>%
+                         mutate_at(vars(ends_with("_prop")), percent) %>%
                            as.data.frame,
-                         capture = TRUE)} %>% 
-  select_(~-starts_with("uniq_nolink_")) 
-            
+                         capture = TRUE)} %>%
+  select_(~-starts_with("uniq_nolink_"))
+
 ##' 1. Remove unmapped FCL codes.
 
 ## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
-  filter_(~nolink) %>% 
+  filter_(~nolink) %>%
   select_(~-nolink)
 
 tldata <- tldata %>%
-  filter_(~!nolink) %>% 
+  filter_(~!nolink) %>%
   select_(~-nolink)
 
 write.csv(tldata_fcl_not_mapped,

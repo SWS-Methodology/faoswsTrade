@@ -132,7 +132,10 @@ hsInRange <- function(hs,
 
     },
     .parallel = parallel,
-    .progress = ifelse(interactive() & !parallel, "text", "none")
+    .progress = ifelse(interactive() &
+                         !parallel &
+                         length(hs) > 10^4,
+                       "text", "none")
   )
 
   df <- df %>%

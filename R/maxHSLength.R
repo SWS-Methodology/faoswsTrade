@@ -18,12 +18,6 @@
 
 maxHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
 
-  # Extract unique input combinations ####
-
-  uniqhs <- tradedata %>%
-    select_(~reporter, ~flow, ~hs) %>%
-    distinct
-
   # Vectorizing over reporter and flow in tradedata
 
   if(length(unique(uniqhs$reporter)) > 1L |
@@ -47,7 +41,9 @@ maxHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
   maxtolength   <- max(stringr::str_length(mapdataset$tocode))
   uniqhs$maxhslength  <- max(maxhslength, maxtolength, maxfromlength)
 
-  uniqhs
+  uniqhs %>%
+    select_(~-hs) %>%
+    distinct
 
   tradedata$hs <- as.numeric(stringr::str_pad(
     tradedata$hs,

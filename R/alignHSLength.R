@@ -1,14 +1,11 @@
 #' Prepares for numerical comparison vector of hs codes from
 #' trade dataset with hs codes range from mapping table.
 #'
-#' @param hs Vector of original hs codes from trade data set.
+#' @param tradedata A data frame with columns `reporter`, `flow` and `hs`.
 #' @param mapdataset Data frame with mapping table containing
 #'   at least columns area, flow, fromcode, tocode
 #'
-#' @return A list with two components:
-#'   * hs - vector with extended hs codes
-#'   * mapdataset - data frame with extended fromcode and to code
-#'   columns.
+#' @return A data frame with columns `reporter`, `flow` and `maxhslength`.
 #'
 #' @details Alignes length of hs codes in three places: vector from trade
 #'   dataset, fromcode and tocode columns of mapping dataset.
@@ -16,34 +13,41 @@
 #'   on right-hand side: trade data hs code and mapping
 #'   fromcode are extended by 0, mapping tocode is extended by 9.
 #'
+#' @import dplyr
 #' @export
 
-alignHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
+maxHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
 
-  stopifnot(all(stringr::str_detect(tradedata$hs, "^\\d+$")))
-  stopifnot(all(stringr::str_detect(mapdataset$fromcode, "^\\d+$")))
-  stopifnot(all(stringr::str_detect(mapdataset$tocode, "^\\d+$")))
+  # Extract unique input combinations ####
+
+  uniqhs <- tradedata %>%
+    select_(~reporter, ~flow, ~hs) %>%
+    distinct
 
   # Vectorizing over reporter and flow in tradedata
 
-  if(length(unique(tradedata$reporter)) > 1 |
-     length(unique(tradedata$flow)) > 1)
-    return(plyr::dlply(tradedata,
-                       c("area", "flow"),
-                       function(df) alignHSLength(
-                         df, mapdataset,
-                         .parallel = parallel)))
+  if(length(unique(uniqhs$reporter)) > 1L |
+     length(unique(uniqhs$flow)) > 1L) return(
+       plyr::ddply(.data = uniqhs,
+                   .variables = c("area", "flow"),
+                   .parallel = parallel,
+                   .fun = maxHSLength,
+                   mapdataset
+       )
+     )
 
 
   # Filter mapping table by current reporter and flow
   mapdataset <- mapdataset %>%
-    filter_(~reporter == tradedata$reporter[1],
-            ~flow == tradedata$flow[1])
+    filter_(~reporter == uniqhs$reporter[1],
+            ~flow == uniqhs$flow[1])
 
-  maxhslength   <- max(stringr::str_length(tradedata$hs))
+  maxhslength   <- max(stringr::str_length(uniqhs$hs))
   maxfromlength <- max(stringr::str_length(mapdataset$fromcode))
   maxtolength   <- max(stringr::str_length(mapdataset$tocode))
-  maxlength     <- max(maxhslength, maxtolength, maxfromlength)
+  uniqhs$maxhslength  <- max(maxhslength, maxtolength, maxfromlength)
+
+  uniqhs
 
   tradedata$hs <- as.numeric(stringr::str_pad(
     tradedata$hs,

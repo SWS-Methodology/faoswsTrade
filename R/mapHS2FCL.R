@@ -27,6 +27,8 @@ mapHS2FCL <- function(tradedata, maptable, parallel = NULL) {
 
   # extend mapping
 
+  # maptable <- maptable %>%
+  #   left_join(hslength, by = c("area" = "reporter", ))
   # Find mappings ####
 
   # Choose one from multiple matches ####

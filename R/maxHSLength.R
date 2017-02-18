@@ -45,28 +45,25 @@ maxHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
     select_(~-hs) %>%
     distinct
 
-  tradedata$hs <- as.numeric(stringr::str_pad(
-    tradedata$hs,
-    width = maxlength,
-    side  = "right",
-    pad   = "0"
-  ))
-
-  mapdataset$fromcode <- as.numeric(stringr::str_pad(
-    mapdataset$fromcode,
-    width = maxlength,
-    side  = "right",
-    pad   = "0"
-  ))
-
-  mapdataset$tocode <- as.numeric(stringr::str_pad(
-    mapdataset$tocode,
-    width = maxlength,
-    side  = "right",
-    pad   = "9"
-  ))
-
-  list(tradedata = tradedata,
-       mapdataset = mapdataset)
+  # tradedata$hs <- as.numeric(stringr::str_pad(
+  #   tradedata$hs,
+  #   width = maxlength,
+  #   side  = "right",
+  #   pad   = "0"
+  # ))
+  #
+  # mapdataset$fromcode <- as.numeric(stringr::str_pad(
+  #   mapdataset$fromcode,
+  #   width = maxlength,
+  #   side  = "right",
+  #   pad   = "0"
+  # ))
+  #
+  # mapdataset$tocode <- as.numeric(stringr::str_pad(
+  #   mapdataset$tocode,
+  #   width = maxlength,
+  #   side  = "right",
+  #   pad   = "9"
+  # ))
 
 }

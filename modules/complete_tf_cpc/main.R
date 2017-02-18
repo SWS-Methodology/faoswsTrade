@@ -124,12 +124,12 @@ if(multicore) {
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
+# Read SWS module run parameters ####
+
 stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
-##' # Parameters
-##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 flog.info("Working year: %s", year)
 
@@ -147,11 +147,7 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
 
 startTime = Sys.time()
 
-##' # Input Data
-##'
-##' ## Supplementary Datasets
-
-##+ datasets
+# Supplementary Datasets ####
 
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
@@ -322,7 +318,7 @@ esdata <- esdata %>%
 flog.info("Records after removing areas absent in HS->FCL map: %s",
           nrow(esdata))
 
-## es_hs2fcl ####
+# ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
@@ -343,7 +339,6 @@ flog.info("Records after HS-FCL mapping: %s",
 
 ##' 1. Remove unmapped FCL codes.
 
-## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
 
@@ -359,7 +354,6 @@ flog.info("Records after removing non-mapped HS codes: %s",
 
 ##' 1. Add FCL units.
 
-## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
@@ -383,11 +377,7 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
-##' # Extract UNSD Tariffline Data
-
-##+ tradeload
-
-##' 1. Download raw data from SWS, filtering by `hs_chapters`.
+# Download TL data ####
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),

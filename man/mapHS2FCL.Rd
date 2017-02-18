@@ -4,7 +4,7 @@
 \alias{mapHS2FCL}
 \title{Function to map HS codes to FCL codes}
 \usage{
-mapHS2FCL(tradedata, maptable, parallel = NULL)
+mapHS2FCL(tradedata, maptable, parallel = FALSE)
 }
 \description{
 Function to map HS codes to FCL codes

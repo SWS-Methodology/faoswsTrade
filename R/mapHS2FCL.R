@@ -5,8 +5,6 @@
 
 mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
-  stopifnot(all(c("reporter", "flow", "hs") %in% colnames(tradedata)))
-
   # Extract unique input combinations ####
 
   uniqhs <- tradedata %>%
@@ -18,17 +16,15 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
   tradedata <- tradedata %>%
-    left_join(hslength, by = c("reporter", "flow")) %>%
+    left_join(hslength, by = c("reporter", "flow")) %>% 
     mutate_(hsextchar = ~stringr::str_pad(hs,
                                           width = maxhslength,
                                           side = "right",
                                           pad = "0"),
             hsext = ~as.numeric(hsextchar))
 
-  # extend mapping
-
-  maptable <- maptable %>%
-    left_join(hslength, by = c("area" = "reporter", "flow")) %>%
+  maptable <- hslength %>%
+    left_join(maptable, by = c("reporter" = "area", "flow")) %>%
     mutate_(fromcodeextchar = ~stringr::str_pad(fromcode,
                                          width = maxhslength,
                                          side = "right",
@@ -36,14 +32,18 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
             tocodeextchar = ~stringr::str_pad(tocode,
                                        width = maxhslength,
                                        side = "right",
-                                       pad = "9")) %>%
+                                       pad = "9")) %>% 
     mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
-            tocodeext   = ~as.numeric(tocodeextchar))
+            tocodeext   = ~as.numeric(tocodeextchar),
+            # Is it legitimate to create row numbers in such way?
+            maplinkid   = ~row_number(reporter)) 
 
 
   # Find mappings ####
 
-  # Choose one from multiple matches ####
+  uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel) 
+
+  # Choose ones from multiple matches ####
 
   # Join original trade dataset with mapping ####
 

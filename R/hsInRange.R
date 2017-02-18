@@ -22,57 +22,33 @@
 #' @export
 
 
-hsInRange <- function(hs,
-                      areacode,
-                      flowname,
+hsInRange <- function(uniqhs,
                       mapdataset,
                       parallel = FALSE) {
 
-  # Constructing of data.frame with original hs codes.
-  if(!all.equal(length(hs),
-                length(areacode),
-                length(flowname)))
-    stop("Vectors of different length")
-
-  stopifnot("recordnumb" %in% colnames(mapdataset))
-
-  df <- data_frame(hs = hs,
-                   areacode = areacode,
-                   flowname = flowname) %>%
-    distinct %>%
-    mutate(id = row_number())
-
-
+  df <- uniqhs %>%
+    mutate(datumid = row_number())
 
   # Splitting of trade dataset by area and flow
   # and applying mapping function to each part
-  # TODO: define the function outside and refer to
-  # it by name for easy performance profiling
   df_fcl <- plyr::ddply(
     df,
-    .variables = c("areacode", "flowname"),
+    .variables = c("reporter", "flow"),
     .fun = function(subdf) {
 
       # Subsetting mapping file
       mapdataset <- mapdataset %>%
-        filter_(~area == subdf$areacode[1],
-                ~flow == subdf$flowname[1])
+        filter_(~reporter == subdf$reporter[1],
+                ~flow == subdf$flow[1])
 
       # If no corresponding records in map return empty df
       if(nrow(mapdataset) == 0)
         return(data_frame(
-          id = subdf$id,
+          datumid = subdf$id,
           hs = subdf$hs,
           fcl = as.integer(NA),
-          recordnumb = as.numeric(NA)))
+          maplinkid = as.numeric(NA)))
 
-      # Align length of HS codes in map and dataset
-      # to make possible comparison of numbers
-      aligned <- alignHSLength(subdf$hs, mapdataset)
-
-      #Replacing original hs codes by aligned versions
-      subdf$hs <- aligned$hs
-      mapdataset <- aligned$mapdataset
 
       # Split original data.frame by row,
       # and looking for matching fcl codes
@@ -80,7 +56,7 @@ hsInRange <- function(hs,
       # If there are multiple matchings we return
       # all matches.
       fcl <- plyr::ldply(
-        subdf$id,
+        subdf$datumid,
         function(currentid) {
 
           # Put single hs code into a separate variable
@@ -90,43 +66,25 @@ hsInRange <- function(hs,
             unlist() %>% unname()
 
           mapdataset <- mapdataset %>%
-            filter_(~fromcode <= hs &
-                      tocode >= hs)
+            filter_(~fromcodeext <= hs &
+                      tocodeext >= hs)
 
           # If no corresponding HS range is
           # available return empty integer
-          if(nrow(mapdataset) == 0) {
+          if(nrow(mapdataset) == 0L) {
             fcl <- as.integer(NA)
-            recordnumb <- as.numeric(NA)
+            maplinkid <- as.numeric(NA)
           }
 
-          if(nrow(mapdataset) == 1L) {
+          if(nrow(mapdataset) >= 1L) {
              fcl <- mapdataset$fcl
-             recordnumb <- mapdataset$recordnumb
-          }
-             # Selection of the narrowest hs range
-          if(nrow(mapdataset) > 1L) {
-            mapdataset <- mapdataset %>%
-              mutate_(hsrange = ~tocode - fromcode) %>%
-              filter_(~hsrange == min(hsrange))
-
-            # If there are still several options
-            # we choose the yougest
-            if(nrow(mapdataset) > 1L) {
-              mapdataset <- mapdataset %>%
-               filter_(~recordnumb == max(recordnumb))
-            }
-
-            stopifnot(nrow(mapdataset) == 1L)
-
-            fcl <- mapdataset$fcl
-            recordnumb <- mapdataset$recordnumb
+             maplinkid <- mapdataset$maplinkid
           }
 
           data_frame(id = currentid,
                      hs = hs,
                      fcl = fcl,
-                     recordnumb = recordnumb)
+                     maplinkid = maplinkid)
         }
       )
 
@@ -134,23 +92,7 @@ hsInRange <- function(hs,
     .parallel = parallel,
     .progress = ifelse(interactive() &
                          !parallel &
-                         length(hs) > 10^4,
+                         nrow(uniqhs) > 10^4,
                        "text", "none")
   )
-
-  df <- df %>%
-    rename_(hsorig = ~hs) %>%
-    # Joining original trade dataset
-    # with new dataset containing fcl codes
-    left_join(df_fcl,
-              by = c("id", "areacode", "flowname")) %>%
-    select_(~id,
-            reporter = ~areacode,
-            flow = ~flowname,
-            hs = ~hsorig,
-            hsext = ~hs,
-            ~fcl,
-            ~recordnumb)
-
-  df
 }

@@ -16,14 +16,14 @@
 #' @import dplyr
 #' @export
 
-maxHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
+maxHSLength <- function(uniqhs, mapdataset, parallel = FALSE) {
 
   # Vectorizing over reporter and flow in tradedata
 
   if(length(unique(uniqhs$reporter)) > 1L |
      length(unique(uniqhs$flow)) > 1L) return(
        plyr::ddply(.data = uniqhs,
-                   .variables = c("area", "flow"),
+                   .variables = c("reporter", "flow"),
                    .parallel = parallel,
                    .fun = maxHSLength,
                    mapdataset
@@ -33,7 +33,7 @@ maxHSLength <- function(tradedata, mapdataset, parallel = FALSE) {
 
   # Filter mapping table by current reporter and flow
   mapdataset <- mapdataset %>%
-    filter_(~reporter == uniqhs$reporter[1],
+    filter_(~area == uniqhs$reporter[1],
             ~flow == uniqhs$flow[1])
 
   maxhslength   <- max(stringr::str_length(uniqhs$hs))

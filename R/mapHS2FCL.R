@@ -3,7 +3,7 @@
 #' @import dplyr
 #' @export
 
-mapHS2FCL <- function(tradedata, maptable, parallel = NULL) {
+mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   stopifnot(all(c("reporter", "flow", "hs") %in% colnames(tradedata)))
 
@@ -13,22 +13,34 @@ mapHS2FCL <- function(tradedata, maptable, parallel = NULL) {
     select_(~reporter, ~flow, ~hs) %>%
     distinct
 
-  # Align HS codes from data and table ####
+  ## Align HS codes from data and table #####
 
-  hslength <- maxHSLength(uniqhs, maptable)
+  hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
   tradedata <- tradedata %>%
-    left_join(hslength, by = c("reporter", "area")) %>%
+    left_join(hslength, by = c("reporter", "flow")) %>%
     mutate_(hsextchar = ~stringr::str_pad(hs,
-            width = maxhslength,
-            side = "right",
-            pad = "0"),
+                                          width = maxhslength,
+                                          side = "right",
+                                          pad = "0"),
             hsext = ~as.numeric(hsextchar))
 
   # extend mapping
 
-  # maptable <- maptable %>%
-  #   left_join(hslength, by = c("area" = "reporter", ))
+  maptable <- maptable %>%
+    left_join(hslength, by = c("area" = "reporter", "flow")) %>%
+    mutate_(fromcodeextchar = ~stringr::str_pad(fromcode,
+                                         width = maxhslength,
+                                         side = "right",
+                                         pad = "0"),
+            tocodeextchar = ~stringr::str_pad(tocode,
+                                       width = maxhslength,
+                                       side = "right",
+                                       pad = "9")) %>%
+    mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
+            tocodeext   = ~as.numeric(tocodeextchar))
+
+
   # Find mappings ####
 
   # Choose one from multiple matches ####

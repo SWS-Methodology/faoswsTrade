@@ -380,19 +380,12 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
-##+ tl_m49fao
-## Based on Excel file from UNSD (unsdpartners..)
-
-##' 1. Remove non-numeric commodity codes.
-
-##+ tl-force-numeric-comm
-
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-##+ tl-aggregate-multiple-rows
+# tl-aggregate-multiple-rows ####
 
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
@@ -404,6 +397,8 @@ tldata <- preAggregateMultipleTLRows(tldata)
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 tldata <- filterHS6FAOinterest(tldata)
+
+# M49 to FAO area list ####
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion
@@ -426,19 +421,14 @@ tldata <- tldata %>%
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
 
-##+ drop_es_from_tl
-
-##' 1. European countries are removed (will be replaced by ES data).
-
 # They will be replaced by ES data
-
 tldata <- tldata %>%
   anti_join(esdata %>%
               select_(~reporter) %>%
               distinct(),
             by = "reporter")
 
-##+ drop_reps_not_in_mdb
+##+ drop_reps_not_in_mdb ####
 
 ##' 1. Area codes not mapping to any FAO country code are removed.
 
@@ -452,7 +442,7 @@ tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
-##+ reexptoexp
+##+ reexptoexp ####
 
 ##' 1. Re-imports become imports and re-exports become exports.
 
@@ -466,7 +456,7 @@ tldata <- tldata %>%
 
 ##' 1. Map HS to FCL.
 
-##+ tl_hs2fcl
+##+ tl_hs2fcl ####
 
 tldatalinks <- tldata %>%
   do(hsInRange(.$hs, .$reporter, .$flow,
@@ -476,9 +466,8 @@ tldatalinks <- tldata %>%
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
-##' 1. Remove unmapped FCL codes.
+##' 1. Remove unmapped FCL codes. ####
 
-## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
   filter_(~is.na(fcl))
 
@@ -487,7 +476,7 @@ tldata <- tldata %>%
 
 #############Units of measurment in TL ####
 
-##' 1. Add FCL units.
+##' 1. Add FCL units. ####
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 

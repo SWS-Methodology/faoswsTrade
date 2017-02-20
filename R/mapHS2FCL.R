@@ -1,4 +1,11 @@
-#' Function to map HS codes to FCL codes
+#' Umbrella function to map HS codes to FCL codes
+#'
+#' The function takes trade data set with mapping table and finds corresponding
+#' FCL codes for specific reporter, flow and HS code combinations.
+#'
+#' @param tradedata Trade data frame. Columns reporter, flow and hs are expected.
+#' @param maptable Mapping table.
+#' @param parallel Should multicore backend be used.
 #'
 #' @import dplyr
 #' @export
@@ -16,7 +23,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
   uniqhs <- uniqhs %>%
-    left_join(hslength, by = c("reporter", "flow")) %>% 
+    left_join(hslength, by = c("reporter", "flow")) %>%
     mutate_(hsextchar = ~stringr::str_pad(hs,
                                           width = maxhslength,
                                           side = "right",
@@ -32,23 +39,23 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
             tocodeextchar = ~stringr::str_pad(tocode,
                                        width = maxhslength,
                                        side = "right",
-                                       pad = "9")) %>% 
+                                       pad = "9")) %>%
     mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
             tocodeext   = ~as.numeric(tocodeextchar),
             # Is it legitimate to create row numbers in such way?
-            maplinkid   = ~row_number(reporter)) 
+            maplinkid   = ~row_number(reporter))
 
 
   # Find mappings ####
-  uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel) 
+  uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
 
   # Choose ones from multiple matches ####
 
   uniqhs <- sel1FCL(uniqhs, maptable)
-  
+
   # Join original trade dataset with mapping ####
-  
- tradedata %>% 
+
+ tradedata %>%
     left_join(uniqhs, by = c("reporter", "flow", "hs"))
 
 }

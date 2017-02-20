@@ -140,12 +140,12 @@ if(multicore) {
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
+# Read SWS module run parameters ####
+
 stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
-##' # Parameters
-##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 flog.info("Working year: %s", year)
 
@@ -169,7 +169,7 @@ startTime = Sys.time()
 ##'
 ##' ## Supplementary Datasets
 
-# Load of help datasets ####
+# Loading of help datasets ####
 
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
@@ -352,28 +352,19 @@ esdata <- esdata %>%
 flog.info("Records after removing areas absent in HS->FCL map: %s",
           nrow(esdata))
 
-## es_hs2fcl ####
+# ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
-                        hsfclmap,
-                        parallel = multicore))
-
-stopifnot(all(c("reporter", "flow", "hs") %in%
-                colnames(esdatalinks)))
-stopifnot(nrow(esdatalinks) > 0)
-
 esdata <- esdata %>%
-  left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+  mapHS2FCL(hsfclmap, multicore)
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
 
 ##' 1. Remove unmapped FCL codes.
 
-## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
 
@@ -389,7 +380,6 @@ flog.info("Records after removing non-mapped HS codes: %s",
 
 ##' 1. Add FCL units.
 
-## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
@@ -413,11 +403,7 @@ esdata <- esdata %>%
   mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
   select_(~-conv)
 
-##' # Extract UNSD Tariffline Data
-
-##+ tradeload
-
-##' 1. Download raw data from SWS, filtering by `hs_chapters`.
+# Download TL data ####
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
@@ -428,19 +414,12 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
-##+ tl_m49fao
-## Based on Excel file from UNSD (unsdpartners..)
-
-##' 1. Remove non-numeric commodity codes.
-
-##+ tl-force-numeric-comm
-
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-##+ tl-aggregate-multiple-rows
+# tl-aggregate-multiple-rows ####
 
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
@@ -452,6 +431,8 @@ tldata <- preAggregateMultipleTLRows(tldata)
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 tldata <- filterHS6FAOinterest(tldata)
+
+# M49 to FAO area list ####
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion
@@ -474,19 +455,14 @@ tldata <- tldata %>%
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
 
-##+ drop_es_from_tl
-
-##' 1. European countries are removed (will be replaced by ES data).
-
 # They will be replaced by ES data
-
 tldata <- tldata %>%
   anti_join(esdata %>%
               select_(~reporter) %>%
               distinct(),
             by = "reporter")
 
-##+ drop_reps_not_in_mdb
+##+ drop_reps_not_in_mdb ####
 
 ##' 1. Area codes not mapping to any FAO country code are removed.
 
@@ -500,7 +476,7 @@ tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
-##+ reexptoexp
+##+ reexptoexp ####
 
 ##' 1. Re-imports become imports and re-exports become exports.
 
@@ -513,51 +489,12 @@ tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
 # TF: Map HS to FCL ####
+tldata <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
-tldatalinks <- tldata %>%
-  do(hsInRange(.$hs, .$reporter, .$flow,
-               hsfclmap,
-               parallel = multicore))
-
-# Join links with main dataset and simultaneously create and write statistics
-# to report
-# Probably it is better to split data hadling and report production
+# Remove unmapped FCL codes. ####
 tldata <- tldata %>%
-  left_join(tldatalinks %>%
-              mutate_(nolink = ~is.na(fcl)) %>%
-              # prepare data for report
-              # it is unique links statistic
-              group_by_(~reporter) %>%
-              mutate_(uniq_nolink_count = ~sum(nolink),
-                         uniq_nolink_prop  = ~sum(nolink) / n()) %>%
-              ungroup,
-            by = c("reporter", "flow", "hs")) %T>% # <== magrittr's tee operator!
-  # We pass tldata with unique links statistics
-  # to next piece of code with tee operator.
-  # Tee op allows to evaluate the piece
-  # but further the previous chunk is passed
-  # So we use tee op for its side effect (of writing to report file)
-            {flog.info("Tariffline nonmapped links:",
-                       # Non-mapped not unique links statistics
-                       group_by_(.,
-                                 ~reporter,
-                                 ~uniq_nolink_count,
-                                 ~uniq_nolink_prop) %>%
-                         summarise_(nolink_count = ~sum(nolink),
-                                    nolink_prop  = ~sum(nolink) / n()) %>%
-                         ungroup %>%
-                         filter_(~nolink_count > 0) %>%
-                         arrange_(~desc(uniq_nolink_prop)) %>%
-                         mutate_at(vars(ends_with("_prop")), percent) %>%
-                           as.data.frame,
-                         capture = TRUE)} %>%
-  # Everything between tee op and next pipe op is sent to the report
-  # and was forgotten
-  select_(~-starts_with("uniq_nolink_"))
+              mutate_(nolink = ~is.na(fcl))
 
-##' 1. Remove unmapped FCL codes.
-
-## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
   filter_(~nolink) %>%
   select_(~-nolink)
@@ -572,7 +509,7 @@ write.csv(tldata_fcl_not_mapped,
 
 #############Units of measurment in TL ####
 
-##' 1. Add FCL units.
+##' Add FCL units. ####
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 

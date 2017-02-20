@@ -8,10 +8,11 @@ trade dataset with hs codes range from mapping table.}
 maxHSLength(uniqhs, mapdataset, parallel = FALSE)
 }
 \arguments{
+\item{uniqhs}{Data frame with columns `reporter`, `flow` and `hs` containing
+unique combinations from a trade data set.}
+
 \item{mapdataset}{Data frame with mapping table containing
 at least columns area, flow, fromcode, tocode}
-
-\item{tradedata}{A data frame with columns `reporter`, `flow` and `hs`.}
 }
 \value{
 A data frame with columns `reporter`, `flow` and `maxhslength`.
@@ -19,11 +20,4 @@ A data frame with columns `reporter`, `flow` and `maxhslength`.
 \description{
 Prepares for numerical comparison vector of hs codes from
 trade dataset with hs codes range from mapping table.
-}
-\details{
-Alignes length of hs codes in three places: vector from trade
-  dataset, fromcode and tocode columns of mapping dataset.
-  Maximum length is determined and all shorter codes are extended
-  on right-hand side: trade data hs code and mapping
-  fromcode are extended by 0, mapping tocode is extended by 9.
 }

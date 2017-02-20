@@ -6,15 +6,11 @@
 #'   flow, fromcode, tocode, fcl
 #' @param parallel Logical. Should multicore backend be used.
 #'
-#' @return Data frame with columns id, area, flow, hsorig, hsext, fcl.
-#'   id holds row numbers of original dataset. hsorig is input hs. hsext is
+#' @return Data frame with columns reporter, flow, datumid, hs, hsext, fcl.
+#'   datumid holds row numbers of original dataset. hs is input hs. hsext is
 #'   input hs with additional zeros if requires. If there are multiple
 #'   HS->FCL matchings, all of them are returned with similar id. If
 #'   there were no matching FCL codes, NA in fcl column is returned.
-#'
-#' @details Input hs, areacode and flowname columns are used to build
-#'   data frame with hs-codes to convert. Probably it is easier to
-#'   pass a data frame, then separate vectors.
 #'
 #' @import dplyr
 #' @export

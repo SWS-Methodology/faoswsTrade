@@ -7,7 +7,13 @@
 sel1FCL(hsfclmatch, maptable)
 }
 \arguments{
-\item{mapsubset}{Data frame with columns reporter, flow, hs, fcl}
+\item{hsfclmatch}{Data frame with columns reporter, flow, hs, hsext, fcl,
+datumid, maplinkid}
+
+\item{maptable}{Data frame with HS->FCL mapping table.}
+}
+\value{
+Data frame similar to hsfclmatch but with all duplicates removed.
 }
 \description{
 Select one record from multiple matches during HS->FCL mapping process.

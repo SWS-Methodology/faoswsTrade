@@ -81,7 +81,7 @@ hsInRange <- function(uniqhs,
              maplinkid <- maptable$maplinkid
           }
 
-          data_frame(id = currentid,
+          data_frame(datumid = currentid,
                      hs = hs,
                      fcl = fcl,
                      maplinkid = maplinkid)
@@ -92,6 +92,7 @@ hsInRange <- function(uniqhs,
     .parallel = parallel,
     .progress = ifelse(interactive() &
                          !parallel &
+                         # Don't show progress for quick calculations
                          nrow(uniqhs) > 10^4,
                        "text", "none")
   )

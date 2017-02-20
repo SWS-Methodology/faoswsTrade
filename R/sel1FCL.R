@@ -23,7 +23,7 @@ sel1FCL <- function(hsfclmatch, maptable) {
 
   # Selection of the narrowest hs range
   hsfclmatch %>%
-    left_join(maptable, by = "maplinkid") %>%
+    left_join(maptable, by = "recordnumb") %>%
     mutate_(hsrange = ~tocodeext - fromcodeext) %>%
     filter_(~hsrange == min(hsrange))
 
@@ -31,12 +31,12 @@ sel1FCL <- function(hsfclmatch, maptable) {
   # we choose the yougest
   if(nrow(hsfclmatch) > 1L) {
     hsfclmatch <- hsfclmatch %>%
-      filter_(~maplinkid == max(maplinkid))
+      filter_(~recordnumb == max(recordnumb))
   }
 
   stopifnot(nrow(hsfclmatch) == 1L)
 
   hsfclmatch %>%
-    select_(~reporter, ~flow, ~datumid, ~hs, ~hsext, ~fcl, ~maplinkid)
+    select_(~reporter, ~flow, ~datumid, ~hs, ~hsext, ~fcl, ~recordnumb)
 
 }

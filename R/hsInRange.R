@@ -46,6 +46,7 @@ hsInRange <- function(uniqhs,
         return(data_frame(
           datumid = subdf$id,
           hs = subdf$hs,
+          hsext = subdf$hsext,
           fcl = as.integer(NA),
           maplinkid = as.numeric(NA)))
 
@@ -60,14 +61,20 @@ hsInRange <- function(uniqhs,
         function(currentid) {
 
           # Put single hs code into a separate variable
-          hs <- subdf %>%
+          hsext <- subdf %>%
             filter_(~datumid == currentid) %>%
             select_(~hsext) %>%
             unlist() %>% unname()
+          
+          # Original HS to include into output dataset
+          hs <- subdf %>%
+            filter_(~datumid == currentid) %>%
+            select_(~hs) %>%
+            unlist() %>% unname()
 
           maptable <- maptable %>%
-            filter_(~fromcodeext <= hs &
-                      tocodeext >= hs)
+            filter_(~fromcodeext <= hsext &
+                      tocodeext >= hsext)
 
           # If no corresponding HS range is
           # available return empty integer
@@ -83,6 +90,7 @@ hsInRange <- function(uniqhs,
 
           data_frame(datumid = currentid,
                      hs = hs,
+                     hsext = hsext,
                      fcl = fcl,
                      maplinkid = maplinkid)
         }

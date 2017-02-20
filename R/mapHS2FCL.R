@@ -43,9 +43,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
                                        side = "right",
                                        pad = "9")) %>%
     mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
-            tocodeext   = ~as.numeric(tocodeextchar),
-            # Is it legitimate to create row numbers in such way?
-            maplinkid   = ~row_number(reporter))
+            tocodeext   = ~as.numeric(tocodeextchar))
 
 
   # Find mappings ####

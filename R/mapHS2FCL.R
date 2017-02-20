@@ -44,6 +44,11 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   # Choose ones from multiple matches ####
 
+  uniqhs <- sel1FCL(uniqhs, maptable)
+  
   # Join original trade dataset with mapping ####
+  
+ tradedata %>% 
+    left_join(uniqhs, by = c("reporter", "flow", "hs"))
 
 }

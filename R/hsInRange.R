@@ -1,12 +1,10 @@
 #' Looks for corresponding FCL codes in country-specific
 #' mapping tables from MDB files
 #'
-#' @param hs Numeric or character vector with HS codes to convert to FCL.
-#' @param areacode Numeric or character vector with reporters' codes.
-#' @param flowname Numeric or character vector of trade direction.
+#' @param uniqhs Data frame with columns reporter, flow, hs.
 #' @param maptable Data frame with HS->FCL mapping with columns area,
 #'   flow, fromcode, tocode, fcl
-#'   registered with doParallel package.
+#' @param parallel Logical. Should multicore backend be used.
 #'
 #' @return Data frame with columns id, area, flow, hsorig, hsext, fcl.
 #'   id holds row numbers of original dataset. hsorig is input hs. hsext is
@@ -65,7 +63,7 @@ hsInRange <- function(uniqhs,
             filter_(~datumid == currentid) %>%
             select_(~hsext) %>%
             unlist() %>% unname()
-          
+
           # Original HS to include into output dataset
           hs <- subdf %>%
             filter_(~datumid == currentid) %>%

@@ -4,7 +4,7 @@
 \alias{sel1FCL}
 \title{Select one record from multiple matches during HS->FCL mapping process.}
 \usage{
-sel1FCL(mapsubset)
+sel1FCL(hsfclmatch, maptable)
 }
 \arguments{
 \item{mapsubset}{Data frame with columns reporter, flow, hs, fcl}

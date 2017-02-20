@@ -5,18 +5,15 @@
 \title{Looks for corresponding FCL codes in country-specific
 mapping tables from MDB files}
 \usage{
-hsInRange(uniqhs, mapdataset, parallel = FALSE)
+hsInRange(uniqhs, maptable, parallel = FALSE)
 }
 \arguments{
-\item{mapdataset}{Data frame with HS->FCL mapping with columns area,
-flow, fromcode, tocode, fcl
-registered with doParallel package.}
+\item{uniqhs}{Data frame with columns reporter, flow, hs.}
 
-\item{hs}{Numeric or character vector with HS codes to convert to FCL.}
+\item{maptable}{Data frame with HS->FCL mapping with columns area,
+flow, fromcode, tocode, fcl}
 
-\item{areacode}{Numeric or character vector with reporters' codes.}
-
-\item{flowname}{Numeric or character vector of trade direction.}
+\item{parallel}{Logical. Should multicore backend be used.}
 }
 \value{
 Data frame with columns id, area, flow, hsorig, hsext, fcl.

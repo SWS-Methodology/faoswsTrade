@@ -5,7 +5,9 @@
 #'
 #' @param tradedata Trade data frame. Columns reporter, flow and hs are expected.
 #' @param maptable Mapping table.
-#' @param parallel Should multicore backend be used.
+#' @param parallel Logical, should multicore backend be used. False by default.
+#'
+#' @return Original trade data frame with additional FCL column.
 #'
 #' @import dplyr
 #' @export

@@ -4,7 +4,7 @@
 #' @param hs Numeric or character vector with HS codes to convert to FCL.
 #' @param areacode Numeric or character vector with reporters' codes.
 #' @param flowname Numeric or character vector of trade direction.
-#' @param mapdataset Data frame with HS->FCL mapping with columns area,
+#' @param maptable Data frame with HS->FCL mapping with columns area,
 #'   flow, fromcode, tocode, fcl
 #'   registered with doParallel package.
 #'
@@ -23,7 +23,7 @@
 
 
 hsInRange <- function(uniqhs,
-                      mapdataset,
+                      maptable,
                       parallel = FALSE) {
 
   df <- uniqhs %>%
@@ -37,12 +37,12 @@ hsInRange <- function(uniqhs,
     .fun = function(subdf) {
 
       # Subsetting mapping file
-      mapdataset <- mapdataset %>%
+      maptable <- maptable %>%
         filter_(~reporter == subdf$reporter[1],
                 ~flow == subdf$flow[1])
 
       # If no corresponding records in map return empty df
-      if(nrow(mapdataset) == 0)
+      if(nrow(maptable) == 0)
         return(data_frame(
           datumid = subdf$id,
           hs = subdf$hs,
@@ -61,24 +61,24 @@ hsInRange <- function(uniqhs,
 
           # Put single hs code into a separate variable
           hs <- subdf %>%
-            filter_(~id == currentid) %>%
-            select_(~hs) %>%
+            filter_(~datumid == currentid) %>%
+            select_(~hsext) %>%
             unlist() %>% unname()
 
-          mapdataset <- mapdataset %>%
+          maptable <- maptable %>%
             filter_(~fromcodeext <= hs &
                       tocodeext >= hs)
 
           # If no corresponding HS range is
           # available return empty integer
-          if(nrow(mapdataset) == 0L) {
+          if(nrow(maptable) == 0L) {
             fcl <- as.integer(NA)
             maplinkid <- as.numeric(NA)
           }
 
-          if(nrow(mapdataset) >= 1L) {
-             fcl <- mapdataset$fcl
-             maplinkid <- mapdataset$maplinkid
+          if(nrow(maptable) >= 1L) {
+             fcl <- maptable$fcl
+             maplinkid <- maptable$maplinkid
           }
 
           data_frame(id = currentid,

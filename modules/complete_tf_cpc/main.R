@@ -323,9 +323,9 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
-                        hsfclmap,
-                        parallel = multicore))
+esdatalinks <- esdata %>% 
+  sample_n(10^5) %>% 
+  mapHS2FCL(hsfclmap, multicore)
 
 stopifnot(all(c("reporter", "flow", "hs") %in%
                 colnames(esdatalinks)))

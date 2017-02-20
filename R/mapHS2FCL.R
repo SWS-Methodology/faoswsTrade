@@ -15,7 +15,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
-  tradedata <- tradedata %>%
+  uniqhs <- uniqhs %>%
     left_join(hslength, by = c("reporter", "flow")) %>% 
     mutate_(hsextchar = ~stringr::str_pad(hs,
                                           width = maxhslength,
@@ -40,7 +40,6 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
 
   # Find mappings ####
-
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel) 
 
   # Choose ones from multiple matches ####

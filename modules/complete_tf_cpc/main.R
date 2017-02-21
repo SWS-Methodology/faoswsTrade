@@ -323,16 +323,8 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
-                        hsfclmap,
-                        parallel = multicore))
-
-stopifnot(all(c("reporter", "flow", "hs") %in%
-                colnames(esdatalinks)))
-stopifnot(nrow(esdatalinks) > 0)
-
 esdata <- esdata %>%
-  left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+  mapHS2FCL(hsfclmap, multicore)
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
@@ -466,13 +458,7 @@ tldata <- tldata %>%
 
 ##+ tl_hs2fcl ####
 
-tldatalinks <- tldata %>%
-  do(hsInRange(.$hs, .$reporter, .$flow,
-               hsfclmap,
-               parallel = multicore))
-
-tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+tldata <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
 ##' 1. Remove unmapped FCL codes. ####
 

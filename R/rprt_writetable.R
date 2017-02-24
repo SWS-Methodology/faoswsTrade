@@ -6,15 +6,14 @@
 rprt_writetable <- function(dataset) {
   
   stopifnot(exists(reportdir))
-  stopifnot(exists(rprt_data))
-  stopifnot(is.list(rprt_data))
+  collectreports <- exists(rprt_data)
   
   name <- substitute(dataset)
   
   write.csv(dataset, 
             file = file.path(reportdir, paste0(name, ".csv")))
   
-  rprt_data[[name]] <<- dataset
+  if(collectreports) rprt_data[[name]] <<- dataset
   
   invisible(dataset)
   

@@ -11,6 +11,6 @@ rprt_report <- function(msg, level = "info") {
 
   fnc <- paste0("flog.", level)
 
-  do.call(fnc, msg)
+  do.call(fnc, list(msg = msg))
 
 }

@@ -43,15 +43,15 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
   # present, it won't change
   .addFlag <- function(.newFlag, .oldFlag) {
 
-    tmp1 <- .oldFlag %>%
+    .newFlag <- as.numeric(strsplit(.newFlag, '-')[[1]])
+
+    .oldFlag <- .oldFlag %>%
       strsplit('-') %>%
-      do.call(rbind, .) %>%
-      apply(2, as.numeric) %>%
-      t()
+      unlist() %>%
+      as.numeric() %>%
+      matrix(ncol=length(.newFlag))
 
-    tmp2 <- as.numeric(strsplit(.newFlag, '-')[[1]])
-
-    apply(1*(t(tmp1 + tmp2) > 0), 1, paste, collapse='-', sep='')
+    apply(1*((.oldFlag + .newFlag) > 0), 1, paste, collapse='-', sep='')
   }
 
   if (type == 'status') flag <- paste0('flag_status_', flag)

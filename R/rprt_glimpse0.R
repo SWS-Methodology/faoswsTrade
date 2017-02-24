@@ -5,7 +5,7 @@
 #'
 #' @export
 
-glimpse0 <- function(tbl) {
+rprt_glimpse0 <- function(tbl) {
 
   writeLines(capture.output(dplyr::glimpse(tbl)))
 

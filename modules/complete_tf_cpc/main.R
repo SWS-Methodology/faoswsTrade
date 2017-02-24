@@ -178,7 +178,7 @@ flog.debug("Reading in hs-fcl mapping")
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
 flog.info("HS->FCL mapping table preview:",
-          glimpse0(hsfclmap3), capture = TRUE)
+          rprt_glimpse0(hsfclmap3), capture = TRUE)
 
 rprt_hsfclmap(hsfclmap3)
 
@@ -273,7 +273,7 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
 )
 
 flog.info("Raw Eurostat data preview:",
-          glimpse0(esdata), capture = TRUE)
+          rprt_glimpse0(esdata), capture = TRUE)
 
 ##' 1. Remove non-numeric codes for reporters/partners/commodities.
 

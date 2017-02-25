@@ -2,6 +2,9 @@
 set.seed(2507)
 debughsfclmap <- TRUE
 
+# List to store debug/report datasets
+rprt_data <- list()
+
 # Parallel backend will be used only if required packages
 # are installed
 # It will be switched to FALSE if packages are not available

@@ -1,6 +1,6 @@
 #' Writes full table for report collection
 #'
-#' @param dataset
+#' @param dataset Data frame to save
 #' @export
 
 rprt_writetable <- function(dataset) {

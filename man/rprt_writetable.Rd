@@ -7,7 +7,7 @@
 rprt_writetable(dataset)
 }
 \arguments{
-\item{dataset}{}
+\item{dataset}{Data frame to save}
 }
 \description{
 Writes full table for report collection

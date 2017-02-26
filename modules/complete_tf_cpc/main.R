@@ -183,7 +183,7 @@ hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 flog.info("HS->FCL mapping table preview:",
           rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-rprt_hsfclmap(hsfclmap3)
+rprt_hsfclmap(hsfclmap3, year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &

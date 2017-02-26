@@ -28,22 +28,22 @@ adaptTradeDataNames <- function(tradedata = NA, origin = NA) {
                  hs = ~comm,
                  flow = ~as.integer(flow),
                  year = ~as.character(tyear),
-                 value = ~tvalue,
-                 weight = ~weight,
-                 qty = ~qty,
+                 value = ~as.numeric(tvalue),
+                 weight = ~as.numeric(weight),
+                 qty = ~as.numeric(qty),
                  qunit = ~as.integer(qunit)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs,1,6))
-    
-  } else { 
+      mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+
+  } else {
     tradedata %>%
-      transmute_(reporter = ~as.numeric(declarant),
-                 partner = ~as.numeric(partner),
+      transmute_(reporter = ~as.integer(declarant),
+                 partner = ~as.integer(partner),
                  hs = ~product_nc,
                  flow = ~as.integer(flow),
-                 year = ~as.character(str_sub(period,1,4)),
+                 year = ~as.character(stringr::str_sub(period, 1, 4)),
                  value = ~as.numeric(value_1k_euro),
                  weight = ~as.numeric(qty_ton),
                  qty = ~as.numeric(sup_quantity)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs,1,6))
+      mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
   }
 }

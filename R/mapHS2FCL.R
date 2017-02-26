@@ -20,6 +20,8 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
     select_(~reporter, ~flow, ~hs) %>%
     distinct
 
+  rprt_uniqhs(uniqhs)
+
   ## Align HS codes from data and table #####
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)

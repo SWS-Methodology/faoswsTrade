@@ -19,12 +19,12 @@
 
 rprt_hsfclmap <- function(maptable, year) {
 
-  report <- maptable %>% 
-    group_by_(~area) %>% 
+  hsfclmap_by_reporter_stats <- maptable %>%
+    group_by_(~area) %>%
     summarise_(count = ~n())
 
-  rprt_writetable(report)
-  
-  rprt_report(report)
-  
+  rprt_writetable(hsfclmap_by_reporter_stats)
+
+  rprt_report(hsfclmap_by_reporter_stats)
+
 }

@@ -33,6 +33,6 @@ rprt_hsfclmap <- function(maptable, year) {
 
   rprt_writetable(hsfclmap_by_reporter_stats)
 
-  rprt_report(hsfclmap_by_reporter_stats)
+  rprt_fulltable(hsfclmap_by_reporter_stats)
 
 }

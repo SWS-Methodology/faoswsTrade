@@ -19,9 +19,17 @@
 
 rprt_hsfclmap <- function(maptable, year) {
 
+  stopifnot(!missing(year))
+
   hsfclmap_by_reporter_stats <- maptable %>%
     group_by_(~area) %>%
-    summarise_(count = ~n())
+    mutate_(totalrecords = ~n()) %>%
+    ungroup() %>%
+    filter_(~startyear <= year &
+              endyear >= year) %>%
+    group_by_(~area, ~totalrecords) %>%
+    # Using dots and setNames to generate column name with year
+    summarize_(.dots = setNames("n()", paste0("records_", year)))
 
   rprt_writetable(hsfclmap_by_reporter_stats)
 

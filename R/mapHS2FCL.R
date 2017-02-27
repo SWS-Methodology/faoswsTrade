@@ -16,7 +16,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
-  
+
   # Extract unique input combinations ####
 
   uniqhs <- tradedata %>%
@@ -28,6 +28,8 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   ## Align HS codes from data and table #####
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
+
+  rprt_hslength(hslength, tradedataname = tradedataname)
 
   uniqhs <- uniqhs %>%
     left_join(hslength, by = c("reporter", "flow")) %>%

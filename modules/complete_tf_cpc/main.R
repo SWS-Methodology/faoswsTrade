@@ -22,7 +22,7 @@ suppressPackageStartupMessages(library(data.table))
 library(stringr)
 library(magrittr)
 library(scales)
-library(tidyr, warn.conflicts = FALSE) 
+library(tidyr, warn.conflicts = FALSE)
 library(futile.logger)
 suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
 library(faosws)
@@ -358,8 +358,7 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdata <- esdata %>%
-  mapHS2FCL(hsfclmap, multicore)
+esdata <- mapHS2FCL(esdata, hsfclmap, multicore)
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))

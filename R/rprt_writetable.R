@@ -3,7 +3,7 @@
 #' @param dataset Data frame to save
 #' @export
 
-rprt_writetable <- function(dataset) {
+rprt_writetable <- function(dataset, prefix = NULL) {
 
   stopifnot(exists("reportdir"))
   collectreports <- exists("rprt_data")
@@ -11,6 +11,11 @@ rprt_writetable <- function(dataset) {
   # We want name to be the same as name of original variable
   # in main.R code
   name <- lazyeval::expr_text(dataset)
+
+  if(!is.null(prefix)) {
+    stopifnot(is.character(prefix))
+    name <- paste(prefix, name, sep = "_")
+  }
 
   write.table(dataset,
             file = file.path(reportdir, paste0(name, ".csv")),

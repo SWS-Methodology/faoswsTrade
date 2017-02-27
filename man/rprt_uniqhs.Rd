@@ -5,10 +5,12 @@
 \title{Reporting on reporter/flow/hs unique combinations during HS->FCL mapping
 process.}
 \usage{
-rprt_uniqhs(uniqhs)
+rprt_uniqhs(uniqhs, tradedataname = NULL)
 }
 \arguments{
 \item{uniqhs}{Data frame with columns reporter, flow and hs.}
+
+\item{tradedataname}{Character of length 1. Most likely `esdata` or `tldata`.}
 }
 \value{
 Data frame with summary statistics.

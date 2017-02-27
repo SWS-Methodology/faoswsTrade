@@ -4,7 +4,7 @@
 \alias{rprt_fulltable}
 \title{Adds full table to report}
 \usage{
-rprt_fulltable(dataset, level = "info")
+rprt_fulltable(dataset, level = "info", prefix = NULL)
 }
 \arguments{
 \item{dataset}{Data frame to report}

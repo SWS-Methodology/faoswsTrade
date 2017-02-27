@@ -4,13 +4,16 @@
 #'
 #' @export
 #' @import futile.logger
-#' @import dplyr
 
-rprt_fulltable <- function(dataset, level = "info") {
+rprt_fulltable <- function(dataset, level = "info", prefix = NULL) {
 
   fnc <- paste0("flog.", level)
   flog_capture <- TRUE
   name <- lazyeval::expr_text(dataset)
+  if(!is.null(prefix)) {
+    stopifnot(is.character(prefix))
+    name <- paste(prefix, name, sep = "_")
+  }
 
   # Supress tibble's table decoration
   dataset <- as.data.frame(dataset, stringsAsFactors = FALSE)

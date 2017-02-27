@@ -4,7 +4,7 @@
 \alias{rprt_writetable}
 \title{Writes full table for report collection}
 \usage{
-rprt_writetable(dataset)
+rprt_writetable(dataset, prefix = NULL)
 }
 \arguments{
 \item{dataset}{Data frame to save}

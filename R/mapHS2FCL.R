@@ -54,6 +54,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
     mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
             tocodeext   = ~as.numeric(tocodeextchar))
 
+  rprt_map_hschanged(maptable, tradedataname = tradedataname)
 
   # Find mappings ####
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)

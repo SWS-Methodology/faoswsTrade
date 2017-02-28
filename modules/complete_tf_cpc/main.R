@@ -143,7 +143,7 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
-hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
+hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
 
 startTime = Sys.time()
 

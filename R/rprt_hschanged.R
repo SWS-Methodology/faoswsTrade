@@ -1,4 +1,4 @@
-#' Reporting on reporter/flow/hs unique combinations during HS->FCL mapping
+#' Reporting on HS code changes in trade data during HS->FCL mapping
 #' process.
 #'
 #' @param uniqhs Data frame with columns reporter, flow, maxhslength, hsextchar

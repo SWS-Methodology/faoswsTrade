@@ -2,7 +2,7 @@
 % Please edit documentation in R/rprt_hschanged.R
 \name{rprt_hschanged}
 \alias{rprt_hschanged}
-\title{Reporting on reporter/flow/hs unique combinations during HS->FCL mapping
+\title{Reporting on HS code changes in trade data during HS->FCL mapping
 process.}
 \usage{
 rprt_hschanged(uniqhs, tradedataname = NULL)
@@ -17,6 +17,6 @@ and hsext. (produced in mapHS2FCL()).}
 Data frame with summary statistics.
 }
 \description{
-Reporting on reporter/flow/hs unique combinations during HS->FCL mapping
+Reporting on HS code changes in trade data during HS->FCL mapping
 process.
 }

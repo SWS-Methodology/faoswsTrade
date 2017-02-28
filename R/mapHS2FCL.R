@@ -39,6 +39,8 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
                                           pad = "0"),
             hsext = ~as.numeric(hsextchar))
 
+  rprt_hschanged(uniqhs, tradedataname = tradedataname)
+
   maptable <- hslength %>%
     left_join(maptable, by = c("reporter" = "area", "flow")) %>%
     mutate_(fromcodeextchar = ~stringr::str_pad(fromcode,

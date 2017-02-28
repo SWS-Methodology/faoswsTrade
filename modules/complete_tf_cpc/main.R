@@ -1062,18 +1062,3 @@ sprintf(
   stats[["discarded"]]
 )
 
-
-### TO DO: FCL output
-#complete_trade_flow_fcl <- complete_trade %>%
-#  select_(~-cpc) %>%
-#  transmute_(reportingCountryM49 = ~reporterM49,
-#             partnerCountryM49 = ~partnerM49,
-#             measuredElementTrade = ~flow,
-#             measuredItemFS = ~fcl,
-#             timePointYears = ~year,
-#             flagObservationStatus = ~flagObservationStatus,
-#             flagMethod = ~flagMethod,
-#             qty = ~qty,
-#             unit = ~fclunit,
-#             value = ~value)
-

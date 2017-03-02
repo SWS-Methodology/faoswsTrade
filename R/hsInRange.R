@@ -1,7 +1,7 @@
 #' Looks for corresponding FCL codes in country-specific
 #' mapping tables from MDB files
 #'
-#' @param uniqhs Data frame with columns reporter, flow, hs.
+#' @param uniqhs Data frame with columns reporter, flow, hsext.
 #' @param maptable Data frame with HS->FCL mapping with columns area,
 #'   flow, fromcode, tocode, fcl
 #' @param parallel Logical. Should multicore backend be used.

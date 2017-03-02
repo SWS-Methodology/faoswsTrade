@@ -59,6 +59,9 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   # Find mappings ####
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
 
+  # Report on nolinks
+  rprt_hsinrange(uniqhs)
+
   # Choose ones from multiple matches ####
 
   uniqhs <- sel1FCL(uniqhs, maptable)

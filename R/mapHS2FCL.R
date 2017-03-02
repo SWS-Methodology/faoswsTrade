@@ -62,6 +62,9 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   # Report on nolinks
   rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
 
+  # Report on multilinks
+  rprt_hs2fcl_multilinks(uniqhs, tradedataname = tradedataname)
+
   # Choose ones from multiple matches ####
 
   uniqhs <- sel1FCL(uniqhs, maptable)

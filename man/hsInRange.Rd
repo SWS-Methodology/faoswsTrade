@@ -8,7 +8,7 @@ mapping tables from MDB files}
 hsInRange(uniqhs, maptable, parallel = FALSE)
 }
 \arguments{
-\item{uniqhs}{Data frame with columns reporter, flow, hs.}
+\item{uniqhs}{Data frame with columns reporter, flow, hsext.}
 
 \item{maptable}{Data frame with HS->FCL mapping with columns area,
 flow, fromcode, tocode, fcl}

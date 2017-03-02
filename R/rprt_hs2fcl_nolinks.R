@@ -9,7 +9,7 @@
 #' @export
 #' @import dplyr
 
-rprt_hsinrange <- function(uniqhs, tradedataname = NULL) {
+rprt_hs2fcl_nolinks <- function(uniqhs, tradedataname = NULL) {
 
   stopifnot(!(is.null(tradedataname)))
   stopifnot(length(tradedataname) == 1L)

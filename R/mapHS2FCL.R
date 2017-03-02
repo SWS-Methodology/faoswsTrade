@@ -60,7 +60,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
 
   # Report on nolinks
-  rprt_hsinrange(uniqhs)
+  rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
 
   # Choose ones from multiple matches ####
 

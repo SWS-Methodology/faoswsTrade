@@ -23,12 +23,14 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
     select_(~reporter, ~flow, ~hs) %>%
     distinct
 
+  # Reports full table in the text report and as csv file
   rprt_uniqhs(uniqhs, tradedataname = tradedataname)
 
   ## Align HS codes from data and table #####
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
+  # Reports full table in the text report and as csv file
   rprt_hslength(hslength, tradedataname = tradedataname)
 
   uniqhs <- uniqhs %>%
@@ -39,6 +41,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
                                           pad = "0"),
             hsext = ~as.numeric(hsextchar))
 
+  # Reports full table in the text report and as csv file
   rprt_hschanged(uniqhs, tradedataname = tradedataname)
 
   maptable <- hslength %>%

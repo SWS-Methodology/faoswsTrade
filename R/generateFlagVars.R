@@ -9,7 +9,7 @@ generateFlagVars <- function(data = stop("'data' needs to be set."),
   var_names <- c(paste0('flag_status_', sort(status)),
                  paste0('flag_method_', sort(method)))
 
-  data[var_names] <- '0-0-0'
+  data[var_names] <- 1000L
 
   return(data)
 }

@@ -15,33 +15,20 @@
 #' @import dplyr
 #' @export
 
-preAggregateMultipleTLRows <- function(rawdata = NA) {
+preAggregateMultipleTLRows <- function(rawdata = NULL) {
 
-  # TODO (Christian) there are some countries that have
-  # a non-unique length of HS:
-  # s <- table(tldata$rep, nchar(tldata$comm))
-  # sort(apply(s!=0, 1, sum))
+  if (is.null(rawdata)) stop('"rawdata" is required')
 
-  if (missing(rawdata)) stop('"rawdata" is required')
-
-  raw <- rawdata %>%
-    tbl_df() %>%
-    select(-chapter) %>%
-    mutate(no_quant  = is.na(qty),
-           no_weight = is.na(weight),
-           nrows = 1)
-
-  raw$cases <- case_when(
-                         !raw$no_quant & !raw$no_weight ~ 1L,
-                         !raw$no_quant &  raw$no_weight ~ 2L,
-                          raw$no_quant & !raw$no_weight ~ 3L,
-                          raw$no_quant &  raw$no_weight ~ 4L
-                         )
-  raw %>%
-        group_by(tyear, rep, prt, flow, comm, qunit, cases) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c('weight', 'qty', 'tvalue', 'nrows')) %>%
-        ungroup() %>%
-        select(-cases)
+  rawdata %>%
+    tbl_df %>%
+    select_(~-chapter) %>%
+    # qty and weight seem to be always >0 or NA
+    # no missing value
+        group_by_(~tyear, ~rep, ~prt,
+                  ~flow, ~comm, ~qunit,
+                  no_quant = ~is.na(qty),
+                  no_weight = ~is.na(weight)) %>%
+        summarise_at(
+          c("weight", "qty", "tvalue"), sum) %>%
+        ungroup
 }

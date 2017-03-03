@@ -38,20 +38,16 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
     stop("Please, set 'variable' to 'value', 'quantity', or 'all'")
   }
 
-  # This function adds 1 to X or Y or Z in a string of the type
-  # X-Y-Z where X, Y or Z are 0 or 1. If another 1 was already
+  # This function adds 1 to X or Y or Z in a number of the type
+  # 1XY where X or Y are 0 or 1. If another 1 was already
   # present, it won't change
   .addFlag <- function(.newFlag, .oldFlag) {
 
-    .newFlag <- as.numeric(strsplit(.newFlag, '-')[[1]])
+    .res <- (.newFlag + .oldFlag) %>%
+              gsub('[^0]', '1', .) %>%
+              as.integer()
 
-    .oldFlag <- .oldFlag %>%
-      strsplit('-') %>%
-      unlist() %>%
-      as.numeric() %>%
-      matrix(ncol=length(.newFlag))
-
-    apply(1*((.oldFlag + .newFlag) > 0), 1, paste, collapse='-', sep='')
+    return(.res)
   }
 
   if (type == 'status') flag <- paste0('flag_status_', flag)
@@ -59,16 +55,20 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
   if (type == 'method') flag <- paste0('flag_method_', flag)
 
   if (variable == 'all') {
-    res <- '1-1'
+    res <- 111L
   } else {
-    res <- paste(1*(variable=='value'), 1*(variable=='quantity'), sep='-')
+    res <- as.integer(
+            100+
+             10*(variable == 'value')+
+              1*(variable == 'quantity')
+            )
   }
 
   if (flag %in% colnames(data) & all(!is.na(data[[flag]]))) {
     res <- .addFlag(res, data[[flag]])
     alt <- data[[flag]]
   } else {
-    alt <- '0-0'
+    alt <- 100L
   }
 
   data[[flag]] <- ifelse(condition, res, alt)

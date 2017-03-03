@@ -689,14 +689,14 @@ esdata <- esdata %>%
 # NO: this isn't needed as below qty = weight and it has already its own flag
 #
 #tldata <- tldata %>%
-#  mutate_each_(funs(swapFlags(., swap='\\1-\\2-\\2'), !is.na(weight)),
+#  mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
 #               ~starts_with('flag_'))
 
 ##' 1. Assign 'qty' flags to 'weight' flags in ES but
 ##' only when 'fclunit' is different from 'mt'.
 
 esdata <- esdata %>%
-  mutate_each_(funs(swapFlags(., swap='\\1-\\3-\\3', fclunit != "mt")),
+  mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
                ~starts_with('flag_'))
 
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
@@ -724,7 +724,7 @@ tradedata <- bind_rows(
 
 # XXX this is fine, but probably the name of the function should be changed
 tradedata <- tradedata %>%
-  mutate_each_(funs(swapFlags(., swap='\\1-\\2')), ~starts_with('flag_'))
+  mutate_each_(funs(swapFlags(., swap='\\1\\2')), ~starts_with('flag_'))
 
 ##' # Outlier Detection and Imputation
 
@@ -776,9 +776,10 @@ tradedata <- tradedata %>%
 # separate flag_method and flag_status into 2 variables each one: _v and _q
 flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
 for (var in flag_vars) {
-  tradedata <- separate_(tradedata, var, '-',
-                         into = paste0(var, '_', c('v', 'q')),
-                         convert = TRUE)
+  tradedata <- separate_(tradedata, var, 1:2,
+                         into = c('x', paste0(var, '_', c('v', 'q'))),
+                         convert = TRUE) %>%
+               select(-x)
 }
 
 
@@ -809,7 +810,8 @@ flag_vars <- sort(unique(sub('_[vq]$', '', colnames(tradedata)[grep('flag_', col
 for (var in flag_vars) {
   var_v <- paste0(var, '_v')
   var_q <- paste0(var, '_q')
-  tradedata[[var]] <- apply(cbind((tradedata[[var_v]]>0)*1, (tradedata[[var_q]]>0)*1), 1, paste, collapse='-')
+
+  tradedata[[var]] <- 100 + (tradedata[[var_v]]>0)*10 + (tradedata[[var_q]]>0)*1
 }
 tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
 
@@ -892,9 +894,10 @@ tradedata <- tradedata %>%
 # separate flag_method and flag_status into 2 variables each one: _v and _q
 flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
 for (var in flag_vars) {
-  tradedata <- separate_(tradedata, var, '-', into = paste0(var, '_', c('v', 'q')))
-  tradedata[[paste0(var, '_v')]] <- as.integer(tradedata[[paste0(var, '_v')]])
-  tradedata[[paste0(var, '_q')]] <- as.integer(tradedata[[paste0(var, '_q')]])
+  tradedata <- separate_(tradedata, var, 1:2,
+                         into = c('x', paste0(var, '_', c('v', 'q'))),
+                         convert = TRUE) %>%
+               select(-x)
 }
 
 
@@ -912,6 +915,7 @@ for (var in flag_vars) {
 
 ##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
+# Modified in order to have X in the table
 flagWeightTable_status <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
   'X',                   1.00,
@@ -922,6 +926,7 @@ flagWeightTable_status <- frame_data(
   'M',                   0.00
 )
 
+# There is no native "method" table
 flagWeightTable_method <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
   'h',                   1.00,
@@ -931,11 +936,15 @@ flagWeightTable_method <- frame_data(
   's',                   0.20
 )
 
+# XXX This piece of code is really slow. There should be a better way.
 for (i in c('status', 'method')) {
   for (j in c('v', 'q')) {
-    var <- paste0('flag_', i, '_(.)_', j)
-    flags <- sub(var, '\\1', colnames(tradedata)[grep(var, colnames(tradedata))])
-    dummies <- tradedata[,colnames(tradedata)[grep(var, colnames(tradedata))]]
+
+    dummies <- tradedata %>%
+      select(starts_with(paste0('flag_', i))) %>%
+      select(ends_with(j))
+
+    flags <- sub('.*_(.)_.$', '\\1', colnames(dummies))
 
     if (i == 'status') {
       flagWeightTable <- flagWeightTable_status
@@ -944,7 +953,10 @@ for (i in c('status', 'method')) {
     }
 
     var <- paste0('flag', toupper(i), '_', j)
-    tradedata[[var]] <- apply(dummies, 1, function(x) ifelse(sum(x)==0, NA, aggregateObservationFlag(flags[x==1])))
+
+    tradedata[[var]] <- apply(dummies, 1, function(x)
+                              ifelse(sum(x)==0, NA,
+                                     aggregateObservationFlag(flags[x==1])))
   }
 }
 
@@ -1002,17 +1014,16 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
          flagMethod = ifelse(measuredElementTrade %in% quantityElements,
                                         flagMethod_q,
                                         flagMethod_v)) %>%
-         # The Status flag will be equal to the weakest flag between
-         # the numerator and the denominator, in this case the denominator.
-         mutate(flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
-                                               flagObservationStatus_q,
-                                               flagObservationStatus),
-                flagMethod = ifelse(measuredElementTrade %in% uvElements,
-                                    'i',
-                                    flagMethod)) %>%
-         select(-flagObservationStatus_v, -flagObservationStatus_q,
-                -flagMethod_v, -flagMethod_q)
-
+  # The Status flag will be equal to the weakest flag between
+  # the numerator and the denominator, in this case the denominator.
+  mutate(flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
+                                        flagObservationStatus_q,
+                                        flagObservationStatus),
+         flagMethod = ifelse(measuredElementTrade %in% uvElements,
+                             'i',
+                             flagMethod)) %>%
+  select(-flagObservationStatus_v, -flagObservationStatus_q,
+         -flagMethod_v, -flagMethod_q)
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
@@ -1032,9 +1043,8 @@ data.table::setcolorder(complete_trade_flow_cpc,
 # Value to zero.
 complete_trade_flow_cpc[is.na(Value), Value := 0]
 
-# FIXME "official" flagObservationStatus should be <BLANK>
-# instead of X (this was a choice made after X was chosen
-# as official flag)
+# "official" status flag should be <BLANK> instead of X (this was a choice
+# made after X was chosen as official flag). Thus, change X to <BLANK>.
 complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
 
 
@@ -1061,19 +1071,4 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
-
-
-### TO DO: FCL output
-#complete_trade_flow_fcl <- complete_trade %>%
-#  select_(~-cpc) %>%
-#  transmute_(reportingCountryM49 = ~reporterM49,
-#             partnerCountryM49 = ~partnerM49,
-#             measuredElementTrade = ~flow,
-#             measuredItemFS = ~fcl,
-#             timePointYears = ~year,
-#             flagObservationStatus = ~flagObservationStatus,
-#             flagMethod = ~flagMethod,
-#             qty = ~qty,
-#             unit = ~fclunit,
-#             value = ~value)
 

@@ -13,4 +13,3 @@ Data.table with code and description
 \description{
 Retrieves data on HS-codes and their descriptions from SWS
 }
-

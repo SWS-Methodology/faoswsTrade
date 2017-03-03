@@ -9,4 +9,3 @@ trailingDigits2(client, maxlength, digit)
 \description{
 Other version of adding of trailing digits. We should check it.
 }
-

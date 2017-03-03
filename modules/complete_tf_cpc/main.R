@@ -1,41 +1,11 @@
-##' ---
-##' title: "Appendix: `complete_tf_cpc` module"
-##' author:
-##'   - Marco Garieri
-##'   - Alexander Matrunich
-##'   - Christian A. Mongeau Ospina
-##'   - Bo Werth\
-##'  
-##'     Food and Agriculture Organization
-##'     of the United Nations
-##' date: "`r format(Sys.time(), '%e %B %Y')`"
-##' output:
-##'    pdf_document
-##' ---
-
-##+ setup, include=FALSE
-knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
-
-##' This document gives a faithful step-by-step sequence of the operations
-##' performed in the `complete_tf_cpc` module. For a narrative version of
-##' the module's approach, please see its main document.
-
-##+ init
-
-## Change Log:
-##
-## - Add unit values to output
-## - Remove adjustment factors
-## - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
-
-## **Flow chart:**
-##
-## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
-
+# Settings ####
 set.seed(2507)
-
 debughsfclmap <- TRUE
-multicore <- FALSE
+
+# Parallel backend will be used only if required packages
+# are installed
+# It will be switched to FALSE if packages are not available
+multicore <- TRUE
 
 ## If true, the reported values will be in $
 ## If false the reported values will be in k$
@@ -47,38 +17,77 @@ use_adjustments <- FALSE
 # If TRUE, use impute outliers
 detect_outliers <- FALSE
 
-##+ libs
-
-## library(tradeproc)
-
+# Libraries ####
 suppressPackageStartupMessages({
   library(data.table)
   library(faoswsTrade)
   library(faosws)
   library(stringr)
   library(scales)
+  library(futile.logger)
   library(faoswsUtil)
   library(tidyr)
   library(faoswsFlag)
-  library(dplyr, warn.conflicts = F)
+  library(dplyr, warn.conflicts = FALSE)
 })
 
+# SWS user name ####
+# Remove domain from username
+SWS_USER <- regmatches(swsContext.username,
+  regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
 
-if(!CheckDebug()){
+stopifnot(!any(is.na(SWS_USER),
+               SWS_USER == ""))
 
+# Development (not SWS-inside) mode addons ####
+if(faosws::CheckDebug()){
+  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
+
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+
+  ## Get session information from SWS. Token must be obtained from web interface
+  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                             token = SETTINGS[["token"]])
+
+  # Fall-back R_SWS_SHARE_PATH var
+  if(is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
+    flog.debug("R_SWS_SHARE_PATH system variable not found.")
+    Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
+    flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
+               tempdir())
+  }
+} else {
   options(error = function(){
     dump.frames()
-    SWS_USER = regmatches(swsContext.username,
-                          regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
+
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
+
     save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
 
+# Reporting directory ####
+
+reportdir <- file.path(
+  Sys.getenv("R_SWS_SHARE_PATH"),
+  SWS_USER,
+  paste0("complete_tf_cpc_",
+         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
+
+stopifnot(!file.exists(reportdir))
+
+dir.create(reportdir, recursive = TRUE)
+
+flog.appender(appender.tee(file.path(reportdir, "report.txt")))
+
+flog.info("SWS user: %s", SWS_USER)
+
 PID <- Sys.getpid()
 
-## Check that all packages are up to date
+# Check that all packages are up to date ####
 local({
   min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
                                          "dplyr"),
@@ -91,18 +100,29 @@ local({
     # required version
     v <- package_version(min_versions[i,"version"])
     if(p < v){
-
       stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
     }
   }
 
 })
 
-
+# Register CPU cores ####
 if(multicore) {
-  suppressPackageStartupMessages(library(doParallel))
-  library(foreach)
-  doParallel::registerDoParallel(cores = detectCores(all.tests = TRUE))
+  if(all(c("doParallel", "foreach") %in%
+         rownames(installed.packages()))) {
+
+    flog.debug("Multicore backend is available.")
+
+    cpucores <- parallel::detectCores(all.tests = TRUE)
+
+    flog.debug("CPU cores detected: %s.", cpucores)
+
+    doParallel::registerDoParallel(cores = cpucores)
+  } else {
+    flog.debug("Multicore backend is not available.")
+
+    multicore <- FALSE
+  }
 }
 
 
@@ -116,62 +136,43 @@ if(multicore) {
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
-if(CheckDebug()){
-  library(faoswsModules)
-  SETTINGS = ReadSettings("modules/complete_tf_cpc/sws.yml")
-  ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
-  ## Get session information from SWS. Token must be obtained from web interface
-  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                     token = SETTINGS[["token"]])
-}
-
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
-
-##+ settings
+# Read SWS module run parameters ####
 
 stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
-##' # Parameters
-
-##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
+flog.info("Working year: %s", year)
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
+flog.info("Coefficient for outlier detection: %s", out_coef)
 
 ##' - `hs_chapters`: specific HS chapters that are downloaded (this parameter
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
-hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
+hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
 startTime = Sys.time()
 
-##' # Input Data
-##'
-##' ## Supplementary Datasets
-
-##+ datasets
+# Supplementary Datasets ####
 
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
 
-## Old procedure
-#data("hsfclmap2", package = "hsfclmap", envir = environment())
-## New procedure
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
+
+flog.info("Rows in HS->FCL mapping table: %s", nrow(hsfclmap3))
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
@@ -179,23 +180,29 @@ hsfclmap <- hsfclmap3 %>%
 
 stopifnot(nrow(hsfclmap) > 0)
 
-##' - `adjustments`: Adjustment notes containing manually added conversion
-##' factors to transform from non-standard units of measurement to standard
-##' ones or to obtain quantities from traded values.
+flog.info("Rows in mapping table after filtering by year: %s",
+          nrow(hsfclmap))
 
-## Old precedure
-#data("adjustments", package = "hsfclmap", envir = environment())
-## New procedure
-message(sprintf("[%s] Reading in adjustments", PID))
+if(use_adjustments) {
 
-adjustments <- tbl_df(ReadDatatable("adjustments"))
-colnames(adjustments) = sapply(colnames(adjustments),
-                               function(x) gsub("adj_","",x))
-adj_cols_int <- c("year","flow","fcl","partner","reporter")
-adj_cols_dbl <- c("hs")
-adjustments = adjustments %>%
-  mutate_each_(funs(as.integer),adj_cols_int) %>%
-  mutate_each_(funs(as.double),adj_cols_dbl)
+  ##' - `adjustments`: Adjustment notes containing manually added conversion
+  ##' factors to transform from non-standard units of measurement to standard
+  ##' ones or to obtain quantities from traded values.
+
+  ## Old precedure
+  #data("adjustments", package = "hsfclmap", envir = environment())
+  ## New procedure
+  message(sprintf("[%s] Reading in adjustments", PID))
+
+  adjustments <- tbl_df(ReadDatatable("adjustments"))
+  colnames(adjustments) <- sapply(colnames(adjustments),
+                                  function(x) gsub("adj_","",x))
+  adj_cols_int <- c("year","flow","fcl","partner","reporter")
+  adj_cols_dbl <- c("hs")
+  adjustments <- adjustments %>%
+    mutate_each_(funs(as.integer),adj_cols_int) %>%
+    mutate_each_(funs(as.double),adj_cols_dbl)
+}
 
 ##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
@@ -255,27 +262,44 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
+flog.info("Records in raw Eurostat data: %s", nrow(esdata))
+
 ##' 1. Remove non-numeric codes for reporters/partners/commodities.
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
+
+flog.info("Records after removing non-numeric reporter codes: %s", nrow(esdata))
+
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
+
+flog.info("Records after removing non-numeric partner codes: %s", nrow(esdata))
+
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 
-##' 1. Keep only `stat_regime`=4.
+flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
 
 ## Only regime 4 is relevant for Eurostat data
-esdata <- esdata[esdata$stat_regime == "4",]
+esdata <- esdata %>%
+  filter_(~stat_regime == "4") %>%
 ## Removing stat_regime as it is not needed anymore
-esdata[,stat_regime := NULL]
+  select_(~-stat_regime)
 
+flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
+
+# TODO: do we need this piece?
 esdata <- tbl_df(esdata)
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+
+# Fiter out HS codes which don't participate in futher processing
+# Such solution drops all HS codes shorter than 6 digits.
+
+esdata <- filterHS6FAOinterest(esdata)
 
 ##' 1. Add variables that will contain flags.
 
@@ -293,10 +317,15 @@ esdata <- esdata %>%
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
+# TODO now we turn esdata back from data.frame to data.table
+# do we need it?
 esdata <- data.table::as.data.table(esdata)
 esdata[, `:=` (reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
+
+flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
+
 esdata <- tbl_df(esdata)
 
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
@@ -305,37 +334,45 @@ esdata <- tbl_df(esdata)
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
+
+write.csv(esdata_not_area_in_fcl_mapping,
+          file = file.path(reportdir,
+                           "esdata_not_area_in_fcl_mapping.csv"))
+
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-## es_hs2fcl ####
+flog.info("Records after removing areas absent in HS->FCL map: %s",
+          nrow(esdata))
+
+# ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
-                        hsfclmap,
-                        parallel = multicore))
-
-stopifnot(all(c("reporter", "flow", "hs") %in%
-                colnames(esdatalinks)))
-stopifnot(nrow(esdatalinks) > 0)
-
 esdata <- esdata %>%
-  left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+  mapHS2FCL(hsfclmap, multicore)
+
+flog.info("Records after HS-FCL mapping: %s",
+          nrow(esdata))
 
 ##' 1. Remove unmapped FCL codes.
 
-## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
+
+write.csv(esdata_fcl_not_mapped,
+          file = file.path(reportdir,
+                           "esdata_fcl_not_mapped.csv"))
 
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
+flog.info("Records after removing non-mapped HS codes: %s",
+          nrow(esdata))
+
 ##' 1. Add FCL units.
 
-## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
@@ -380,19 +417,12 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
-##+ tl_m49fao
-## Based on Excel file from UNSD (unsdpartners..)
-
-##' 1. Remove non-numeric commodity codes.
-
-##+ tl-force-numeric-comm
-
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-##+ tl-aggregate-multiple-rows
+# tl-aggregate-multiple-rows ####
 
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
@@ -410,6 +440,8 @@ tldata <- tldata %>%
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
+tldata <- filterHS6FAOinterest(tldata)
+
 ##' 1. Generate Observation Status X flag.
 tldata <- tldata %>%
   setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
@@ -418,6 +450,8 @@ tldata <- tldata %>%
   setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
   setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
+
+# M49 to FAO area list ####
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion
@@ -440,19 +474,14 @@ tldata <- tldata %>%
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
 
-##+ drop_es_from_tl
-
-##' 1. European countries are removed (will be replaced by ES data).
-
 # They will be replaced by ES data
-
 tldata <- tldata %>%
   anti_join(esdata %>%
               select_(~reporter) %>%
               distinct(),
             by = "reporter")
 
-##+ drop_reps_not_in_mdb
+##+ drop_reps_not_in_mdb ####
 
 ##' 1. Area codes not mapping to any FAO country code are removed.
 
@@ -466,7 +495,7 @@ tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
-##+ reexptoexp
+##+ reexptoexp ####
 
 ##' 1. Re-imports become imports and re-exports become exports.
 
@@ -480,19 +509,12 @@ tldata <- tldata %>%
 
 ##' 1. Map HS to FCL.
 
-##+ tl_hs2fcl
+##+ tl_hs2fcl ####
 
-tldatalinks <- tldata %>%
-  do(hsInRange(.$hs, .$reporter, .$flow,
-               hsfclmap,
-               parallel = multicore))
+tldata <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
-tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+##' 1. Remove unmapped FCL codes. ####
 
-##' 1. Remove unmapped FCL codes.
-
-## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
   filter_(~is.na(fcl))
 
@@ -501,7 +523,7 @@ tldata <- tldata %>%
 
 #############Units of measurment in TL ####
 
-##' 1. Add FCL units.
+##' 1. Add FCL units. ####
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
@@ -558,8 +580,7 @@ tldata <- tldata %>%
 fcl_spec_mt_conv <- tldata %>%
   filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
-  distinct() %>%
-  mutate_(fcldesc = ~descFCL(fcl))
+  distinct
 
 if(NROW(fcl_spec_mt_conv) > 0){
 
@@ -578,8 +599,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
   ### Add commodity specific conv.factors to dataset
 
   tldata <- tldata %>%
-    left_join(fcl_spec_mt_conv %>%
-                select_(~-fcldesc),
+    left_join(fcl_spec_mt_conv,
               by = c("fcl", "wco"))
   ########## Conversion of units
 
@@ -646,9 +666,8 @@ tldata_mid = tldata
 
 ##' # Combine Trade Data Sources
 
+if (use_adjustments) {
 ##' 1. Application of "adjustment notes" to both ES and TL data.
-
-##+ apply_adjustment
 
 # TODO Check quantity/weight
 # The notes should save the results in weight
@@ -782,7 +801,6 @@ for (var in flag_vars) {
                select(-x)
 }
 
-
 ##' 1. Aggregate values and quantities by FCL codes.
 
 # Aggregation by fcl
@@ -900,11 +918,6 @@ for (var in flag_vars) {
                select(-x)
 }
 
-
-
-
-
-
 ##' # Output for SWS
 
 ##' 1. Filter observations with FCL code `1181` (bees).
@@ -978,7 +991,6 @@ complete_trade_flow_cpc <- tradedata %>%
              value = ~value) %>%
   ## unit of monetary values is "1000 $"
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
-
 
 ##' 1. Transform dataset separating monetary values, quantities and unit values
 ##' in different rows.
@@ -1071,4 +1083,3 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
-

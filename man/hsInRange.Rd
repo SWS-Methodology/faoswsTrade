@@ -5,10 +5,24 @@
 \title{Looks for corresponding FCL codes in country-specific
 mapping tables from MDB files}
 \usage{
-hsInRange(hs, areacode, flowname, mapdataset, parallel = F)
+hsInRange(uniqhs, maptable, parallel = FALSE)
+}
+\arguments{
+\item{uniqhs}{Data frame with columns reporter, flow, hsext.}
+
+\item{maptable}{Data frame with HS->FCL mapping with columns area,
+flow, fromcode, tocode, fcl}
+
+\item{parallel}{Logical. Should multicore backend be used.}
+}
+\value{
+Data frame with columns reporter, flow, datumid, hs, hsext, fcl.
+  datumid holds row numbers of original dataset. hs is input hs. hsext is
+  input hs with additional zeros if requires. If there are multiple
+  HS->FCL matchings, all of them are returned with similar id. If
+  there were no matching FCL codes, NA in fcl column is returned.
 }
 \description{
 Looks for corresponding FCL codes in country-specific
 mapping tables from MDB files
 }
-

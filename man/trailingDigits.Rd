@@ -9,4 +9,3 @@ trailingDigits(from, to, digit)
 \description{
 Adds zeros to the end of hs column to make both columns of equal length
 }
-

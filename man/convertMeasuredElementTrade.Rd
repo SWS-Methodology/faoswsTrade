@@ -9,4 +9,3 @@ convertMeasuredElementTrade(element, unit, flow)
 \description{
 Converts measuredElementTrade for the output
 }
-

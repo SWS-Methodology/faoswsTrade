@@ -23,4 +23,3 @@ TL and ES data use different variable names for reporters, partners,
 commodities, values, quantity, and year. This function give these
 variables the same name in both datasets.
 }
-

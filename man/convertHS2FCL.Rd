@@ -9,4 +9,3 @@ convertHS2FCL(tradedata, hsfclmap, parallel)
 \description{
 It is based on notes from FAO ESS MDB files.
 }
-

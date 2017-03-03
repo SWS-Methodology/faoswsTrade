@@ -14,4 +14,3 @@ Comtrade M49 <-> FAO area list map.
 This table should be used for reporters codes.
 }
 \keyword{datasets}
-

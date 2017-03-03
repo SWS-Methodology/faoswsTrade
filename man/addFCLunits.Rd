@@ -18,4 +18,3 @@ addFCLunits(tradedata = NA, fclunits = NA)
 For each FCL code an expected FCL unit (i.e., what units does FAO expects
 for given FCL codes) is added.
 }
-

@@ -18,4 +18,3 @@ reported partner codes and corresponding Comtrade M49 area codes
 \description{
 Converts reporter-specific codes of partners into FAO area codes
 }
-

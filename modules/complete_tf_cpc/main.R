@@ -1,41 +1,11 @@
-##' ---
-##' title: "Appendix: `complete_tf_cpc` module"
-##' author:
-##'   - Marco Garieri
-##'   - Alexander Matrunich
-##'   - Christian A. Mongeau Ospina
-##'   - Bo Werth\
-##'
-##'     Food and Agriculture Organization
-##'     of the United Nations
-##' date: "`r format(Sys.time(), '%e %B %Y')`"
-##' output:
-##'    pdf_document
-##' ---
-
-##+ setup, include=FALSE
-knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
-
-##' This document gives a faithful step-by-step sequence of the operations
-##' performed in the `complete_tf_cpc` module. For a narrative version of
-##' the module's approach, please see its main document.
-
-##+ init
-
-## Change Log:
-##
-## - Add unit values to output
-## - Remove adjustment factors
-## - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
-
-## **Flow chart:**
-##
-## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
-
+# Settings ####
 set.seed(2507)
-
 debughsfclmap <- TRUE
-multicore <- FALSE
+
+# Parallel backend will be used only if required packages
+# are installed
+# It will be switched to FALSE if packages are not available
+multicore <- TRUE
 
 ## If true, the reported values will be in $
 ## If false the reported values will be in k$
@@ -44,37 +14,80 @@ dollars <- FALSE
 ## If TRUE, use adjustments (AKA "conversion notes")
 use_adjustments <- FALSE
 
+# If TRUE, use impute outliers
+detect_outliers <- FALSE
 
-##+ libs
-
-## library(tradeproc)
-
+# Libraries ####
 suppressPackageStartupMessages({
   library(data.table)
-  library(stringr)
-  library(scales)
-  library(tidyr)
-  library(futile.logger)
-  library(dplyr, warn.conflicts = FALSE)
   library(faoswsTrade)
   library(faosws)
+  library(stringr)
+  library(scales)
+  library(futile.logger)
   library(faoswsUtil)
+  library(tidyr)
+  library(faoswsFlag)
+  library(dplyr, warn.conflicts = FALSE)
 })
 
+# SWS user name ####
+# Remove domain from username
+SWS_USER <- regmatches(swsContext.username,
+  regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
 
-if(!CheckDebug()){
+stopifnot(!any(is.na(SWS_USER),
+               SWS_USER == ""))
 
+# Development (not SWS-inside) mode addons ####
+if(faosws::CheckDebug()){
+  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
+
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+
+  ## Get session information from SWS. Token must be obtained from web interface
+  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                             token = SETTINGS[["token"]])
+
+  # Fall-back R_SWS_SHARE_PATH var
+  if(is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
+    flog.debug("R_SWS_SHARE_PATH system variable not found.")
+    Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
+    flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
+               tempdir())
+  }
+} else {
   options(error = function(){
     dump.frames()
+
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
+
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
-    save(last.dump, file=file.path(filename, "last.dump.RData"))
+
+    save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
 
+# Reporting directory ####
+
+reportdir <- file.path(
+  Sys.getenv("R_SWS_SHARE_PATH"),
+  SWS_USER,
+  paste0("complete_tf_cpc_",
+         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
+
+stopifnot(!file.exists(reportdir))
+
+dir.create(reportdir, recursive = TRUE)
+
+flog.appender(appender.tee(file.path(reportdir, "report.txt")))
+
+flog.info("SWS user: %s", SWS_USER)
+
 PID <- Sys.getpid()
 
-## Check that all packages are up to date
+# Check that all packages are up to date ####
 local({
   min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
                                          "dplyr"),
@@ -87,18 +100,29 @@ local({
     # required version
     v <- package_version(min_versions[i,"version"])
     if(p < v){
-
       stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
     }
   }
 
 })
 
-
+# Register CPU cores ####
 if(multicore) {
-  suppressPackageStartupMessages(library(doParallel))
-  library(foreach)
-  doParallel::registerDoParallel(cores=detectCores(all.tests=TRUE))
+  if(all(c("doParallel", "foreach") %in%
+         rownames(installed.packages()))) {
+
+    flog.debug("Multicore backend is available.")
+
+    cpucores <- parallel::detectCores(all.tests = TRUE)
+
+    flog.debug("CPU cores detected: %s.", cpucores)
+
+    doParallel::registerDoParallel(cores = cpucores)
+  } else {
+    flog.debug("Multicore backend is not available.")
+
+    multicore <- FALSE
+  }
 }
 
 
@@ -112,50 +136,14 @@ if(multicore) {
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
-if(CheckDebug()){
-  library(faoswsModules)
-  SETTINGS = ReadSettings("modules/complete_tf_cpc/sws.yml")
-  ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
-  ## Get session information from SWS. Token must be obtained from web interface
-  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                     token = SETTINGS[["token"]])
-
-  reportdir <- Sys.getenv('HOMEPATH')
-} else {
-  USER <- regmatches(
-    swsContext.username,
-    regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
-
-  stopifnot(!any(is.na(USER), USER == ""))
-
-  reportdir <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), USER)
-}
-
-reportdir <- file.path(reportdir,
-  paste0("tradereport_", format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-
-#stopifnot(!file.exists(reportdir))
-
-dir.create(reportdir, recursive = TRUE)
-
-flog.appender(appender.file(file.path(reportdir, "report.txt")))
-
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
-
-##+ settings
+# Read SWS module run parameters ####
 
 stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
-##' # Parameters
-##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 flog.info("Working year: %s", year)
-## List of datasets available
-#datas = faosws::FetchDatatableConfig()
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
@@ -167,26 +155,19 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
-hs_chapters <- c(1:24, 33, 35, 38, 40:43, 50:53)
+hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
 
-##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse=' ')`
+##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
 startTime = Sys.time()
 
-##' # Input Data
-##'
-##' ## Supplementary Datasets
-
-##+ datasets
+# Supplementary Datasets ####
 
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
 
-## Old procedure
-#data("hsfclmap2", package = "hsfclmap", envir = environment())
-## New procedure
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
@@ -201,23 +182,27 @@ stopifnot(nrow(hsfclmap) > 0)
 
 flog.info("Rows in mapping table after filtering by year: %s",
           nrow(hsfclmap))
-##' - `adjustments`: Adjustment notes containing manually added conversion
-##' factors to transform from non-standard units of measurement to standard
-##' ones or to obtain quantities from traded values.
 
-## Old precedure
-#data("adjustments", package = "hsfclmap", envir = environment())
-## New procedure
-message(sprintf("[%s] Reading in adjustments", PID))
+if(use_adjustments) {
 
-adjustments <- tbl_df(ReadDatatable("adjustments"))
-colnames(adjustments) = sapply(colnames(adjustments),
-                               function(x) gsub("adj_","",x))
-adj_cols_int <- c("year","flow","fcl","partner","reporter")
-adj_cols_dbl <- c("hs")
-adjustments = adjustments %>%
-  mutate_each_(funs(as.integer),adj_cols_int) %>%
-  mutate_each_(funs(as.double),adj_cols_dbl)
+  ##' - `adjustments`: Adjustment notes containing manually added conversion
+  ##' factors to transform from non-standard units of measurement to standard
+  ##' ones or to obtain quantities from traded values.
+
+  ## Old precedure
+  #data("adjustments", package = "hsfclmap", envir = environment())
+  ## New procedure
+  message(sprintf("[%s] Reading in adjustments", PID))
+
+  adjustments <- tbl_df(ReadDatatable("adjustments"))
+  colnames(adjustments) <- sapply(colnames(adjustments),
+                                  function(x) gsub("adj_","",x))
+  adj_cols_int <- c("year","flow","fcl","partner","reporter")
+  adj_cols_dbl <- c("hs")
+  adjustments <- adjustments %>%
+    mutate_each_(funs(as.integer),adj_cols_int) %>%
+    mutate_each_(funs(as.double),adj_cols_dbl)
+}
 
 ##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
@@ -277,35 +262,70 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
+flog.info("Records in raw Eurostat data: %s", nrow(esdata))
+
 ##' 1. Remove non-numeric codes for reporters/partners/commodities.
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
+
+flog.info("Records after removing non-numeric reporter codes: %s", nrow(esdata))
+
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
+
+flog.info("Records after removing non-numeric partner codes: %s", nrow(esdata))
+
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 
-##' 1. Keep only `stat_regime`=4.
+flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
 
 ## Only regime 4 is relevant for Eurostat data
-esdata <- esdata[esdata$stat_regime=="4",]
+esdata <- esdata %>%
+  filter_(~stat_regime == "4") %>%
 ## Removing stat_regime as it is not needed anymore
-esdata[,stat_regime:=NULL]
+  select_(~-stat_regime)
 
+flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
+
+# TODO: do we need this piece?
 esdata <- tbl_df(esdata)
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 
+# Fiter out HS codes which don't participate in futher processing
+# Such solution drops all HS codes shorter than 6 digits.
+
+esdata <- filterHS6FAOinterest(esdata)
+
+##' 1. Add variables that will contain flags.
+
+esdata <- generateFlagVars(data = esdata)
+
+##' 1. Generate Observation Status X flag.
+esdata <- esdata %>%
+  setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'status', flag = 'X', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
+
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
+# TODO now we turn esdata back from data.frame to data.table
+# do we need it?
 esdata <- data.table::as.data.table(esdata)
-esdata[, `:=`(reporter = convertGeonom2FAO(reporter),
+esdata[, `:=` (reporter = convertGeonom2FAO(reporter),
               partner = convertGeonom2FAO(partner))]
 esdata <- esdata[partner != 252, ]
+
+flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
+
 esdata <- tbl_df(esdata)
 
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
@@ -314,37 +334,45 @@ esdata <- tbl_df(esdata)
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
+
+write.csv(esdata_not_area_in_fcl_mapping,
+          file = file.path(reportdir,
+                           "esdata_not_area_in_fcl_mapping.csv"))
+
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-## es_hs2fcl ####
+flog.info("Records after removing areas absent in HS->FCL map: %s",
+          nrow(esdata))
+
+# ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- esdata %>% do(hsInRange(.$hs, .$reporter, .$flow,
-                        hsfclmap,
-                        parallel = multicore))
-
-stopifnot(all(c("reporter", "flow", "hs") %in%
-                colnames(esdatalinks)))
-stopifnot(nrow(esdatalinks) > 0)
-
 esdata <- esdata %>%
-  left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+  mapHS2FCL(hsfclmap, multicore)
+
+flog.info("Records after HS-FCL mapping: %s",
+          nrow(esdata))
 
 ##' 1. Remove unmapped FCL codes.
 
-## es remove non mapped fcls
 esdata_fcl_not_mapped <- esdata %>%
   filter_(~is.na(fcl))
+
+write.csv(esdata_fcl_not_mapped,
+          file = file.path(reportdir,
+                           "esdata_fcl_not_mapped.csv"))
 
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
+flog.info("Records after removing non-mapped HS codes: %s",
+          nrow(esdata))
+
 ##' 1. Add FCL units.
 
-## es join fclunits
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
 ##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
@@ -364,8 +392,9 @@ es_spec_conv <- frame_data(
 )
 
 esdata <- esdata %>%
-  left_join(es_spec_conv, by='fcl') %>%
-  mutate_(qty=~ifelse(is.na(conv), qty, qty*conv)) %>%
+  left_join(es_spec_conv, by = 'fcl') %>%
+  mutate_(qty = ~ifelse(is.na(conv), qty, qty*conv)) %>%
+  setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
   select_(~-conv)
 
 ##' # Extract UNSD Tariffline Data
@@ -373,7 +402,7 @@ esdata <- esdata %>%
 ##+ tradeload
 
 #### Get list of agri codes ####
-#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse=", ")
+#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse = ", ")
 
 # tldata <- getRawAgriTL(year, agricodeslist)
 
@@ -381,35 +410,48 @@ esdata <- esdata %>%
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns=c("rep", "tyear", "flow",
+                        columns = c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
                                   "chapter"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
-##+ tl_m49fao
-## Based on Excel file from UNSD (unsdpartners..)
-
-##' 1. Remove non-numeric commodity codes.
-
-##+ tl-force-numeric-comm
-
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
 
 tldata <- tbl_df(tldata)
 
-##+ tl-aggregate-multiple-rows
+# tl-aggregate-multiple-rows ####
 
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
 
 tldata <- preAggregateMultipleTLRows(tldata)
 
+##' 1. Add variables that will contain flags.
+
+tldata <- generateFlagVars(data = tldata)
+
+tldata <- tldata %>%
+  setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
+
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+tldata <- filterHS6FAOinterest(tldata)
+
+##' 1. Generate Observation Status X flag.
+tldata <- tldata %>%
+  setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'status', flag = 'X', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
+
+# M49 to FAO area list ####
 
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion
@@ -432,19 +474,14 @@ tldata <- tldata %>%
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
 
-##+ drop_es_from_tl
-
-##' 1. European countries are removed (will be replaced by ES data).
-
 # They will be replaced by ES data
-
 tldata <- tldata %>%
   anti_join(esdata %>%
               select_(~reporter) %>%
               distinct(),
             by = "reporter")
 
-##+ drop_reps_not_in_mdb
+##+ drop_reps_not_in_mdb ####
 
 ##' 1. Area codes not mapping to any FAO country code are removed.
 
@@ -458,7 +495,7 @@ tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
-##+ reexptoexp
+##+ reexptoexp ####
 
 ##' 1. Re-imports become imports and re-exports become exports.
 
@@ -472,19 +509,12 @@ tldata <- tldata %>%
 
 ##' 1. Map HS to FCL.
 
-##+ tl_hs2fcl
+##+ tl_hs2fcl ####
 
-tldatalinks <- tldata %>%
-  do(hsInRange(.$hs, .$reporter, .$flow,
-               hsfclmap,
-               parallel = multicore))
+tldata <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
-tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+##' 1. Remove unmapped FCL codes. ####
 
-##' 1. Remove unmapped FCL codes.
-
-## Non mapped FCL
 tldata_fcl_not_mapped <- tldata %>%
   filter_(~is.na(fcl))
 
@@ -493,7 +523,7 @@ tldata <- tldata %>%
 
 #############Units of measurment in TL ####
 
-##' 1. Add FCL units.
+##' 1. Add FCL units. ####
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
@@ -550,16 +580,15 @@ tldata <- tldata %>%
 fcl_spec_mt_conv <- tldata %>%
   filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
-  distinct() %>%
-  mutate_(fcldesc = ~descFCL(fcl))
+  distinct
 
 if(NROW(fcl_spec_mt_conv) > 0){
 
   conversion_factors_fcl <- tldata %>%
     filter(!is.na(weight) & !is.na(qty)) %>%
-    mutate(qw=(weight/qty)/1000) %>%
+    mutate(qw = (weight/qty)/1000) %>%
     group_by(fcl, wco) %>%
-    summarise(convspec=median(qw, na.rm=TRUE)) %>%
+    summarise(convspec = median(qw, na.rm = TRUE)) %>%
     ungroup()
 
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
@@ -570,8 +599,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
   ### Add commodity specific conv.factors to dataset
 
   tldata <- tldata %>%
-    left_join(fcl_spec_mt_conv %>%
-                select_(~-fcldesc),
+    left_join(fcl_spec_mt_conv,
               by = c("fcl", "wco"))
   ########## Conversion of units
 
@@ -589,27 +617,39 @@ if(NROW(fcl_spec_mt_conv) > 0){
   tldata$qtyfcl = NA
 }
 
-
 ##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
 ##' the final unit of measurement is tonnes the `weight` is used as `quantity`
 
-tldata$qtyfcl <- ifelse((tldata$qty == 0 | is.na(tldata$qty)) &
+cond <- (tldata$qty == 0 | is.na(tldata$qty)) &
                           tldata$fclunit == "mt" &
                           is.na(tldata$qtyfcl) &
-                          tldata$weight > 0,
-                        tldata$weight,
-                        tldata$qtyfcl)
+                          tldata$weight > 0
+
+tldata$qtyfcl <- ifelse(cond, tldata$weight, tldata$qtyfcl)
+
+# XXX
+# Flag on weight as qty (which underwent a change) will populate weight
+tldata <- tldata %>%
+  setFlag3(!cond, type = 'method', flag = 'i', variable = 'weight')
 
 # Always use weight if available and fclunit is mt
-tldata$qtyfcl <- ifelse(tldata$fclunit=='mt' & !is.na(tldata$weight) & tldata$weight>0,
-                       tldata$weight*0.001,
-                       tldata$qtyfcl)
+
+cond <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
+
+tldata$qtyfcl <- ifelse(cond, tldata$weight*0.001, tldata$qtyfcl)
+
+tldata <- tldata %>%
+  setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
 
 ######### Value from USD to thousands of USD
 if (dollars){
-  esdata$value <- esdata$value * 1000
+  esdata <- esdata %>%
+    mutate(value = value * 1000) %>%
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 } else { ## This means it is in k$
-  tldata$value <- tldata$value / 1000
+  tldata <- tldata %>%
+    mutate(value = value / 1000) %>%
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 }
 
 ##' 1. Aggregate UNSD Tariffline Data to FCL.
@@ -617,35 +657,38 @@ if (dollars){
 ##+ tl_aggregate
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
+# XXX "notes" are applied to weight that is transformed below from qtyfcl
 tldata <- tldata %>%
-  select_(~year,
-          ~reporter,
-          ~partner,
-          ~flow,
-          ~fcl,
-          ~fclunit,
-          ~hs,
-          weight = ~qtyfcl,
-          ~qty,
-          ~value)
+  select(-weight) %>%
+  rename(weight = qtyfcl)
 
 tldata_mid = tldata
 
 ##' # Combine Trade Data Sources
 
+if (use_adjustments) {
 ##' 1. Application of "adjustment notes" to both ES and TL data.
-
-##+ apply_adjustment
 
 # TODO Check quantity/weight
 # The notes should save the results in weight
 
+# TODO (Christian) Check this (some ES partners are not TL partners):
+# unique(esdata$partner)[!(unique(esdata$partner) %in% unique(tldata$partner))]
+
+# We need to set the flags one by one as adjustments not necessarily
+# (probably never?) adjust all the three variables at the same time
 if (use_adjustments == TRUE) {
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
-                           adjustments = adjustments, parallel = multicore)
+                           adjustments = adjustments, parallel = multicore) %>%
+    setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
+    setFlag3(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
+    setFlag3(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
 
   tldata <- useAdjustments(tradedata = tldata, year = year,
-                           adjustments = adjustments, parallel = multicore)
+                           adjustments = adjustments, parallel = multicore) %>%
+    setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
+    setFlag3(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
+    setFlag3(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
 }
 
 ##+ es_convcur
@@ -657,26 +700,50 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                             filter(Year == year) %>%
                                             select(ExchangeRate))
 
+esdata <- esdata %>%
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
+
+###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
+#
+# NO: this isn't needed as below qty = weight and it has already its own flag
+#
+#tldata <- tldata %>%
+#  mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
+#               ~starts_with('flag_'))
+
+##' 1. Assign 'qty' flags to 'weight' flags in ES but
+##' only when 'fclunit' is different from 'mt'.
+
+esdata <- esdata %>%
+  mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
+               ~starts_with('flag_'))
+
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
 ##' to single data set.
 ##'     - TL: assign `weight` to `qty`
-##'     - ES: assign `weight` to `qty` if `fclunit` is equal to `mt`, else keep `qty`
+##'     - ES: assign `weight` to `qty` if `fclunit` is `mt`, else keep `qty`
 
 ##+ combine_es_tl
 
 tradedata <- bind_rows(
   tldata %>%
     # Not using as.character() as it will retain scientific notation
-    mutate_(hs = ~format(hs, scientific = FALSE, trim = TRUE)) %>%
-    select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, ~fclunit, ~hs,
-            qty = ~weight, ~value),
+    mutate(hs = format(hs, scientific = FALSE, trim = TRUE)) %>%
+    select(year, reporter, partner, flow,
+            fcl, fclunit, hs,
+            qty = weight, value,
+            starts_with('flag_')),
   esdata %>%
-    mutate_(uniqqty = ~ifelse(fclunit == "mt", weight, qty)) %>%
-    select_(~year, ~reporter, ~partner, ~flow,
-            ~fcl, ~fclunit,~hs,
-            qty = ~uniqqty, ~value)
+    mutate(uniqqty = ifelse(fclunit == "mt", weight, qty)) %>%
+    select(year, reporter, partner, flow,
+            fcl, fclunit, hs,
+            qty = uniqqty, value,
+            starts_with('flag_'))
 )
+
+# XXX this is fine, but probably the name of the function should be changed
+tradedata <- tradedata %>%
+  mutate_each_(funs(swapFlags(., swap='\\1\\2')), ~starts_with('flag_'))
 
 ##' # Outlier Detection and Imputation
 
@@ -699,8 +766,12 @@ tradedata$uv <- round(tradedata$uv, 10)
 
 ##' 1. Outlier detection by using the logarithm of the unit value.
 
-tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
-                            parameters = list(out_coef=out_coef))
+if (detect_outliers) {
+  tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
+                              parameters = list(out_coef = out_coef))
+} else {
+  tradedata$outlier <- FALSE
+}
 
 ##+ impute_qty_uv
 
@@ -712,6 +783,23 @@ tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
 ## (monetary values are not supposed to be modified).
 
 tradedata <- doImputation(tradedata = tradedata)
+
+# XXX using flagTrade for the moment, but should go away
+tradedata <- tradedata %>%
+    setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
+    setFlag2(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
+
+##' Separate flags.
+
+###### TODO (Christian) Rethink/refactor
+# separate flag_method and flag_status into 2 variables each one: _v and _q
+flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
+for (var in flag_vars) {
+  tradedata <- separate_(tradedata, var, 1:2,
+                         into = c('x', paste0(var, '_', c('v', 'q'))),
+                         convert = TRUE) %>%
+               select(-x)
+}
 
 ##' 1. Aggregate values and quantities by FCL codes.
 
@@ -725,12 +813,31 @@ tradedata <- tradedata %>%
           ~fclunit,
           ~qty,
           ~value,
-          ~flagTrade) %>%
+          ~flagTrade,
+          ~starts_with('flag_')) %>%
+  mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   summarise_each_(funs(sum(., na.rm = TRUE)),
-                  vars = c("qty", "value","flagTrade")) %>%
+                  vars = c("qty", "value","flagTrade", "nfcl",
+                           ~starts_with('flag_'))) %>%
   ungroup()
 
+###### TODO (Christian) Rethink/refactor
+# unite _v and _q into one variable
+flag_vars <- sort(unique(sub('_[vq]$', '', colnames(tradedata)[grep('flag_', colnames(tradedata))])))
+for (var in flag_vars) {
+  var_v <- paste0(var, '_v')
+  var_q <- paste0(var, '_q')
+
+  tradedata[[var]] <- 100 + (tradedata[[var_v]]>0)*10 + (tradedata[[var_q]]>0)*1
+}
+tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
+
+##' 1. Se flags for aggregated values/quantities XXX.
+
+tradedata <- tradedata %>%
+  setFlag2(nfcl > 1,  type = 'method', flag = 's', variable = 'all')
+  
 ##' 1. Map FCL codes to CPC.
 
 # Adding CPC2 extended code
@@ -783,72 +890,33 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 ## Mirroring for non reporting countries
 tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
+
+##' 1. Set flags XXX.
+
+tradedata <- tradedata %>%
+    setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
+    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
+    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'c', var = 'quantity')
+
 ##' ## Flag management
 
 ##' **Note**: work on this section is currently in progress.
-##'
-##' - observationStatus:
-##'     - Reporting countries:
-##'         - `X` if `flagTrade` is zero (i.e., no imputation) and FCL unit != "$ value only"
-##'         - `I` if `flagTrade` is non-zero (i.e., imputation) and FCL unit != "$ value only"
-##'   - Non-reporting countries: `E`
-##'
-##' - flagMethod:
-##'     - Reporting countries:
-##'         - `<BLANK>` if `flagTrade` is zero (i.e., no imputation) and FCL unit != "$ value only"
-##'         - `e` if `flagTrade` is non-zero (i.e., imputation) and FCL unit != "$ value only"
-##'   - Non-reporting countries: `e`
 
-##+ sws_flag
-
-## Flag from numeric to letters
-## TO DO (Marco): need to discuss how to treat flags
-##                at the moment Status I and method e
-##                for both imputed and mirrored
-##                because applying 12% change in mirroring
-
-addFlagsAfterMirror <- function(data=stop("'data' must be defined'"),
-                                nonreporting=NULL) {
-
-  ## data <- tradedata
-  copyData <- data
-
-  outData <-
-    copyData %>%
-    mutate_(
-      flagObservationStatus =
-        ## ~ifelse((flagTrade > 0) & (fclunit != "$ value only"),
-        ~ifelse(reporter %in% nonreporting,
-                "E",
-                ifelse((flagTrade > 0) & (fclunit != "$ value only"),
-                       "I",
-                       "X")
-                ),
-      flagMethod =
-        ~ifelse(reporter %in% nonreporting,
-                "e", # both measures in same row; need to overwrite with "c"
-                     # flag for quantities when transforming to normalized
-                     # format
-                ifelse((flagTrade > 0) & (fclunit != "$ value only"),
-                       "e",
-                       "")
-                )
-    )
-
-    return(outData)
-}
-
-## complete_trade <- tradedata %>%
-##   mutate_(
-##     flagObservationStatus = ~ifelse((flagTrade > 0) &
-##                                       (fclunit != "$ value only"),"I",""),
-##     flagMethod = ~ifelse((flagTrade > 0) &
-##                            (fclunit != "$ value only"),"e",""))
-
-complete_trade <-
-  tradedata %>% addFlagsAfterMirror(nonreporting = nonreporting)
+################################################
+# TODO Rethink/refactor: clean flags for fclunit != "$ value only"
+################################################
 
 ##+ completed_trade_flow
+
+###### TODO (Christian) Rethink/refactor
+# separate flag_method and flag_status into 2 variables each one: _v and _q
+flag_vars <- colnames(tradedata)[grep('flag_', colnames(tradedata))]
+for (var in flag_vars) {
+  tradedata <- separate_(tradedata, var, 1:2,
+                         into = c('x', paste0(var, '_', c('v', 'q'))),
+                         convert = TRUE) %>%
+               select(-x)
+}
 
 ##' # Output for SWS
 
@@ -860,7 +928,52 @@ complete_trade <-
 
 ##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
 
-complete_trade_flow_cpc <- complete_trade %>%
+# Modified in order to have X in the table
+flagWeightTable_status <- frame_data(
+  ~flagObservationStatus, ~flagObservationWeights,
+  'X',                   1.00,
+  '',                    0.99,
+  'T',                   0.80,
+  'E',                   0.75,
+  'I',                   0.50,
+  'M',                   0.00
+)
+
+# There is no native "method" table
+flagWeightTable_method <- frame_data(
+  ~flagObservationStatus, ~flagObservationWeights,
+  'h',                   1.00,
+  'i',                   0.80,
+  'e',                   0.60,
+  'c',                   0.40,
+  's',                   0.20
+)
+
+# XXX This piece of code is really slow. There should be a better way.
+for (i in c('status', 'method')) {
+  for (j in c('v', 'q')) {
+
+    dummies <- tradedata %>%
+      select(starts_with(paste0('flag_', i))) %>%
+      select(ends_with(j))
+
+    flags <- sub('.*_(.)_.$', '\\1', colnames(dummies))
+
+    if (i == 'status') {
+      flagWeightTable <- flagWeightTable_status
+    } else {
+      flagWeightTable <- flagWeightTable_method
+    }
+
+    var <- paste0('flag', toupper(i), '_', j)
+
+    tradedata[[var]] <- apply(dummies, 1, function(x)
+                              ifelse(sum(x)==0, NA,
+                                     aggregateObservationFlag(flags[x==1])))
+  }
+}
+
+complete_trade_flow_cpc <- tradedata %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
   filter_(~!(is.na(cpc))) %>%
@@ -868,15 +981,16 @@ complete_trade_flow_cpc <- complete_trade %>%
              geographicAreaM49Partner = ~partnerM49,
              flow = ~flow,
              timePointYears = ~year,
-             flagObservationStatus = ~flagObservationStatus,
-             flagMethod = ~flagMethod,
+             flagObservationStatus_v = ~flagSTATUS_v,
+             flagObservationStatus_q = ~flagSTATUS_q,
+             flagMethod_v = ~flagMETHOD_v,
+             flagMethod_q = ~flagMETHOD_q,
              measuredItemCPC = ~cpc,
              qty = ~qty,
              unit = ~fclunit,
              value = ~value) %>%
   ## unit of monetary values is "1000 $"
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
-
 
 ##' 1. Transform dataset separating monetary values, quantities and unit values
 ##' in different rows.
@@ -890,8 +1004,9 @@ complete_trade_flow_cpc <- complete_trade %>%
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
                 -geographicAreaM49Partner, -measuredItemCPC,
-                -timePointYears, -flagObservationStatus,
-                -flagMethod, -unit, -flow) %>%
+                -timePointYears,
+                -flagObservationStatus_v, -flagObservationStatus_q,
+                -flagMethod_v, -flagMethod_q, -unit, -flow) %>%
   rowwise() %>%
   mutate_(measuredElementTrade =
             ~convertMeasuredElementTrade(measuredElementTrade,
@@ -901,47 +1016,26 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   filter_(~measuredElementTrade != "999") %>%
   select_(~-flow,~-unit)
 
-##' 1. Overwrite **flagMethod** for mirrored quantities: `e` becomes `c`
+quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
+uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
 
-##+ overwrite_mirror_method_flag
-
-overwriteFlagMethodMirrorQuantities <- function(data=stop("'data' cannot be empty"),
-                                                quantityElements=c("5608", "5609", "5610", "5908", "5909", "5910")) {
-  copyData <- data
-  outData <-
-    copyData %>%
-    mutate_(flagMethod =
-              ~ifelse(flagObservationStatus == "E" & measuredElementTrade %in% quantityElements,
-                      "c",
-                      flagMethod)
-            )
-  return(outData)
-}
-
-complete_trade_flow_cpc <-
-  complete_trade_flow_cpc %>%
-  overwriteFlagMethodMirrorQuantities()
-
-
-##' 1. Add **flagMethod** `i` to unit values
-
-##+ add_uv_method_flag
-
-addFlagUnitValues <- function(data=stop("'data' cannot be empty'"),
-                              uvElements=c("5638", "5639", "5630", "5938", "5939", "5930")) {
-  copyData <- data
-  outData <-
-    copyData %>%
-    mutate_(flagMethod =
-              ~ifelse(measuredElementTrade %in% uvElements,
-                      "i",
-                      flagMethod))
-  return(outData)
-}
-
-complete_trade_flow_cpc <-
-  complete_trade_flow_cpc %>%
-  addFlagUnitValues()
+complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
+  mutate(flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
+                                        flagObservationStatus_q,
+                                        flagObservationStatus_v),
+         flagMethod = ifelse(measuredElementTrade %in% quantityElements,
+                                        flagMethod_q,
+                                        flagMethod_v)) %>%
+  # The Status flag will be equal to the weakest flag between
+  # the numerator and the denominator, in this case the denominator.
+  mutate(flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
+                                        flagObservationStatus_q,
+                                        flagObservationStatus),
+         flagMethod = ifelse(measuredElementTrade %in% uvElements,
+                             'i',
+                             flagMethod)) %>%
+  select(-flagObservationStatus_v, -flagObservationStatus_q,
+         -flagMethod_v, -flagMethod_q)
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
@@ -955,12 +1049,25 @@ data.table::setcolorder(complete_trade_flow_cpc,
                           "flagObservationStatus",
                           "flagMethod"))
 
+# XXX Temporary workaround: some NAs are given flags and given
+# that NAs cannot have flags the system refuses to save them.
+# These NAs are unit values computed on a zero quantity. Setting
+# Value to zero.
+complete_trade_flow_cpc[is.na(Value), Value := 0]
+
+# "official" status flag should be <BLANK> instead of X (this was a choice
+# made after X was chosen as official flag). Thus, change X to <BLANK>.
+complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
+
+
 message(sprintf("[%s] Writing data to session/database", PID))
 
 stats <- SaveData("trade",
                   "completed_tf_cpc_m49",
                   complete_trade_flow_cpc,
                   waitTimeout = 10800)
+
+## remove value only
 
 message(sprintf("[%s] Session/database write completed!", PID))
 
@@ -976,19 +1083,3 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
-
-
-### TO DO: FCL output
-#complete_trade_flow_fcl <- complete_trade %>%
-#  select_(~-cpc) %>%
-#  transmute_(reportingCountryM49 = ~reporterM49,
-#             partnerCountryM49 = ~partnerM49,
-#             measuredElementTrade = ~flow,
-#             measuredItemFS = ~fcl,
-#             timePointYears = ~year,
-#             flagObservationStatus = ~flagObservationStatus,
-#             flagMethod = ~flagMethod,
-#             qty = ~qty,
-#             unit = ~fclunit,
-#             value = ~value)
-

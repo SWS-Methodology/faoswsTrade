@@ -15,50 +15,20 @@
 #' @import dplyr
 #' @export
 
-preAggregateMultipleTLRows <- function(rawdata = NA) {
+preAggregateMultipleTLRows <- function(rawdata = NULL) {
 
-  if (missing(rawdata)) stop('"rawdata" is required')
+  if (is.null(rawdata)) stop('"rawdata" is required')
 
-  rawdata_orig <- rawdata %>%
-    tbl_df() %>%
+  rawdata %>%
+    tbl_df %>%
     select_(~-chapter) %>%
     # qty and weight seem to be always >0 or NA
     # no missing value
-    mutate_(no_quant = ~is.na(qty),
-            no_weight = ~is.na(weight))
-
-  step1 <- rawdata_orig %>%
-        filter_(~(!no_quant & !no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-
-  step2 <- rawdata_orig %>%
-        filter_(~(no_quant & !no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-
-  step3 <- rawdata_orig %>%
-        filter_(~(!no_quant & no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-
-  step4 <- rawdata_orig %>%
-        filter_(~(no_quant & no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-      
-
-  bind_rows(step1, step2, step3, step4)
+        group_by_(~tyear, ~rep, ~prt,
+                  ~flow, ~comm, ~qunit,
+                  no_quant = ~is.na(qty),
+                  no_weight = ~is.na(weight)) %>%
+        summarise_at(
+          c("weight", "qty", "tvalue"), sum) %>%
+        ungroup
 }

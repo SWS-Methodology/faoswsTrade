@@ -15,4 +15,3 @@ Interger vector of FAO area codes
 \description{
 Converts area codes, stored in UNSD Comtrade M49, into FAO area codes
 }
-

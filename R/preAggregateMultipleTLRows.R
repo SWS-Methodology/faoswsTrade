@@ -17,48 +17,31 @@
 
 preAggregateMultipleTLRows <- function(rawdata = NA) {
 
+  # TODO (Christian) there are some countries that have
+  # a non-unique length of HS:
+  # s <- table(tldata$rep, nchar(tldata$comm))
+  # sort(apply(s!=0, 1, sum))
+
   if (missing(rawdata)) stop('"rawdata" is required')
 
-  rawdata_orig <- rawdata %>%
+  raw <- rawdata %>%
     tbl_df() %>%
-    select_(~-chapter) %>%
-    # qty and weight seem to be always >0 or NA
-    # no missing value
-    mutate_(no_quant = ~is.na(qty),
-            no_weight = ~is.na(weight))
+    select(-chapter) %>%
+    mutate(no_quant  = is.na(qty),
+           no_weight = is.na(weight),
+           nrows = 1)
 
-  step1 <- rawdata_orig %>%
-        filter_(~(!no_quant & !no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
+  raw$cases <- case_when(
+                         !raw$no_quant & !raw$no_weight ~ 1L,
+                         !raw$no_quant &  raw$no_weight ~ 2L,
+                          raw$no_quant & !raw$no_weight ~ 3L,
+                          raw$no_quant &  raw$no_weight ~ 4L
+                         )
+  raw %>%
+        group_by(tyear, rep, prt, flow, comm, qunit, cases) %>%
         summarise_each_(
                         funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-
-  step2 <- rawdata_orig %>%
-        filter_(~(no_quant & !no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-
-  step3 <- rawdata_orig %>%
-        filter_(~(!no_quant & no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-
-  step4 <- rawdata_orig %>%
-        filter_(~(no_quant & no_weight)) %>%
-        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit) %>%
-        summarise_each_(
-                        funs(sum(.)),
-                        vars = c("weight", "qty", "tvalue")) %>%
-        ungroup()
-      
-
-  bind_rows(step1, step2, step3, step4)
+                        vars = c('weight', 'qty', 'tvalue', 'nrows')) %>%
+        ungroup() %>%
+        select(-cases)
 }

@@ -31,17 +31,12 @@ suppressPackageStartupMessages({
   library(dplyr, warn.conflicts = FALSE)
 })
 
-# SWS user name ####
-# Remove domain from username
-SWS_USER <- regmatches(swsContext.username,
-  regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
-
-stopifnot(!any(is.na(SWS_USER),
-               SWS_USER == ""))
-
 # Development (not SWS-inside) mode addons ####
 if(faosws::CheckDebug()){
   SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
+
+  # Local user name ####
+  USER <- Sys.getenv('USERNAME')
 
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
@@ -59,9 +54,14 @@ if(faosws::CheckDebug()){
   }
 } else {
   options(error = function(){
+    # SWS user name ####
+    # Remove domain from username
+    USER <- regmatches(swsContext.username,
+    regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+
     dump.frames()
 
-    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), SWS_USER, "complete_tf_cpc")
+    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), USER, "complete_tf_cpc")
 
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
 
@@ -69,11 +69,13 @@ if(faosws::CheckDebug()){
   })
 }
 
+stopifnot(!any(is.na(USER), USER == ""))
+
 # Reporting directory ####
 
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
-  SWS_USER,
+  USER,
   paste0("complete_tf_cpc_",
          format(Sys.time(), "%Y%m%d%H%M%S%Z")))
 
@@ -83,7 +85,7 @@ dir.create(reportdir, recursive = TRUE)
 
 flog.appender(appender.tee(file.path(reportdir, "report.txt")))
 
-flog.info("SWS user: %s", SWS_USER)
+flog.info("SWS user: %s", USER)
 
 PID <- Sys.getpid()
 
@@ -103,7 +105,6 @@ local({
       stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
     }
   }
-
 })
 
 # Register CPU cores ####

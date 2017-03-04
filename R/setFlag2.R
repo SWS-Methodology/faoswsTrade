@@ -1,9 +1,14 @@
 #' Set flags in trade data.
 #'
+#' The generated flag will be a numeric variable like 1XY where
+#' X and Y are dummies that are equal to 1 if the flag applies to
+#' the \code{value} or \code{quantity} variables, respectively, and
+#' 0 otherwise.
+#'
 #' @param type The type of flag to set: "status" or "method".
 #' @param flag The value of the flag to set (e.g., "e" for estimated data).
 #' @param variable The variable that gets the flag: "value", "quantity".
-#' @return Populates the flag variable (generating it if not present).
+#' @return Populates the flag variable.
 #' @import dplyr
 #' @export
 

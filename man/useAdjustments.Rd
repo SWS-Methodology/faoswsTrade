@@ -4,9 +4,10 @@
 \alias{useAdjustments}
 \title{Use specific adjustment factors for trade data.}
 \usage{
-useAdjustments(tradedata = NA, year = NA, adjustments = NA,
-  parallel = FALSE, dbg = faosws::CheckDebug(), PID = NA,
-  verbose = TRUE)
+useAdjustments(tradedata = stop("\\"tradedata\\" is missing."),
+  year = stop("\\"year\\" is missing."),
+  adjustments = stop("\\"adjustments\\" is missing."), parallel = FALSE,
+  dbg = faosws::CheckDebug(), PID = NA, verbose = TRUE)
 }
 \arguments{
 \item{tradedata}{Trade data.}

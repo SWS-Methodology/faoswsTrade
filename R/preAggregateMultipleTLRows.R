@@ -11,24 +11,31 @@
 #'
 #' @param rawdata Raw TL (a tibble).
 #' @return The original TL data after aggregation, when possible (see
-#'   details).
+#'   details). A new variable (\code{nrows}) is created and indicates the
+#'   original number of rows that were aggregated.
 #' @import dplyr
 #' @export
 
-preAggregateMultipleTLRows <- function(rawdata = NULL) {
+preAggregateMultipleTLRows <- function(rawdata = NA) {
 
-  if (is.null(rawdata)) stop('"rawdata" is required')
+  if (missing(rawdata)) stop('"rawdata" is required')
 
-  rawdata %>%
-    tbl_df %>%
-    select_(~-chapter) %>%
-    # qty and weight seem to be always >0 or NA
-    # no missing value
-        group_by_(~tyear, ~rep, ~prt,
-                  ~flow, ~comm, ~qunit,
-                  no_quant = ~is.na(qty),
-                  no_weight = ~is.na(weight)) %>%
-        summarise_at(
-          c("weight", "qty", "tvalue"), sum) %>%
-        ungroup
+  raw <- rawdata %>%
+    mutate_(no_quant  = ~is.na(qty),
+            no_weight = ~is.na(weight),
+            nrows = 1)
+
+  raw$cases <- case_when(
+                         !raw$no_quant & !raw$no_weight ~ 1L,
+                         !raw$no_quant &  raw$no_weight ~ 2L,
+                          raw$no_quant & !raw$no_weight ~ 3L,
+                          raw$no_quant &  raw$no_weight ~ 4L
+                         )
+  raw %>%
+        group_by_(~tyear, ~rep, ~prt, ~flow, ~comm, ~qunit, ~cases) %>%
+        summarise_each_(
+                        funs(sum(.)),
+                        vars = c('weight', 'qty', 'tvalue', 'nrows')) %>%
+        ungroup() %>%
+        select_(~-cases)
 }

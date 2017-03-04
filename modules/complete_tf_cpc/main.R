@@ -1,3 +1,38 @@
+##' ---
+##' title: "Appendix: `complete_tf_cpc` module"
+##' author:
+##'   - Marco Garieri
+##'   - Alexander Matrunich
+##'   - Christian A. Mongeau Ospina
+##'   - Bo Werth\
+##'  
+##'     Food and Agriculture Organization
+##'     of the United Nations
+##' date: "`r format(Sys.time(), '%e %B %Y')`"
+##' output:
+##'    pdf_document
+##' ---
+
+##+ setup, include=FALSE
+knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
+
+##' This document gives a faithful step-by-step sequence of the operations
+##' performed in the `complete_tf_cpc` module. For a narrative version of
+##' the module's approach, please see its main document.
+
+##+ init
+
+## Change Log:
+##
+## - Add unit values to output
+## - Remove adjustment factors
+## - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
+
+## **Flow chart:**
+##
+## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
+
+
 # Settings ####
 set.seed(2507)
 debughsfclmap <- TRUE
@@ -143,6 +178,9 @@ stopifnot(
   !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
+##' # Parameters
+
+##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 flog.info("Working year: %s", year)
 
@@ -264,6 +302,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
 )
 
 flog.info("Records in raw Eurostat data: %s", nrow(esdata))
+
+##' 1. Keep only `stat_regime`=4.
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata %>%
@@ -668,7 +708,6 @@ tldata_mid = tldata
 
 ##' # Combine Trade Data Sources
 
-if (use_adjustments) {
 ##' 1. Application of "adjustment notes" to both ES and TL data.
 
 # TODO Check quantity/weight

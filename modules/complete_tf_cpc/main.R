@@ -265,13 +265,21 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
 
 flog.info("Records in raw Eurostat data: %s", nrow(esdata))
 
-##' 1. Remove non-numeric codes for reporters/partners/commodities.
+## Only regime 4 is relevant for Eurostat data
+esdata <- esdata %>%
+  filter_(~stat_regime == "4") %>%
+## Removing stat_regime as it is not needed anymore
+  select_(~-stat_regime)
+
+flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
 
 flog.info("Records after removing non-numeric reporter codes: %s", nrow(esdata))
+
+##' 1. Remove non-numeric codes for reporters/partners/commodities.
 
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
 
@@ -282,20 +290,12 @@ esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
 
 flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
 
-## Only regime 4 is relevant for Eurostat data
-esdata <- esdata %>%
-  filter_(~stat_regime == "4") %>%
-## Removing stat_regime as it is not needed anymore
-  select_(~-stat_regime)
-
-flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
-
-# TODO: do we need this piece?
-esdata <- tbl_df(esdata)
-
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+
+# TODO: do we need this piece?
+esdata <- tbl_df(esdata)
 
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.
@@ -418,8 +418,12 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
+##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
+
+tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
 # This probably should be part of the faoswsEnsure
-tldata <- tldata[grepl("^[[:digit:]]+$",tldata$comm),]
+tldata <- tldata[grepl("^[[:digit:]]+$",tldata$hs),]
 
 tldata <- tbl_df(tldata)
 
@@ -436,10 +440,6 @@ tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%
   setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
-
-##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
-
-tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
 tldata <- filterHS6FAOinterest(tldata)
 
@@ -624,6 +624,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
 cond <- (tldata$qty == 0 | is.na(tldata$qty)) &
                           tldata$fclunit == "mt" &
                           is.na(tldata$qtyfcl) &
+                          !is.na(tldata$weight) &
                           tldata$weight > 0
 
 tldata$qtyfcl <- ifelse(cond, tldata$weight, tldata$qtyfcl)

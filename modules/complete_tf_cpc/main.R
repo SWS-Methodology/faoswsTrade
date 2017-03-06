@@ -71,7 +71,9 @@ if(faosws::CheckDebug()){
   SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
 
   # Local user name ####
-  USER <- Sys.getenv('USERNAME')
+  USER <- if_else(.Platform$OS.type == "unix",
+                  Sys.getenv('USER'),
+                  Sys.getenv('USERNAME'))
 
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])

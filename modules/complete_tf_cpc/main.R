@@ -58,6 +58,9 @@ use_adjustments <- FALSE
 # If TRUE, use impute outliers
 detect_outliers <- FALSE
 
+# Switch off dplyr's progress bars globally
+dplyr.show_progress <- FALSE
+
 # Libraries ####
 suppressPackageStartupMessages({
   library(data.table)

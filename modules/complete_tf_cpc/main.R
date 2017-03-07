@@ -5,7 +5,7 @@
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
 ##'   - Bo Werth\
-##'  
+##'
 ##'     Food and Agriculture Organization
 ##'     of the United Nations
 ##' date: "`r format(Sys.time(), '%e %B %Y')`"
@@ -36,6 +36,12 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 # Settings ####
 set.seed(2507)
 debughsfclmap <- TRUE
+
+# Logging level
+# There are following levels:
+# trace, debug, info, warn, error, fatal
+# Level `trace` shows everything in the log
+futile.logger::flog.threshold("TRACE")
 
 # Parallel backend will be used only if required packages
 # are installed
@@ -880,7 +886,7 @@ tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
 
 tradedata <- tradedata %>%
   setFlag2(nfcl > 1,  type = 'method', flag = 's', variable = 'all')
-  
+
 ##' 1. Map FCL codes to CPC.
 
 # Adding CPC2 extended code

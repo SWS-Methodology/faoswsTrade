@@ -205,6 +205,8 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
+##+ hschapters, eval = TRUE
+
 hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`

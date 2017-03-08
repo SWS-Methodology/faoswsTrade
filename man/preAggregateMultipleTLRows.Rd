@@ -11,7 +11,8 @@ preAggregateMultipleTLRows(rawdata = NA)
 }
 \value{
 The original TL data after aggregation, when possible (see
-  details).
+  details). A new variable (\code{nrows}) is created and indicates the
+  original number of rows that were aggregated.
 }
 \description{
 Do a first aggregation of raw Tariff Line data, when possible.

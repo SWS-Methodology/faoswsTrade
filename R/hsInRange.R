@@ -92,6 +92,8 @@ hsInRange <- function(uniqhs,
 
     },
     .parallel = parallel,
+    # Windows requires functions and packages to be explicitly exported
+    .paropts = list(.packages = "dplyr"),
     .progress = ifelse(interactive() &
                          !parallel &
                          # Don't show progress for quick calculations

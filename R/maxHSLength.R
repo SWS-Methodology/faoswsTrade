@@ -21,6 +21,7 @@ maxHSLength <- function(uniqhs, mapdataset, parallel = FALSE) {
                    .variables = c("reporter", "flow"),
                    .parallel = parallel,
                    .fun = maxHSLength,
+                   .paropts = list(.packages = "dplyr"),
                    mapdataset
        )
      )

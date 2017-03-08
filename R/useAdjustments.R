@@ -12,20 +12,14 @@
 #' @import dplyr
 #' @export
 
-useAdjustments <- function(tradedata = NA,
-                           year = NA,
-                           adjustments = NA,
+useAdjustments <- function(tradedata = stop('"tradedata" is missing.'),
+                           year = stop('"year" is missing.'),
+                           adjustments = stop('"adjustments" is missing.'),
                            parallel = FALSE,
                            dbg = faosws::CheckDebug(),
                            PID = NA,
                            verbose = TRUE) {
   
-  if (missing(tradedata)) stop('"tradedata" is missing.')
-
-  if (missing(year)) stop('"year" is missing.')
-
-  if (missing(adjustments)) stop('"adjustments" is missing.')
-
   if (!is.logical(parallel)) stop('"parallel" should be TRUE or FALSE.')
 
   if (!is.logical(dbg)) stop('"dbg" should be TRUE or FALSE.')
@@ -39,12 +33,29 @@ useAdjustments <- function(tradedata = NA,
     message(sprintf("[%s] Applying adjustments to %s", PID, d))
   }
 
-  tbl_df(plyr::ldply(sort(unique(tradedata$reporter)),
+  # Needed, because of multiple rows
+  tradedata$key <- 1:nrow(tradedata)
+
+  tradedata_adj <- tbl_df(plyr::ldply(sort(unique(tradedata$reporter)),
                                function(x) {
-                                 applyadj(x, year, adj, tradedata, dbg)
+                                 applyadj(x, year, adj, tradedata)
                                },
                                .progress = ifelse(prog, "text", "none"),
                                .inform = FALSE,
                                .parallel = parallel))
+  tradedata <- tradedata %>%
+                 rename(orig_value=value, orig_weight=weight, orig_qty=qty)
 
+  tradedata_adj %>%
+    # TODO (Christian) This join can be simplified by
+    # taking into account only a subset of variables
+    left_join(tradedata) %>%
+    mutate(
+           # Using coalesce to replace NAs with -1 as NAs will expand
+           adj_value  = !(near(coalesce(value, -1),  coalesce(orig_value, -1))),
+           adj_weight = !(near(coalesce(weight, -1), coalesce(orig_weight, -1))),
+           adj_qty    = !(near(coalesce(qty, -1),    coalesce(orig_qty, -1))),
+           adjusted   = adj_value | adj_weight | adj_qty
+           ) %>%
+    select(-orig_value, -orig_weight, -orig_qty)
 }

@@ -440,6 +440,8 @@ esdata <- esdata %>%
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
 
+rprt_hs2fcl_fulldata(esdata, "esdata")
+
 ##' 1. Remove unmapped FCL codes.
 
 esdata_fcl_not_mapped <- esdata %>%
@@ -598,6 +600,8 @@ tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+
+rprt_hs2fcl_fulldata(tldata, "tldata")
 
 # Remove unmapped FCL codes. ####
 tldata <- tldata %>%

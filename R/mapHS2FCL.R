@@ -7,7 +7,7 @@
 #' @param maptable Mapping table.
 #' @param parallel Logical, should multicore backend be used. False by default.
 #'
-#' @return Original trade data frame with additional FCL column.
+#' @return Data frame with unique combinations reporter/flow/hs/fcl.
 #'
 #' @import dplyr
 #' @export
@@ -55,9 +55,5 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   uniqhs <- sel1FCL(uniqhs, maptable)
 
-  # Join original trade dataset with mapping ####
-
- tradedata %>%
-    left_join(uniqhs, by = c("reporter", "flow", "hs"))
-
+  uniqhs
 }

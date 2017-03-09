@@ -14,7 +14,7 @@ mapHS2FCL(tradedata, maptable, parallel = FALSE)
 \item{parallel}{Logical, should multicore backend be used. False by default.}
 }
 \value{
-Original trade data frame with additional FCL column.
+Data frame with unique combinations reporter/flow/hs/fcl.
 }
 \description{
 The function takes trade data set with mapping table and finds corresponding

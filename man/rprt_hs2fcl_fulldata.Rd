@@ -15,7 +15,7 @@ rprt_hs2fcl_fulldata(tradedata, tradedataname = NULL)
 Data frame with summary statistics.
 }
 \description{
-The function generates the following statistics per reporter, hs6, 
+The function generates the following statistics per reporter, hs6,
 reporter/hs6:
 \itemize{
   \item Number of nonmatched records.

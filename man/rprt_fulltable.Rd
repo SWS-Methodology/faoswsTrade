@@ -4,10 +4,20 @@
 \alias{rprt_fulltable}
 \title{Adds full table to report}
 \usage{
-rprt_fulltable(dataset, level = "info", prefix = NULL)
+rprt_fulltable(dataset, level = "info", prefix = NULL, pretty_prop = TRUE)
 }
 \arguments{
 \item{dataset}{Data frame to report}
+
+\item{level}{Character of length one. Futile logger level to send messages
+to. By default "info".}
+
+\item{prefix}{Character of length one. Prefix for name to use in the report.
+NULL by default.}
+
+\item{pretty_prop}{Logical of length one. If TRUE all numeric columns with
+names end with "_prop" will be converted for easy reading with
+scales::percent.}
 }
 \description{
 Adds full table to report

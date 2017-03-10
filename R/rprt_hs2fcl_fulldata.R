@@ -57,4 +57,6 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   rprt_writetable(nolinks_byreporterhs6, prefix = tradedataname)
   rprt_writetable(nolinks_byhs6, prefix = tradedataname)
 
+  rprt_fulltable(nolinks_byreporter, pretty_prop = TRUE)
+
 }

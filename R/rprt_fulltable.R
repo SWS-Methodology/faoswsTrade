@@ -11,6 +11,8 @@
 #'
 #' @export
 #' @import futile.logger
+#' @import dplyr
+#' @import scales
 
 rprt_fulltable <- function(dataset, level = "info", prefix = NULL, pretty_prop = TRUE) {
 
@@ -26,12 +28,12 @@ rprt_fulltable <- function(dataset, level = "info", prefix = NULL, pretty_prop =
       # Column names from previous step what are numeric
       numericvars <- plyr::laply(dataset[vars2convert], is.numeric)
 
-      if(length(numericvars) > 0L) {
+      if(sum(numericvars) > 0L) {
         vars2convert <- vars2convert[numericvars]
 
         dataset <- dataset %>%
-          mutate_at(vars(vars2convert),
-                    funs(scales::percent))
+          mutate_at(vars2convert,
+                    funs(percent))
 
         if(missing(pretty_prop)) {
           warning(sprintf(

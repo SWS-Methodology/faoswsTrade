@@ -35,6 +35,9 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # Settings ####
 set.seed(2507)
+
+# Size for Eurostat sampling. Set NULL if no sampling is required.
+samplesize <- 10^4
 debughsfclmap <- TRUE
 
 # List to store debug/report datasets
@@ -336,6 +339,11 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
+if(!is.null(samplesize)) {
+  esdata <- sample_n(esdata, samplesize)
+  warning(sprintf("Eurostat data was sampled with size %d", samplesize))
+}
+
 flog.info("Raw Eurostat data preview:",
           rprt_glimpse0(esdata), capture = TRUE)
 
@@ -440,7 +448,7 @@ esdata <- esdata %>%
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
 
-rprt_hs2fcl_fulldata(esdata, "esdata")
+rprt_hs2fcl_fulldata(esdata, tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
 
@@ -601,7 +609,7 @@ tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
-rprt_hs2fcl_fulldata(tldata, "tldata")
+rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
 
 # Remove unmapped FCL codes. ####
 tldata <- tldata %>%

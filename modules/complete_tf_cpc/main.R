@@ -37,7 +37,7 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 set.seed(2507)
 
 # Size for Eurostat sampling. Set NULL if no sampling is required.
-samplesize <- 10^4
+samplesize <- NULL
 debughsfclmap <- TRUE
 
 # List to store debug/report datasets

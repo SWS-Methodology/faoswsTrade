@@ -35,7 +35,13 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # Settings ####
 set.seed(2507)
+
+# Size for Eurostat sampling. Set NULL if no sampling is required.
+samplesize <- NULL
 debughsfclmap <- TRUE
+
+# List to store debug/report datasets
+rprt_data <- list()
 
 # Logging level
 # There are following levels:
@@ -61,25 +67,30 @@ detect_outliers <- FALSE
 # Switch off dplyr's progress bars globally
 dplyr.show_progress <- FALSE
 
+
 # Libraries ####
-suppressPackageStartupMessages({
-  library(data.table)
-  library(faoswsTrade)
-  library(faosws)
-  library(stringr)
-  library(scales)
-  library(futile.logger)
-  library(faoswsUtil)
-  library(tidyr)
-  library(faoswsFlag)
-  library(dplyr, warn.conflicts = FALSE)
-})
+suppressPackageStartupMessages(library(data.table))
+library(stringr)
+library(magrittr)
+library(scales)
+library(tidyr, warn.conflicts = FALSE)
+library(futile.logger)
+suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
+library(faosws)
+library(faoswsUtil)
+library(faoswsTrade)
+library(faoswsFlag)
 
-# Development (not SWS-inside) mode addons ####
+# Development (SWS-outside) mode addons ####
 if(faosws::CheckDebug()){
-  SETTINGS <- faoswsModules::ReadSettings("modules/complete_tf_cpc/sws.yml")
+  localsettingspath <- "modules/complete_tf_cpc/sws.yml"
+  SETTINGS <- faoswsModules::ReadSettings(localsettingspath)
+  flog.debug("Local settings read from %s",
+             localsettingspath)
+  flog.debug("Local settings read:",
+             SETTINGS,
+             capture = TRUE)
 
-  # Local user name ####
   USER <- if_else(.Platform$OS.type == "unix",
                   Sys.getenv('USER'),
                   Sys.getenv('USERNAME'))
@@ -96,26 +107,28 @@ if(faosws::CheckDebug()){
     flog.debug("R_SWS_SHARE_PATH system variable not found.")
     Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
     flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-               tempdir())
-  }
+               tempdir())}
 } else {
   options(error = function(){
-    # SWS user name ####
     # Remove domain from username
-    USER <- regmatches(swsContext.username,
-    regexpr("(?<=/).+$", swsContext.username, perl = TRUE))
+    USER <- regmatches(
+      swsContext.username,
+      regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
+    )
 
     dump.frames()
-
-    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), USER, "complete_tf_cpc")
-
+    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"),
+                          USER,
+                          "complete_tf_cpc")
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
-
     save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
 
 stopifnot(!any(is.na(USER), USER == ""))
+
+flog.debug("User's computation parameters:",
+           swsContext.computationParams, capture = TRUE)
 
 # Reporting directory ####
 
@@ -124,14 +137,19 @@ reportdir <- file.path(
   USER,
   paste0("complete_tf_cpc_",
          format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-
 stopifnot(!file.exists(reportdir))
-
 dir.create(reportdir, recursive = TRUE)
 
-flog.appender(appender.tee(file.path(reportdir, "report.txt")))
+# Open report directory in system default file browser
+if(interactive()) browseURL(reportdir)
 
-flog.info("SWS user: %s", USER)
+flog.appender(appender.tee(file.path(reportdir,
+                                      "report.txt")))
+
+flog.info("SWS-session is run by user %s", USER)
+
+flog.debug("R session environment: ",
+           sessionInfo(), capture = TRUE)
 
 PID <- Sys.getpid()
 
@@ -209,11 +227,12 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 
 hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
 
+flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
 startTime = Sys.time()
 
-# Supplementary Datasets ####
+# Loading of help datasets ####
 
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
@@ -221,10 +240,14 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
+flog.debug("Reading in hs-fcl mapping")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
-flog.info("Rows in HS->FCL mapping table: %s", nrow(hsfclmap3))
+flog.info("HS->FCL mapping table preview:",
+          rprt_glimpse0(hsfclmap3), capture = TRUE)
+
+rprt_hsfclmap(hsfclmap3, year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
@@ -305,6 +328,8 @@ hs_chapters_str <-
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
+flog.info(toupper("##### Eurostat trade data #####"))
+
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         columns = c("declarant", "partner",
                                     "product_nc", "flow",
@@ -314,7 +339,13 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
-flog.info("Records in raw Eurostat data: %s", nrow(esdata))
+if(!is.null(samplesize)) {
+  esdata <- sample_n(esdata, samplesize)
+  warning(sprintf("Eurostat data was sampled with size %d", samplesize))
+}
+
+flog.info("Raw Eurostat data preview:",
+          rprt_glimpse0(esdata), capture = TRUE)
 
 ##' 1. Keep only `stat_regime`=4.
 
@@ -328,15 +359,20 @@ flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 
 ## Declarant and partner numeric
 ## This probably should be part of the faoswsEnsure
-esdata <- esdata[grepl("^[[:digit:]]+$",esdata$declarant),]
 
-flog.info("Records after removing non-numeric reporter codes: %s", nrow(esdata))
+esdata <- esdata %>%
+  mutate_at(vars(declarant, partner),
+            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %T>%
+            {flog.info("Non-numeric area codes: ",
+             summarize_at(.,
+                          .cols = vars(ends_with("non_numeric")),
+                          .funs = funs(total = sum,
+                                       prop = percent(sum(.) / n()))),
+             capture = TRUE)} %>%
+  filter_(~!declarant_non_numeric & !partner_non_numeric) %>%
+  select(-ends_with("non_numeric"))
 
-##' 1. Remove non-numeric codes for reporters/partners/commodities.
-
-esdata <- esdata[grepl("^[[:digit:]]+$",esdata$partner),]
-
-flog.info("Records after removing non-numeric partner codes: %s", nrow(esdata))
+flog.info("Records after removing non-numeric area codes: %s", nrow(esdata))
 
 ## Removing TOTAL from product_nc column
 esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
@@ -411,6 +447,8 @@ esdata <- esdata %>%
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
+
+rprt_hs2fcl_fulldata(esdata, tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
 
@@ -563,8 +601,7 @@ tldata <- tldata %>%
 tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
-##' 1. Map HS to FCL.
-
+# TF: Map HS to FCL ####
 ##+ tl_hs2fcl ####
 
 tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
@@ -572,17 +609,27 @@ tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
-##' 1. Remove unmapped FCL codes. ####
+rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
+
+# Remove unmapped FCL codes. ####
+tldata <- tldata %>%
+              mutate_(nolink = ~is.na(fcl))
 
 tldata_fcl_not_mapped <- tldata %>%
-  filter_(~is.na(fcl))
+  filter_(~nolink) %>%
+  select_(~-nolink)
 
 tldata <- tldata %>%
-  filter_(~!(is.na(fcl)))
+  filter_(~!nolink) %>%
+  select_(~-nolink)
+
+write.csv(tldata_fcl_not_mapped,
+          file = file.path(reportdir,
+                           "tldata_fcl_not_mapped.csv"))
 
 #############Units of measurment in TL ####
 
-##' 1. Add FCL units. ####
+##' Add FCL units. ####
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 

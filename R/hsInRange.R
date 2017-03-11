@@ -42,7 +42,7 @@ hsInRange <- function(uniqhs,
           hs = subdf$hs,
           hsext = subdf$hsext,
           fcl = as.integer(NA),
-          maplinkid = as.numeric(NA)))
+          recordnumb = as.numeric(NA)))
 
 
       # Split original data.frame by row,
@@ -74,19 +74,19 @@ hsInRange <- function(uniqhs,
           # available return empty integer
           if(nrow(maptable) == 0L) {
             fcl <- as.integer(NA)
-            maplinkid <- as.numeric(NA)
+            recordnumb <- as.numeric(NA)
           }
 
           if(nrow(maptable) >= 1L) {
              fcl <- maptable$fcl
-             maplinkid <- maptable$maplinkid
+             recordnumb <- maptable$recordnumb
           }
 
           data_frame(datumid = currentid,
                      hs = hs,
                      hsext = hsext,
                      fcl = fcl,
-                     maplinkid = maplinkid)
+                     recordnumb = recordnumb)
         }
       )
 

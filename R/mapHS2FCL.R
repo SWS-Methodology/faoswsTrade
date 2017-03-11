@@ -14,15 +14,24 @@
 
 mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
+  # Name for passing to reporting functions
+  tradedataname <- lazyeval::expr_text(tradedata)
+
   # Extract unique input combinations ####
 
   uniqhs <- tradedata %>%
     select_(~reporter, ~flow, ~hs) %>%
     distinct
 
+  # Reports full table in the text report and as csv file
+  rprt_uniqhs(uniqhs, tradedataname = tradedataname)
+
   ## Align HS codes from data and table #####
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
+
+  # Reports full table in the text report and as csv file
+  rprt_hslength(hslength, tradedataname = tradedataname)
 
   uniqhs <- uniqhs %>%
     left_join(hslength, by = c("reporter", "flow")) %>%
@@ -31,6 +40,9 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
                                           side = "right",
                                           pad = "0"),
             hsext = ~as.numeric(hsextchar))
+
+  # Reports full table in the text report and as csv file
+  rprt_hschanged(uniqhs, tradedataname = tradedataname)
 
   maptable <- hslength %>%
     left_join(maptable, by = c("reporter" = "area", "flow")) %>%
@@ -43,13 +55,18 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
                                        side = "right",
                                        pad = "9")) %>%
     mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
-            tocodeext   = ~as.numeric(tocodeextchar),
-            # Is it legitimate to create row numbers in such way?
-            maplinkid   = ~row_number(reporter))
+            tocodeext   = ~as.numeric(tocodeextchar))
 
+  rprt_map_hschanged(maptable, tradedataname = tradedataname)
 
   # Find mappings ####
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
+
+  # Report on nolinks
+  rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
+
+  # Report on multilinks
+  rprt_hs2fcl_multilinks(uniqhs, tradedataname = tradedataname)
 
   # Choose ones from multiple matches ####
 

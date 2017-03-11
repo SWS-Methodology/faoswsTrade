@@ -6,6 +6,9 @@
 \usage{
 convertGeonom2FAO(geonom)
 }
+\arguments{
+\item{geonom}{Vector with Geonom area codes}
+}
 \description{
 Convertion of EuroStat Geonomenclature to FAO area codes
 }

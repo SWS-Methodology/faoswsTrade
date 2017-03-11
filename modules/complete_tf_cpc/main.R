@@ -109,13 +109,13 @@ if(faosws::CheckDebug()){
     flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
                tempdir())}
 } else {
-  options(error = function(){
     # Remove domain from username
     USER <- regmatches(
       swsContext.username,
       regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
     )
 
+  options(error = function(){
     dump.frames()
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"),
                           USER,

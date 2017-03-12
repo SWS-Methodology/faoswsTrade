@@ -40,6 +40,9 @@ rprt_hsfclmap <- function(maptable, year) {
     select(1, 2, 5, 6, 3, 4) %>%
     ungroup()
 
+  hsfclmap_by_reporter_stats <- add_area_names(hsfclmap_by_reporter_stats,
+                                               "fao", "area")
+
   rprt_writetable(hsfclmap_by_reporter_stats)
 
   # In the report we pretty percents instead of decimals
@@ -47,8 +50,6 @@ rprt_hsfclmap <- function(maptable, year) {
     mutate_(.dots = setNames(paste0("scales::percent(prop_", year, ")"),
                              paste0("prop_", year)))
 
-  rprt_fulltable(hsfclmap_by_reporter_stats,
-                 area_code_class = "fao",
-                 area_columns = "area")
+  rprt_fulltable(hsfclmap_by_reporter_stats)
 
 }

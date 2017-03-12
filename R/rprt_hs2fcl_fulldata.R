@@ -41,28 +41,28 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   nolinks_byreporter <- tradedata %>%
     group_by_(~reporter) %>%
     summarise_(.dots = stats) %>%
-    filter_(.dots = filters) %>% 
+    filter_(.dots = filters) %>%
     arrange_(.dots = sorting)
 
   nolinks_byreporterhs6 <- tradedata %>%
     group_by_(~reporter, ~hs6) %>%
     summarize_(.dots = stats) %>%
     ungroup() %>%
-    filter_(.dots = filters) %>% 
+    filter_(.dots = filters) %>%
     arrange_(.dots = sorting)
 
   nolinks_byhs6 <- tradedata %>%
     group_by_(~hs6) %>%
     summarize_(.dots = stats) %>%
-    filter_(.dots = filters) %>% 
+    filter_(.dots = filters) %>%
     arrange_(.dots = sorting)
 
   rprt_writetable(nolinks_byreporter, prefix = tradedataname)
   rprt_writetable(nolinks_byreporterhs6, prefix = tradedataname)
   rprt_writetable(nolinks_byhs6, prefix = tradedataname)
 
-  rprt_fulltable(nolinks_byreporter, pretty_prop = TRUE)
-  rprt_fulltable(nolinks_byreporterhs6, pretty_prop = TRUE)
-  rprt_fulltable(nolinks_byhs6, pretty_prop = TRUE)
+  rprt_fulltable(nolinks_byreporter, pretty_prop = TRUE, area_code_class = "fao")
+  rprt_fulltable(nolinks_byreporterhs6, pretty_prop = TRUE, area_code_class = "fao")
+  rprt_fulltable(nolinks_byhs6, pretty_prop = TRUE, area_code_class = "fao")
 
 }

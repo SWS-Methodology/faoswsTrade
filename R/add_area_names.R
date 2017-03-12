@@ -3,16 +3,17 @@
 #'
 #' @param data A data frame where reporter or partner columns exists.
 #' @param code_class A character string indicating classification of area codes:
-#' "fao", "m49" or "geonom". By default "fao".
+#' "fao", "m49" or "geonom".
 #' @param area_columns A character vector indicating names of columns with area
 #' codes. By default c("reporter", "partner").
 #' @return Original data frame with added columns.
 #' @export
 #' @import dplyr
 
-add_area_names <- function(data, code_class = "fao",
+add_area_names <- function(data, code_class = NULL,
                            area_columns = c("reporter", "partner")) {
 
+  stopifnot(!is.null(code_class))
   code_class <- tolower(code_class)
 
   if(code_class != "fao") stop("Only FAO area codes are supported now.")
@@ -25,7 +26,7 @@ add_area_names <- function(data, code_class = "fao",
   }
 
   data <- data %>%
-    mutate_at(columns2change, funs_(name = paste0("area_name_", code_class)))
+    mutate_at(columns2change, funs(name = name_area(., code_class = code_class)))
 
   data
 

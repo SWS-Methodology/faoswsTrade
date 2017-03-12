@@ -3,6 +3,7 @@
 export(adaptTradeDataNames)
 export(addFCLunits)
 export(applyadj)
+export(area_name_fao)
 export(convertComtradeM49ToFAO)
 export(convertGeonom2FAO)
 export(convertHS2FCL)

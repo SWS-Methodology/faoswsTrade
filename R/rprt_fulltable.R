@@ -8,15 +8,33 @@
 #' @param pretty_prop Logical of length one. If TRUE all numeric columns with
 #'   names end with "_prop" will be converted for easy reading with
 #'   scales::percent.
+#' @param area_code_class Character "fao", "m49", "geonom" or NULL. If not NULL
+#'   columns with area names will be added. NULL by default. See
+#'   ?add_area_names for details.
+#' @param area_columns Character vector with names of columns containing area
+#'   codes. By default c("reporter", "partner").
 #'
 #' @export
 #' @import futile.logger
 #' @import dplyr
 #' @import scales
 
-rprt_fulltable <- function(dataset, level = "info", prefix = NULL, pretty_prop = TRUE) {
+rprt_fulltable <- function(dataset,
+                           level = "info",
+                           prefix = NULL,
+                           pretty_prop = TRUE,
+                           area_code_class = NULL,
+                           area_columns = c("reporter", "partner")) {
 
   name <- lazyeval::expr_text(dataset)
+
+  if(!is.null(area_code_class)) {
+
+    dataset <- add_area_names(dataset,
+                              code_class = area_code_class,
+                              area_columns = area_columns)
+
+  }
 
   if(pretty_prop) {
 

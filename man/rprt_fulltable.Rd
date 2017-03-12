@@ -4,7 +4,8 @@
 \alias{rprt_fulltable}
 \title{Adds full table to report}
 \usage{
-rprt_fulltable(dataset, level = "info", prefix = NULL, pretty_prop = TRUE)
+rprt_fulltable(dataset, level = "info", prefix = NULL, pretty_prop = TRUE,
+  area_code_class = NULL, area_columns = c("reporter", "partner"))
 }
 \arguments{
 \item{dataset}{Data frame to report}
@@ -18,6 +19,13 @@ NULL by default.}
 \item{pretty_prop}{Logical of length one. If TRUE all numeric columns with
 names end with "_prop" will be converted for easy reading with
 scales::percent.}
+
+\item{area_code_class}{Character "fao", "m49", "geonom" or NULL. If not NULL
+columns with area names will be added. NULL by default. See
+?add_area_names for details.}
+
+\item{area_columns}{Character vector with names of columns containing area
+codes. By default c("reporter", "partner").}
 }
 \description{
 Adds full table to report

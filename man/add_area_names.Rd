@@ -5,16 +5,16 @@
 \title{A function to add columns with area names to a data frame where reporter or
 partner columns exist.}
 \usage{
-add_area_names(data, codeclass = "fao", areacolumns = c("reporter",
+add_area_names(data, code_class = "fao", area_columns = c("reporter",
   "partner"))
 }
 \arguments{
 \item{data}{A data frame where reporter or partner columns exists.}
 
-\item{codeclass}{A character string indicating classification of area codes:
+\item{code_class}{A character string indicating classification of area codes:
 "fao", "m49" or "geonom". By default "fao".}
 
-\item{areacolumns}{A character vector indicating names of columns with area
+\item{area_columns}{A character vector indicating names of columns with area
 codes. By default c("reporter", "partner").}
 }
 \value{

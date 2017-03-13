@@ -150,7 +150,9 @@ reportdir <- file.path(
   USER,
   paste0("complete_tf_cpc_",
          format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-reportdir <- normalizePath(reportdir, winslash='/')
+reportdir <- normalizePath(reportdir,
+                           winslash='/',
+                           mustWork = FALSE)
 stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 

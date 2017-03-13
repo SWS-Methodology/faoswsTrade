@@ -25,10 +25,12 @@ rprt_map_hschanged <- function(maptable, tradedataname = NULL) {
     filter_(~otherlength) %>%
     select_(~-otherlength)
 
+  map_hschange <- add_area_names(map_hschange, "fao")
+
   rprt_writetable(map_hschange, prefix = tradedataname)
 
   map_hschange_statistic <- map_hschange_all %>%
-    group_by_(~reporter) %>%
+    group_by_(~reporter, ~name) %>%
     summarize_(all = ~n(),
                changed = ~sum(otherlength),
                changedprop = ~changed / all)

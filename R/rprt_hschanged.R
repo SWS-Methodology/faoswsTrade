@@ -25,10 +25,12 @@ rprt_hschanged <- function(uniqhs, tradedataname = NULL) {
     filter_(~otherlength) %>%
     select_(~-otherlength)
 
+  hschange <- add_area_names(hschange, "fao")
+
   rprt_writetable(hschange, prefix = tradedataname)
 
   hschange_statistic <- hschange_all %>%
-    group_by_(~reporter) %>%
+    group_by_(~reporter, ~name) %>%
     summarize_(all = ~n(),
                changed = ~sum(otherlength),
                changedprop = ~changed / all)

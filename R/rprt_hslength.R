@@ -14,6 +14,8 @@ rprt_hslength <- function(hslength, tradedataname = NULL) {
   stopifnot(!(is.null(tradedataname)))
   stopifnot(length(tradedataname) == 1L)
 
+  hslength <- add_area_names(hslength, "fao")
+
   rprt_writetable(hslength, prefix = tradedataname)
 
   rprt_fulltable(hslength, prefix = tradedataname)

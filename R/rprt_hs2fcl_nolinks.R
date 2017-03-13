@@ -16,6 +16,8 @@ rprt_hs2fcl_nolinks <- function(uniqhs, tradedataname = NULL) {
   stopifnot(all(c("reporter", "flow", "hsext") %in%
                   colnames(uniqhs)))
 
+  uniqhs <- add_area_names(uniqhs, "fao")
+
   hsfcl_nolinks <- uniqhs %>%
     filter_(~is.na(fcl))
 
@@ -23,7 +25,7 @@ rprt_hs2fcl_nolinks <- function(uniqhs, tradedataname = NULL) {
 
   hsfcl_nolinks_statistic <- uniqhs %>%
     mutate_(nolink = ~is.na(fcl)) %>%
-    group_by_(~reporter, ~flow) %>%
+    group_by_(~reporter, ~name, ~flow) %>%
     summarize_(nolinks = ~sum(nolink),
                nolinks_prop = ~nolinks / n()) %>%
     filter_(~nolinks > 0L)

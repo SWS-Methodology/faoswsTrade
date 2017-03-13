@@ -21,11 +21,11 @@ rprt_map_hschanged <- function(maptable, tradedataname = NULL) {
   map_hschange_all <- maptable %>%
     mutate_(otherlength = ~stringr::str_length(fromcode) != maxhslength)
 
+  map_hschange_all <- add_area_names(map_hschange_all, "fao")
+
   map_hschange <- map_hschange_all %>%
     filter_(~otherlength) %>%
     select_(~-otherlength)
-
-  map_hschange <- add_area_names(map_hschange, "fao")
 
   rprt_writetable(map_hschange, prefix = tradedataname)
 

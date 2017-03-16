@@ -405,6 +405,7 @@ flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata)
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+esdata <- adaptTradeDataTypes(tradedata = esdata, origin = "ES")
 
 # TODO: do we need this piece?
 esdata <- tbl_df(esdata)
@@ -546,6 +547,7 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+tldata <- adaptTradeDataTypes(tldata, "TL")
 
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$",tldata$hs),]

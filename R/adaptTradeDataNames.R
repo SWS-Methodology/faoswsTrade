@@ -13,37 +13,58 @@
 #' @import dplyr
 #' @export
 
-adaptTradeDataNames <- function(tradedata = NA, origin = NA) {
+adaptTradeDataNames <- function(tradedata, origin) {
 
   if (missing(tradedata)) stop('"tradedata" should be set.')
 
+  origin <- toupper(origin)
   if (missing(origin) | (origin!="TL" & origin!="ES")) {
     stop('"origin" needs to be "TL" or "ES"')
   }
 
-  if (origin == "TL") {
-    tradedata %>%
-      transmute_(reporter = ~as.integer(rep),
-                 partner = ~as.integer(prt),
-                 hs = ~comm,
-                 flow = ~as.integer(flow),
-                 year = ~as.character(tyear),
-                 value = ~as.numeric(tvalue),
-                 weight = ~as.numeric(weight),
-                 qty = ~as.numeric(qty),
-                 qunit = ~as.integer(qunit)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+  if(origin == "TL")
+    old_common_names <- c("tyear", "rep", "prt",
+                          "flow", "comm", "tvalue",
+                          "weight") else
+                            old_common_names <- c(
+                              "period", "declarant", "partner",
+                              "flow", "product_nc", "value_1k_euro",
+                              "qty_ton")
 
-  } else {
-    tradedata %>%
-      transmute_(reporter = ~as.integer(declarant),
-                 partner = ~as.integer(partner),
-                 hs = ~product_nc,
-                 flow = ~as.integer(flow),
-                 year = ~as.character(stringr::str_sub(period, 1, 4)),
-                 value = ~as.numeric(value_1k_euro),
-                 weight = ~as.numeric(qty_ton),
-                 qty = ~as.numeric(sup_quantity)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
-  }
+  new_common_names <- c("year", "reporter", "partner",
+                        "flow", "hs", "value",
+                        "weight")
+
+  stopifnot(length(old_common_names) ==
+                      length(new_common_names))
+
+  tradedata %>%
+    rename_(.dots = setNames(old_common_names, new_common_names))
+
+#
+#   if (origin == "TL") {
+#     tradedata %>%
+#       transmute_(reporter = ~as.integer(rep),
+#                  partner = ~as.integer(prt),
+#                  hs = ~comm,
+#                  flow = ~as.integer(flow),
+#                  year = ~as.character(tyear),
+#                  value = ~as.numeric(tvalue),
+#                  weight = ~as.numeric(weight),
+#                  qty = ~as.numeric(qty),
+#                  qunit = ~as.integer(qunit)) %>%
+#       mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+#
+#   } else {
+#     tradedata %>%
+#       transmute_(reporter = ~as.integer(declarant),
+#                  partner = ~as.integer(partner),
+#                  hs = ~product_nc,
+#                  flow = ~as.integer(flow),
+#                  year = ~as.character(stringr::str_sub(period, 1, 4)),
+#                  value = ~as.numeric(value_1k_euro),
+#                  weight = ~as.numeric(qty_ton),
+#                  qty = ~as.numeric(sup_quantity)) %>%
+#       mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+#   }
 }

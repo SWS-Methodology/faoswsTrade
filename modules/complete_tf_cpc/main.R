@@ -145,13 +145,20 @@ stopifnot(!any(is.na(USER), USER == ""))
 flog.debug("User's computation parameters:",
            swsContext.computationParams, capture = TRUE)
 
+##' - `year`: year for processing.
+# Will be used in reporting directory name
+year <- as.integer(swsContext.computationParams$year)
+flog.info("Working year: %s", year)
+
+
 # Reporting directory ####
 
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
   USER,
-  paste0("complete_tf_cpc_",
-         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
+  paste("complete_tf_cpc", year, 
+         format(Sys.time(), "%Y%m%d%H%M%S%Z"),
+        sep = "_"))
 reportdir <- normalizePath(reportdir,
                            winslash='/',
                            mustWork = FALSE)
@@ -222,14 +229,9 @@ if(multicore) {
 # Read SWS module run parameters ####
 
 stopifnot(
-  !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
 ##' # Parameters
-
-##' - `year`: year for processing.
-year <- as.integer(swsContext.computationParams$year)
-flog.info("Working year: %s", year)
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.

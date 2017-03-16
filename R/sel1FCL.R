@@ -19,6 +19,7 @@ sel1FCL <- function(hsfclmatch, maptable) {
       ungroup
   )
 
+  # Return original record if there is only one match
   if(nrow(hsfclmatch) == 1L) return(hsfclmatch)
 
   # Selection of the narrowest hs range

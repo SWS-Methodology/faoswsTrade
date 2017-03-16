@@ -349,11 +349,16 @@ message(sprintf("[%s] Reading in Eurostat data", PID))
 flog.info(toupper("##### Eurostat trade data #####"))
 
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
-                        columns = c("declarant", "partner",
-                                    "product_nc", "flow",
-                                    "period", "value_1k_euro",
-                                    "qty_ton", "sup_quantity",
-                                    "stat_regime"),
+                        columns = c(
+                          "period",
+                          "declarant",
+                          "partner",
+                          "flow",
+                          "product_nc",
+                          "value_1k_euro",
+                          "qty_ton",
+                          "sup_quantity",
+                          "stat_regime"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
@@ -520,12 +525,21 @@ esdata <- esdata %>%
 
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
+# Download TL data ####
+
 message(sprintf("[%s] Reading in Tariffline data", PID))
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns = c("rep", "tyear", "flow",
-                                  "comm", "prt", "weight",
-                                  "qty", "qunit", "tvalue",
-                                  "chapter"),
+                        columns = c(
+                          "tyear",
+                          "rep",
+                          "prt",
+                          "flow",
+                          "comm",
+                          "tvalue",
+                          "weight",
+                          "qty",
+                          "qunit",
+                          "chapter"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 

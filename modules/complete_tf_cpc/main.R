@@ -148,15 +148,13 @@ flog.debug("User's computation parameters:",
 ##' - `year`: year for processing.
 # Will be used in reporting directory name
 year <- as.integer(swsContext.computationParams$year)
-flog.info("Working year: %s", year)
-
 
 # Reporting directory ####
 
 reportdir <- file.path(
   Sys.getenv("R_SWS_SHARE_PATH"),
   USER,
-  paste("complete_tf_cpc", year, 
+  paste("complete_tf_cpc", year,
          format(Sys.time(), "%Y%m%d%H%M%S%Z"),
         sep = "_"))
 reportdir <- normalizePath(reportdir,

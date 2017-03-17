@@ -24,7 +24,11 @@ sel1FCL <- function(hsfclmatch, maptable) {
 
   # Selection of the narrowest hs range
   hsfclmatch <- hsfclmatch %>%
-    left_join(maptable, by = "recordnumb") %>%
+    left_join(maptable %>%
+                select_(~recordnumb,
+                        ~fromcodeext,
+                        ~tocodeext),
+              by = "recordnumb") %>%
     mutate_(hsrange = ~tocodeext - fromcodeext) %>%
     filter_(~hsrange == min(hsrange))
 

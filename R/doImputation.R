@@ -18,45 +18,44 @@ doImputation <- function(tradedata = NA) {
   if (missing(tradedata)) stop('"tradedata" is missing.')
 
   tradedata <- tradedata %>%
-    mutate(i=1, hs8 = str_sub(hs, 1, 8), hs6 = str_sub(hs, 1, 6)) %>%
+    mutate(i = 1, hs8 = str_sub(hs, 1, 8), hs6 = str_sub(hs, 1, 6)) %>%
     mutate(
-           hs8 = if_else(nchar(hs8)==7, paste0('0', hs8), hs8),
-           hs6 = if_else(nchar(hs6)==5, paste0('0', hs6), hs6)
+           hs8 = if_else(nchar(hs8) == 7, paste0('0', hs8), hs8),
+           hs6 = if_else(nchar(hs6) == 5, paste0('0', hs6), hs6)
            ) %>%
-    # median value reporter/HS
+    # median value reporter/HS (full length)
     group_by_(~year, ~reporter, ~flow, ~hs) %>%
-    mutate_(n_reporter_hs = ~sum(i), uv_reporter_hs = ~median(uv, na.rm = TRUE)) %>%
-    ungroup() %>%
+    mutate_(n_rep_hs = ~sum(i), uvm_rep_hs = ~median(uv, na.rm = TRUE)) %>%
     # median value reporter/HS8
     group_by_(~year, ~reporter, ~flow, ~hs8) %>%
-    mutate_(n_reporter_hs8 = ~sum(i), uv_reporter_hs8 = ~median(uv, na.rm = TRUE)) %>%
-    ungroup() %>%
+    mutate_(n_rep_hs8 = ~sum(i), uvm_rep_hs8 = ~median(uv, na.rm = TRUE)) %>%
     # median value reporter/HS6
     group_by_(~year, ~reporter, ~flow, ~hs6) %>%
-    mutate_(n_reporter_hs6 = ~sum(i), uv_reporter_hs6 = ~median(uv, na.rm = TRUE)) %>%
-    ungroup() %>%
+    mutate_(n_rep_hs6 = ~sum(i), uvm_rep_hs6 = ~median(uv, na.rm = TRUE)) %>%
     # median value HS
     group_by_(~year, ~flow, ~hs) %>%
-    mutate_(n_hs = ~sum(i), uv_hs = ~median(uv, na.rm = TRUE)) %>%
-    ungroup() %>%
+    mutate_(n_hs = ~sum(i), uvm_hs = ~median(uv, na.rm = TRUE)) %>%
     # median value FCL
     group_by_(~year, ~flow, ~fcl) %>%
-    mutate_(uv_fcl = ~median(uv, na.rm = TRUE)) %>%
-    ungroup() %>%
+    mutate_(uvm_fcl = ~median(uv, na.rm = TRUE)) %>%
     # median value flow
     group_by_(~year, ~flow) %>%
-    mutate_(uv_flow = ~median(uv, na.rm = TRUE)) %>%
-    ungroup()
+    mutate_(uvm_flow = ~median(uv, na.rm = TRUE)) %>%
+    ungroup() %>%
+    select(-i)
 
-  imputed_qty <- case_when(
-    !is.na(tradedata$uv_reporter_hs)  & tradedata$n_reporter_hs  > 10  ~ tradedata$value / tradedata$uv_reporter_hs,
-    !is.na(tradedata$uv_reporter_hs8) & tradedata$n_reporter_hs8 > 10  ~ tradedata$value / tradedata$uv_reporter_hs8,
-    !is.na(tradedata$uv_reporter_hs6) & tradedata$n_reporter_hs6 > 10  ~ tradedata$value / tradedata$uv_reporter_hs6,
-    !is.na(tradedata$uv_hs)                                            ~ tradedata$value / tradedata$uv_hs,
-    !is.na(tradedata$uv_fcl)                                           ~ tradedata$value / tradedata$uv_fcl,
-    # XXX
-    !is.na(tradedata$uv_flow)                                          ~ tradedata$value / tradedata$uv_flow
-  )
+  tradedata$uvm <- tradedata %>% 
+    {case_when(
+      !is.na(.$uvm_rep_hs)  & .$n_rep_hs  > 10 ~ .$uvm_rep_hs,
+      !is.na(.$uvm_rep_hs8) & .$n_rep_hs8 > 10 ~ .$uvm_rep_hs8,
+      !is.na(.$uvm_rep_hs6) & .$n_rep_hs6 > 10 ~ .$uvm_rep_hs6,
+      !is.na(.$uvm_hs)                         ~ .$uvm_hs,
+      !is.na(.$uvm_fcl)                        ~ .$uvm_fcl,
+      # XXX
+      !is.na(.$uvm_flow)                       ~ .$uvm_flow
+    )}
+
+  imputed_qty <- tradedata$value / tradedata$uvm
 
   tradedata %>%
     mutate_(qty = ~ifelse(no_quant | outlier, imputed_qty, qty),

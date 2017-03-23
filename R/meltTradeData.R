@@ -8,7 +8,7 @@
 #'
 #' @export
 
-meltTradeData function(data = NA) {
+meltTradeData <- function(data = NA) {
   reshape2::melt(data,
                  id=c('geographicAreaM49Reporter',
                       'geographicAreaM49Partner',

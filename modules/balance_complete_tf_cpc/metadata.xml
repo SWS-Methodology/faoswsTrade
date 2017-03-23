@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RScript xmlns="http://www.fao.org/rScript" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.fao.org/rScript rScript.xsd ">
+	<Name>Complete trade flow balance</Name>
+	<Description>A brief description of the module's functions</Description>
+	<Category>Imputation</Category>
+	<Authors>
+		<Author>
+			<Name>Christian A. Mongeau Ospina</Name>
+			<Mail>CHRISTIAN.MONGEAU@FAO.ORG</Mail>
+		</Author>
+	</Authors>
+		<Params>
+    <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>threshold</Code>
+            <Label>Number</Label>
+            <Description>A number as input (R sees it as a char, though)</Description>
+            <Compulsory>true</Compulsory>
+            <Min>1.1</Min>
+            <Max>10</Max>
+    </Param>
+    <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="List">
+	    <Code>listInput</Code>
+	    <Label>List</Label>
+		  <Description>A drop-down box of options</Description>
+		  <Compulsory>true</Compulsory>
+      <Options>
+				<Option>
+					<Label>Option 1</Label>
+					<Value>op1</Value>
+				</Option>
+				<Option>
+					<Label>Option 2</Label>
+					<Value>op2</Value>
+				</Option>
+        <Option>
+					<Label>Option 3</Label>
+					<Value>op3</Value>
+				</Option>
+			</Options>
+    </Param>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="String">
+			<Code>stringInput</Code>
+			<Label>String</Label>
+			<Description>A string input</Description>
+			<Compulsory>false</Compulsory>
+		</Param>
+	</Params>
+	<Datasets>
+		<MainDataset>
+			<Code>tablename</Code>
+			<SelectableDimensions>
+				<SelectableDimension compulsory="true">geographicAreaM49</SelectableDimension>
+				<SelectableDimension compulsory="true">measuredItemCPC</SelectableDimension>
+				<SelectableDimension compulsory="true">measuredElement</SelectableDimension>
+				<SelectableDimension compulsory="true">timePointYears</SelectableDimension>
+			</SelectableDimensions>
+		</MainDataset>
+	</Datasets>
+	<InteractiveValidation>false</InteractiveValidation>
+	<Background>false</Background>
+</RScript>

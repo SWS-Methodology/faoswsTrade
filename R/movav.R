@@ -16,13 +16,14 @@
 #'
 #' @export
 
-movav <- function(x, pkg = 'native', mode = 'centered') {
+movav <- function(x, pkg = 'native', mode = 'centered', na.rm = TRUE) {
 
   if (pkg == 'zoo') {
     if (mode == 'centered') {
-      res <- zoo::rollapply(lag(x), 3, mean, fill = NA, align = 'right')
-    } else {
       stop('Sorry, only "mode = centered" is implemented with zoo')
+    } else {
+      res <- zoo::rollapply(lag(x), 3, mean, fill = NA,
+                            align = 'right', na.rm = na.rm)
     }
   } else {
     if (mode == 'centered') {

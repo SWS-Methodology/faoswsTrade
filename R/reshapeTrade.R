@@ -18,18 +18,25 @@ reshapeTrade <- function(data = NA) {
            type      = ifelse(measuredElementTrade %in% c('5622', '5922'), 'value', 'qty'),
            flagTrade = paste(flagObservationStatus, flagMethod, sep = '-')
            ) %>%
-    select(-measuredElementTrade, -flagObservationStatus, -flagMethod)
+    select(-flagObservationStatus, -flagMethod)
 
   data_flags <- data %>%
-    select(-Value) %>%
+    select(-measuredElementTrade, -Value) %>%
     tidyr::spread(type, flagTrade) %>%
-    rename(flag_qty = qty, flag_value = value)
+    dplyr::rename(flag_qty = qty, flag_value = value)
 
   data_value <- data %>%
-    select(-flagTrade) %>%
+    select(-measuredElementTrade, -flagTrade) %>%
     tidyr::spread(type, Value)
 
-  res <- left_join(data_value, data_flags)
+  data_qelement <- data %>%
+    filter(type != 'value') %>%
+    select(flow, measuredElementTrade, measuredItemCPC) %>%
+    unique()
+
+  res <- left_join(data_value, data_flags) %>%
+    left_join(data_qelement) %>%
+    dplyr::rename(measuredElementTrade_q = measuredElementTrade)
 
   return(res)
 }

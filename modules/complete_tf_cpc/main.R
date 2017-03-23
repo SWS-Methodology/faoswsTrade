@@ -66,7 +66,9 @@ detect_outliers <- FALSE
 
 # Switch off dplyr's progress bars globally
 dplyr.show_progress <- FALSE
-
+# max.print in RStudio is too small
+oldMaxPrint <- getOption("max.print")
+options(max.print = 99999L)
 
 # Libraries ####
 suppressPackageStartupMessages(library(data.table))
@@ -150,7 +152,9 @@ reportdir <- file.path(
   USER,
   paste0("complete_tf_cpc_",
          format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-reportdir <- normalizePath(reportdir, winslash='/')
+reportdir <- normalizePath(reportdir,
+                           winslash='/',
+                           mustWork = FALSE)
 stopifnot(!file.exists(reportdir))
 dir.create(reportdir, recursive = TRUE)
 
@@ -1203,3 +1207,11 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
+
+# Restore changed options
+options(max.print = oldMaxPrint)
+
+# Save list with report data
+saveRDS(rprt_data, file = file.path(reportdir, "report_data.rds"))
+
+

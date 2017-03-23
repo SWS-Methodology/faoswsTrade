@@ -21,6 +21,8 @@ rprt_map_hschanged <- function(maptable, tradedataname = NULL) {
   map_hschange_all <- maptable %>%
     mutate_(otherlength = ~stringr::str_length(fromcode) != maxhslength)
 
+  map_hschange_all <- add_area_names(map_hschange_all, "fao")
+
   map_hschange <- map_hschange_all %>%
     filter_(~otherlength) %>%
     select_(~-otherlength)
@@ -28,7 +30,7 @@ rprt_map_hschanged <- function(maptable, tradedataname = NULL) {
   rprt_writetable(map_hschange, prefix = tradedataname)
 
   map_hschange_statistic <- map_hschange_all %>%
-    group_by_(~reporter) %>%
+    group_by_(~reporter, ~name) %>%
     summarize_(all = ~n(),
                changed = ~sum(otherlength),
                changedprop = ~changed / all)

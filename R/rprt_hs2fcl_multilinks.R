@@ -22,6 +22,8 @@ rprt_hs2fcl_multilinks <- function(uniqhs, tradedataname = NULL) {
     ungroup() %>%
     mutate_(multilink = ~matches > 1L)
 
+  hsfcl_matchescount <- add_area_names(hsfcl_matchescount, "fao")
+
   hsfcl_multilinks <- hsfcl_matchescount %>%
     filter_(~multilink) %>%
     select_(~-multilink)
@@ -29,7 +31,7 @@ rprt_hs2fcl_multilinks <- function(uniqhs, tradedataname = NULL) {
   rprt_writetable(hsfcl_multilinks, prefix = tradedataname)
 
   hsfcl_multilinks_statistic <- hsfcl_matchescount %>%
-    group_by_(~reporter) %>%
+    group_by_(~reporter, ~name) %>%
     summarise_(multicount = ~sum(multilink),
                multiprop  = ~multicount / n()) %>%
     ungroup() %>%

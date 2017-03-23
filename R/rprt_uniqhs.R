@@ -25,5 +25,6 @@ rprt_uniqhs <- function(uniqhs, tradedataname = NULL) {
 
   rprt_writetable(uniq_hs_by_reporter, prefix = tradedataname)
 
-  rprt_fulltable(uniq_hs_by_reporter, prefix = tradedataname)
+  rprt_fulltable(uniq_hs_by_reporter, prefix = tradedataname,
+                 area_code_class = "fao")
 }

@@ -103,13 +103,9 @@
 
 "fcl_2_cpc2"
 
-#' HS codes of length 6 from Standard 2012 what take part in futher processing
+#' HS codes of length 6 from HSagric_filter.xls what take part in futher processing
 #' of agricultural trade data.
 #'
-#' Taken from HS2012-6 digits Standard.xls file provided by Cladia from B/C team.
-#' Version of December 2016. Consists of 1061 codes.
-#' https://github.com/SWS-Methodology/faoswsTrade/issues/66
-#'
-#' @format A character vector of length 1061.
+#' @format A numeric vector of length 21352.
 
 "hs6faointerest"

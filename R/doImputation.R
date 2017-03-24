@@ -22,7 +22,7 @@ doImputation <- function(tradedata = NA, uv.median = 'uvm') {
   }
 
   if (is.null(tradedata$value)) {
-    stop(paste0('No "', value, '" variable in the data.'))
+    stop(paste0('No "value" variable in the data.'))
   }
 
   imputed_qty <- tradedata$value / tradedata[[uv.median]]

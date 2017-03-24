@@ -22,33 +22,35 @@ computeMedianUnitValue <- function(tradedata = NA, name = 'uvm', other = TRUE) {
   if (missing(tradedata)) stop('"tradedata" is missing.')
 
   tradedata <- tradedata %>%
-    mutate(i = 1, hs8 = str_sub(hs, 1, 8), hs6 = str_sub(hs, 1, 6)) %>%
+    mutate(
+           hs8 = stringr::str_sub(hs, 1, 8),
+           hs6 = stringr::str_sub(hs, 1, 6)
+           ) %>%
     mutate(
            hs8 = if_else(nchar(hs8) == 7, paste0('0', hs8), hs8),
            hs6 = if_else(nchar(hs6) == 5, paste0('0', hs6), hs6)
            ) %>%
     # median value reporter/HS (full length)
     group_by_(~year, ~reporter, ~flow, ~hs) %>%
-    mutate_(n_rep_hs = ~sum(i), uvm_rep_hs = ~median(uv, na.rm = TRUE)) %>%
+    mutate_(n_rep_hs = ~n(), uvm_rep_hs = ~median(uv, na.rm = TRUE)) %>%
     # median value reporter/HS8
     group_by_(~year, ~reporter, ~flow, ~hs8) %>%
-    mutate_(n_rep_hs8 = ~sum(i), uvm_rep_hs8 = ~median(uv, na.rm = TRUE)) %>%
+    mutate_(n_rep_hs8 = ~n(), uvm_rep_hs8 = ~median(uv, na.rm = TRUE)) %>%
     # median value reporter/HS6
     group_by_(~year, ~reporter, ~flow, ~hs6) %>%
-    mutate_(n_rep_hs6 = ~sum(i), uvm_rep_hs6 = ~median(uv, na.rm = TRUE)) %>%
+    mutate_(n_rep_hs6 = ~n(), uvm_rep_hs6 = ~median(uv, na.rm = TRUE)) %>%
     # median value HS
     group_by_(~year, ~flow, ~hs) %>%
-    mutate_(n_hs = ~sum(i), uvm_hs = ~median(uv, na.rm = TRUE)) %>%
+    mutate_(n_hs = ~n(), uvm_hs = ~median(uv, na.rm = TRUE)) %>%
     # median value FCL
     group_by_(~year, ~flow, ~fcl) %>%
     mutate_(uvm_fcl = ~median(uv, na.rm = TRUE)) %>%
     # median value flow
     group_by_(~year, ~flow) %>%
     mutate_(uvm_flow = ~median(uv, na.rm = TRUE)) %>%
-    ungroup() %>%
-    select(-i)
+    ungroup()
 
-  tradedata$uvm <- tradedata %>% 
+  tradedata[[name]] <- tradedata %>% 
     {case_when(
       !is.na(.$uvm_rep_hs)  & .$n_rep_hs  > 10 ~ .$uvm_rep_hs,
       !is.na(.$uvm_rep_hs8) & .$n_rep_hs8 > 10 ~ .$uvm_rep_hs8,

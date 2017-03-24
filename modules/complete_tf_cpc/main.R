@@ -906,6 +906,8 @@ if (detect_outliers) {
 ## These flags are also assigned to monetary values. This may need to be revised
 ## (monetary values are not supposed to be modified).
 
+tradedata <- computeMedianUnitValue(tradedata = tradedata)
+
 tradedata <- doImputation(tradedata = tradedata)
 
 # XXX using flagTrade for the moment, but should go away

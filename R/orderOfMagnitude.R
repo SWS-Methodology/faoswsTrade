@@ -35,6 +35,10 @@ orderOfMagnitude <- function(data = NA,
   if (missing(to.check)) stop("'to.check' is required.")
   if (missing(benchmark)) stop("'bechmark' is required.")
 
+  if (allow <= 0) {
+    stop('"allow" equal to zero or negative does not make sense.')
+  }
+
   to.check_name <- to.check
   benchmark_name <- benchmark
 
@@ -68,6 +72,7 @@ orderOfMagnitude <- function(data = NA,
     stop('"method" should be one of "round" or "ceiling".')
   }
 
+  # This is TRUE if to.check is 'near' the ratio by a factor of 10.
   test <- (to.check >= benchmark * ratio * (100-allow)/100) &
           (to.check <= benchmark * ratio * (100+allow)/100)
 

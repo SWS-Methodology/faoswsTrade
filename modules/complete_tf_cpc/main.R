@@ -908,6 +908,14 @@ if (detect_outliers) {
 
 tradedata <- computeMedianUnitValue(tradedata = tradedata)
 
+tradedata$uvx <- orderOfMagnitude(data = tradedata,
+                                 to.check = 'uv', benchmark = 'uvm')
+
+tradedata <- tradedata %>%
+  mutate(out_magnitude = (uvx != uv)) %>%
+  select(-uv) %>%
+  rename(uv = uvx)
+
 tradedata <- doImputation(tradedata = tradedata)
 
 # XXX using flagTrade for the moment, but should go away

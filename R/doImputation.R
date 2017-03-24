@@ -28,6 +28,6 @@ doImputation <- function(tradedata = NA, uv.median = 'uvm') {
   imputed_qty <- tradedata$value / tradedata[[uv.median]]
 
   tradedata %>%
-    mutate_(qty = ~ifelse(no_quant | outlier, imputed_qty, qty),
-           flagTrade = ~ifelse(no_quant | outlier, 1, 0))
+    mutate_(flagTrade = ~ifelse(no_quant | outlier | out_magnitude, 1, 0),
+            qty       = ~ifelse(flagTrade == 1, imputed_qty, qty))
 }

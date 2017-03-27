@@ -10,7 +10,6 @@
 #' @param variable The variable that gets the flag: "value", "weight",
 #'   "quantity".
 #' @return Populates the flag variable.
-#' @import dplyr
 #' @export
 
 setFlag3 <- function(data = NA, condition = NA, type = NA, flag = NA, variable = NA) {
@@ -44,18 +43,6 @@ setFlag3 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
     stop("Please, set 'variable' to 'value', 'weight', 'quantity', or 'all'")
   }
 
-  # This function adds 1 to X or Y or Z in a number of the type
-  # 1XYZ where X, Y or Z are 0 or 1. If another 1 was already
-  # present, it won't change
-  .addFlag <- function(.newFlag, .oldFlag) {
-
-    .res <- (.newFlag + .oldFlag) %>%
-              gsub('[^0]', '1', .) %>%
-              as.integer()
-
-    return(.res)
-  }
-
   if (type == 'status') flag <- paste0('flag_status_', flag)
 
   if (type == 'method') flag <- paste0('flag_method_', flag)
@@ -72,7 +59,7 @@ setFlag3 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
   }
 
   if (flag %in% colnames(data) & all(!is.na(data[[flag]]))) {
-    res <- .addFlag(res, data[[flag]])
+    res <- sumFlags(new = res, old = data[[flag]])
     alt <- data[[flag]]
   } else {
     alt <- 1000L

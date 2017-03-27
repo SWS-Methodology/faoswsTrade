@@ -929,18 +929,11 @@ for (var in flag_vars) {
 
 ##' 1. Aggregate values and quantities by FCL codes.
 
+tradedata <- tradedata %>%
+  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+
 # Aggregation by fcl
 tradedata <- tradedata %>%
-  select_(~year,
-          ~reporter,
-          ~partner,
-          ~flow,
-          ~fcl,
-          ~fclunit,
-          ~qty,
-          ~value,
-          ~flagTrade,
-          ~starts_with('flag_')) %>%
   mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   summarise_each_(funs(sum(., na.rm = TRUE)),

@@ -272,6 +272,25 @@ hsfclmap <- hsfclmap3 %>%
             endyear >= year) %>%
   select_(~-startyear, ~-endyear)
 
+# Workaround issue #123
+hsfclmap <- hsfclmap %>%
+  mutate_at(vars(ends_with("code")),
+                 funs(num = as.numeric)) %>%
+  mutate_(fromgtto = ~fromcode_num > tocode_num) %>%
+  select(-ends_with("code_num"))
+
+from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
+
+if(length(from_gt_to) > 0)
+  flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
+                 paste0(from_gt_to, collapse = ", ")))
+
+hsfclmap <- hsfclmap %>%
+  filter_(~!fromgtto) %>%
+  select_(~-fromgtto)
+
+
+
 stopifnot(nrow(hsfclmap) > 0)
 
 flog.info("Rows in mapping table after filtering by year: %s",

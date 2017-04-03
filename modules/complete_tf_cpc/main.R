@@ -269,7 +269,8 @@ rprt_hsfclmap(hsfclmap3, year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
-            endyear >= year)
+            endyear >= year) %>%
+  select_(~-startyear, ~-endyear)
 
 stopifnot(nrow(hsfclmap) > 0)
 

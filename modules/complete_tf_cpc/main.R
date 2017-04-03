@@ -906,6 +906,8 @@ if (detect_outliers) {
 ## These flags are also assigned to monetary values. This may need to be revised
 ## (monetary values are not supposed to be modified).
 
+tradedata <- computeMedianUnitValue(tradedata = tradedata)
+
 tradedata <- doImputation(tradedata = tradedata)
 
 # XXX using flagTrade for the moment, but should go away
@@ -927,24 +929,22 @@ for (var in flag_vars) {
 
 ##' 1. Aggregate values and quantities by FCL codes.
 
+tradedata_flags <- tradedata %>%
+  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+  summarise_each_(funs(sumFlags(flags = .)), vars = ~starts_with('flag_')) %>%
+  ungroup()
+
 # Aggregation by fcl
 tradedata <- tradedata %>%
-  select_(~year,
-          ~reporter,
-          ~partner,
-          ~flow,
-          ~fcl,
-          ~fclunit,
-          ~qty,
-          ~value,
-          ~flagTrade,
-          ~starts_with('flag_')) %>%
   mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   summarise_each_(funs(sum(., na.rm = TRUE)),
-                  vars = c("qty", "value","flagTrade", "nfcl",
-                           ~starts_with('flag_'))) %>%
+                  vars = c("qty", "value","flagTrade", "nfcl")) %>%
   ungroup()
+
+tradedata <- left_join(tradedata,
+                       tradedata_flags,
+                       by = c('year', 'reporter', 'partner', 'flow', 'fcl'))
 
 ###### TODO (Christian) Rethink/refactor
 # unite _v and _q into one variable

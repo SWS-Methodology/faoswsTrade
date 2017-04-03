@@ -19,11 +19,16 @@ sel1FCL <- function(hsfclmatch, maptable) {
       ungroup
   )
 
+  # Return original record if there is only one match
   if(nrow(hsfclmatch) == 1L) return(hsfclmatch)
 
   # Selection of the narrowest hs range
-  hsfclmatch %>%
-    left_join(maptable, by = "recordnumb") %>%
+  hsfclmatch <- hsfclmatch %>%
+    left_join(maptable %>%
+                select_(~recordnumb,
+                        ~fromcodeext,
+                        ~tocodeext),
+              by = "recordnumb") %>%
     mutate_(hsrange = ~tocodeext - fromcodeext) %>%
     filter_(~hsrange == min(hsrange))
 

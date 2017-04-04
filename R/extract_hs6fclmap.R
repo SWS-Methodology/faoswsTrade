@@ -37,7 +37,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     filter_(~hsrange == 0) %>%
     select_(~reporter,
             ~flow,
-            hs = ~fromcode,
+            hs6 = ~fromcode,
             ~fcl,
             ~recordnumb)
 

@@ -27,15 +27,6 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
   maptable <- maptable %>%
     mutate_at(vars(ends_with("code")),
               funs(str_sub(., end = 6L))) %>%
-    # Probably after trimming to hs6 we are getting duplicates
-    distinct_(~reporter,
-              ~flow,
-              ~fromcode,
-              ~tocode,
-              ~fcl,
-              .keep_all = TRUE) %>%
-    # as.numeric in a separate step to run distinct on character
-    # instead of numeric
     mutate_at(vars(ends_with("code")),
               as.numeric) %>%
     mutate_(hsrange = ~tocode - fromcode)
@@ -57,7 +48,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                     rows <- length(allhs)
                     fcl <- rep.int(df$fcl, times = rows)
                     recordnumb <- rep.int(df$recordnumb, times = rows)
-                    data_frame(hs = allhs,
+                    data_frame(hs6 = allhs,
                                fcl = fcl,
                                recordnumb = recordnumb)
                   })
@@ -65,17 +56,16 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                 .parallel = parallel) %>%
     select_(~reporter,
             ~flow,
-            ~hs,
+            ~hs6,
             ~fcl,
             ~recordnumb)
 
   bind_rows(maptable_0range, maptable_range) %>%
-    distinct() %>%
     # split by chunks to be efficient in parallel execution
     plyr::ddply(.variables = c("reporter", "flow"),
                 function(df) {
                   df %>%
-                    group_by_(~hs) %>%
+                    group_by_(~hs6) %>%
                     mutate_(fcl_links = ~length(unique(fcl))) %>%
                     ungroup()
                 },

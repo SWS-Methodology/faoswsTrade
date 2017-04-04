@@ -358,6 +358,11 @@ hs_chapters_str <-
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
+# hs6fclmap ####
+
+hs6fclmap <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+
+
 ##' # Extract Eurostat Combined Nomenclature Data
 
 ##+ es-extract

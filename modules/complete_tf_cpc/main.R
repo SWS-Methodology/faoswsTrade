@@ -192,7 +192,7 @@ local({
 # Register CPU cores ####
 if(multicore) {
   if(all(c("doParallel", "foreach") %in%
-         rownames(installed.packages()))) {
+         rownames(installed.packages(noCache = TRUE)))) {
 
     flog.debug("Multicore backend is available.")
 

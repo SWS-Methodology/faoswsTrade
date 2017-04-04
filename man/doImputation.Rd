@@ -4,7 +4,7 @@
 \alias{doImputation}
 \title{Impute missing values or outliers.}
 \usage{
-doImputation(tradedata = NA)
+doImputation(tradedata = NA, uv.median = "uvm")
 }
 \arguments{
 \item{tradedata}{Trade data.}

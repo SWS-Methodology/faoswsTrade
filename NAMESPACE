@@ -3,6 +3,7 @@
 export(adaptTradeDataNames)
 export(addFCLunits)
 export(add_area_names)
+export(add_fcls_from_links)
 export(applyadj)
 export(area_name_fao)
 export(computeMedianUnitValue)

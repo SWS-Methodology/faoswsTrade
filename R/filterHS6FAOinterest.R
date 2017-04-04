@@ -20,10 +20,7 @@ filterHS6FAOinterest <- function(tradedata) {
   flog.info("Records before filtering: %s", orignrow)
 
   tradedata <- tradedata %>%
-    mutate_(hs6 = ~str_extract(hs, "^\\d{6}")) %>%
-    filter_(~!is.na(hs6)) %>%
-    filter_(~hs6 %in% hs6faointerest) %>%
-    select_(~-hs6)
+    filter_(~hs6 %in% hs6faointerest)
 
   flog.info("Records after filtering: %s",
             nrow(tradedata))

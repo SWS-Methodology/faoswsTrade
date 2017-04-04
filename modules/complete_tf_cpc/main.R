@@ -490,8 +490,9 @@ esdatalinks <- mapHS2FCL(tradedata = esdata,
                          hs6maptable = hs6fclmap,
                          parallel = multicore)
 
-esdata <- esdata %>%
-    left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+esdata <- add_fcls_from_links(esdata,
+                              hs6links = esdatahs6links,
+                              links = esdatalinks)
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
@@ -659,6 +660,17 @@ tldatalinks <- mapHS2FCL(tradedata = tldata,
 
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+
+tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
+
+tldatalinks <- mapHS2FCL(tradedata = tldata,
+                         maptable = hsfclmap,
+                         hs6maptable = hs6fclmap,
+                         parallel = multicore)
+
+tldata <- add_fcls_from_links(tldata,
+                              hs6links = tldatahs6links,
+                              links = tldatalinks)
 
 rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
 

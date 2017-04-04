@@ -8,6 +8,8 @@ extract_hs6fclmap(maptable = NULL, parallel = FALSE)
 }
 \arguments{
 \item{maptable}{hsfclmap data frame.}
+
+\item{parallel}{Should parallel execution be used if available. FALSE by default.}
 }
 \value{
 Data frame with columns reporter, flow, hs6, fcl

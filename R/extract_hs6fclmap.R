@@ -1,8 +1,10 @@
 #' Create HS6->FCL mapping table.
 #'
 #' @import dplyr
+#' @import stringr
 #'
 #' @param maptable hsfclmap data frame.
+#' @param parallel Should parallel execution be used if available. FALSE by default.
 #' @return Data frame with columns reporter, flow, hs6, fcl
 #' @export
 #'

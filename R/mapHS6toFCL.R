@@ -27,21 +27,10 @@ mapHS6toFCL <- function(tradedata, hs6maptable, parallel = FALSE) {
       mutate_(hs6 = ~as.integer(hs6))
   }
 
-
   tradedata <- tradedata %>%
     select_(~reporter, ~flow, ~hs6) %>%
     distinct()
 
-  hs6tomap <- hs6maptable %>%
-    select_(~hs6) %>%
-    arrange_(~hs6) %>%
-    distinct() %>% unname() %>% unlist()
-
-  tradedata <- tradedata %>%
-    filter_(~hs6 %in% hs6tomap)
-
   tradedata %>%
-    left_join(hs6maptable, by = c("reporter", "flow", "hs6"))
-
-
+    inner_join(hs6maptable, by = c("reporter", "flow", "hs6"))
 }

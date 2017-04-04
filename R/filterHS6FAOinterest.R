@@ -12,7 +12,7 @@ filterHS6FAOinterest <- function(tradedata) {
 
   stopifnot("hs" %in% colnames(tradedata))
 
-  hs6faointerest <- getAgriHSCodes()
+  hs6faointerest <- as.integer(getAgriHSCodes())
 
   orignrow <- nrow(tradedata)
 

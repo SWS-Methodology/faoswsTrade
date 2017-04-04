@@ -483,7 +483,12 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- mapHS2FCL(esdata, hsfclmap, multicore)
+esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
+
+esdatalinks <- mapHS2FCL(tradedata = esdata,
+                         maptable = hsfclmap,
+                         hs6maptable = hs6fclmap,
+                         parallel = multicore)
 
 esdata <- esdata %>%
     left_join(esdatalinks, by = c("reporter", "flow", "hs"))
@@ -647,7 +652,10 @@ tldata <- tldata %>%
 # TF: Map HS to FCL ####
 ##+ tl_hs2fcl ####
 
-tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
+tldatalinks <- mapHS2FCL(tradedata = tldata,
+                         maptable = hsfclmap,
+                         hs6maptable = hs6fclmap,
+                         parallel = multicore)
 
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))

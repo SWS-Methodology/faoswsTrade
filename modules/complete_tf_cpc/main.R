@@ -564,12 +564,12 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 
 stopifnot(nrow(tldata) > 0)
 
+# This probably should be part of the faoswsEnsure
+tldata <- tldata[grepl("^[[:digit:]]+$", tldata$comm),]
+
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
-
-# This probably should be part of the faoswsEnsure
-tldata <- tldata[grepl("^[[:digit:]]+$",tldata$hs),]
 
 tldata <- tbl_df(tldata)
 

@@ -653,14 +653,6 @@ tldata <- tldata %>%
 # TF: Map HS to FCL ####
 ##+ tl_hs2fcl ####
 
-tldatalinks <- mapHS2FCL(tradedata = tldata,
-                         maptable = hsfclmap,
-                         hs6maptable = hs6fclmap,
-                         parallel = multicore)
-
-tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
-
 tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
 
 tldatalinks <- mapHS2FCL(tradedata = tldata,

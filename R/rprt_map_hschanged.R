@@ -39,7 +39,9 @@ rprt_map_hschanged <- function(maptable, tradedataname = NULL) {
 
   map_hschange_statistic <- map_hschange_statistic %>%
     arrange_(~desc(changedprop)) %>%
-    mutate_(changedprop = ~scales::percent(changedprop))
+    mutate_(changedprop = ~ifelse(is.na(changedprop),
+                                  as.character(changedprop),
+                                  scales::percent(changedprop)))
 
   rprt_fulltable(map_hschange_statistic, prefix = tradedataname)
 }

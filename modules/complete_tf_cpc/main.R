@@ -197,7 +197,7 @@ local({
 # Register CPU cores ####
 if(multicore) {
   if(all(c("doParallel", "foreach") %in%
-         rownames(installed.packages()))) {
+         rownames(installed.packages(noCache = TRUE)))) {
 
     flog.debug("Multicore backend is available.")
 
@@ -382,6 +382,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
+stopifnot(nrow(esdata) > 0)
+
 if(!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
   warning(sprintf("Eurostat data was sampled with size %d", samplesize))
@@ -559,6 +561,8 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                                   "chapter"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
+
+stopifnot(nrow(tldata) > 0)
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 

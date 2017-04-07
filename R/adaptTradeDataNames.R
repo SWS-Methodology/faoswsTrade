@@ -32,7 +32,7 @@ adaptTradeDataNames <- function(tradedata = NA, origin = NA) {
                  weight = ~as.numeric(weight),
                  qty = ~as.numeric(qty),
                  qunit = ~as.integer(qunit)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+      mutate_(hs6 = ~as.integer(stringr::str_sub(hs, end = 6L)))
 
   } else {
     tradedata %>%
@@ -44,6 +44,6 @@ adaptTradeDataNames <- function(tradedata = NA, origin = NA) {
                  value = ~as.numeric(value_1k_euro),
                  weight = ~as.numeric(qty_ton),
                  qty = ~as.numeric(sup_quantity)) %>%
-      mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+      mutate_(hs6 = ~as.integer(stringr::str_sub(hs, end = 6L)))
   }
 }

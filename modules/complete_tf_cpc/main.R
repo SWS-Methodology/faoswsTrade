@@ -197,7 +197,7 @@ local({
 # Register CPU cores ####
 if(multicore) {
   if(all(c("doParallel", "foreach") %in%
-         rownames(installed.packages()))) {
+         rownames(installed.packages(noCache = TRUE)))) {
 
     flog.debug("Multicore backend is available.")
 
@@ -269,7 +269,27 @@ rprt_hsfclmap(hsfclmap3, year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
-            endyear >= year)
+            endyear >= year) %>%
+  select_(~-startyear, ~-endyear)
+
+# Workaround issue #123
+hsfclmap <- hsfclmap %>%
+  mutate_at(vars(ends_with("code")),
+                 funs(num = as.numeric)) %>%
+  mutate_(fromgtto = ~fromcode_num > tocode_num) %>%
+  select(-ends_with("code_num"))
+
+from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
+
+if(length(from_gt_to) > 0)
+  flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
+                 paste0(from_gt_to, collapse = ", ")))
+
+hsfclmap <- hsfclmap %>%
+  filter_(~!fromgtto) %>%
+  select_(~-fromgtto)
+
+
 
 stopifnot(nrow(hsfclmap) > 0)
 
@@ -356,6 +376,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                                     "stat_regime"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
+
+stopifnot(nrow(esdata) > 0)
 
 if(!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
@@ -528,6 +550,8 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                                   "chapter"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
+
+stopifnot(nrow(tldata) > 0)
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
@@ -716,7 +740,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
     ungroup()
 
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
-    left_join(conversion_factors_fcl)
+    left_join(conversion_factors_fcl, by = c("fcl", "wco"))
 
   fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
 

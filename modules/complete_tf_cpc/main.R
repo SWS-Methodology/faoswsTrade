@@ -178,24 +178,7 @@ check_versions(c("faoswsUtil", "faoswsTrade",
                c('0.2.11', '0.1.1', '0.5.0'))
 
 # Register CPU cores ####
-if(multicore) {
-  if(all(c("doParallel", "foreach") %in%
-         rownames(installed.packages(noCache = TRUE)))) {
-
-    flog.debug("Multicore backend is available.")
-
-    cpucores <- parallel::detectCores(all.tests = TRUE)
-
-    flog.debug("CPU cores detected: %s.", cpucores)
-
-    doParallel::registerDoParallel(cores = cpucores)
-  } else {
-    flog.debug("Multicore backend is not available.")
-
-    multicore <- FALSE
-  }
-}
-
+if(multicore) multicore <- register_cpu_cores()
 
 ##+ swsdebug
 

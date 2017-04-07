@@ -2,7 +2,6 @@
 #'
 #' @param tradedata Trade data frame.
 #' @param hs6maptable Map table produced by \code{extract_hs6fclmap} function.
-#' @param parallel Should parallel execution be used. \code{FALSE} by default.
 #'
 #' @return Data frame with unique reporter/flow/hs->fcl links.
 #'
@@ -10,7 +9,7 @@
 #' @import stringr
 #' @export
 
-mapHS6toFCL <- function(tradedata, hs6maptable, parallel = FALSE) {
+mapHS6toFCL <- function(tradedata, hs6maptable) {
 
   # HS6 mapping table subset with 1-to-1 hs->fcl links
   hs6maptable <- hs6maptable %>%

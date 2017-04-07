@@ -4,14 +4,12 @@
 \alias{mapHS6toFCL}
 \title{Map HS to FCL based on HS codes of length 6}
 \usage{
-mapHS6toFCL(tradedata, hs6maptable, parallel = FALSE)
+mapHS6toFCL(tradedata, hs6maptable)
 }
 \arguments{
 \item{tradedata}{Trade data frame.}
 
 \item{hs6maptable}{Map table produced by \code{extract_hs6fclmap} function.}
-
-\item{parallel}{Should parallel execution be used. \code{FALSE} by default.}
 }
 \value{
 Data frame with unique reporter/flow/hs->fcl links.

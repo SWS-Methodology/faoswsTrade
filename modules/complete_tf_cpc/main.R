@@ -146,25 +146,9 @@ flog.debug("User's computation parameters:",
            swsContext.computationParams, capture = TRUE)
 
 ##' - `year`: year for processing.
-# Will be used in reporting directory name
 year <- as.integer(swsContext.computationParams$year)
 
-# Reporting directory ####
-
-reportdir <- file.path(
-  Sys.getenv("R_SWS_SHARE_PATH"),
-  USER,
-  paste("complete_tf_cpc", year,
-         format(Sys.time(), "%Y%m%d%H%M%S%Z"),
-        sep = "_"))
-reportdir <- normalizePath(reportdir,
-                           winslash='/',
-                           mustWork = FALSE)
-stopifnot(!file.exists(reportdir))
-dir.create(reportdir, recursive = TRUE)
-
-# Open report directory in system default file browser
-if(interactive()) browseURL(reportdir)
+reportdir <- reportdirectory(USER, year)
 
 flog.appender(appender.tee(file.path(reportdir,
                                       "report.txt")))

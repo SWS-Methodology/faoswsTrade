@@ -740,7 +740,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
     ungroup()
 
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
-    left_join(conversion_factors_fcl)
+    left_join(conversion_factors_fcl, by = c("fcl", "wco"))
 
   fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
 

@@ -172,22 +172,10 @@ flog.debug("R session environment: ",
 PID <- Sys.getpid()
 
 # Check that all packages are up to date ####
-local({
-  min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
-                                         "dplyr"),
-                             version = c('0.2.11', '0.1.1', '0.5.0'),
-                             stringsAsFactors = FALSE)
 
-  for (i in nrow(min_versions)){
-    # installed version
-    p <- packageVersion(min_versions[i,"package"])
-    # required version
-    v <- package_version(min_versions[i,"version"])
-    if(p < v){
-      stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
-    }
-  }
-})
+check_versions(c("faoswsUtil", "faoswsTrade",
+                 "dplyr"),
+               c('0.2.11', '0.1.1', '0.5.0'))
 
 # Register CPU cores ####
 if(multicore) {

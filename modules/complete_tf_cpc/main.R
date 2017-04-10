@@ -47,7 +47,10 @@ rprt_data <- list()
 # There are following levels:
 # trace, debug, info, warn, error, fatal
 # Level `trace` shows everything in the log
-futile.logger::flog.threshold("TRACE")
+
+# Additional logger for technical data
+futile.logger::flog.logger("dev", "TRACE")
+futile.logger::flog.threshold("TRACE", name = "dev")
 
 # Parallel backend will be used only if required packages
 # are installed
@@ -64,6 +67,10 @@ use_adjustments <- FALSE
 # If TRUE, use impute outliers
 detect_outliers <- FALSE
 
+# Print general log to console
+general_log2console <- FALSE
+
+dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
 # Switch off dplyr's progress bars globally
 dplyr.show_progress <- FALSE
 # max.print in RStudio is too small
@@ -85,44 +92,7 @@ library(faoswsFlag)
 
 # Development (SWS-outside) mode addons ####
 if(faosws::CheckDebug()){
-  localsettingspath <- "modules/complete_tf_cpc/sws.yml"
-  SETTINGS <- faoswsModules::ReadSettings(localsettingspath)
-  flog.debug("Local settings read from %s",
-             localsettingspath)
-  flog.debug("Local settings read:",
-             SETTINGS,
-             capture = TRUE)
-
-  USER <- if_else(.Platform$OS.type == "unix",
-                  Sys.getenv('USER'),
-                  Sys.getenv('USERNAME'))
-
-  ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
-
-  ## Get session information from SWS. Token must be obtained from web interface
-  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                             token = SETTINGS[["token"]])
-
-  # R_SWS_SHARE_PATH: 1) environment; 2) user; 3) fallback
-  if (is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
-    flog.debug("R_SWS_SHARE_PATH environment variable not found.")
-
-    if (!is.na(SETTINGS[['share']]) & dir.exists(SETTINGS[['share']])) {
-      flog.debug("A valid 'share' variable was found in %s",
-                 localsettingspath)
-      Sys.setenv("R_SWS_SHARE_PATH" = SETTINGS[['share']])
-      flog.debug("R_SWS_SHARE_PATH set to %s",
-                 SETTINGS[['share']])
-    } else {
-      # Fall-back R_SWS_SHARE_PATH var
-      flog.debug("An invalid/inexistent 'share' variable in %s",
-                 localsettingspath)
-      Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
-      flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-                 tempdir())
-    }
-  }
+  set_sws_dev_settings(dev_sws_set_file)
 } else {
     # Remove domain from username
     USER <- regmatches(
@@ -143,76 +113,45 @@ if(faosws::CheckDebug()){
 stopifnot(!any(is.na(USER), USER == ""))
 
 flog.debug("User's computation parameters:",
-           swsContext.computationParams, capture = TRUE)
+           swsContext.computationParams, capture = TRUE,
+           name = "dev")
 
 ##' - `year`: year for processing.
-# Will be used in reporting directory name
 year <- as.integer(swsContext.computationParams$year)
 
-# Reporting directory ####
+reportdir <- reportdirectory(USER, year)
 
-reportdir <- file.path(
-  Sys.getenv("R_SWS_SHARE_PATH"),
-  USER,
-  paste("complete_tf_cpc", year,
-         format(Sys.time(), "%Y%m%d%H%M%S%Z"),
-        sep = "_"))
-reportdir <- normalizePath(reportdir,
-                           winslash='/',
-                           mustWork = FALSE)
-stopifnot(!file.exists(reportdir))
-dir.create(reportdir, recursive = TRUE)
+# Send general log messages
+if(general_log2console) {
+  # to console and a file
+    flog.appender(appender.tee(file.path(reportdir,
+                                       "report.txt")))
+} else {
+  # to a file only
+  flog.appender(appender.file(file.path(reportdir,
+                                        "report.txt")))
+}
 
-# Open report directory in system default file browser
-if(interactive()) browseURL(reportdir)
-
+# Send technical log messages to a file and console
 flog.appender(appender.tee(file.path(reportdir,
-                                      "report.txt")))
+                                      "development.log")),
+              name = "dev")
 
-flog.info("SWS-session is run by user %s", USER)
+flog.info("SWS-session is run by user %s", USER, name = "dev")
 
-flog.debug("R session environment: ",
-           sessionInfo(), capture = TRUE)
+flog.info("R session environment: ",
+           sessionInfo(), capture = TRUE, name = "dev")
 
 PID <- Sys.getpid()
 
 # Check that all packages are up to date ####
-local({
-  min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
-                                         "dplyr"),
-                             version = c('0.2.11', '0.1.1', '0.5.0'),
-                             stringsAsFactors = FALSE)
 
-  for (i in nrow(min_versions)){
-    # installed version
-    p <- packageVersion(min_versions[i,"package"])
-    # required version
-    v <- package_version(min_versions[i,"version"])
-    if(p < v){
-      stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
-    }
-  }
-})
+check_versions(c("faoswsUtil", "faoswsTrade",
+                 "dplyr"),
+               c('0.2.11', '0.1.1', '0.5.0'))
 
 # Register CPU cores ####
-if(multicore) {
-  if(all(c("doParallel", "foreach") %in%
-         rownames(installed.packages(noCache = TRUE)))) {
-
-    flog.debug("Multicore backend is available.")
-
-    cpucores <- parallel::detectCores(all.tests = TRUE)
-
-    flog.debug("CPU cores detected: %s.", cpucores)
-
-    doParallel::registerDoParallel(cores = cpucores)
-  } else {
-    flog.debug("Multicore backend is not available.")
-
-    multicore <- FALSE
-  }
-}
-
+if(multicore) multicore <- register_cpu_cores()
 
 ##+ swsdebug
 
@@ -236,8 +175,6 @@ stopifnot(
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 flog.info("Coefficient for outlier detection: %s", out_coef)
-
-##' - `hs_chapters`: specific HS chapters that are downloaded (this parameter
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
@@ -258,7 +195,7 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-flog.debug("Reading in hs-fcl mapping")
+flog.debug("Reading in hs-fcl mapping", name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 

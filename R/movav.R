@@ -25,7 +25,7 @@ movav <- function(x, pkg = 'native', mode = 'centered', n = 5, na.rm = TRUE) {
       res <- zoo::rollapply(lag(x), n, mean, fill = NA,
                             align = 'right', na.rm = na.rm)
     }
-  } else {
+  } else if (pkg = 'native') {
     if (n != 3) stop('Only n = 3 can be used with pkg = "native"')
 
     if (mode == 'centered') {
@@ -35,7 +35,7 @@ movav <- function(x, pkg = 'native', mode = 'centered', n = 5, na.rm = TRUE) {
       } else {
         res <- x
       }
-    } else if (pkg == 'native') {
+    } else {
       if (length(x) > 2) {
         res <- cbind(x, c(NA, x[1:(length(x)-1)]), c(NA, NA, x[1:(length(x)-2)]))
         res <- apply(res, 1, mean, na.rm = TRUE)

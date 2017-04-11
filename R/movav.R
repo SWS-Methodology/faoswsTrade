@@ -16,16 +16,18 @@
 #'
 #' @export
 
-movav <- function(x, pkg = 'native', mode = 'centered', na.rm = TRUE) {
+movav <- function(x, pkg = 'native', mode = 'centered', n = 5, na.rm = TRUE) {
 
   if (pkg == 'zoo') {
     if (mode == 'centered') {
-      stop('Sorry, only "mode = centered" is implemented with zoo')
+      stop('Only "mode = centered" is implemented with zoo')
     } else {
-      res <- zoo::rollapply(lag(x), 3, mean, fill = NA,
+      res <- zoo::rollapply(lag(x), n, mean, fill = NA,
                             align = 'right', na.rm = na.rm)
     }
   } else {
+    if (n != 3) stop('Only n = 3 can be used with pkg = "native"')
+
     if (mode == 'centered') {
       if (length(x) > 1) {
         res <- cbind(x, c(NA, x[1:(length(x)-1)]), c(x[2:length(x)], NA))
@@ -33,7 +35,7 @@ movav <- function(x, pkg = 'native', mode = 'centered', na.rm = TRUE) {
       } else {
         res <- x
       }
-    } else {
+    } else if (pkg == 'native') {
       if (length(x) > 2) {
         res <- cbind(x, c(NA, x[1:(length(x)-1)]), c(NA, NA, x[1:(length(x)-2)]))
         res <- apply(res, 1, mean, na.rm = TRUE)
@@ -41,6 +43,8 @@ movav <- function(x, pkg = 'native', mode = 'centered', na.rm = TRUE) {
       } else {
         res <- x
       }
+    } else {
+      stop('"pkg" should be "native" or "zoo"')
     }
 
     res[is.nan(res)] <- NA

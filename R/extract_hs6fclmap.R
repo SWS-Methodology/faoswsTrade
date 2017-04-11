@@ -55,7 +55,8 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                                recordnumb = recordnumb)
                   })
                 },
-                .parallel = parallel) %>%
+                .parallel = parallel,
+                .paropts = list(.packages = "dplyr")) %>%
     select_(~reporter,
             ~flow,
             ~hs6,
@@ -71,5 +72,6 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                     mutate_(fcl_links = ~length(unique(fcl))) %>%
                     ungroup()
                 },
-                .parallel = parallel)
+                .parallel = parallel,
+                .paropts = list(.packages = "dplyr"))
 }

@@ -39,7 +39,9 @@ rprt_hschanged <- function(uniqhs, tradedataname = NULL) {
 
   hschange_statistic <- hschange_statistic %>%
     arrange_(~desc(changedprop)) %>%
-    mutate_(changedprop = ~scales::percent(changedprop))
+    mutate_(changedprop = ~ifelse(is.na(changedprop),
+                                  as.character(changedprop),
+                                  scales::percent(changedprop)))
 
   rprt_fulltable(hschange_statistic, prefix = tradedataname)
 }

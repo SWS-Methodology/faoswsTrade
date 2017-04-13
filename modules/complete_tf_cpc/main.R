@@ -47,7 +47,10 @@ rprt_data <- list()
 # There are following levels:
 # trace, debug, info, warn, error, fatal
 # Level `trace` shows everything in the log
-futile.logger::flog.threshold("TRACE")
+
+# Additional logger for technical data
+futile.logger::flog.logger("dev", "TRACE")
+futile.logger::flog.threshold("TRACE", name = "dev")
 
 # Parallel backend will be used only if required packages
 # are installed
@@ -64,6 +67,10 @@ use_adjustments <- FALSE
 # If TRUE, use impute outliers
 detect_outliers <- FALSE
 
+# Print general log to console
+general_log2console <- FALSE
+
+dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
 # Switch off dplyr's progress bars globally
 options(dplyr.show_progress = FALSE)
 # max.print in RStudio is too small
@@ -85,7 +92,7 @@ library(faoswsFlag)
 
 # Development (SWS-outside) mode addons ####
 if(faosws::CheckDebug()){
-  set_sws_dev_settings("modules/complete_tf_cpc/sws.yml")
+  set_sws_dev_settings(dev_sws_set_file)
 } else {
     # Remove domain from username
     USER <- regmatches(
@@ -106,31 +113,34 @@ if(faosws::CheckDebug()){
 stopifnot(!any(is.na(USER), USER == ""))
 
 flog.debug("User's computation parameters:",
-           swsContext.computationParams, capture = TRUE)
+           swsContext.computationParams, capture = TRUE,
+           name = "dev")
 
-# Reporting directory ####
+##' - `year`: year for processing.
+year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- file.path(
-  Sys.getenv("R_SWS_SHARE_PATH"),
-  USER,
-  paste0("complete_tf_cpc_",
-         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-reportdir <- normalizePath(reportdir,
-                           winslash='/',
-                           mustWork = FALSE)
-stopifnot(!file.exists(reportdir))
-dir.create(reportdir, recursive = TRUE)
+reportdir <- reportdirectory(USER, year)
 
-# Open report directory in system default file browser
-if(interactive()) browseURL(reportdir)
+# Send general log messages
+if(general_log2console) {
+  # to console and a file
+    flog.appender(appender.tee(file.path(reportdir,
+                                       "report.txt")))
+} else {
+  # to a file only
+  flog.appender(appender.file(file.path(reportdir,
+                                        "report.txt")))
+}
 
+# Send technical log messages to a file and console
 flog.appender(appender.tee(file.path(reportdir,
-                                      "report.txt")))
+                                      "development.log")),
+              name = "dev")
 
-flog.info("SWS-session is run by user %s", USER)
+flog.info("SWS-session is run by user %s", USER, name = "dev")
 
-flog.debug("R session environment: ",
-           sessionInfo(), capture = TRUE)
+flog.info("R session environment: ",
+           sessionInfo(), capture = TRUE, name = "dev")
 
 PID <- Sys.getpid()
 
@@ -156,22 +166,15 @@ if(multicore) multicore <- register_cpu_cores()
 # Read SWS module run parameters ####
 
 stopifnot(
-  !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
 ##' # Parameters
-
-##' - `year`: year for processing.
-year <- as.integer(swsContext.computationParams$year)
-flog.info("Working year: %s", year)
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 flog.info("Coefficient for outlier detection: %s", out_coef)
-
-##' - `hs_chapters`: specific HS chapters that are downloaded (this parameter
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
@@ -192,7 +195,7 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-flog.debug("Reading in hs-fcl mapping")
+flog.debug("Reading in hs-fcl mapping", name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
@@ -487,12 +490,12 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
 
 stopifnot(nrow(tldata) > 0)
 
+# This probably should be part of the faoswsEnsure
+tldata <- tldata[grepl("^[[:digit:]]+$", tldata$comm),]
+
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
-
-# This probably should be part of the faoswsEnsure
-tldata <- tldata[grepl("^[[:digit:]]+$",tldata$hs),]
 
 tldata <- tbl_df(tldata)
 

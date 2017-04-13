@@ -65,7 +65,7 @@ use_adjustments <- FALSE
 detect_outliers <- FALSE
 
 # Switch off dplyr's progress bars globally
-dplyr.show_progress <- FALSE
+options(dplyr.show_progress = FALSE)
 # max.print in RStudio is too small
 oldMaxPrint <- getOption("max.print")
 options(max.print = 99999L)

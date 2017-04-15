@@ -746,8 +746,8 @@ if (dollars){
 # Replace weight (first quantity column) by newly produced qtyfcl column
 # XXX "notes" are applied to weight that is transformed below from qtyfcl
 tldata <- tldata %>%
-  select(-weight) %>%
-  rename(weight = qtyfcl)
+  select(-weight, -qty) %>%
+  rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
 

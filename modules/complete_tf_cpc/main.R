@@ -627,7 +627,8 @@ tldata <- tldata %>%
 ctfclunitsconv <- tldata %>%
   select_(~qunit, ~wco, ~fclunit) %>%
   distinct() %>%
-  arrange_(~qunit)
+  arrange_(~qunit) %>%
+  as.data.table()
 
 ################ Conv. factor (TL) ################
 
@@ -639,22 +640,17 @@ ctfclunitsconv <- tldata %>%
 ##' is done.
 
 ctfclunitsconv$conv <- 0
-ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "$ value only"] <- NA # Missing quantity
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "l"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
-                      ctfclunitsconv$wco == "u"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
-                      ctfclunitsconv$wco == "u"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
-                      ctfclunitsconv$wco == "u"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "kg"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "m³"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "carat"] <- 5e-6
+# Missing quantity
+ctfclunitsconv[qunit == 1,                                conv :=   NA]
+# Missing quantity
+ctfclunitsconv[fclunit == "$ value only",                 conv :=   NA]
+ctfclunitsconv[fclunit == "mt"         & wco == "l",      conv := .001]
+ctfclunitsconv[fclunit == "heads"      & wco == "u" ,     conv :=    1]
+ctfclunitsconv[fclunit == "1000 heads" & wco == "u" ,     conv := .001]
+ctfclunitsconv[fclunit == "number"     & wco == "u"  ,    conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "kg"  ,   conv := .001]
+ctfclunitsconv[fclunit == "mt"         & wco == "m³"   ,  conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "carat" , conv := 5e-6]
 
 
 ##### Add conv factor to the dataset

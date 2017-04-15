@@ -493,6 +493,11 @@ stopifnot(nrow(tldata) > 0)
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$", tldata$comm),]
 
+# Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
+tldata[qunit ==  '6', c('qty', 'qunit') := list(   qty*2, '5')]
+tldata[qunit ==  '9', c('qty', 'qunit') := list(qty*1000, '5')]
+tldata[qunit == '11', c('qty', 'qunit') := list(  qty*12, '5')]
+
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")

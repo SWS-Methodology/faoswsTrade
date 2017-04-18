@@ -73,9 +73,22 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   hsfcl_nolinks <- tradedata %>%
     filter_(~is.na(fcl)) %>%
     mutate_(year = year) %>%
-    select_(~year, ~reporter, ~partner, ~flow, ~hs_orig,
-            ~hs_extend, ~fcl, ~value, ~weight, ~qty)
+    select_(~year, ~reporter, ~partner, ~flow, ~hs,
+            ~fcl, ~value, ~weight, ~qty)
 
   rprt_writetable(hsfcl_nolinks, prefix = tradedataname)
 
+  # Canada case (issue #78)
+  if(33 %in% tradedata$reporter) {
+
+    canada_links <- tradedata %>%
+      filter_(~reporter == 33) %>%
+      mutate_(year = year) %>%
+      select_(~year, ~reporter, ~flow, ~hs,
+              ~fcl) %>%
+      distinct()
+
+    rprt_writetable(canada_links, prefix = tradedataname)
+
+  }
 }

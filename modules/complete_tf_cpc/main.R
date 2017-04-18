@@ -493,6 +493,11 @@ stopifnot(nrow(tldata) > 0)
 # This probably should be part of the faoswsEnsure
 tldata <- tldata[grepl("^[[:digit:]]+$", tldata$comm),]
 
+# Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
+tldata[qunit ==  '6', c('qty', 'qunit') := list(   qty*2, '5')]
+tldata[qunit ==  '9', c('qty', 'qunit') := list(qty*1000, '5')]
+tldata[qunit == '11', c('qty', 'qunit') := list(  qty*12, '5')]
+
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
@@ -622,7 +627,8 @@ tldata <- tldata %>%
 ctfclunitsconv <- tldata %>%
   select_(~qunit, ~wco, ~fclunit) %>%
   distinct() %>%
-  arrange_(~qunit)
+  arrange_(~qunit) %>%
+  as.data.table()
 
 ################ Conv. factor (TL) ################
 
@@ -634,22 +640,17 @@ ctfclunitsconv <- tldata %>%
 ##' is done.
 
 ctfclunitsconv$conv <- 0
-ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "$ value only"] <- NA # Missing quantity
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "l"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
-                      ctfclunitsconv$wco == "u"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
-                      ctfclunitsconv$wco == "u"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
-                      ctfclunitsconv$wco == "u"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "kg"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "m³"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "carat"] <- 5e-6
+# Missing quantity
+ctfclunitsconv[qunit == 1,                                conv :=   NA]
+# Missing quantity
+ctfclunitsconv[fclunit == "$ value only",                 conv :=   NA]
+ctfclunitsconv[fclunit == "mt"         & wco == "l",      conv := .001]
+ctfclunitsconv[fclunit == "heads"      & wco == "u" ,     conv :=    1]
+ctfclunitsconv[fclunit == "1000 heads" & wco == "u" ,     conv := .001]
+ctfclunitsconv[fclunit == "number"     & wco == "u"  ,    conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "kg"  ,   conv := .001]
+ctfclunitsconv[fclunit == "mt"         & wco == "m³"   ,  conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "carat" , conv := 5e-6]
 
 
 ##### Add conv factor to the dataset
@@ -745,8 +746,8 @@ if (dollars){
 # Replace weight (first quantity column) by newly produced qtyfcl column
 # XXX "notes" are applied to weight that is transformed below from qtyfcl
 tldata <- tldata %>%
-  select(-weight) %>%
-  rename(weight = qtyfcl)
+  select(-weight, -qty) %>%
+  rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
 
@@ -812,8 +813,6 @@ esdata <- esdata %>%
 
 tradedata <- bind_rows(
   tldata %>%
-    # Not using as.character() as it will retain scientific notation
-    mutate(hs = format(hs, scientific = FALSE, trim = TRUE)) %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
             qty = weight, value,

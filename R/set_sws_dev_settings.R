@@ -15,10 +15,10 @@ set_sws_dev_settings <- function(localsettingspath = NULL) {
   stopifnot(!is.null(localsettingspath))
   SETTINGS <- faoswsModules::ReadSettings(localsettingspath)
   flog.debug("Local settings read from %s",
-             localsettingspath)
+             localsettingspath, name = "dev")
   flog.debug("Local settings read:",
              SETTINGS,
-             capture = TRUE)
+             capture = TRUE, name = "dev")
 
   USER <<- if_else(.Platform$OS.type == "unix",
                    Sys.getenv('USER'),
@@ -33,22 +33,22 @@ set_sws_dev_settings <- function(localsettingspath = NULL) {
 
   # R_SWS_SHARE_PATH: 1) environment; 2) user; 3) fallback
   if (is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
-    flog.debug("R_SWS_SHARE_PATH environment variable not found.")
+    flog.debug("R_SWS_SHARE_PATH environment variable not found.", name = "dev")
 
     if (!is.na(SETTINGS[['share']]) & dir.exists(SETTINGS[['share']])) {
       flog.debug("A valid 'share' variable was found in %s",
-                 localsettingspath)
+                 localsettingspath, name = "dev")
       Sys.setenv("R_SWS_SHARE_PATH" = SETTINGS[['share']])
       flog.debug("R_SWS_SHARE_PATH set to %s",
-                 SETTINGS[['share']])
+                 SETTINGS[['share']], name = "dev")
     }
     else {
       # Fall-back R_SWS_SHARE_PATH var
       flog.debug("An invalid/inexistent 'share' variable in %s",
-                 localsettingspath)
+                 localsettingspath, name = "dev")
       Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
       flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-                 tempdir())
+                 tempdir(), name = "dev")
     }
   }
   invisible(SETTINGS)

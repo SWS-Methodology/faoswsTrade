@@ -68,4 +68,14 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   rprt_fulltable(nolinks_byreporterhs6, pretty_prop = TRUE)
   rprt_fulltable(nolinks_byhs6, pretty_prop = TRUE)
 
+
+  # All records with failed mapping
+  hsfcl_nolinks <- tradedata %>%
+    filter_(~is.na(fcl)) %>%
+    mutate_(year = year) %>%
+    select_(~year, ~reporter, ~partner, ~flow, ~hs_orig,
+            ~hs_extend, ~fcl, ~value, ~weight, ~qty)
+
+  rprt_writetable(hsfcl_nolinks, prefix = tradedataname)
+
 }

@@ -440,13 +440,6 @@ rprt_hs2fcl_fulldata(esdata, tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
 
-esdata_fcl_not_mapped <- esdata %>%
-  filter_(~is.na(fcl))
-
-write.csv(esdata_fcl_not_mapped,
-          file = file.path(reportdir,
-                           "esdata_fcl_not_mapped.csv"))
-
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
@@ -608,20 +601,9 @@ tldata <- add_fcls_from_links(tldata,
 rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
 
 # Remove unmapped FCL codes. ####
-tldata <- tldata %>%
-              mutate_(nolink = ~is.na(fcl))
-
-tldata_fcl_not_mapped <- tldata %>%
-  filter_(~nolink) %>%
-  select_(~-nolink)
 
 tldata <- tldata %>%
-  filter_(~!nolink) %>%
-  select_(~-nolink)
-
-write.csv(tldata_fcl_not_mapped,
-          file = file.path(reportdir,
-                           "tldata_fcl_not_mapped.csv"))
+  filter_(~is.na(fcl))
 
 #############Units of measurment in TL ####
 

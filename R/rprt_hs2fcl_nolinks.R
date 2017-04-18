@@ -19,7 +19,13 @@ rprt_hs2fcl_nolinks <- function(uniqhs, tradedataname = NULL) {
   uniqhs <- add_area_names(uniqhs, "fao")
 
   hsfcl_nolinks <- uniqhs %>%
-    filter_(~is.na(fcl))
+    filter_(~is.na(fcl)) %>%
+    select_(reporter_fao = ~reporter,
+            reporter = ~name,
+            ~flow,
+            hs_orig = ~hs,
+            hs_extend = ~hsext,
+            ~fcl)
 
   rprt_writetable(hsfcl_nolinks, prefix = tradedataname)
 

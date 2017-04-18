@@ -813,8 +813,6 @@ esdata <- esdata %>%
 
 tradedata <- bind_rows(
   tldata %>%
-    # Not using as.character() as it will retain scientific notation
-    mutate(hs = format(hs, scientific = FALSE, trim = TRUE)) %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
             qty = weight, value,

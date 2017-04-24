@@ -593,7 +593,7 @@ tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
-rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
+rprt(esdata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 # Remove unmapped FCL codes. ####
 tldata <- tldata %>%

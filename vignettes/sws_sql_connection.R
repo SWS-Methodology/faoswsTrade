@@ -1,4 +1,4 @@
-.swsdbpwd <- "rUikJnLmtDN7iA5c7u06"
+.swsdbpwd <- "PWD-GOES-HERE"
 
 trade_src <- src_postgres(dbname = "sws_data",
                           host = "hqldvpostgres01.hq.un.fao.org",

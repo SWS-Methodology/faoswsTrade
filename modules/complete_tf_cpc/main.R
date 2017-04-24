@@ -202,7 +202,7 @@ hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 flog.info("HS->FCL mapping table preview:",
           rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-rprt_hsfclmap(hsfclmap3, year)
+rprt(hsfclmap3, "hsfclmap", year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
@@ -425,7 +425,7 @@ esdata <- esdata %>%
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
 
-rprt_hs2fcl_fulldata(esdata, tradedataname = "esdata")
+rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
 

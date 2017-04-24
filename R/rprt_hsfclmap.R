@@ -12,7 +12,6 @@
 #' @param year Integer. Reporting year.
 #' @return TBD
 #' @import dplyr
-#' @export
 #'
 #' @seealso See \url{https://github.com/SWS-Methodology/faoswsTrade/issues/83}
 #'   for problem background.

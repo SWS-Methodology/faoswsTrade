@@ -537,6 +537,8 @@ tldata <- tldata %>%
 
 message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 
+flog.trace("TL: converting M49 to FAO area list", name = "dev")
+
 tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
               select_(wholepartner = ~rtCode,
@@ -551,7 +553,7 @@ tldata <- tldata %>%
           reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
-
+flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
 tldata <- tldata %>%
   anti_join(esdata %>%
@@ -569,12 +571,14 @@ tldata <- tldata %>%
 tldata_not_area_in_fcl_mapping <- tldata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
+
+flog.trace("TL: dropping reporters not found in the mapping table")
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
 ##+ reexptoexp ####
-
+flog.trace("TL: recoding reimport/reexport", name = "dev")
 ##' 1. Re-imports become imports and re-exports become exports.
 
 # { "id": "1", "text": "Import" },
@@ -590,12 +594,14 @@ tldata <- tldata %>%
 
 tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
+flog.trace("TL: merging mapped links with trade records", name = "dev")
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 # Remove unmapped FCL codes. ####
+flog.trace("TL: dropping unmapped records", name = "dev")
 tldata <- tldata %>%
               mutate_(nolink = ~is.na(fcl))
 

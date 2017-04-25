@@ -10,6 +10,8 @@ multicore <- TRUE
 threshold <- 0.5
 # Years
 years <- as.character(2000:2014)
+# movav order
+movav_order <- 5
 
 library(faosws)
 library(dplyr)
@@ -88,6 +90,9 @@ calculateOnDataSWS <- function(data = NA) {
     ## Number of yearly points by commodity
     #plot(x %>% group_by(geographicAreaM49Partner, measuredItemCPC) %>% count() %$% table(n))
 
+    N <- length(unique(data$timePointYears))
+    morder <- ifelse(N <= movav_order, N, movav_order)
+
     tradedata <- data %>%
       reshapeTrade() %>%
       # XXX should be "value only" items
@@ -116,8 +121,8 @@ calculateOnDataSWS <- function(data = NA) {
                measuredItemCPC
                ) %>%
       dplyr::mutate(
-             ma_v_fwd = movav(value, pkg = 'zoo', mode = 'lag'),
-             ma_q_fwd = movav(qty, pkg = 'zoo', mode = 'lag'),
+             ma_v_fwd = movav(value, pkg = 'zoo', mode = 'lag', n = N),
+             ma_q_fwd = movav(qty, pkg = 'zoo', mode = 'lag', n = N),
              ma_fwd   = ma_v_fwd / ma_q_fwd
              ) %>%
       dplyr::arrange(
@@ -135,11 +140,11 @@ calculateOnDataSWS <- function(data = NA) {
                ) %>%
       #mutate(var = uv/lag(uv)-1)
       dplyr::mutate(
-             ma_v_bck = movav(value, pkg = 'zoo', mode = 'lag'),
-             ma_q_bck = movav(qty, pkg = 'zoo', mode = 'lag'),
+             ma_v_bck = movav(value, pkg = 'zoo', mode = 'lag', n = N),
+             ma_q_bck = movav(qty, pkg = 'zoo', mode = 'lag', n = N),
              ma_bck   = ma_v_bck / ma_q_bck,
              ma       = ifelse(
-                               timePointYears %in% years[1:5],
+                               timePointYears %in% years[1:N],
                                ma_fwd,
                                ma_bck
                                ),

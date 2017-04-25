@@ -17,7 +17,8 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
 
-  # Extract unique input combinations ####
+
+  flog.trace("HS+ mapping: extraction of unique combinations", name = "dev")
 
   uniqhs <- tradedata %>%
     select_(~reporter, ~flow, ~hs) %>%
@@ -26,7 +27,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   # Reports full table in the text report and as csv file
   rprt_uniqhs(uniqhs, tradedataname = tradedataname)
 
-  ## Align HS codes from data and table #####
+  flog.trace("HS+ mapping: align HS codes from data and table", name = "dev")
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
@@ -59,7 +60,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   rprt_map_hschanged(maptable, tradedataname = tradedataname)
 
-  # Find mappings ####
+  flog.trace("HS+ mapping: looking for links", name = "dev")
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
 
   # Report on nolinks
@@ -68,7 +69,7 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   # Report on multilinks
   rprt_hs2fcl_multilinks(uniqhs, tradedataname = tradedataname)
 
-  # Choose ones from multiple matches ####
+  flog.trace("HS+ mapping: selection from multiple matches", name = "dev")
 
   uniqhs <- sel1FCL(uniqhs, maptable)
 

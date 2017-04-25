@@ -9,7 +9,7 @@ register_cpu_cores <- function() {
   if(all(c("doParallel", "foreach") %in%
          rownames(installed.packages(noCache = TRUE)))) {
 
-    flog.info("Multicore backend is available.", name = "dev")
+    flog.debug("Packages doParallel and foreach are available.", name = "dev")
 
     cpucores <- parallel::detectCores(all.tests = TRUE)
 
@@ -19,8 +19,11 @@ register_cpu_cores <- function() {
 
     multicore <- TRUE
 
+    flog.debug("Parallel backend registered and will be used", name = "dev")
+
   } else {
-    flog.debug("Multicore backend is not available.", name = "dev")
+    flog.debug("Packages doParallel and foreach are not available", name = "dev")
+    flog.debug("Parallel execution is disabled",  name = "dev")
 
     multicore <- FALSE
   }

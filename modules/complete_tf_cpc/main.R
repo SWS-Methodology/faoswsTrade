@@ -202,7 +202,7 @@ hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 flog.info("HS->FCL mapping table preview:",
           rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-rprt_hsfclmap(hsfclmap3, year)
+rprt(hsfclmap3, "hsfclmap", year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
@@ -425,7 +425,7 @@ esdata <- esdata %>%
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
 
-rprt_hs2fcl_fulldata(esdata, tradedataname = "esdata")
+rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
 
@@ -537,6 +537,8 @@ tldata <- tldata %>%
 
 message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 
+flog.trace("TL: converting M49 to FAO area list", name = "dev")
+
 tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
               select_(wholepartner = ~rtCode,
@@ -551,7 +553,7 @@ tldata <- tldata %>%
           reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
-
+flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
 tldata <- tldata %>%
   anti_join(esdata %>%
@@ -569,12 +571,14 @@ tldata <- tldata %>%
 tldata_not_area_in_fcl_mapping <- tldata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
+
+flog.trace("TL: dropping reporters not found in the mapping table", name = "dev")
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
 ##+ reexptoexp ####
-
+flog.trace("TL: recoding reimport/reexport", name = "dev")
 ##' 1. Re-imports become imports and re-exports become exports.
 
 # { "id": "1", "text": "Import" },
@@ -590,12 +594,14 @@ tldata <- tldata %>%
 
 tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
 
+flog.trace("TL: merging mapped links with trade records", name = "dev")
 tldata <- tldata %>%
   left_join(tldatalinks, by = c("reporter", "flow", "hs"))
 
-rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
+rprt(esdata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 # Remove unmapped FCL codes. ####
+flog.trace("TL: dropping unmapped records", name = "dev")
 tldata <- tldata %>%
               mutate_(nolink = ~is.na(fcl))
 
@@ -615,6 +621,8 @@ write.csv(tldata_fcl_not_mapped,
 
 ##' Add FCL units. ####
 
+flog.trace("TL: add FCL units", name = "dev")
+
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
 tldata <- tldata %>%
@@ -631,7 +639,7 @@ ctfclunitsconv <- tldata %>%
   as.data.table()
 
 ################ Conv. factor (TL) ################
-
+flog.trace("TL: conversion factors", name = "dev")
 
 ##### Table for conv. factor
 
@@ -729,6 +737,7 @@ tldata <- tldata %>%
   setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
 
 ######### Value from USD to thousands of USD
+
 if (dollars){
   esdata <- esdata %>%
     mutate(value = value * 1000) %>%
@@ -745,6 +754,7 @@ if (dollars){
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
 # XXX "notes" are applied to weight that is transformed below from qtyfcl
+flog.trace("TL: aggregate to FCL", name = "dev")
 tldata <- tldata %>%
   select(-weight, -qty) %>%
   rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
@@ -764,6 +774,7 @@ tldata_mid = tldata
 # We need to set the flags one by one as adjustments not necessarily
 # (probably never?) adjust all the three variables at the same time
 if (use_adjustments == TRUE) {
+  flog.trace("Apply adjustments", name = "dev")
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
                            adjustments = adjustments, parallel = multicore) %>%
     setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
@@ -810,7 +821,7 @@ esdata <- esdata %>%
 ##'     - ES: assign `weight` to `qty` if `fclunit` is `mt`, else keep `qty`
 
 ##+ combine_es_tl
-
+flog.trace("Combine TL and ES data sets", name = "dev")
 tradedata <- bind_rows(
   tldata %>%
     select(year, reporter, partner, flow,
@@ -830,7 +841,7 @@ tradedata <- tradedata %>%
   mutate_each_(funs(swapFlags(., swap='\\1\\2')), ~starts_with('flag_'))
 
 ##' # Outlier Detection and Imputation
-
+flog.trace("Outlier detection and imputation", name = "dev")
 ##+ calculate_median_uv
 
 tradedata <- tradedata %>%
@@ -870,6 +881,7 @@ tradedata <- computeMedianUnitValue(tradedata = tradedata)
 
 tradedata <- doImputation(tradedata = tradedata)
 
+flog.trace("Flag stuff", name = "dev")
 # XXX using flagTrade for the moment, but should go away
 tradedata <- tradedata %>%
     setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
@@ -895,6 +907,7 @@ tradedata_flags <- tradedata %>%
   ungroup()
 
 # Aggregation by fcl
+flog.trace("Aggregation by FCL", name = "dev")
 tradedata <- tradedata %>%
   mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
@@ -902,6 +915,7 @@ tradedata <- tradedata %>%
                   vars = c("qty", "value","flagTrade", "nfcl")) %>%
   ungroup()
 
+flog.trace("Flags again", name = "dev")
 tradedata <- left_join(tradedata,
                        tradedata_flags,
                        by = c('year', 'reporter', 'partner', 'flow', 'fcl'))
@@ -925,6 +939,7 @@ tradedata <- tradedata %>%
 ##' 1. Map FCL codes to CPC.
 
 # Adding CPC2 extended code
+flog.trace("Add CPC item codes", name = "dev")
 tradedata <- tradedata %>%
   mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl), version = "2.1"))
 
@@ -939,6 +954,7 @@ no_mapping_fcl2cpc = tradedata %>%
 ##' 1. Map FAO area codes to M49.
 
 # Converting back to M49 for the system
+flog.trace("Convert FAO area codes to M49", name = "dev")
 tradedata <- tradedata %>%
   mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
           partnerM49 = ~fs2m49(as.character(partner)))
@@ -959,7 +975,7 @@ countries_not_mapping_M49 <- bind_rows(
 
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
-
+flog.trace("Mirroring", name = "dev")
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                       unique(tradedata$reporter))]
 
@@ -976,7 +992,7 @@ tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
 
 ##' 1. Set flags XXX.
-
+flog.trace("Flags XXX (for adults only?)", name = "dev")
 tradedata <- tradedata %>%
     setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
     setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
@@ -1034,6 +1050,7 @@ flagWeightTable_method <- frame_data(
 )
 
 # XXX This piece of code is really slow. There should be a better way.
+flog.trace("Cycle on status and method flags", name = "dev")
 for (i in c('status', 'method')) {
   for (j in c('v', 'q')) {
 
@@ -1057,6 +1074,7 @@ for (i in c('status', 'method')) {
   }
 }
 
+flog.trace("Complete trade flow CPC", name = "dev")
 complete_trade_flow_cpc <- tradedata %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
@@ -1145,7 +1163,7 @@ complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '
 
 
 message(sprintf("[%s] Writing data to session/database", PID))
-
+flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 stats <- SaveData("trade",
                   "completed_tf_cpc_m49",
                   complete_trade_flow_cpc,
@@ -1154,6 +1172,7 @@ stats <- SaveData("trade",
 ## remove value only
 
 message(sprintf("[%s] Session/database write completed!", PID))
+flog.trace("[%s] Session/database write completed!", PID, name = "dev")
 
 sprintf(
   "Module completed in %1.2f minutes.
@@ -1167,6 +1186,19 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
+
+flog.info(
+    "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+    difftime(Sys.time(), startTime, units = "min"),
+    stats[["inserted"]],
+    stats[["appended"]],
+    stats[["ignored"]],
+    stats[["discarded"]], name = "dev"
+  )
 
 # Restore changed options
 options(max.print = oldMaxPrint)

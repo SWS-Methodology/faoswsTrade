@@ -13,7 +13,6 @@
 #'
 #' @return Data frame with summary statistics.
 #'
-#' @export
 #' @import dplyr
 
 rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {

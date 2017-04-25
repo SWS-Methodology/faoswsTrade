@@ -69,9 +69,10 @@ reporters <- GetCodeList2(dimension = Vars[['reporters']])[type == 'country', co
 Keys <- list( #reporters = reporter,
              partners = GetCodeList2(dimension = Vars[['partners']])[type == 'country', code],
              items    = GetCodeList2(dimension = Vars[['items']])[, code],
+             # Quantity [#], Quantity [head], Quantity [1000 head], Quantity [t], Value [1000 $]
              elements = c('5607', '5608', '5609', '5610', '5622',
                           '5907', '5908', '5909', '5910', '5922'),
-             years    = as.character(years))
+             years    = years)
 
 
 ######################################################################

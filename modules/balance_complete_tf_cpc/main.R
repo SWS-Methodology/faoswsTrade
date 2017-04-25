@@ -6,9 +6,10 @@ setwd('C:/Users/mongeau/Dropbox/GitHub/SWS-Methodology/faoswsTrade')
 # For parallel computation
 multicore <- TRUE
 # Maximum allowed discrepancy in the flow/mirror ratio
+# TODO: should be a parameter
 threshold <- 1.5
 # Years
-years <- 2000:2014
+years <- as.character(2000:2014)
 # Whether to smooth trade or not
 smooth_trade <- FALSE
 

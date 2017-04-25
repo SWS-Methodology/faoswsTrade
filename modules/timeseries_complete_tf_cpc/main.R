@@ -196,6 +196,7 @@ if (multicore) {
                                 'Keys',
                                 'reshapeTrade',
                                 'movav',
+                                'movav_order',
                                 'threshold'))
 
   if(CheckDebug()) {

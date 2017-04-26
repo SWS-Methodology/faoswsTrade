@@ -37,7 +37,7 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # Package build ID
 # It is included into report directory name
-build_id <- "extendrep"
+build_id <- "hs6map"
 
 set.seed(2507)
 
@@ -302,6 +302,7 @@ hs_chapters_str <-
 
 # hs6fclmap ####
 
+flog.trace("Extraction of HS6 mapping table", name = "dev")
 hs6fclmap <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 
 

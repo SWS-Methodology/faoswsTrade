@@ -200,7 +200,7 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-flog.debug("Reading in hs-fcl mapping", name = "dev")
+flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
@@ -313,6 +313,7 @@ hs6fclmap <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
+flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
 
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
@@ -615,7 +616,7 @@ tldata <- add_fcls_from_links(tldata,
                               hs6links = tldatahs6links,
                               links = tldatalinks)
 
-rprt(esdata, "hs2fcl_fulldata", tradedataname = "tldata")
+rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 flog.trace("TL: dropping unmapped records", name = "dev")
 

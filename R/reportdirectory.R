@@ -21,7 +21,7 @@ reportdirectory <- function(sws_user, year, build_id, create = TRUE, browsedir =
     sws_share,
     sws_user,
     paste("complete_tf_cpc", year, build_id,
-          format(Sys.time(), "%Y%m%d%H%M%S"),
+          format(Sys.time(), "%Y%m%d_%H%M"),
           sep = "_"))
 
   reportdir <- normalizePath(reportdir,

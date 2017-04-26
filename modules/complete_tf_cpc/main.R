@@ -34,6 +34,11 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 
 # Settings ####
+
+# Package build ID
+# It is included into report directory name
+build_id <- "extendrep"
+
 set.seed(2507)
 
 # Size for Eurostat sampling. Set NULL if no sampling is required.
@@ -119,7 +124,7 @@ flog.debug("User's computation parameters:",
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- reportdirectory(USER, year)
+reportdir <- reportdirectory(USER, year, build_id)
 
 # Send general log messages
 if(general_log2console) {
@@ -484,7 +489,8 @@ esdata <- esdata %>%
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_", year),
                         columns = c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
@@ -513,10 +519,12 @@ tldata <- tbl_df(tldata)
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
 
+flog.trace("TL: aggreation of similar flows", name = "dev")
+
 tldata <- preAggregateMultipleTLRows(tldata)
 
 ##' 1. Add variables that will contain flags.
-
+flog.trace("TL: add flag variables")
 tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%

@@ -2,6 +2,7 @@
 #'
 #' @param user User name to include in the name.
 #' @param year Year to include in the name.
+#' @param build_id Identificator to include in the name.
 #' @param create Should the directory be created. TRUE by default.
 #' @param browsedir Should the directory be opened in system-default file
 #'   browser. TRUE by default.
@@ -10,7 +11,7 @@
 #' @export
 #'
 
-reportdirectory <- function(sws_user, year, create = TRUE, browsedir = TRUE) {
+reportdirectory <- function(sws_user, year, build_id, create = TRUE, browsedir = TRUE) {
 
   sws_share <- Sys.getenv("R_SWS_SHARE_PATH", unset = NA_character_)
 
@@ -19,8 +20,8 @@ reportdirectory <- function(sws_user, year, create = TRUE, browsedir = TRUE) {
   reportdir <- file.path(
     sws_share,
     sws_user,
-    paste("complete_tf_cpc", year,
-          format(Sys.time(), "%Y%m%d%H%M%S%Z"),
+    paste("complete_tf_cpc", year, build_id,
+          format(Sys.time(), "%Y%m%d%H%M%S"),
           sep = "_"))
 
   reportdir <- normalizePath(reportdir,

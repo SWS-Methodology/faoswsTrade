@@ -34,6 +34,11 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 
 # Settings ####
+
+# Package build ID
+# It is included into report directory name
+build_id <- "extendrep"
+
 set.seed(2507)
 
 # Size for Eurostat sampling. Set NULL if no sampling is required.
@@ -119,7 +124,7 @@ flog.debug("User's computation parameters:",
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- reportdirectory(USER, year)
+reportdir <- reportdirectory(USER, year, build_id)
 
 # Send general log messages
 if(general_log2console) {

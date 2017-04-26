@@ -2,9 +2,11 @@
 #'
 #' @import dplyr
 #' @import stringr
+#' @import futile.logger
 #'
 #' @param maptable hsfclmap data frame.
-#' @param parallel Should parallel execution be used if available. FALSE by default.
+#' @param parallel Should parallel execution be used if available. FALSE by
+#'   default.
 #' @return Data frame with columns reporter, flow, hs6, fcl
 #' @export
 #'
@@ -13,19 +15,24 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
 
   stopifnot(!is.null(maptable))
 
+  # Rename area column to reporter as in future we want to
+  # use reporter in the mapping table (there is an issue at github)
   if(!"reporter" %in% colnames(maptable) &
      "area" %in% colnames(maptable)) {
     maptable <- rename_(maptable, .dots = list(reporter = ~area))
   }
 
+  # Drop garbage
   maptable <- select_(maptable,
                       ~reporter,
                       ~flow,
                       ~fromcode,
                       ~tocode,
-                      ~fcl,
-                      ~recordnumb)
+                      ~fcl)
 
+  # Convert hs columns to integer hs6 and
+  # calculate from-to range
+  flog.trace("HS6 map: calculation of HS ranges", name = "dev")
   maptable <- maptable %>%
     mutate_at(vars(ends_with("code")),
               funs(str_sub(., end = 6L))) %>%
@@ -33,14 +40,19 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
               as.numeric) %>%
     mutate_(hsrange = ~tocode - fromcode)
 
+  # Subset maptable with zero from-to hs range
+  # where we don't need to add intermediate codes
   maptable_0range <- maptable %>%
     filter_(~hsrange == 0) %>%
     select_(~reporter,
             ~flow,
             hs6 = ~fromcode,
-            ~fcl,
-            ~recordnumb)
+            ~fcl)
 
+  # Map table subset where real hs from-to range exists
+  # and we need to fill numbers
+  flog.trace("HS6 map: filling of HS ranges by intermediate codes",
+             name = "dev")
   maptable_range <- maptable %>%
     filter_(~hsrange > 0) %>%
     plyr::ddply(.variables = c("reporter", "flow"),
@@ -49,10 +61,8 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                     allhs <- seq.int(df$fromcode, df$tocode)
                     rows <- length(allhs)
                     fcl <- rep.int(df$fcl, times = rows)
-                    recordnumb <- rep.int(df$recordnumb, times = rows)
                     data_frame(hs6 = allhs,
-                               fcl = fcl,
-                               recordnumb = recordnumb)
+                               fcl = fcl)
                   })
                 },
                 .parallel = parallel,
@@ -60,11 +70,15 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     select_(~reporter,
             ~flow,
             ~hs6,
-            ~fcl,
-            ~recordnumb)
+            ~fcl)
 
+  # Bind both subsets and then calculate number of matching
+  # fcl codes per each hs6
+  flog.trace("HS6 map: calculation of FCL matches per HS6", name = "dev")
   bind_rows(maptable_0range, maptable_range) %>%
-    # split by chunks to be efficient in parallel execution
+    arrange_(~reporter, ~flow, ~hs6, ~fcl) %>%
+    distinct() %>%
+    # Split by chunks to be efficient in parallel execution
     plyr::ddply(.variables = c("reporter", "flow"),
                 function(df) {
                   df %>%
@@ -73,5 +87,6 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                     ungroup()
                 },
                 .parallel = parallel,
-                .paropts = list(.packages = "dplyr"))
+                .paropts = list(.packages = "dplyr")) %>%
+    rprt("hs6fclmap")
 }

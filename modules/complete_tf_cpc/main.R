@@ -485,7 +485,8 @@ esdata <- esdata %>%
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_", year),
                         columns = c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
@@ -514,10 +515,12 @@ tldata <- tbl_df(tldata)
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
 
+flog.trace("TL: aggreation of similar flows", name = "dev")
+
 tldata <- preAggregateMultipleTLRows(tldata)
 
 ##' 1. Add variables that will contain flags.
-
+flog.trace("TL: add flag variables")
 tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%

@@ -37,7 +37,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     mutate_at(vars(ends_with("code")),
               funs(str_sub(., end = 6L))) %>%
     mutate_at(vars(ends_with("code")),
-              as.numeric) %>%
+              as.integer) %>%
     mutate_(hsrange = ~tocode - fromcode)
 
   # Subset maptable with zero from-to hs range

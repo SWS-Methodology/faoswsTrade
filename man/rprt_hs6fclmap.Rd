@@ -4,10 +4,10 @@
 \alias{rprt_hs6fclmap}
 \title{Reports on results of extraction of HS6->FCL map}
 \usage{
-rprt_hs6fclmap(data = NULL)
+rprt_hs6fclmap(hs6fclmap = NULL)
 }
 \arguments{
-\item{data}{produced by extract_hs6fclmap function}
+\item{hs6fclmap}{produced by extract_hs6fclmap function}
 }
 \description{
 Reports on results of extraction of HS6->FCL map

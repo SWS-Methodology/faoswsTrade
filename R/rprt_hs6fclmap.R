@@ -1,13 +1,13 @@
 #' Reports on results of extraction of HS6->FCL map
 #'
-#' @param data produced by extract_hs6fclmap function
+#' @param hs6fclmap produced by extract_hs6fclmap function
 #' @import dplyr
 
-rprt_hs6fclmap <- function(data = NULL) {
+rprt_hs6fclmap <- function(hs6fclmap = NULL) {
 
-  stopifnot(!is.null(data))
+  stopifnot(!is.null(hs6fclmap))
 
-  hs6fclmap_by_reporter_stat <- data %>%
+  hs6fclmap_by_reporter_stat <- hs6fclmap %>%
     group_by_(~reporter, ~flow) %>%
     mutate(total_links = n()) %>%
     group_by_(~total_links, ~hs6, add = TRUE) %>%
@@ -25,7 +25,9 @@ rprt_hs6fclmap <- function(data = NULL) {
 
   hs6fclmap_by_reporter_stat <- add_area_names(hs6fclmap_by_reporter_stat,
                                                "fao")
+  hs6fclmap <- add_area_names(hs6fclmap, "fao")
 
+  rprt_writetable(hs6fclmap)
   rprt_writetable(hs6fclmap_by_reporter_stat)
   rprt_writetable(hs6fclmap_total_stat)
   rprt_fulltable(hs6fclmap_total_stat, pretty_prop = TRUE)

@@ -73,6 +73,9 @@ mapHS2FCL <- function(tradedata, maptable, hs6maptable, parallel = FALSE) {
   flog.trace("HS+ mapping: looking for links", name = "dev")
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
 
+  hs2fcl_mapped_links <- uniqhs
+  rprt_writetable(hs2fcl_mapped_links, prefix = tradedataname)
+
   # Report on nolinks
   rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
 

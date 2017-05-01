@@ -11,6 +11,9 @@
 
 mapHS6toFCL <- function(tradedata, hs6maptable) {
 
+  # Name for passing to reporting functions
+  tradedataname <- lazyeval::expr_text(tradedata)
+
   # HS6 mapping table subset with 1-to-1 hs->fcl links
   hs6maptable <- hs6maptable %>%
     filter_(~fcl_links == 1L) %>%
@@ -30,6 +33,17 @@ mapHS6toFCL <- function(tradedata, hs6maptable) {
     select_(~reporter, ~flow, ~hs6) %>%
     distinct()
 
+  rowsbeforejoin <- nrow(tradedata)
+
+  tradedata <- tradedata %>%
+    left_join(hs6maptable, by = c("reporter", "flow", "hs6"))
+
+  if(rowsbeforejoin != nrow(tradedata))
+    warning(paste0("Rows before join: ", rowsbeforejoin,
+                   ", after join: ", nrow(tradedata)))
+
+  rprt(tradedata, "hs6fcl_results", tradedataname = tradedataname)
+
   tradedata %>%
-    inner_join(hs6maptable, by = c("reporter", "flow", "hs6"))
+    filter_(~!is.na(fcl))
 }

@@ -38,6 +38,7 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 # Package build ID
 # It is included into report directory name
 build_id <- "hs6map"
+stopaftermapping <- TRUE
 
 set.seed(2507)
 
@@ -624,6 +625,7 @@ flog.trace("TL: dropping unmapped records", name = "dev")
 tldata <- tldata %>%
   filter_(~is.na(fcl))
 
+if(stopaftermapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
 
 ##' Add FCL units. ####

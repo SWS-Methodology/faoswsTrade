@@ -17,7 +17,7 @@ mapHS2FCL <- function(tradedata, maptable, hs6maptable, parallel = FALSE) {
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
 
-  # HS6 mapping table subset without 1-to-1 hs->fcl links
+  # HS6 mapping table subset with 1-to-1 hs->fcl links
   hs6maptable <- hs6maptable %>%
     filter_(~fcl_links == 1L)
 
@@ -35,7 +35,8 @@ mapHS2FCL <- function(tradedata, maptable, hs6maptable, parallel = FALSE) {
   rprt_uniqhs(uniqhs, tradedataname = tradedataname)
 
   # Drop mapping records already used in hs6 mapping
-  maptable <- anti_join(maptable, hs6maptable, by = "recordnumb")
+  # maptable <- anti_join(maptable, hs6maptable,
+  #                       by = c("area" = "reporter", "flow", "hs6"))
 
   flog.trace("HS+ mapping: align HS codes from data and table", name = "dev")
 

@@ -28,8 +28,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                       ~flow,
                       ~fromcode,
                       ~tocode,
-                      ~fcl,
-                      ~recordnumb)
+                      ~fcl)
 
   # Convert hs columns to integer hs6 and
   # calculate from-to range
@@ -48,8 +47,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     select_(~reporter,
             ~flow,
             hs6 = ~fromcode,
-            ~fcl,
-            ~recordnumb)
+            ~fcl)
 
   # Map table subset where real hs from-to range exists
   # and we need to fill numbers
@@ -63,10 +61,8 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                     allhs <- seq.int(df$fromcode, df$tocode)
                     rows <- length(allhs)
                     fcl <- rep.int(df$fcl, times = rows)
-                    recordnumb <- rep.int(df$recordnumb, times = rows)
                     data_frame(hs6 = allhs,
-                               fcl = fcl,
-                               recordnumb = recordnumb)
+                               fcl = fcl)
                   })
                 },
                 .parallel = parallel,
@@ -74,8 +70,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     select_(~reporter,
             ~flow,
             ~hs6,
-            ~fcl,
-            ~recordnumb)
+            ~fcl)
 
   # Bind both subsets and then calculate number of matching
   # fcl codes per each hs6

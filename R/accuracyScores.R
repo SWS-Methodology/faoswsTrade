@@ -92,7 +92,7 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
 
     accu <- tibble(
                    country    = dimnames(global_accu)[[1]],
-                   accu_score = page_rank(g)$vector
+                   accu_score = igraph::page_rank(g)$vector
                    ) %>%
             mutate(
                    accu_rank  = rank(-accu_score),

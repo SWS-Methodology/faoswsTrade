@@ -51,7 +51,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
 
   # Map table subset where real hs from-to range exists
   # and we need to fill numbers
-  flog.trace("HS6 map: filling of HS ranges by intermediate codes",
+  flog.trace("HS6 map: convert HS ranges into explicit HS codes",
              name = "dev")
   maptable_range <- maptable %>%
     filter_(~hsrange > 0) %>%
@@ -87,6 +87,5 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                     ungroup()
                 },
                 .parallel = parallel,
-                .paropts = list(.packages = "dplyr")) %>%
-    rprt("hs6fclmap")
+                .paropts = list(.packages = "dplyr"))
 }

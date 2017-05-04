@@ -37,8 +37,8 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # Package build ID
 # It is included into report directory name
-build_id <- "master"
-stopaftermapping <- FALSE
+build_id <- "mapendyear"
+stopaftermapping <- TRUE
 
 set.seed(2507)
 
@@ -304,8 +304,15 @@ hs_chapters_str <-
 # hs6fclmap ####
 
 flog.trace("Extraction of HS6 mapping table", name = "dev")
-hs6fclmap <- extract_hs6fclmap(hsfclmap, parallel = multicore)
-
+flog.info("CSV reports on HS6 maps are not full:
+report on all-years map is overwritten by current-year report")
+flog.trace("Universal (all years) HS6 mapping table", name = "dev")
+hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+flog.trace("Current year specific HS6 mapping table", name = "dev")
+hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>% 
+  filter_(~fcl_links == 1L) %>% 
+  distinct()
 
 ##' # Extract Eurostat Combined Nomenclature Data
 

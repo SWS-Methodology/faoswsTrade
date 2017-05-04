@@ -38,7 +38,7 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 # Package build ID
 # It is included into report directory name
 build_id <- "master"
-stopaftermapping <- TRUE
+stopaftermapping <- FALSE
 
 set.seed(2507)
 

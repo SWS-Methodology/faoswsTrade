@@ -55,7 +55,7 @@ rprt_fulltable <- function(dataset,
 
         if(missing(pretty_prop)) {
           warning(sprintf(
-            "Following columns in dataset %s were\n converted with scales::percent: %s",
+            "Following columns in dataset %s were\n converted with scales::percent: %s. \nSet pretty_prop = TRUE to avoid this message.",
             name, paste(vars2convert, collapse = ", ")))
 
         }

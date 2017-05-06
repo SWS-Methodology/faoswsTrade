@@ -34,6 +34,12 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 
 # Settings ####
+
+# Package build ID
+# It is included into report directory name
+build_id <- "master"
+stopaftermapping <- FALSE
+
 set.seed(2507)
 
 # Size for Eurostat sampling. Set NULL if no sampling is required.
@@ -119,7 +125,7 @@ flog.debug("User's computation parameters:",
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- reportdirectory(USER, year)
+reportdir <- reportdirectory(USER, year, build_id)
 
 # Send general log messages
 if(general_log2console) {
@@ -195,7 +201,7 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-flog.debug("Reading in hs-fcl mapping", name = "dev")
+flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
@@ -295,6 +301,19 @@ hs_chapters_str <-
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
+# hs6fclmap ####
+
+flog.trace("Extraction of HS6 mapping table", name = "dev")
+flog.trace("Universal (all years) HS6 mapping table", name = "dev")
+hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+flog.trace("Current year specific HS6 mapping table", name = "dev")
+hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
+  filter_(~fcl_links == 1L) %>%
+  distinct()
+
+rprt(hs6fclmap, "hs6fclmap")
+
 ##' # Extract Eurostat Combined Nomenclature Data
 
 ##+ es-extract
@@ -303,6 +322,7 @@ hs_chapters_str <-
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
+flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
 
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
@@ -417,10 +437,16 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- mapHS2FCL(esdata, hsfclmap, multicore)
+esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
-esdata <- esdata %>%
-    left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+esdatalinks <- mapHS2FCL(tradedata = esdata,
+                         maptable = hsfclmap,
+                         hs6maptable = hs6fclmap,
+                         parallel = multicore)
+
+esdata <- add_fcls_from_links(esdata,
+                              hs6links = esdatahs6links,
+                              links = esdatalinks)
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
@@ -428,13 +454,6 @@ flog.info("Records after HS-FCL mapping: %s",
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
-
-esdata_fcl_not_mapped <- esdata %>%
-  filter_(~is.na(fcl))
-
-write.csv(esdata_fcl_not_mapped,
-          file = file.path(reportdir,
-                           "esdata_fcl_not_mapped.csv"))
 
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
@@ -480,7 +499,8 @@ esdata <- esdata %>%
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_", year),
                         columns = c("rep", "tyear", "flow",
                                   "comm", "prt", "weight",
                                   "qty", "qunit", "tvalue",
@@ -509,10 +529,12 @@ tldata <- tbl_df(tldata)
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
 
+flog.trace("TL: aggreation of similar flows", name = "dev")
+
 tldata <- preAggregateMultipleTLRows(tldata)
 
 ##' 1. Add variables that will contain flags.
-
+flog.trace("TL: add flag variables")
 tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%
@@ -592,31 +614,25 @@ tldata <- tldata %>%
 # TF: Map HS to FCL ####
 ##+ tl_hs2fcl ####
 
-tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
+tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
 
-flog.trace("TL: merging mapped links with trade records", name = "dev")
-tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+tldatalinks <- mapHS2FCL(tradedata = tldata,
+                         maptable = hsfclmap,
+                         hs6maptable = hs6fclmap,
+                         parallel = multicore)
 
-rprt(esdata, "hs2fcl_fulldata", tradedataname = "tldata")
+tldata <- add_fcls_from_links(tldata,
+                              hs6links = tldatahs6links,
+                              links = tldatalinks)
 
-# Remove unmapped FCL codes. ####
+rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
+
 flog.trace("TL: dropping unmapped records", name = "dev")
-tldata <- tldata %>%
-              mutate_(nolink = ~is.na(fcl))
-
-tldata_fcl_not_mapped <- tldata %>%
-  filter_(~nolink) %>%
-  select_(~-nolink)
 
 tldata <- tldata %>%
-  filter_(~!nolink) %>%
-  select_(~-nolink)
+  filter_(~is.na(fcl))
 
-write.csv(tldata_fcl_not_mapped,
-          file = file.path(reportdir,
-                           "tldata_fcl_not_mapped.csv"))
-
+if(stopaftermapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
 
 ##' Add FCL units. ####

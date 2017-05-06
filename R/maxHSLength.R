@@ -46,6 +46,6 @@ maxHSLength <- function(uniqhs, mapdataset, parallel = FALSE) {
   uniqhs$maxhslength  <- max(maxhslength, maxtolength, maxfromlength)
 
   uniqhs %>%
-    select_(~-hs) %>%
+    select_(~reporter, ~flow, ~maxhslength) %>%
     distinct
 }

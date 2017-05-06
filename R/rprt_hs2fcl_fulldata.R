@@ -37,6 +37,9 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   filters <- list(~nolink_count != 0L)
   sorting <- list(~desc(nolink_prop))
 
+  nolinks_total <- tradedata %>%
+    summarise_(.dots = stats)
+
   nolinks_byreporter <- tradedata %>%
     group_by_(~reporter) %>%
     summarise_(.dots = stats) %>%
@@ -59,12 +62,37 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   nolinks_byreporterhs6 <- add_area_names(nolinks_byreporterhs6, "fao")
   nolinks_byreporter <- add_area_names(nolinks_byreporter, "fao")
 
+  rprt_writetable(nolinks_total, prefix = tradedataname)
   rprt_writetable(nolinks_byreporter, prefix = tradedataname)
   rprt_writetable(nolinks_byreporterhs6, prefix = tradedataname)
   rprt_writetable(nolinks_byhs6, prefix = tradedataname)
 
+  rprt_fulltable(nolinks_total, pretty_prop = TRUE)
   rprt_fulltable(nolinks_byreporter, pretty_prop = TRUE)
   rprt_fulltable(nolinks_byreporterhs6, pretty_prop = TRUE)
   rprt_fulltable(nolinks_byhs6, pretty_prop = TRUE)
 
+
+  # All records with failed mapping
+  hsfcl_nolinks <- tradedata %>%
+    filter_(~is.na(fcl)) %>%
+    mutate_(year = year) %>%
+    select_(~year, ~reporter, ~partner, ~flow, ~hs,
+            ~fcl, ~value, ~weight, ~qty)
+
+  rprt_writetable(hsfcl_nolinks, prefix = tradedataname)
+
+  # Canada case (issue #78)
+  if(33 %in% tradedata$reporter) {
+
+    canada_links <- tradedata %>%
+      filter_(~reporter == 33) %>%
+      mutate_(year = year) %>%
+      select_(~year, ~reporter, ~flow, ~hs,
+              ~fcl) %>%
+      distinct()
+
+    rprt_writetable(canada_links, prefix = tradedataname)
+
+  }
 }

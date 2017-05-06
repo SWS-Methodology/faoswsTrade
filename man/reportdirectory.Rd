@@ -4,10 +4,12 @@
 \alias{reportdirectory}
 \title{Create directory for writing a report and supplementary files}
 \usage{
-reportdirectory(sws_user, year, create = TRUE, browsedir = TRUE)
+reportdirectory(sws_user, year, build_id, create = TRUE, browsedir = TRUE)
 }
 \arguments{
 \item{year}{Year to include in the name.}
+
+\item{build_id}{Identificator to include in the name.}
 
 \item{create}{Should the directory be created. TRUE by default.}
 

@@ -12,20 +12,31 @@
 #' @import dplyr
 #' @export
 
-mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
+mapHS2FCL <- function(tradedata, maptable, hs6maptable, parallel = FALSE) {
 
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
 
+  # HS6 mapping table subset with 1-to-1 hs->fcl links
+  hs6maptable <- hs6maptable %>%
+    filter_(~fcl_links == 1L)
 
   flog.trace("HS+ mapping: extraction of unique combinations", name = "dev")
 
   uniqhs <- tradedata %>%
-    select_(~reporter, ~flow, ~hs) %>%
+    select_(~reporter, ~flow, ~hs6, ~hs) %>%
     distinct
+
+  # Drop records mapped with hs6
+  uniqhs <- anti_join(uniqhs, hs6maptable,
+                      by = c("reporter", "flow", "hs6"))
 
   # Reports full table in the text report and as csv file
   rprt_uniqhs(uniqhs, tradedataname = tradedataname)
+
+  # Drop mapping records already used in hs6 mapping
+  # maptable <- anti_join(maptable, hs6maptable,
+  #                       by = c("area" = "reporter", "flow", "hs6"))
 
   flog.trace("HS+ mapping: align HS codes from data and table", name = "dev")
 
@@ -62,6 +73,9 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   flog.trace("HS+ mapping: looking for links", name = "dev")
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
+
+  hs2fcl_mapped_links <- uniqhs
+  rprt_writetable(hs2fcl_mapped_links, prefix = tradedataname)
 
   # Report on nolinks
   rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)

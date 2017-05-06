@@ -4,7 +4,7 @@
 \alias{mapHS2FCL}
 \title{Umbrella function to map HS codes to FCL codes}
 \usage{
-mapHS2FCL(tradedata, maptable, parallel = FALSE)
+mapHS2FCL(tradedata, maptable, hs6maptable, parallel = FALSE)
 }
 \arguments{
 \item{tradedata}{Trade data frame. Columns reporter, flow and hs are expected.}

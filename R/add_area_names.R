@@ -3,10 +3,11 @@
 #'
 #' @param data A data frame where reporter or partner columns exists.
 #' @param code_class A character string indicating classification of area codes:
-#' "fao", "m49" or "geonom".
+#'   "fao", "m49" or "geonom".
 #' @param area_columns A character vector indicating names of columns with area
-#' codes. By default c("reporter", "partner").
-#' @return Original data frame with added columns.
+#'   codes. By default c("reporter", "partner").
+#' @return Original data frame with added columns with name "name" (one column)
+#'   or suffix "_name" (several columns).
 #' @export
 #' @import dplyr
 

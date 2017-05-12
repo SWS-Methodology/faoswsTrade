@@ -22,18 +22,21 @@ adaptTradeDataNames <- function(tradedata, origin) {
     stop('"origin" needs to be "TL" or "ES"')
   }
 
-  if(origin == "TL")
-    old_common_names <- c("tyear", "rep", "prt",
-                          "flow", "comm", "tvalue",
-                          "weight") else
-                            old_common_names <- c(
-                              "period", "declarant", "partner",
-                              "flow", "product_nc", "value_1k_euro",
-                              "qty_ton")
+  if (origin == "TL")
+    old_common_names <- c(
+      "tyear", "rep", "prt",
+      "flow", "comm", "tvalue",
+      "weight", "qty")
+
+  if (origin == "ES")
+    old_common_names <- c(
+      "period", "declarant", "partner",
+      "flow", "product_nc", "value_1k_euro",
+      "qty_ton", "sup_quantity")
 
   new_common_names <- c("year", "reporter", "partner",
                         "flow", "hs", "value",
-                        "weight")
+                        "weight", "qty")
 
   stopifnot(length(old_common_names) ==
                       length(new_common_names))
@@ -41,30 +44,4 @@ adaptTradeDataNames <- function(tradedata, origin) {
   tradedata %>%
     rename_(.dots = setNames(old_common_names, new_common_names))
 
-#
-#   if (origin == "TL") {
-#     tradedata %>%
-#       transmute_(reporter = ~as.integer(rep),
-#                  partner = ~as.integer(prt),
-#                  hs = ~comm,
-#                  flow = ~as.integer(flow),
-#                  year = ~as.character(tyear),
-#                  value = ~as.numeric(tvalue),
-#                  weight = ~as.numeric(weight),
-#                  qty = ~as.numeric(qty),
-#                  qunit = ~as.integer(qunit)) %>%
-#       mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
-#
-#   } else {
-#     tradedata %>%
-#       transmute_(reporter = ~as.integer(declarant),
-#                  partner = ~as.integer(partner),
-#                  hs = ~product_nc,
-#                  flow = ~as.integer(flow),
-#                  year = ~as.character(stringr::str_sub(period, 1, 4)),
-#                  value = ~as.numeric(value_1k_euro),
-#                  weight = ~as.numeric(qty_ton),
-#                  qty = ~as.numeric(sup_quantity)) %>%
-#       mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
-#   }
 }

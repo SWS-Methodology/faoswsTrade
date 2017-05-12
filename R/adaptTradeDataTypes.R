@@ -21,14 +21,20 @@ adaptTradeDataTypes <- function(tradedata, origin) {
   }
 
   stopifnot(all(c("year", "reporter", "partner", "flow", "value", "weight",
-                   "qty") %in% colnames(tradedata)))
+                   "qty", "hs") %in% colnames(tradedata)))
+
+  tradedata <- tradedata %>%
+    mutate_at(vars(reporter, partner, hs),
+            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %>%
+    filter_(~!(reporter_non_numeric | partner_non_numeric | hs_non_numeric)) %>%
+    select_(~-ends_with("_non_numeric"))
 
   tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, flow),
               as.integer) %>%
     mutate_at(vars(value, weight, qty),
               as.numeric) %>%
-    mutate_(hs6 = ~stringr::str_sub(hs, 1, 6))
+    mutate_(hs6 = ~as.integer(stringr::str_sub(hs, 1, 6)))
 
   if (origin == "TL") {
     tradedata %>%

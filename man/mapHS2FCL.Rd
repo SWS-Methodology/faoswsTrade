@@ -4,12 +4,14 @@
 \alias{mapHS2FCL}
 \title{Umbrella function to map HS codes to FCL codes}
 \usage{
-mapHS2FCL(tradedata, maptable, parallel = FALSE)
+mapHS2FCL(tradedata, maptable, hs6maptable, year = NULL, parallel = FALSE)
 }
 \arguments{
 \item{tradedata}{Trade data frame. Columns reporter, flow and hs are expected.}
 
 \item{maptable}{Mapping table.}
+
+\item{year}{Integer, year the trade module run on.}
 
 \item{parallel}{Logical, should multicore backend be used. False by default.}
 }

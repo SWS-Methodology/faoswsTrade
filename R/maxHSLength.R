@@ -31,12 +31,21 @@ maxHSLength <- function(uniqhs, mapdataset, parallel = FALSE) {
     filter_(~area == uniqhs$reporter[1],
             ~flow == uniqhs$flow[1])
 
+  if(nrow(mapdataset) == 0L) {
+    message(paste0("For reporter ", uniqhs$reporter[1],
+                " flow ", uniqhs$flow[1],
+                ", no records in the mapping table"))
+    return(data_frame(reporter = uniqhs$reporter[1],
+                      flow = uniqhs$flow[1],
+                      maxhslength = NA_integer_))
+  }
+
   maxhslength   <- max(stringr::str_length(uniqhs$hs))
   maxfromlength <- max(stringr::str_length(mapdataset$fromcode))
   maxtolength   <- max(stringr::str_length(mapdataset$tocode))
   uniqhs$maxhslength  <- max(maxhslength, maxtolength, maxfromlength)
 
   uniqhs %>%
-    select_(~-hs) %>%
+    select_(~reporter, ~flow, ~maxhslength) %>%
     distinct
 }

@@ -5,6 +5,7 @@
 #'
 #' @param tradedata Trade data frame. Columns reporter, flow and hs are expected.
 #' @param maptable Mapping table.
+#' @param year Integer, year the trade module run on.
 #' @param parallel Logical, should multicore backend be used. False by default.
 #'
 #' @return Data frame with unique combinations reporter/flow/hs/fcl.
@@ -12,21 +13,40 @@
 #' @import dplyr
 #' @export
 
-mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
+mapHS2FCL <- function(tradedata,
+                      maptable,
+                      hs6maptable,
+                      year = NULL,
+                      parallel = FALSE) {
+
+  stopifnot(!is.null(year))
+  stopifnot(is.integer(year))
 
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
 
-  # Extract unique input combinations ####
+  # HS6 mapping table subset with 1-to-1 hs->fcl links
+  hs6maptable <- hs6maptable %>%
+    filter_(~fcl_links == 1L)
+
+  flog.trace("HS+ mapping: extraction of unique combinations", name = "dev")
 
   uniqhs <- tradedata %>%
-    select_(~reporter, ~flow, ~hs) %>%
+    select_(~reporter, ~flow, ~hs6, ~hs) %>%
     distinct
+
+  # Drop records mapped with hs6
+  uniqhs <- anti_join(uniqhs, hs6maptable,
+                      by = c("reporter", "flow", "hs6"))
 
   # Reports full table in the text report and as csv file
   rprt_uniqhs(uniqhs, tradedataname = tradedataname)
 
-  ## Align HS codes from data and table #####
+  # Drop mapping records already used in hs6 mapping
+  # maptable <- anti_join(maptable, hs6maptable,
+  #                       by = c("area" = "reporter", "flow", "hs6"))
+
+  flog.trace("HS+ mapping: align HS codes from data and table", name = "dev")
 
   hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
 
@@ -59,8 +79,11 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
 
   rprt_map_hschanged(maptable, tradedataname = tradedataname)
 
-  # Find mappings ####
+  flog.trace("HS+ mapping: looking for links", name = "dev")
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
+
+  hs2fcl_mapped_links <- uniqhs
+  rprt_writetable(hs2fcl_mapped_links, prefix = tradedataname)
 
   # Report on nolinks
   rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
@@ -68,9 +91,9 @@ mapHS2FCL <- function(tradedata, maptable, parallel = FALSE) {
   # Report on multilinks
   rprt_hs2fcl_multilinks(uniqhs, tradedataname = tradedataname)
 
-  # Choose ones from multiple matches ####
+  flog.trace("HS+ mapping: selection from multiple matches", name = "dev")
 
-  uniqhs <- sel1FCL(uniqhs, maptable)
+  uniqhs <- sel1FCL(uniqhs, maptable, cur_yr = year)
 
   uniqhs
 }

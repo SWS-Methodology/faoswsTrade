@@ -18,7 +18,8 @@ add_area_names(data, code_class = NULL, area_columns = c("reporter",
 codes. By default c("reporter", "partner").}
 }
 \value{
-Original data frame with added columns.
+Original data frame with added columns with name "name" (one column)
+  or suffix "_name" (several columns).
 }
 \description{
 A function to add columns with area names to a data frame where reporter or

@@ -34,6 +34,12 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 
 # Settings ####
+
+# Package build ID
+# It is included into report directory name
+build_id <- "master"
+stopaftermapping <- FALSE
+
 set.seed(2507)
 
 # Size for Eurostat sampling. Set NULL if no sampling is required.
@@ -47,7 +53,10 @@ rprt_data <- list()
 # There are following levels:
 # trace, debug, info, warn, error, fatal
 # Level `trace` shows everything in the log
-futile.logger::flog.threshold("TRACE")
+
+# Additional logger for technical data
+futile.logger::flog.logger("dev", "TRACE")
+futile.logger::flog.threshold("TRACE", name = "dev")
 
 # Parallel backend will be used only if required packages
 # are installed
@@ -64,8 +73,12 @@ use_adjustments <- FALSE
 # If TRUE, use impute outliers
 detect_outliers <- FALSE
 
+# Print general log to console
+general_log2console <- FALSE
+
+dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
 # Switch off dplyr's progress bars globally
-dplyr.show_progress <- FALSE
+options(dplyr.show_progress = FALSE)
 # max.print in RStudio is too small
 oldMaxPrint <- getOption("max.print")
 options(max.print = 99999L)
@@ -85,44 +98,7 @@ library(faoswsFlag)
 
 # Development (SWS-outside) mode addons ####
 if(faosws::CheckDebug()){
-  localsettingspath <- "modules/complete_tf_cpc/sws.yml"
-  SETTINGS <- faoswsModules::ReadSettings(localsettingspath)
-  flog.debug("Local settings read from %s",
-             localsettingspath)
-  flog.debug("Local settings read:",
-             SETTINGS,
-             capture = TRUE)
-
-  USER <- if_else(.Platform$OS.type == "unix",
-                  Sys.getenv('USER'),
-                  Sys.getenv('USERNAME'))
-
-  ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
-
-  ## Get session information from SWS. Token must be obtained from web interface
-  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                             token = SETTINGS[["token"]])
-
-  # R_SWS_SHARE_PATH: 1) environment; 2) user; 3) fallback
-  if (is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
-    flog.debug("R_SWS_SHARE_PATH environment variable not found.")
-
-    if (!is.na(SETTINGS[['share']]) & dir.exists(SETTINGS[['share']])) {
-      flog.debug("A valid 'share' variable was found in %s",
-                 localsettingspath)
-      Sys.setenv("R_SWS_SHARE_PATH" = SETTINGS[['share']])
-      flog.debug("R_SWS_SHARE_PATH set to %s",
-                 SETTINGS[['share']])
-    } else {
-      # Fall-back R_SWS_SHARE_PATH var
-      flog.debug("An invalid/inexistent 'share' variable in %s",
-                 localsettingspath)
-      Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
-      flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-                 tempdir())
-    }
-  }
+  set_sws_dev_settings(dev_sws_set_file)
 } else {
     # Remove domain from username
     USER <- regmatches(
@@ -143,71 +119,45 @@ if(faosws::CheckDebug()){
 stopifnot(!any(is.na(USER), USER == ""))
 
 flog.debug("User's computation parameters:",
-           swsContext.computationParams, capture = TRUE)
+           swsContext.computationParams, capture = TRUE,
+           name = "dev")
 
-# Reporting directory ####
+##' - `year`: year for processing.
+year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- file.path(
-  Sys.getenv("R_SWS_SHARE_PATH"),
-  USER,
-  paste0("complete_tf_cpc_",
-         format(Sys.time(), "%Y%m%d%H%M%S%Z")))
-reportdir <- normalizePath(reportdir,
-                           winslash='/',
-                           mustWork = FALSE)
-stopifnot(!file.exists(reportdir))
-dir.create(reportdir, recursive = TRUE)
+reportdir <- reportdirectory(USER, year, build_id)
 
-# Open report directory in system default file browser
-if(interactive()) browseURL(reportdir)
+# Send general log messages
+if(general_log2console) {
+  # to console and a file
+    flog.appender(appender.tee(file.path(reportdir,
+                                       "report.txt")))
+} else {
+  # to a file only
+  flog.appender(appender.file(file.path(reportdir,
+                                        "report.txt")))
+}
 
+# Send technical log messages to a file and console
 flog.appender(appender.tee(file.path(reportdir,
-                                      "report.txt")))
+                                      "development.log")),
+              name = "dev")
 
-flog.info("SWS-session is run by user %s", USER)
+flog.info("SWS-session is run by user %s", USER, name = "dev")
 
-flog.debug("R session environment: ",
-           sessionInfo(), capture = TRUE)
+flog.info("R session environment: ",
+           sessionInfo(), capture = TRUE, name = "dev")
 
 PID <- Sys.getpid()
 
 # Check that all packages are up to date ####
-local({
-  min_versions <- data.frame(package = c("faoswsUtil", "faoswsTrade",
-                                         "dplyr"),
-                             version = c('0.2.11', '0.1.1', '0.5.0'),
-                             stringsAsFactors = FALSE)
 
-  for (i in nrow(min_versions)){
-    # installed version
-    p <- packageVersion(min_versions[i,"package"])
-    # required version
-    v <- package_version(min_versions[i,"version"])
-    if(p < v){
-      stop(sprintf("%s >= %s required", min_versions[i,"package"], v))
-    }
-  }
-})
+check_versions(c("faoswsUtil", "faoswsTrade",
+                 "dplyr"),
+               c('0.2.11', '0.1.1', '0.5.0'))
 
 # Register CPU cores ####
-if(multicore) {
-  if(all(c("doParallel", "foreach") %in%
-         rownames(installed.packages()))) {
-
-    flog.debug("Multicore backend is available.")
-
-    cpucores <- parallel::detectCores(all.tests = TRUE)
-
-    flog.debug("CPU cores detected: %s.", cpucores)
-
-    doParallel::registerDoParallel(cores = cpucores)
-  } else {
-    flog.debug("Multicore backend is not available.")
-
-    multicore <- FALSE
-  }
-}
-
+if(multicore) multicore <- register_cpu_cores()
 
 ##+ swsdebug
 
@@ -222,22 +172,15 @@ if(multicore) {
 # Read SWS module run parameters ####
 
 stopifnot(
-  !is.null(swsContext.computationParams$year),
   !is.null(swsContext.computationParams$out_coef))
 
 ##' # Parameters
-
-##' - `year`: year for processing.
-year <- as.integer(swsContext.computationParams$year)
-flog.info("Working year: %s", year)
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
 # See coef argument in ?boxplot.stats
 out_coef <- as.numeric(swsContext.computationParams$out_coef)
 flog.info("Coefficient for outlier detection: %s", out_coef)
-
-##' - `hs_chapters`: specific HS chapters that are downloaded (this parameter
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
@@ -258,18 +201,38 @@ startTime = Sys.time()
 ##' https://github.com/SWS-Methodology/hsfclmap
 
 message(sprintf("[%s] Reading in hs-fcl mapping", PID))
-flog.debug("Reading in hs-fcl mapping")
+flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
 flog.info("HS->FCL mapping table preview:",
           rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-rprt_hsfclmap(hsfclmap3, year)
+rprt(hsfclmap3, "hsfclmap", year)
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year &
-            endyear >= year)
+            endyear >= year) %>%
+  select_(~-startyear, ~-endyear)
+
+# Workaround issue #123
+hsfclmap <- hsfclmap %>%
+  mutate_at(vars(ends_with("code")),
+                 funs(num = as.numeric)) %>%
+  mutate_(fromgtto = ~fromcode_num > tocode_num) %>%
+  select(-ends_with("code_num"))
+
+from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
+
+if(length(from_gt_to) > 0)
+  flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
+                 paste0(from_gt_to, collapse = ", ")))
+
+hsfclmap <- hsfclmap %>%
+  filter_(~!fromgtto) %>%
+  select_(~-fromgtto)
+
+
 
 stopifnot(nrow(hsfclmap) > 0)
 
@@ -338,6 +301,19 @@ hs_chapters_str <-
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
+# hs6fclmap ####
+
+flog.trace("Extraction of HS6 mapping table", name = "dev")
+flog.trace("Universal (all years) HS6 mapping table", name = "dev")
+hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+flog.trace("Current year specific HS6 mapping table", name = "dev")
+hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
+  filter_(~fcl_links == 1L) %>%
+  distinct()
+
+rprt(hs6fclmap, "hs6fclmap")
+
 ##' # Extract Eurostat Combined Nomenclature Data
 
 ##+ es-extract
@@ -346,6 +322,7 @@ hs_chapters_str <-
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
 message(sprintf("[%s] Reading in Eurostat data", PID))
+flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
 
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
@@ -361,6 +338,8 @@ esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
                           "stat_regime"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
+
+stopifnot(nrow(esdata) > 0)
 
 if(!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
@@ -405,7 +384,7 @@ flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata)
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
-esdata <- adaptTradeDataTypes(tradedata = esdata, origin = "ES")
+esdata <- adaptTradeDataTypes(tldata, "ES")
 
 # TODO: do we need this piece?
 esdata <- tbl_df(esdata)
@@ -464,24 +443,24 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS to FCL.
 
-esdatalinks <- mapHS2FCL(esdata, hsfclmap, multicore)
+esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
-esdata <- esdata %>%
-    left_join(esdatalinks, by = c("reporter", "flow", "hs"))
+esdatalinks <- mapHS2FCL(tradedata = esdata,
+                         maptable = hsfclmap3,
+                         hs6maptable = hs6fclmap,
+                         year = year,
+                         parallel = multicore)
+
+esdata <- add_fcls_from_links(esdata,
+                              hs6links = esdatahs6links,
+                              links = esdatalinks)
 
 flog.info("Records after HS-FCL mapping: %s",
           nrow(esdata))
 
-rprt_hs2fcl_fulldata(esdata, tradedataname = "esdata")
+rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
 ##' 1. Remove unmapped FCL codes.
-
-esdata_fcl_not_mapped <- esdata %>%
-  filter_(~is.na(fcl))
-
-write.csv(esdata_fcl_not_mapped,
-          file = file.path(reportdir,
-                           "esdata_fcl_not_mapped.csv"))
 
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
@@ -529,6 +508,7 @@ esdata <- esdata %>%
 # Download TL data ####
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
+flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         columns = c(
                           "tyear",
@@ -544,13 +524,20 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
+stopifnot(nrow(tldata) > 0)
+
+# This probably should be part of the faoswsEnsure
+tldata <- tldata[grepl("^[[:digit:]]+$", tldata$comm),]
+
+# Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
+tldata[qunit ==  '6', c('qty', 'qunit') := list(   qty*2, '5')]
+tldata[qunit ==  '9', c('qty', 'qunit') := list(qty*1000, '5')]
+tldata[qunit == '11', c('qty', 'qunit') := list(  qty*12, '5')]
+
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 tldata <- adaptTradeDataTypes(tldata, "TL")
-
-# This probably should be part of the faoswsEnsure
-tldata <- tldata[grepl("^[[:digit:]]+$",tldata$hs),]
 
 tldata <- tbl_df(tldata)
 
@@ -559,10 +546,12 @@ tldata <- tbl_df(tldata)
 ##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
 ##' are aggregated.
 
+flog.trace("TL: aggreation of similar flows", name = "dev")
+
 tldata <- preAggregateMultipleTLRows(tldata)
 
 ##' 1. Add variables that will contain flags.
-
+flog.trace("TL: add flag variables")
 tldata <- generateFlagVars(data = tldata)
 
 tldata <- tldata %>%
@@ -587,6 +576,8 @@ tldata <- tldata %>%
 
 message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 
+flog.trace("TL: converting M49 to FAO area list", name = "dev")
+
 tldata <- tldata %>%
   left_join(unsdpartnersblocks %>%
               select_(wholepartner = ~rtCode,
@@ -601,7 +592,7 @@ tldata <- tldata %>%
           reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
           partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
 
-
+flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
 tldata <- tldata %>%
   anti_join(esdata %>%
@@ -619,12 +610,14 @@ tldata <- tldata %>%
 tldata_not_area_in_fcl_mapping <- tldata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
+
+flog.trace("TL: dropping reporters not found in the mapping table", name = "dev")
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
 
 ##+ reexptoexp ####
-
+flog.trace("TL: recoding reimport/reexport", name = "dev")
 ##' 1. Re-imports become imports and re-exports become exports.
 
 # { "id": "1", "text": "Import" },
@@ -638,32 +631,31 @@ tldata <- tldata %>%
 # TF: Map HS to FCL ####
 ##+ tl_hs2fcl ####
 
-tldatalinks <- mapHS2FCL(tldata, hsfclmap, parallel = multicore)
+tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
+
+tldatalinks <- mapHS2FCL(tradedata = tldata,
+                         maptable = hsfclmap3,
+                         hs6maptable = hs6fclmap,
+                         year = year,
+                         parallel = multicore)
+
+tldata <- add_fcls_from_links(tldata,
+                              hs6links = tldatahs6links,
+                              links = tldatalinks)
+
+rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
+
+flog.trace("TL: dropping unmapped records", name = "dev")
 
 tldata <- tldata %>%
-  left_join(tldatalinks, by = c("reporter", "flow", "hs"))
+  filter_(~is.na(fcl))
 
-rprt_hs2fcl_fulldata(tldata, tradedataname = "tldata")
-
-# Remove unmapped FCL codes. ####
-tldata <- tldata %>%
-              mutate_(nolink = ~is.na(fcl))
-
-tldata_fcl_not_mapped <- tldata %>%
-  filter_(~nolink) %>%
-  select_(~-nolink)
-
-tldata <- tldata %>%
-  filter_(~!nolink) %>%
-  select_(~-nolink)
-
-write.csv(tldata_fcl_not_mapped,
-          file = file.path(reportdir,
-                           "tldata_fcl_not_mapped.csv"))
-
+if(stopaftermapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
 
 ##' Add FCL units. ####
+
+flog.trace("TL: add FCL units", name = "dev")
 
 tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
@@ -677,10 +669,11 @@ tldata <- tldata %>%
 ctfclunitsconv <- tldata %>%
   select_(~qunit, ~wco, ~fclunit) %>%
   distinct() %>%
-  arrange_(~qunit)
+  arrange_(~qunit) %>%
+  as.data.table()
 
 ################ Conv. factor (TL) ################
-
+flog.trace("TL: conversion factors", name = "dev")
 
 ##### Table for conv. factor
 
@@ -689,22 +682,17 @@ ctfclunitsconv <- tldata %>%
 ##' is done.
 
 ctfclunitsconv$conv <- 0
-ctfclunitsconv$conv[ctfclunitsconv$qunit == 1] <- NA # Missing quantity
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "$ value only"] <- NA # Missing quantity
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "l"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "heads" &
-                      ctfclunitsconv$wco == "u"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "1000 heads" &
-                      ctfclunitsconv$wco == "u"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "number" &
-                      ctfclunitsconv$wco == "u"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "kg"] <- .001
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "m³"] <- 1
-ctfclunitsconv$conv[ctfclunitsconv$fclunit == "mt" &
-                      ctfclunitsconv$wco == "carat"] <- 5e-6
+# Missing quantity
+ctfclunitsconv[qunit == 1,                                conv :=   NA]
+# Missing quantity
+ctfclunitsconv[fclunit == "$ value only",                 conv :=   NA]
+ctfclunitsconv[fclunit == "mt"         & wco == "l",      conv := .001]
+ctfclunitsconv[fclunit == "heads"      & wco == "u" ,     conv :=    1]
+ctfclunitsconv[fclunit == "1000 heads" & wco == "u" ,     conv := .001]
+ctfclunitsconv[fclunit == "number"     & wco == "u"  ,    conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "kg"  ,   conv := .001]
+ctfclunitsconv[fclunit == "mt"         & wco == "m³"   ,  conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "carat" , conv := 5e-6]
 
 
 ##### Add conv factor to the dataset
@@ -732,7 +720,7 @@ if(NROW(fcl_spec_mt_conv) > 0){
     ungroup()
 
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
-    left_join(conversion_factors_fcl)
+    left_join(conversion_factors_fcl, by = c("fcl", "wco"))
 
   fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
 
@@ -783,6 +771,7 @@ tldata <- tldata %>%
   setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
 
 ######### Value from USD to thousands of USD
+
 if (dollars){
   esdata <- esdata %>%
     mutate(value = value * 1000) %>%
@@ -799,9 +788,10 @@ if (dollars){
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
 # XXX "notes" are applied to weight that is transformed below from qtyfcl
+flog.trace("TL: aggregate to FCL", name = "dev")
 tldata <- tldata %>%
-  select(-weight) %>%
-  rename(weight = qtyfcl)
+  select(-weight, -qty) %>%
+  rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
 
@@ -818,6 +808,7 @@ tldata_mid = tldata
 # We need to set the flags one by one as adjustments not necessarily
 # (probably never?) adjust all the three variables at the same time
 if (use_adjustments == TRUE) {
+  flog.trace("Apply adjustments", name = "dev")
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
                            adjustments = adjustments, parallel = multicore) %>%
     setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
@@ -864,11 +855,9 @@ esdata <- esdata %>%
 ##'     - ES: assign `weight` to `qty` if `fclunit` is `mt`, else keep `qty`
 
 ##+ combine_es_tl
-
+flog.trace("Combine TL and ES data sets", name = "dev")
 tradedata <- bind_rows(
   tldata %>%
-    # Not using as.character() as it will retain scientific notation
-    mutate(hs = format(hs, scientific = FALSE, trim = TRUE)) %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
             qty = weight, value,
@@ -886,7 +875,7 @@ tradedata <- tradedata %>%
   mutate_each_(funs(swapFlags(., swap='\\1\\2')), ~starts_with('flag_'))
 
 ##' # Outlier Detection and Imputation
-
+flog.trace("Outlier detection and imputation", name = "dev")
 ##+ calculate_median_uv
 
 tradedata <- tradedata %>%
@@ -922,8 +911,11 @@ if (detect_outliers) {
 ## These flags are also assigned to monetary values. This may need to be revised
 ## (monetary values are not supposed to be modified).
 
+tradedata <- computeMedianUnitValue(tradedata = tradedata)
+
 tradedata <- doImputation(tradedata = tradedata)
 
+flog.trace("Flag stuff", name = "dev")
 # XXX using flagTrade for the moment, but should go away
 tradedata <- tradedata %>%
     setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
@@ -943,24 +935,24 @@ for (var in flag_vars) {
 
 ##' 1. Aggregate values and quantities by FCL codes.
 
+tradedata_flags <- tradedata %>%
+  group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
+  summarise_each_(funs(sumFlags(flags = .)), vars = ~starts_with('flag_')) %>%
+  ungroup()
+
 # Aggregation by fcl
+flog.trace("Aggregation by FCL", name = "dev")
 tradedata <- tradedata %>%
-  select_(~year,
-          ~reporter,
-          ~partner,
-          ~flow,
-          ~fcl,
-          ~fclunit,
-          ~qty,
-          ~value,
-          ~flagTrade,
-          ~starts_with('flag_')) %>%
   mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   summarise_each_(funs(sum(., na.rm = TRUE)),
-                  vars = c("qty", "value","flagTrade", "nfcl",
-                           ~starts_with('flag_'))) %>%
+                  vars = c("qty", "value","flagTrade", "nfcl")) %>%
   ungroup()
+
+flog.trace("Flags again", name = "dev")
+tradedata <- left_join(tradedata,
+                       tradedata_flags,
+                       by = c('year', 'reporter', 'partner', 'flow', 'fcl'))
 
 ###### TODO (Christian) Rethink/refactor
 # unite _v and _q into one variable
@@ -981,6 +973,7 @@ tradedata <- tradedata %>%
 ##' 1. Map FCL codes to CPC.
 
 # Adding CPC2 extended code
+flog.trace("Add CPC item codes", name = "dev")
 tradedata <- tradedata %>%
   mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl), version = "2.1"))
 
@@ -995,6 +988,7 @@ no_mapping_fcl2cpc = tradedata %>%
 ##' 1. Map FAO area codes to M49.
 
 # Converting back to M49 for the system
+flog.trace("Convert FAO area codes to M49", name = "dev")
 tradedata <- tradedata %>%
   mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
           partnerM49 = ~fs2m49(as.character(partner)))
@@ -1015,7 +1009,7 @@ countries_not_mapping_M49 <- bind_rows(
 
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
-
+flog.trace("Mirroring", name = "dev")
 nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
                                                       unique(tradedata$reporter))]
 
@@ -1032,7 +1026,7 @@ tradedata <- mirrorNonReporters(tradedata = tradedata,
                                 nonreporters = nonreporting)
 
 ##' 1. Set flags XXX.
-
+flog.trace("Flags XXX (for adults only?)", name = "dev")
 tradedata <- tradedata %>%
     setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
     setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
@@ -1090,6 +1084,7 @@ flagWeightTable_method <- frame_data(
 )
 
 # XXX This piece of code is really slow. There should be a better way.
+flog.trace("Cycle on status and method flags", name = "dev")
 for (i in c('status', 'method')) {
   for (j in c('v', 'q')) {
 
@@ -1113,6 +1108,7 @@ for (i in c('status', 'method')) {
   }
 }
 
+flog.trace("Complete trade flow CPC", name = "dev")
 complete_trade_flow_cpc <- tradedata %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
@@ -1201,7 +1197,7 @@ complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '
 
 
 message(sprintf("[%s] Writing data to session/database", PID))
-
+flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 stats <- SaveData("trade",
                   "completed_tf_cpc_m49",
                   complete_trade_flow_cpc,
@@ -1210,6 +1206,7 @@ stats <- SaveData("trade",
 ## remove value only
 
 message(sprintf("[%s] Session/database write completed!", PID))
+flog.trace("[%s] Session/database write completed!", PID, name = "dev")
 
 sprintf(
   "Module completed in %1.2f minutes.
@@ -1223,6 +1220,19 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
+
+flog.info(
+    "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+    difftime(Sys.time(), startTime, units = "min"),
+    stats[["inserted"]],
+    stats[["appended"]],
+    stats[["ignored"]],
+    stats[["discarded"]], name = "dev"
+  )
 
 # Restore changed options
 options(max.print = oldMaxPrint)

@@ -6,7 +6,7 @@
 
 getAgriHSCodes <- function() {
 
-  data("hs6faointerest", package = "faoswsTrade", envir = environment())
+  hs6faointerest <- faosws::ReadDatatable('hs6faointerest')
 
-  hs6faointerest
+  return(hs6faointerest$hs6_code)
 }

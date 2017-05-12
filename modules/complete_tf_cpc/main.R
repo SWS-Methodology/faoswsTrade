@@ -37,7 +37,7 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # Package build ID
 # It is included into report directory name
-build_id <- "adaptnames"
+build_id <- "master"
 stopaftermapping <- FALSE
 
 set.seed(2507)
@@ -501,6 +501,11 @@ tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
                         )
 
 stopifnot(nrow(tldata) > 0)
+
+if(!is.null(samplesize)) {
+  tldata <- sample_n(tldata, samplesize)
+  warning(sprintf("Tariffline data was sampled with size %d", samplesize))
+}
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 

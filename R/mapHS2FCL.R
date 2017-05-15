@@ -5,6 +5,7 @@
 #'
 #' @param tradedata Trade data frame. Columns reporter, flow and hs are expected.
 #' @param maptable Mapping table.
+#' @param year Integer, year the trade module run on.
 #' @param parallel Logical, should multicore backend be used. False by default.
 #'
 #' @return Data frame with unique combinations reporter/flow/hs/fcl.
@@ -12,7 +13,14 @@
 #' @import dplyr
 #' @export
 
-mapHS2FCL <- function(tradedata, maptable, hs6maptable, parallel = FALSE) {
+mapHS2FCL <- function(tradedata,
+                      maptable,
+                      hs6maptable,
+                      year = NULL,
+                      parallel = FALSE) {
+
+  stopifnot(!is.null(year))
+  stopifnot(is.integer(year))
 
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
@@ -85,7 +93,7 @@ mapHS2FCL <- function(tradedata, maptable, hs6maptable, parallel = FALSE) {
 
   flog.trace("HS+ mapping: selection from multiple matches", name = "dev")
 
-  uniqhs <- sel1FCL(uniqhs, maptable)
+  uniqhs <- sel1FCL(uniqhs, maptable, cur_yr = year)
 
   uniqhs
 }

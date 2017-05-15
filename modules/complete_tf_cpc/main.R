@@ -314,10 +314,11 @@ hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
 
 rprt(hs6fclmap, "hs6fclmap")
 
+# EUROSTAT DATA  -----------------
 ##' # Extract Eurostat Combined Nomenclature Data
 
 ##+ es-extract
-#### Download ES data ####
+##  Download ES data ===============
 
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
@@ -326,11 +327,16 @@ flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
 
 esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
-                        columns = c("declarant", "partner",
-                                    "product_nc", "flow",
-                                    "period", "value_1k_euro",
-                                    "qty_ton", "sup_quantity",
-                                    "stat_regime"),
+                        columns = c(
+                          "period",
+                          "declarant",
+                          "partner",
+                          "flow",
+                          "product_nc",
+                          "value_1k_euro",
+                          "qty_ton",
+                          "sup_quantity",
+                          "stat_regime"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
 )
 
@@ -354,31 +360,10 @@ esdata <- esdata %>%
 
 flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 
-## Declarant and partner numeric
-## This probably should be part of the faoswsEnsure
-
-esdata <- esdata %>%
-  mutate_at(vars(declarant, partner),
-            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %T>%
-            {flog.info("Non-numeric area codes: ",
-             summarize_at(.,
-                          .cols = vars(ends_with("non_numeric")),
-                          .funs = funs(total = sum,
-                                       prop = percent(sum(.) / n()))),
-             capture = TRUE)} %>%
-  filter_(~!declarant_non_numeric & !partner_non_numeric) %>%
-  select(-ends_with("non_numeric"))
-
-flog.info("Records after removing non-numeric area codes: %s", nrow(esdata))
-
-## Removing TOTAL from product_nc column
-esdata <- esdata[grepl("^[[:digit:]]+$",esdata$product_nc),]
-
-flog.info("Records after removing non-numeric commodity codes: %s", nrow(esdata))
-
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+esdata <- adaptTradeDataTypes(esdata, "ES")
 
 # TODO: do we need this piece?
 esdata <- tbl_df(esdata)
@@ -440,8 +425,9 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
 esdatalinks <- mapHS2FCL(tradedata = esdata,
-                         maptable = hsfclmap,
+                         maptable = hsfclmap3,
                          hs6maptable = hs6fclmap,
+                         year = year,
                          parallel = multicore)
 
 esdata <- add_fcls_from_links(esdata,
@@ -487,41 +473,50 @@ esdata <- esdata %>%
   setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
   select_(~-conv)
 
+
+# TARIFFLINE DATA ####
 ##' # Extract UNSD Tariffline Data
 
 ##+ tradeload
 
-#### Get list of agri codes ####
-#agricodeslist <- paste0(shQuote(getAgriHSCodes(), "sh"), collapse = ", ")
-
-# tldata <- getRawAgriTL(year, agricodeslist)
-
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
+
+## Download TL data ####
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_", year),
-                        columns = c("rep", "tyear", "flow",
-                                  "comm", "prt", "weight",
-                                  "qty", "qunit", "tvalue",
-                                  "chapter"),
+tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
+                        columns = c(
+                          "tyear",
+                          "rep",
+                          "prt",
+                          "flow",
+                          "comm",
+                          "tvalue",
+                          "weight",
+                          "qty",
+                          "qunit",
+                          "chapter"),
                         where = paste0("chapter IN (", hs_chapters_str, ")")
                         )
 
 stopifnot(nrow(tldata) > 0)
 
-# This probably should be part of the faoswsEnsure
-tldata <- tldata[grepl("^[[:digit:]]+$", tldata$comm),]
-
-# Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
-tldata[qunit ==  '6', c('qty', 'qunit') := list(   qty*2, '5')]
-tldata[qunit ==  '9', c('qty', 'qunit') := list(qty*1000, '5')]
-tldata[qunit == '11', c('qty', 'qunit') := list(  qty*12, '5')]
+if(!is.null(samplesize)) {
+  tldata <- sample_n(tldata, samplesize)
+  warning(sprintf("Tariffline data was sampled with size %d", samplesize))
+}
 
 ##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
 
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+tldata <- adaptTradeDataTypes(tldata, "TL")
 
+# Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
+tldata <- as.data.table(tldata)
+tldata[qunit ==  6, c('qty', 'qunit') := list(   qty*2, 5)]
+tldata[qunit ==  9, c('qty', 'qunit') := list(qty*1000, 5)]
+tldata[qunit == 11, c('qty', 'qunit') := list(  qty*12, 5)]
 tldata <- tbl_df(tldata)
 
 # tl-aggregate-multiple-rows ####
@@ -617,8 +612,9 @@ tldata <- tldata %>%
 tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
 
 tldatalinks <- mapHS2FCL(tradedata = tldata,
-                         maptable = hsfclmap,
+                         maptable = hsfclmap3,
                          hs6maptable = hs6fclmap,
+                         year = year,
                          parallel = multicore)
 
 tldata <- add_fcls_from_links(tldata,

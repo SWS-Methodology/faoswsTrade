@@ -998,8 +998,7 @@ countries_not_mapping_M49 <- bind_rows(
 ##' 1. Obtain list of non-reporting countries as difference between the list of
 ##' reporter countries and the list of partner countries.
 flog.trace("Mirroring", name = "dev")
-nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
-                                                      unique(tradedata$reporter))]
+nonreporting <- setdiff(unique(tradedata$partner), unique(tradedata$reporter))
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).

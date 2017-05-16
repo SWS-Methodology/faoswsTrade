@@ -326,19 +326,21 @@ message(sprintf("[%s] Reading in Eurostat data", PID))
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
 
-esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
-                        columns = c(
-                          "period",
-                          "declarant",
-                          "partner",
-                          "flow",
-                          "product_nc",
-                          "value_1k_euro",
-                          "qty_ton",
-                          "sup_quantity",
-                          "stat_regime"),
-                        where = paste0("chapter IN (", hs_chapters_str, ")")
-)
+esdata <- ReadDatatable(
+  paste0("ce_combinednomenclature_unlogged_", year),
+  columns = c(
+    "period",
+    "declarant",
+    "partner",
+    "flow",
+    "product_nc",
+    "value_1k_euro",
+    "qty_ton",
+    "sup_quantity",
+    "stat_regime"
+  ),
+  where = paste0("chapter IN (", hs_chapters_str, ")")
+) %>% tbl_df()
 
 stopifnot(nrow(esdata) > 0)
 
@@ -365,9 +367,6 @@ flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 esdata <- adaptTradeDataTypes(esdata, "ES")
 
-# TODO: do we need this piece?
-esdata <- tbl_df(esdata)
-
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.
 
@@ -389,12 +388,12 @@ esdata <- esdata %>%
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
-# TODO now we turn esdata back from data.frame to data.table
-# do we need it?
-esdata <- data.table::as.data.table(esdata)
-esdata[, `:=` (reporter = convertGeonom2FAO(reporter),
-              partner = convertGeonom2FAO(partner))]
-esdata <- esdata[partner != 252, ]
+esdata <- esdata %>%
+  mutate(
+    reporter = convertGeonom2FAO(reporter),
+    partner = convertGeonom2FAO(partner)
+  ) %>%
+  filter(partner != 252)
 
 flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
 
@@ -485,20 +484,22 @@ esdata <- esdata %>%
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns = c(
-                          "tyear",
-                          "rep",
-                          "prt",
-                          "flow",
-                          "comm",
-                          "tvalue",
-                          "weight",
-                          "qty",
-                          "qunit",
-                          "chapter"),
-                        where = paste0("chapter IN (", hs_chapters_str, ")")
-                        )
+tldata <- ReadDatatable(
+  paste0("ct_tariffline_unlogged_", year),
+  columns = c(
+    "tyear",
+    "rep",
+    "prt",
+    "flow",
+    "comm",
+    "tvalue",
+    "weight",
+    "qty",
+    "qunit",
+    "chapter"
+  ),
+  where = paste0("chapter IN (", hs_chapters_str, ")")
+)
 
 stopifnot(nrow(tldata) > 0)
 

@@ -637,7 +637,7 @@ rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 flog.trace("TL: dropping unmapped records", name = "dev")
 
 tldata <- tldata %>%
-  filter_(~is.na(fcl))
+  filter_(~!is.na(fcl))
 
 if(stopaftermapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####

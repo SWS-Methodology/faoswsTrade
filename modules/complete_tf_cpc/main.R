@@ -558,26 +558,36 @@ message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
 tldata <- tldata %>%
-  left_join(unsdpartnersblocks %>%
-              select_(wholepartner = ~rtCode,
-                      part = ~formula) %>%
-              # Exclude EU grouping and old countries
-              filter_(~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
-            by = c("partner" = "part")) %>%
-  mutate_(partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
-          m49rep = ~reporter,
-          m49par = ~partner,
-          # Conversion from Comtrade M49 to FAO area list
-          reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
-          partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
+  left_join(
+    unsdpartnersblocks %>%
+      select_(
+        wholepartner = ~rtCode,
+        part = ~formula
+      ) %>%
+      # Exclude EU grouping and old countries
+      filter_(
+        ~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)
+      ),
+    by = c("partner" = "part")
+  ) %>%
+  mutate_(
+    partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
+    m49rep = ~reporter,
+    m49par = ~partner,
+    # Conversion from Comtrade M49 to FAO area list
+    reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
+    partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
+  )
 
 flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
 tldata <- tldata %>%
-  anti_join(esdata %>%
-              select_(~reporter) %>%
-              distinct(),
-            by = "reporter")
+  anti_join(
+    esdata %>%
+      select_(~reporter) %>%
+      distinct(),
+    by = "reporter"
+  )
 
 ##+ drop_reps_not_in_mdb ####
 

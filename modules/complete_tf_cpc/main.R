@@ -292,8 +292,7 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 
 ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
-data("EURconversionUSD", package = "faoswsTrade", envir = environment())
-#EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
+EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
 hs_chapters_str <-
   formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
@@ -817,8 +816,8 @@ if (use_adjustments == TRUE) {
 ##' `EURconversionUSD` table.
 
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
-                                            filter(Year == year) %>%
-                                            select(ExchangeRate))
+                                          filter(eusd_year == year) %>%
+                                          select(eusd_exchangerate))
 
 esdata <- esdata %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')

@@ -442,7 +442,7 @@ rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
-flog.info("Records after removing non-mapped HS codes: %s",
+flog.info("ES records after removing non-mapped HS codes: %s",
           nrow(esdata))
 
 ##' 1. Add FCL units.
@@ -637,6 +637,9 @@ flog.trace("TL: dropping unmapped records", name = "dev")
 
 tldata <- tldata %>%
   filter_(~!is.na(fcl))
+
+flog.info("TL records after removing non-mapped HS codes: %s",
+          nrow(tldata))
 
 if(stopaftermapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####

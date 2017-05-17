@@ -25,11 +25,9 @@ rprt_hs6fclmap <- function(hs6fclmap = NULL) {
 
   hs6fclmap_by_reporter_stat <- add_area_names(hs6fclmap_by_reporter_stat,
                                                "fao")
-  hs6fclmap <- add_area_names(hs6fclmap, "fao")
 
-  rprt_writetable(hs6fclmap)
-  rprt_writetable(hs6fclmap_by_reporter_stat)
-  rprt_writetable(hs6fclmap_total_stat)
+  rprt_writetable(hs6fclmap_by_reporter_stat, subdir = "details")
+  rprt_writetable(hs6fclmap_total_stat, subdir = "details")
   rprt_fulltable(hs6fclmap_total_stat, pretty_prop = TRUE)
   rprt_fulltable(hs6fclmap_by_reporter_stat, pretty_prop = TRUE)
 

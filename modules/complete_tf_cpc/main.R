@@ -1008,10 +1008,9 @@ total_flows <- bind_rows(
   summarise(n = sum(n, na.rm = TRUE)) %>%
   ungroup()
 
-nonreporting <- total_flows %>%
+to_mirror <- total_flows %>%
   filter(n == 0) %>%
-  select(-n) %>%
-  mutate(flow = recode(flow, '1' = 2, '2' = 1))
+  select(-n)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
@@ -1022,19 +1021,23 @@ nonreporting <- total_flows %>%
 ##' imports (exports) to account for the difference between CIF and FOB prices.
 
 ## Mirroring for non reporting countries
-tradedata <- mirrorNonReporters(tradedata = tradedata,
-                                mirror = nonreporting)
+tradedata <- mirrorNonReporters(tradedata = tradedata, mirror = to_mirror)
+
+# Add an auxiliary variable "mirrored" that will be removed later
+tradedata <- tradedata %>%
+  left_join(
+    to_mirror %>% mutate(mirrored = 1L),
+    by = c('reporter' = 'area', 'flow')
+  )
 
 ##' 1. Set flags XXX.
 flog.trace("Flags XXX (for adults only?)", name = "dev")
 
-cond <- (tradedata$reporter %in% nonreporting$area &
-  tradedata$flow %in% nonreporting$flow)
-
 tradedata <- tradedata %>%
-  setFlag2(cond, type = 'status', flag = 'E', var = 'all') %>%
-  setFlag2(cond, type = 'method', flag = 'i', var = 'value') %>%
-  setFlag2(cond, type = 'method', flag = 'c', var = 'quantity')
+  setFlag2(!is.na(mirrored), type = 'status', flag = 'E', var = 'all') %>%
+  setFlag2(!is.na(mirrored), type = 'method', flag = 'i', var = 'value') %>%
+  setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
+  select(-mirrored)
 
 ##' ## Flag management
 

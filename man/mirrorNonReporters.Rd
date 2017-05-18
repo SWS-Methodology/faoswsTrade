@@ -9,8 +9,8 @@ mirrorNonReporters(tradedata = NA, mirror = NA)
 \arguments{
 \item{tradedata}{Trade data.}
 
-\item{mirror}{data.frame containing the code of the area, the
-flow and the number of flows.}
+\item{mirror}{data.frame containing the code of the area and the
+flow that should be mirrored.}
 }
 \value{
 \code{tradedata} with mirrored data for non-reporters added.

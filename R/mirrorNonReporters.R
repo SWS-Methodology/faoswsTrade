@@ -11,8 +11,8 @@
 #' values of reporters' exports).
 #'
 #' @param tradedata Trade data.
-#' @param mirror data.frame containing the code of the area, the
-#'   flow and the number of flows.
+#' @param mirror data.frame containing the code of the area and the
+#'   flow that should be mirrored.
 #' @return \code{tradedata} with mirrored data for non-reporters added.
 #' @import dplyr
 #' @export
@@ -23,12 +23,14 @@ mirrorNonReporters <- function(tradedata = NA, mirror = NA) {
 
   if (missing(mirror)) stop('"mirror" is missing.')
 
-  rprt_writetable(mirror, 'countries_to')
+  rprt_writetable(mirror, 'flows_')
 
   tradedatanonrep <- tradedata %>%
     left_join(
-      mirror %>% rename_(partner = ~area) %>% mutate(i = 1),
-      by = c("partner", "flow")
+      mirror %>%
+        mutate(flow = recode(flow, '1' = 2, '2' = 1)) %>%
+        mutate(i = 1),
+      by = c("partner" = "area", "flow")
     ) %>%
     filter_(~i == 1) %>%
     select_(~-i) %>%

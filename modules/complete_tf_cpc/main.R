@@ -736,28 +736,15 @@ if(NROW(fcl_spec_mt_conv) > 0){
   tldata$qtyfcl = NA
 }
 
-##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
-##' the final unit of measurement is tonnes the `weight` is used as `quantity`
-
-cond <- (tldata$qty == 0 | is.na(tldata$qty)) &
-                          tldata$fclunit == "mt" &
-                          is.na(tldata$qtyfcl) &
-                          !is.na(tldata$weight) &
-                          tldata$weight > 0
-
-tldata$qtyfcl <- ifelse(cond, tldata$weight, tldata$qtyfcl)
-
-# XXX
-# Flag on weight as qty (which underwent a change) will populate weight
-tldata <- tldata %>%
-  setFlag3(!cond, type = 'method', flag = 'i', variable = 'weight')
-
-# Always use weight if available and fclunit is mt
+##' 1. If the `weight` variable is available and the final unit
+##' of measurement is tonnes then `weight` is used as `quantity`
 
 cond <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
 
 tldata$qtyfcl <- ifelse(cond, tldata$weight*0.001, tldata$qtyfcl)
 
+# XXX
+# Flag on weight as qty (which underwent a change) will populate weight
 tldata <- tldata %>%
   setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
 
@@ -998,10 +985,32 @@ countries_not_mapping_M49 <- bind_rows(
 
 ##' # Mirror Trade Estimation
 
-##' 1. Obtain list of non-reporting countries as difference between the list of
-##' reporter countries and the list of partner countries.
+##' 1. Create a table with the list of reporters and partners
+##' combined as areas and count the number of flows that the
+##' areas declare as reporting countries. The partners that
+##' never show up as reporters or the reporters that do not
+##' report a flow will have a number of flows equal to zero
+##' and will be mirrored.
 flog.trace("Mirroring", name = "dev")
-nonreporting <- setdiff(unique(tradedata$partner), unique(tradedata$reporter))
+
+total_flows <- bind_rows(
+    tradedata %>%
+      count(reporter, flow) %>%
+      rename(area = reporter) %>%
+      ungroup(),
+    data.frame(
+      area = rep(unique(tradedata$partner), each = 2),
+      flow = sort(unique(tradedata$flow)),
+      n = 0
+    )
+  ) %>%
+  group_by(area, flow) %>%
+  summarise(n = sum(n, na.rm = TRUE)) %>%
+  ungroup()
+
+to_mirror <- total_flows %>%
+  filter(n == 0) %>%
+  select(-n)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
@@ -1012,15 +1021,23 @@ nonreporting <- setdiff(unique(tradedata$partner), unique(tradedata$reporter))
 ##' imports (exports) to account for the difference between CIF and FOB prices.
 
 ## Mirroring for non reporting countries
-tradedata <- mirrorNonReporters(tradedata = tradedata,
-                                nonreporters = nonreporting)
+tradedata <- mirrorNonReporters(tradedata = tradedata, mirror = to_mirror)
+
+# Add an auxiliary variable "mirrored" that will be removed later
+tradedata <- tradedata %>%
+  left_join(
+    to_mirror %>% mutate(mirrored = 1L),
+    by = c('reporter' = 'area', 'flow')
+  )
 
 ##' 1. Set flags XXX.
 flog.trace("Flags XXX (for adults only?)", name = "dev")
+
 tradedata <- tradedata %>%
-    setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
-    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
-    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'c', var = 'quantity')
+  setFlag2(!is.na(mirrored), type = 'status', flag = 'E', var = 'all') %>%
+  setFlag2(!is.na(mirrored), type = 'method', flag = 'i', var = 'value') %>%
+  setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
+  select(-mirrored)
 
 ##' ## Flag management
 

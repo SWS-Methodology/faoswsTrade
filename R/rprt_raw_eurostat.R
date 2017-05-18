@@ -1,22 +1,21 @@
-#' Report table on raw Eurostat data
+#' Report table on raw trade data
 #'
 #'@import dplyr
 #'@import scales
-#'@export
 
-rprt_raw_eurostat <- function(esdata) {
+rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
 
-  esdata <- esdata %>%
-    mutate_at(vars(declarant, partner),
-              funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %T>%
-              {flog.info("Non-numeric area codes: ",
-                         summarize_at(.,
-                                      .cols = vars(ends_with("non_numeric")),
-                                      .funs = funs(total = sum,
-                                                   prop = percent(sum(.) / n()))),
-                         capture = TRUE)} %>%
-    filter_(~!declarant_non_numeric & !partner_non_numeric) %>%
-    select(-ends_with("non_numeric"))
-  
+  stopifnot(!is.null(tradedata))
+  stopifnot(!is.null(tradedataname))
+
+  rawdata_statistics <- tradedata %>%
+    group_by_(~reporter, ~flow) %>%
+    summarize_(nonmrc_prt = ~sum(partner_non_numeric),
+               nonmrc_hs = ~sum(hs_non_numeric),
+               nonmrc_prt_prop = ~nonmrc_prt / n(),
+               nonmrc_hs_prop = ~nonmrc_hs / n()) %>%
+    ungroup()
+
+  rprt_writetable(rawdata_statistics, prefix = tradedataname)
 
 }

@@ -42,7 +42,7 @@ rprt_hsfclmap <- function(maptable, year) {
   hsfclmap_by_reporter_stats <- add_area_names(hsfclmap_by_reporter_stats,
                                                "fao", "area")
 
-  rprt_writetable(hsfclmap_by_reporter_stats)
+  rprt_writetable(hsfclmap_by_reporter_stats, subdir = "details")
 
   # In the report we pretty percents instead of decimals
   hsfclmap_by_reporter_stats <- hsfclmap_by_reporter_stats %>%

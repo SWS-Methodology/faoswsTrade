@@ -16,7 +16,7 @@ rprt_writetable <- function(dataset, prefix = NULL, subdir = NULL) {
   collectreports <- exists("rprt_data")
 
   if(!is.null(subdir)) {
-    reportdir <- normalizePath(file.path(reportdir, sibdir), mustWork = FALSE)
+    reportdir <- normalizePath(file.path(reportdir, subdir), mustWork = FALSE)
     if(!dir.exists(reportdir)) dir.create(reportdir)
   }
 

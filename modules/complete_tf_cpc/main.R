@@ -132,7 +132,7 @@ flog.debug("User's computation parameters:",
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- reportdirectory(USER, year, build_id)
+reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 
 # Send general log messages
 if(general_log2console) {

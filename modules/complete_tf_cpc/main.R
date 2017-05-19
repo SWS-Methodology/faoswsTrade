@@ -405,9 +405,8 @@ esdata <- tbl_df(esdata)
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-write.csv(esdata_not_area_in_fcl_mapping,
-          file = file.path(reportdir,
-                           "esdata_not_area_in_fcl_mapping.csv"))
+rprt_writetable(esdata_not_area_in_fcl_mapping)
+
 
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
@@ -598,6 +597,7 @@ tldata <- tldata %>%
 tldata_not_area_in_fcl_mapping <- tldata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
+rprt_writetable(tldata_not_area_in_fcl_mapping)
 
 flog.trace("TL: dropping reporters not found in the mapping table", name = "dev")
 tldata <- tldata %>%

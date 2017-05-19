@@ -76,11 +76,15 @@ detect_outliers <- FALSE
 # Print general log to console
 general_log2console <- FALSE
 
+# Save current options (will be reset at the end)
+old_options <- options()
+
 dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
+
 # Switch off dplyr's progress bars globally
 options(dplyr.show_progress = FALSE)
+
 # max.print in RStudio is too small
-oldMaxPrint <- getOption("max.print")
 options(max.print = 99999L)
 
 # Libraries ####
@@ -100,11 +104,14 @@ library(faoswsFlag)
 if(faosws::CheckDebug()){
   set_sws_dev_settings(dev_sws_set_file)
 } else {
-    # Remove domain from username
-    USER <- regmatches(
-      swsContext.username,
-      regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
-    )
+  # In order to have all columns aligned. Issue #119
+  options(width = 1000L)
+
+  # Remove domain from username
+  USER <- regmatches(
+    swsContext.username,
+    regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
+  )
 
   options(error = function(){
     dump.frames()
@@ -1242,7 +1249,7 @@ flog.info(
   )
 
 # Restore changed options
-options(max.print = oldMaxPrint)
+options(old_options)
 
 # Save list with report data
 saveRDS(rprt_data, file = file.path(reportdir, "report_data.rds"))

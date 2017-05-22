@@ -1,4 +1,3 @@
-##' ---
 ##' title: "Appendix: `complete_tf_cpc` module"
 ##' author:
 ##'   - Marco Garieri
@@ -125,10 +124,6 @@ if(faosws::CheckDebug()){
 
 stopifnot(!any(is.na(USER), USER == ""))
 
-flog.debug("User's computation parameters:",
-           swsContext.computationParams, capture = TRUE,
-           name = "dev")
-
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
@@ -151,6 +146,10 @@ flog.appender(appender.tee(file.path(reportdir,
               name = "dev")
 
 flog.info("SWS-session is run by user %s", USER, name = "dev")
+
+flog.debug("User's computation parameters:",
+           swsContext.computationParams, capture = TRUE,
+           name = "dev")
 
 flog.info("R session environment: ",
            sessionInfo(), capture = TRUE, name = "dev")

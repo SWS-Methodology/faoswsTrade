@@ -364,9 +364,11 @@ flog.info("Raw Eurostat data preview:",
 esdata <- esdata %>%
   filter_(~stat_regime == "4") %>%
 ## Removing stat_regime as it is not needed anymore
-  select_(~-stat_regime)
+  select_(~-stat_regime) %>%
+  # Remove totals
+  filter_(~declarant != "EU")
 
-flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
+flog.info("Records after filtering by 4th stat regime and removing EU totals: %s", nrow(esdata))
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 

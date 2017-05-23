@@ -20,12 +20,18 @@ adaptTradeDataTypes <- function(tradedata, origin) {
     stop('"origin" needs to be "TL" or "ES"')
   }
 
+  tradedataname <- ifelse(origin == "TL", "tldata", "esdata")
+
   stopifnot(all(c("year", "reporter", "partner", "flow", "value", "weight",
                    "qty", "hs") %in% colnames(tradedata)))
 
   tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, hs),
-            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %>%
+            funs(non_numeric = !grepl("^[[:digit:]]+$", .)))
+
+  rprt(tradedata, "rawtradedata", tradedataname)
+
+  tradedata <- tradedata %>%
     filter_(~!(reporter_non_numeric | partner_non_numeric | hs_non_numeric)) %>%
     select_(~-ends_with("_non_numeric"))
 

@@ -1,4 +1,3 @@
-##' ---
 ##' title: "Appendix: `complete_tf_cpc` module"
 ##' author:
 ##'   - Marco Garieri
@@ -76,11 +75,15 @@ detect_outliers <- FALSE
 # Print general log to console
 general_log2console <- FALSE
 
+# Save current options (will be reset at the end)
+old_options <- options()
+
 dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
+
 # Switch off dplyr's progress bars globally
 options(dplyr.show_progress = FALSE)
+
 # max.print in RStudio is too small
-oldMaxPrint <- getOption("max.print")
 options(max.print = 99999L)
 
 # Libraries ####
@@ -100,11 +103,14 @@ library(faoswsFlag)
 if(faosws::CheckDebug()){
   set_sws_dev_settings(dev_sws_set_file)
 } else {
-    # Remove domain from username
-    USER <- regmatches(
-      swsContext.username,
-      regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
-    )
+  # In order to have all columns aligned. Issue #119
+  options(width = 1000L)
+
+  # Remove domain from username
+  USER <- regmatches(
+    swsContext.username,
+    regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
+  )
 
   options(error = function(){
     dump.frames()
@@ -118,14 +124,10 @@ if(faosws::CheckDebug()){
 
 stopifnot(!any(is.na(USER), USER == ""))
 
-flog.debug("User's computation parameters:",
-           swsContext.computationParams, capture = TRUE,
-           name = "dev")
-
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
 
-reportdir <- reportdirectory(USER, year, build_id)
+reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 
 # Send general log messages
 if(general_log2console) {
@@ -144,6 +146,10 @@ flog.appender(appender.tee(file.path(reportdir,
               name = "dev")
 
 flog.info("SWS-session is run by user %s", USER, name = "dev")
+
+flog.debug("User's computation parameters:",
+           swsContext.computationParams, capture = TRUE,
+           name = "dev")
 
 flog.info("R session environment: ",
            sessionInfo(), capture = TRUE, name = "dev")
@@ -292,8 +298,7 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 
 ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
-data("EURconversionUSD", package = "faoswsTrade", envir = environment())
-#EURconversionUSD <- tbl_df(ReadDatatable("eur_conversion_usd"))
+EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
 hs_chapters_str <-
   formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
@@ -326,19 +331,21 @@ message(sprintf("[%s] Reading in Eurostat data", PID))
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
 
-esdata <- ReadDatatable(paste0("ce_combinednomenclature_unlogged_",year),
-                        columns = c(
-                          "period",
-                          "declarant",
-                          "partner",
-                          "flow",
-                          "product_nc",
-                          "value_1k_euro",
-                          "qty_ton",
-                          "sup_quantity",
-                          "stat_regime"),
-                        where = paste0("chapter IN (", hs_chapters_str, ")")
-)
+esdata <- ReadDatatable(
+  paste0("ce_combinednomenclature_unlogged_", year),
+  columns = c(
+    "period",
+    "declarant",
+    "partner",
+    "flow",
+    "product_nc",
+    "value_1k_euro",
+    "qty_ton",
+    "sup_quantity",
+    "stat_regime"
+  ),
+  where = paste0("chapter IN (", hs_chapters_str, ")")
+) %>% tbl_df()
 
 stopifnot(nrow(esdata) > 0)
 
@@ -365,9 +372,6 @@ flog.info("Records after filtering by 4th stat regime: %s", nrow(esdata))
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 esdata <- adaptTradeDataTypes(esdata, "ES")
 
-# TODO: do we need this piece?
-esdata <- tbl_df(esdata)
-
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.
 
@@ -389,12 +393,12 @@ esdata <- esdata %>%
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
-# TODO now we turn esdata back from data.frame to data.table
-# do we need it?
-esdata <- data.table::as.data.table(esdata)
-esdata[, `:=` (reporter = convertGeonom2FAO(reporter),
-              partner = convertGeonom2FAO(partner))]
-esdata <- esdata[partner != 252, ]
+esdata <- esdata %>%
+  mutate(
+    reporter = convertGeonom2FAO(reporter),
+    partner = convertGeonom2FAO(partner)
+  ) %>%
+  filter(partner != 252)
 
 flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
 
@@ -407,9 +411,8 @@ esdata <- tbl_df(esdata)
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-write.csv(esdata_not_area_in_fcl_mapping,
-          file = file.path(reportdir,
-                           "esdata_not_area_in_fcl_mapping.csv"))
+rprt_writetable(esdata_not_area_in_fcl_mapping)
+
 
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
@@ -444,7 +447,7 @@ rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
-flog.info("Records after removing non-mapped HS codes: %s",
+flog.info("ES records after removing non-mapped HS codes: %s",
           nrow(esdata))
 
 ##' 1. Add FCL units.
@@ -485,20 +488,22 @@ esdata <- esdata %>%
 
 message(sprintf("[%s] Reading in Tariffline data", PID))
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
-tldata <- ReadDatatable(paste0("ct_tariffline_unlogged_",year),
-                        columns = c(
-                          "tyear",
-                          "rep",
-                          "prt",
-                          "flow",
-                          "comm",
-                          "tvalue",
-                          "weight",
-                          "qty",
-                          "qunit",
-                          "chapter"),
-                        where = paste0("chapter IN (", hs_chapters_str, ")")
-                        )
+tldata <- ReadDatatable(
+  paste0("ct_tariffline_unlogged_", year),
+  columns = c(
+    "tyear",
+    "rep",
+    "prt",
+    "flow",
+    "comm",
+    "tvalue",
+    "weight",
+    "qty",
+    "qunit",
+    "chapter"
+  ),
+  where = paste0("chapter IN (", hs_chapters_str, ")")
+)
 
 stopifnot(nrow(tldata) > 0)
 
@@ -557,26 +562,36 @@ message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
 tldata <- tldata %>%
-  left_join(unsdpartnersblocks %>%
-              select_(wholepartner = ~rtCode,
-                      part = ~formula) %>%
-              # Exclude EU grouping and old countries
-              filter_(~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)),
-            by = c("partner" = "part")) %>%
-  mutate_(partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
-          m49rep = ~reporter,
-          m49par = ~partner,
-          # Conversion from Comtrade M49 to FAO area list
-          reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
-          partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par)))
+  left_join(
+    unsdpartnersblocks %>%
+      select_(
+        wholepartner = ~rtCode,
+        part = ~formula
+      ) %>%
+      # Exclude EU grouping and old countries
+      filter_(
+        ~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)
+      ),
+    by = c("partner" = "part")
+  ) %>%
+  mutate_(
+    partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
+    m49rep = ~reporter,
+    m49par = ~partner,
+    # Conversion from Comtrade M49 to FAO area list
+    reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
+    partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
+  )
 
 flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
 tldata <- tldata %>%
-  anti_join(esdata %>%
-              select_(~reporter) %>%
-              distinct(),
-            by = "reporter")
+  anti_join(
+    esdata %>%
+      select_(~reporter) %>%
+      distinct(),
+    by = "reporter"
+  )
 
 ##+ drop_reps_not_in_mdb ####
 
@@ -588,6 +603,7 @@ tldata <- tldata %>%
 tldata_not_area_in_fcl_mapping <- tldata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
+rprt_writetable(tldata_not_area_in_fcl_mapping)
 
 flog.trace("TL: dropping reporters not found in the mapping table", name = "dev")
 tldata <- tldata %>%
@@ -626,7 +642,10 @@ rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 flog.trace("TL: dropping unmapped records", name = "dev")
 
 tldata <- tldata %>%
-  filter_(~is.na(fcl))
+  filter_(~!is.na(fcl))
+
+flog.info("TL records after removing non-mapped HS codes: %s",
+          nrow(tldata))
 
 if(stopaftermapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
@@ -723,28 +742,15 @@ if(NROW(fcl_spec_mt_conv) > 0){
   tldata$qtyfcl = NA
 }
 
-##' 1. If the `quantity` variable is not reported, but the `weight` variable is and
-##' the final unit of measurement is tonnes the `weight` is used as `quantity`
-
-cond <- (tldata$qty == 0 | is.na(tldata$qty)) &
-                          tldata$fclunit == "mt" &
-                          is.na(tldata$qtyfcl) &
-                          !is.na(tldata$weight) &
-                          tldata$weight > 0
-
-tldata$qtyfcl <- ifelse(cond, tldata$weight, tldata$qtyfcl)
-
-# XXX
-# Flag on weight as qty (which underwent a change) will populate weight
-tldata <- tldata %>%
-  setFlag3(!cond, type = 'method', flag = 'i', variable = 'weight')
-
-# Always use weight if available and fclunit is mt
+##' 1. If the `weight` variable is available and the final unit
+##' of measurement is tonnes then `weight` is used as `quantity`
 
 cond <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
 
 tldata$qtyfcl <- ifelse(cond, tldata$weight*0.001, tldata$qtyfcl)
 
+# XXX
+# Flag on weight as qty (which underwent a change) will populate weight
 tldata <- tldata %>%
   setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
 
@@ -806,8 +812,8 @@ if (use_adjustments == TRUE) {
 ##' `EURconversionUSD` table.
 
 esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
-                                            filter(Year == year) %>%
-                                            select(ExchangeRate))
+                                          filter(eusd_year == year) %>%
+                                          select(eusd_exchangerate))
 
 esdata <- esdata %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
@@ -985,11 +991,32 @@ countries_not_mapping_M49 <- bind_rows(
 
 ##' # Mirror Trade Estimation
 
-##' 1. Obtain list of non-reporting countries as difference between the list of
-##' reporter countries and the list of partner countries.
+##' 1. Create a table with the list of reporters and partners
+##' combined as areas and count the number of flows that the
+##' areas declare as reporting countries. The partners that
+##' never show up as reporters or the reporters that do not
+##' report a flow will have a number of flows equal to zero
+##' and will be mirrored.
 flog.trace("Mirroring", name = "dev")
-nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
-                                                      unique(tradedata$reporter))]
+
+total_flows <- bind_rows(
+    tradedata %>%
+      count(reporter, flow) %>%
+      rename(area = reporter) %>%
+      ungroup(),
+    data.frame(
+      area = rep(unique(tradedata$partner), each = 2),
+      flow = sort(unique(tradedata$flow)),
+      n = 0
+    )
+  ) %>%
+  group_by(area, flow) %>%
+  summarise(n = sum(n, na.rm = TRUE)) %>%
+  ungroup()
+
+to_mirror <- total_flows %>%
+  filter(n == 0) %>%
+  select(-n)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).
@@ -1000,15 +1027,23 @@ nonreporting <- unique(tradedata$partner)[!is.element(unique(tradedata$partner),
 ##' imports (exports) to account for the difference between CIF and FOB prices.
 
 ## Mirroring for non reporting countries
-tradedata <- mirrorNonReporters(tradedata = tradedata,
-                                nonreporters = nonreporting)
+tradedata <- mirrorNonReporters(tradedata = tradedata, mirror = to_mirror)
+
+# Add an auxiliary variable "mirrored" that will be removed later
+tradedata <- tradedata %>%
+  left_join(
+    to_mirror %>% mutate(mirrored = 1L),
+    by = c('reporter' = 'area', 'flow')
+  )
 
 ##' 1. Set flags XXX.
 flog.trace("Flags XXX (for adults only?)", name = "dev")
+
 tradedata <- tradedata %>%
-    setFlag2(reporter %in% nonreporting, type = 'status', flag = 'E', var = 'all') %>%
-    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'i', var = 'value') %>%
-    setFlag2(reporter %in% nonreporting, type = 'method', flag = 'c', var = 'quantity')
+  setFlag2(!is.na(mirrored), type = 'status', flag = 'E', var = 'all') %>%
+  setFlag2(!is.na(mirrored), type = 'method', flag = 'i', var = 'value') %>%
+  setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
+  select(-mirrored)
 
 ##' ## Flag management
 
@@ -1213,7 +1248,7 @@ flog.info(
   )
 
 # Restore changed options
-options(max.print = oldMaxPrint)
+options(old_options)
 
 # Save list with report data
 saveRDS(rprt_data, file = file.path(reportdir, "report_data.rds"))

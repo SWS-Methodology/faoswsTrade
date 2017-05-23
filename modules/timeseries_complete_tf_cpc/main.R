@@ -9,9 +9,9 @@ multicore <- TRUE
 # TODO: should be a parameter
 threshold <- 0.5
 # Years
-years <- as.character(2000:2014)
+years <- as.character(2000:2015)
 # movav order
-movav_order <- 5
+movav_order <- 3
 
 library(faosws)
 library(dplyr)
@@ -35,7 +35,7 @@ library(dplyr)
 # 5.38, UV, $/head
 # 5.39, UV, $/1000 head
 
-if(CheckDebug()){
+if (CheckDebug()) {
   library(faoswsModules)
   settings_file <- "modules/timeseries_complete_tf_cpc/sws.yml"
   SETTINGS = faoswsModules::ReadSettings(settings_file)
@@ -46,7 +46,7 @@ if(CheckDebug()){
   ## Get session information from SWS.
   ## Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-                     token = SETTINGS[["token"]])
+                     token   = SETTINGS[["token"]])
 }
 
 #GetCodeList('trade', 'completed_tf_cpc_m49', 'measuredItemCPC')
@@ -54,27 +54,31 @@ if(CheckDebug()){
 
 GetCodeList2 <- function(dimension = NA) {
   GetCodeList(
-              domain = 'trade',
-              dataset = 'completed_tf_cpc_m49',
-              dimension = dimension
-              )
+    domain    = 'trade',
+    dataset   = 'completed_tf_cpc_m49',
+    dimension = dimension
+  )
 }
 
-Vars <- list(reporters = 'geographicAreaM49Reporter',
-             partners  = 'geographicAreaM49Partner',
-             items     = 'measuredItemCPC',
-             elements  = 'measuredElementTrade',
-             years     = 'timePointYears')
+Vars <- list(
+  reporters = 'geographicAreaM49Reporter',
+  partners  = 'geographicAreaM49Partner',
+  items     = 'measuredItemCPC',
+  elements  = 'measuredElementTrade',
+  years     = 'timePointYears'
+)
 
 reporters <- GetCodeList2(dimension = Vars[['reporters']])[type == 'country', code]
 
-Keys <- list( #reporters = reporter,
-             partners = GetCodeList2(dimension = Vars[['partners']])[type == 'country', code],
-             items    = GetCodeList2(dimension = Vars[['items']])[, code],
-             # Quantity [#], Quantity [head], Quantity [1000 head], Quantity [t], Value [1000 $]
-             elements = c('5607', '5608', '5609', '5610', '5622',
-                          '5907', '5908', '5909', '5910', '5922'),
-             years    = years)
+Keys <- list(
+  #reporters = reporter,
+  partners = GetCodeList2(dimension = Vars[['partners']])[type == 'country', code],
+  items    = GetCodeList2(dimension = Vars[['items']])[, code],
+  # Quantity [#], Quantity [head], Quantity [1000 head], Quantity [t], Value [1000 $]
+  elements = c('5607', '5608', '5609', '5610', '5622',
+               '5907', '5908', '5909', '5910', '5922'),
+  years    = years
+)
 
 
 ######################################################################
@@ -99,64 +103,68 @@ calculateOnDataSWS <- function(data = NA) {
       filter(!is.na(qty)) %>%
       dplyr::mutate(uv = value / qty) %>%
       tidyr::complete(
-                      tidyr::nesting(
-                                     flow,
-                                     geographicAreaM49Reporter,
-                                     geographicAreaM49Partner,
-                                     measuredItemCPC
-                                     ),
-                      timePointYears
-                      ) %>%
+        tidyr::nesting(
+          flow,
+          geographicAreaM49Reporter,
+          geographicAreaM49Partner,
+          measuredItemCPC
+        ),
+        timePointYears
+      ) %>%
       dplyr::arrange(
-              flow,
-              geographicAreaM49Reporter,
-              geographicAreaM49Partner,
-              measuredItemCPC,
-              desc(timePointYears)
-              ) %>%
+        flow,
+        geographicAreaM49Reporter,
+        geographicAreaM49Partner,
+        measuredItemCPC,
+        desc(timePointYears)
+      ) %>%
       dplyr::group_by(
-               flow,
-               geographicAreaM49Reporter,
-               geographicAreaM49Partner,
-               measuredItemCPC
-               ) %>%
+        flow,
+        geographicAreaM49Reporter,
+        geographicAreaM49Partner,
+        measuredItemCPC
+      ) %>%
       dplyr::mutate(
-             ma_v_fwd = movav(value, pkg = 'zoo', mode = 'lag', n = N),
-             ma_q_fwd = movav(qty, pkg = 'zoo', mode = 'lag', n = N),
-             ma_fwd   = ma_v_fwd / ma_q_fwd
-             ) %>%
+        ma_v_fwd = movav(value, pkg = 'zoo', mode = 'lag', n = N),
+        ma_q_fwd = movav(qty, pkg = 'zoo', mode = 'lag', n = N),
+        ma_fwd   = ma_v_fwd / ma_q_fwd
+      ) %>%
       dplyr::arrange(
-              flow,
-              geographicAreaM49Reporter,
-              geographicAreaM49Partner,
-              measuredItemCPC,
-              timePointYears
-              ) %>%
+        flow,
+        geographicAreaM49Reporter,
+        geographicAreaM49Partner,
+        measuredItemCPC,
+        timePointYears
+      ) %>%
       dplyr::group_by(
-               flow,
-               geographicAreaM49Reporter,
-               geographicAreaM49Partner,
-               measuredItemCPC
-               ) %>%
+        flow,
+        geographicAreaM49Reporter,
+        geographicAreaM49Partner,
+        measuredItemCPC
+      ) %>%
       #mutate(var = uv/lag(uv)-1)
       dplyr::mutate(
-             ma_v_bck = movav(value, pkg = 'zoo', mode = 'lag', n = N),
-             ma_q_bck = movav(qty, pkg = 'zoo', mode = 'lag', n = N),
-             ma_bck   = ma_v_bck / ma_q_bck,
-             ma       = ifelse(
-                               timePointYears %in% years[1:N],
-                               ma_fwd,
-                               ma_bck
-                               ),
-             ratio_ma = uv/ma,
-             nna_ma   = sum(!is.na(ma)),
-             out      = if_else(between(ratio_ma,
-                                        1-threshold,
-                                        1+threshold),
-                                0, 1, 0),
-             qty_new  = if_else(out == 1, value/ma, qty),
-             uv_new   = value/qty_new
-             ) %>%
+        ma_v_bck = movav(value, pkg = 'zoo', mode = 'lag', n = N),
+        ma_q_bck = movav(qty, pkg = 'zoo', mode = 'lag', n = N),
+        ma_bck   = ma_v_bck / ma_q_bck,
+        ma       = ifelse(
+                     timePointYears %in% years[1:N],
+                     ma_fwd,
+                     ma_bck
+                   ),
+        ratio_ma = uv/ma,
+        nna_ma   = sum(!is.na(ma)),
+        out      = if_else(
+                     between(
+                       ratio_ma,
+                       1-threshold,
+                       1+threshold),
+                     1,
+                     0
+                   ),
+        qty_new  = if_else(out == 1, value/ma, qty),
+        uv_new   = value/qty_new
+      ) %>%
       #filter(nna_ma > 0)
       dplyr::ungroup()
   
@@ -186,25 +194,31 @@ if (multicore) {
                          NULL
                })
 
-  parallel::clusterExport(cl, c('SETTINGS',
-                                ls(pattern = 'swsContext'),
-                                'getComputedDataSWS',
-                                'calculateOnDataSWS',
-                                'computeData',
-                                'years',
-                                'Vars',
-                                'Keys',
-                                'reshapeTrade',
-                                'movav',
-                                'movav_order',
-                                'threshold'))
+  parallel::clusterExport(cl,
+    c(
+      'SETTINGS',
+      ls(pattern = 'swsContext'),
+      'getComputedDataSWS',
+      'calculateOnDataSWS',
+      'computeData',
+      'years',
+      'Vars',
+      'Keys',
+      'reshapeTrade',
+      'movav',
+      'movav_order',
+      'threshold'
+    )
+  )
 
   if(CheckDebug()) {
-    parallel::clusterEvalQ(cl, {
-                           ## Define where your certificates are stored
-                           faosws::SetClientFiles(SETTINGS[["certdir"]])
-                           NULL
-             })
+    parallel::clusterEvalQ(cl,
+      {
+        ## Define where your certificates are stored
+        faosws::SetClientFiles(SETTINGS[["certdir"]])
+        NULL
+      }
+    )
   }
 
 }
@@ -212,17 +226,17 @@ if (multicore) {
 
 start_time <- Sys.time()
 db_list <- plyr::mlply(
-                       #expand.grid(
-                       #  reporters,
-                       #  stringsAsFactors = FALSE
-                       #  ) %>%
-                       #    as_data_frame() %>%
-                       #    rename(reporter = Var1, year = Var2),
-                       data_frame(reporter = reporters),
-                       .fun = computeData,
-                       .parallel = multicore,
-                       .progress = 'text'
-                       )
+  #expand.grid(
+  #  reporters,
+  #  stringsAsFactors = FALSE
+  #  ) %>%
+  #    as_data_frame() %>%
+  #    rename(reporter = Var1, year = Var2),
+  data_frame(reporter = reporters),
+  .fun = computeData,
+  .parallel = multicore,
+  .progress = 'text'
+)
 end_time <- Sys.time()
 print(end_time-start_time)
 
@@ -242,18 +256,18 @@ countries_no_data <- setdiff(reporters, new_reporters)
 db_final <- list()
 
 db_stats <- data.frame(
-                       reporter         = new_reporters,
-                       n                = NA_real_,
-                       n_m              = NA_real_,
-                       n_x              = NA_real_,
-                       n_out            = NA_real_,
-                       n_out_m          = NA_real_,
-                       n_out_x          = NA_real_,
-                       perc_out         = NA_real_,
-                       perc_out_m       = NA_real_,
-                       perc_out_x       = NA_real_,
-                       stringsAsFactors = FALSE
-                       )
+  reporter         = new_reporters,
+  n                = NA_real_,
+  n_m              = NA_real_,
+  n_x              = NA_real_,
+  n_out            = NA_real_,
+  n_out_m          = NA_real_,
+  n_out_x          = NA_real_,
+  perc_out         = NA_real_,
+  perc_out_m       = NA_real_,
+  perc_out_x       = NA_real_,
+  stringsAsFactors = FALSE
+)
 
 start_time <- Sys.time()
 p <- progress_estimated(length(new_reporters))
@@ -264,19 +278,19 @@ for (reporter in new_reporters) {
   db_tmp <- db_list[[reporter]] %>%
   filter(!is.na(qty) | !is.na(value)) %>%
   select(
-         geographicAreaM49Reporter,
-         geographicAreaM49Partner,
-         flow,
-         measuredItemCPC,
-         timePointYears,
-         flag_qty,
-         flag_value,
-         qty = qty_new,
-         value,
-         uv = uv_new,
-         out,
-         measuredElementTrade_q
-         )
+    geographicAreaM49Reporter,
+    geographicAreaM49Partner,
+    flow,
+    measuredItemCPC,
+    timePointYears,
+    flag_qty,
+    flag_value,
+    qty = qty_new,
+    value,
+    uv = uv_new,
+    out,
+    measuredElementTrade_q
+  )
 
   mystats <- c(
     nrow(db_tmp),
@@ -296,29 +310,31 @@ for (reporter in new_reporters) {
     select(-flag_value, -qty, -value, -out) %>%
     # The UV flag is the weakest, i.e., the qty one.
     tidyr::separate(
-                    flag_qty,
-                    sep    = '-',
-                    into   = c('flagObservationStatus', 'flagMethod'),
-                    remove = TRUE
-                    ) %>%
+      flag_qty,
+      sep    = '-',
+      into   = c('flagObservationStatus', 'flagMethod'),
+      remove = TRUE
+    ) %>%
     mutate(flagMethod = 'i') %>%
     rename(Value = uv) %>%
     # As on 2017-03-20 this works (see the element list at the beginning),
     # but it's not probably the best way to do it.
-    mutate(measuredElementTrade = stringr::str_replace(
-                                                       measuredElementTrade_q,
-                                                       '^(..).(.)$',
-                                                       '\\13\\2')) %>%
+    mutate(
+      measuredElementTrade = stringr::str_replace(
+                                                  measuredElementTrade_q,
+                                                  '^(..).(.)$',
+                                                  '\\13\\2')
+    ) %>%
     select(
-           geographicAreaM49Reporter,
-           geographicAreaM49Partner,
-           measuredElementTrade,
-           measuredItemCPC,
-           timePointYears,
-           Value,
-           flagObservationStatus,
-           flagMethod
-           )
+      geographicAreaM49Reporter,
+      geographicAreaM49Partner,
+      measuredElementTrade,
+      measuredItemCPC,
+      timePointYears,
+      Value,
+      flagObservationStatus,
+      flagMethod
+    )
 
 
 
@@ -328,41 +344,41 @@ for (reporter in new_reporters) {
     mutate(flag = ifelse(type == 'qty', flag_qty, flag_value)) %>%
     select(-flag_qty, -flag_value) %>%
     tidyr::separate(
-                    flag,
-                    sep    = '-',
-                    into   = c('flagObservationStatus', 'flagMethod'),
-                    remove = TRUE
-                    ) %>%
+      flag,
+      sep    = '-',
+      into   = c('flagObservationStatus', 'flagMethod'),
+      remove = TRUE
+    ) %>%
     mutate(
-           measuredElementTrade = ifelse(
-                                         type != 'value',
-                                         measuredElementTrade_q,
-                                         ifelse(flow == 1, '5622', '5922')
-                                         )
-           ) %>%
+      measuredElementTrade = ifelse(
+                                    type != 'value',
+                                    measuredElementTrade_q,
+                                    ifelse(flow == 1, '5622', '5922')
+                                    )
+    ) %>%
     mutate(
-           flagObservationStatus = ifelse(
-                                          type == 'qty' & out == 1,
-                                          'I',
-                                          flagObservationStatus
-                                          ),
-           flagMethod = ifelse(
-                               type == 'qty' & out == 1,
-                               'e',
-                               flagMethod
-                               )
-           ) %>%
+      flagObservationStatus = ifelse(
+                                     type == 'qty' & out == 1,
+                                     'I',
+                                     flagObservationStatus
+                                     ),
+      flagMethod = ifelse(
+                          type == 'qty' & out == 1,
+                          'e',
+                          flagMethod
+                          )
+    ) %>%
     #select(-flow, -measuredElementTrade_q, -type, -out)
     select(
-           geographicAreaM49Reporter,
-           geographicAreaM49Partner,
-           measuredElementTrade,
-           measuredItemCPC,
-           timePointYears,
-           Value,
-           flagObservationStatus,
-           flagMethod
-           )
+      geographicAreaM49Reporter,
+      geographicAreaM49Partner,
+      measuredElementTrade,
+      measuredItemCPC,
+      timePointYears,
+      Value,
+      flagObservationStatus,
+      flagMethod
+    )
 
   db_final[[reporter]] <- bind_rows(db_q_v, db_uv) %>%
     data.table::as.data.table()

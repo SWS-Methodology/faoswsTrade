@@ -35,6 +35,8 @@ extract_rprt_year <- function(dirname = NULL, prefix = NULL) {
 
   stopifnot(!any(is.na(year)))
 
+  stopifnot(!all(duplicated(year)))
+
   year
 }
 
@@ -93,10 +95,14 @@ bind_rprts <- function(rprt_elems_list) {
                               elem <- one_year_rprt_list[[nm]]
                               stopifnot("data.frame" %in% class(elem))
                               if (!"year" %in% colnames(elem)) {
-                                elem$year <- year
+                                if (nrow(elem) > 0L) {
+                                  elem$year <- year
+                                } else {
+                                  elem$year <- integer(0L)
+                                }
                               }
                               elem
-                              }))
+                            }))
 
   })
 

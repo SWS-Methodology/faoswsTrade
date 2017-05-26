@@ -14,6 +14,21 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
     tradedata <- add_area_names(tradedata, area_codes_class, "reporter")
   } else warning("No suitable area code list for given trade data name.")
 
+  rawdata_nonmrc_prtnrs_full <- tradedata %>%
+    filter_(~partner_non_numeric) %>%
+    select_(~-ends_with("non_numeric"))
+
+  rprt_writetable(rawdata_nonmrc_prtnrs_full, prefix = tradedataname,
+                  subdir = "preproc")
+
+
+  rawdata_nonmrc_hs_full <- tradedata %>%
+    filter_(~hs_non_numeric) %>%
+    select_(~-ends_with("non_numeric"))
+
+  rprt_writetable(rawdata_nonmrc_hs_full, prefix = tradedataname,
+                  subdir = "preproc")
+
 
   # Report non numeric partner and hs codes summary
   rawdata_nonmrc <- tradedata %>%
@@ -24,7 +39,7 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
                nonmrc_hs_prop = ~nonmrc_hs / n()) %>%
     ungroup()
 
-  rprt_writetable(rawdata_nonmrc, prefix = tradedataname)
+  rprt_writetable(rawdata_nonmrc, prefix = tradedataname, subdir = "preproc")
 
   # Report length of hs code
   rawdata_hslength <- tradedata %>%
@@ -35,5 +50,5 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
     ungroup() %>%
     tidyr::spread_("hslength", "count", fill = 0L)
 
-  rprt_writetable(rawdata_hslength, prefix = tradedataname)
+  rprt_writetable(rawdata_hslength, prefix = tradedataname, subdir = "preproc")
 }

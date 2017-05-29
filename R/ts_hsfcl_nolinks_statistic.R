@@ -5,15 +5,14 @@
 #' library(dygraph)
 #' library(dplyr)
 #'
-#' ts1 <- ts_nolinks_data("/mnt/storage/sws_share/chr", "complete_tf_cpc")
+#' ts1 <- ts_hsfcl_nolinks_statistic("/mnt/storage/sws_share/chr", "complete_tf_cpc")
 #'
 #' ts1 %>%
 #'   group_by(year) %>%
 #'   summarize(total_nolinks = sum(nolinks)) %>%
 #'   ungroup() %>%
 #'   ggplot(aes(year, total_nolinks)) +
-#'   geom_line() +
-#'   scale_y_log10()
+#'   geom_bin(stat = "identity")
 #'
 #' ts1 %>%
 #'   group_by(year) %>%
@@ -24,7 +23,7 @@
 #'     main = "Unmapped HS codes (Tariff line and Eurostat)")
 
 
-ts_nolinks_data <- function(collection_path = NULL, prefix = NULL) {
+ts_hsfcl_nolinks_statistic <- function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("esdata_hsfcl_nolinks_statistic",
              "tldata_hsfcl_nolinks_statistic")

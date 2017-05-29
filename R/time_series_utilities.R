@@ -33,9 +33,16 @@ extract_rprt_year <- function(dirname = NULL, prefix = NULL) {
   year <- stringr::str_match_all(dirname, paste0(prefix, "_(\\d{4})")) %>%
     vapply(function(x) as.integer(x[[2]]), integer(1L))
 
+  # NA in years
   stopifnot(!any(is.na(year)))
 
+  # Duplicates in years
   stopifnot(!all(duplicated(year)))
+
+  # Missing years
+  stopifnot(length(year) == length(seq.int(from = min(year),
+                                           to = max(year),
+                                           by = 1L)))
 
   year
 }

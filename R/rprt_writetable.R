@@ -13,18 +13,23 @@ rprt_writetable <- function(dataset, prefix = NULL, subdir = NULL) {
 
   stopifnot(exists("reportdir"))
   stopifnot(dir.exists(reportdir))
-  collectreports <- exists("rprt_data")
 
-  if(!is.null(subdir)) {
+  # Dir for RDS files
+  datadir <- normalizePath(file.path(reportdir, "datadir"), mustWork = FALSE)
+  if (!dir.exists(datadir)) dir.create(datadir)
+
+  # Dir for detailed csv
+  if (!is.null(subdir)) {
     reportdir <- normalizePath(file.path(reportdir, subdir), mustWork = FALSE)
-    if(!dir.exists(reportdir)) dir.create(reportdir)
+    if (!dir.exists(reportdir)) dir.create(reportdir)
   }
+
 
   # We want name to be the same as name of original variable
   # in main.R code
   name <- lazyeval::expr_text(dataset)
 
-  if(!is.null(prefix)) {
+  if (!is.null(prefix)) {
     stopifnot(is.character(prefix))
     stopifnot(length(prefix) == 1L)
     name <- paste(prefix, name, sep = "_")
@@ -35,7 +40,7 @@ rprt_writetable <- function(dataset, prefix = NULL, subdir = NULL) {
             sep = ",",
             row.names = FALSE)
 
-  if(collectreports) rprt_data[[name]] <<- dataset
+  saveRDS(dataset, file = file.path(datadir, paste0(name, ".rds")))
 
   invisible(dataset)
 

@@ -192,7 +192,11 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 
 ##+ hschapters, eval = TRUE
 
-hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
+hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
+  formatC(width = 2, format = "d", flag = "0") %>%
+  as.character %>%
+  shQuote(type = "sh") %>%
+  paste(collapse = ", ")
 
 flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
@@ -300,12 +304,6 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 
 EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
-hs_chapters_str <-
-  formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
-  as.character %>%
-  shQuote(type = "sh") %>%
-  paste(collapse = ", ")
-
 # hs6fclmap ####
 
 flog.trace("Extraction of HS6 mapping table", name = "dev")
@@ -344,7 +342,7 @@ esdata <- ReadDatatable(
     "sup_quantity",
     "stat_regime"
   ),
-  where = paste0("chapter IN (", hs_chapters_str, ")")
+  where = paste0("chapter IN (", hs_chapters, ")")
 ) %>% tbl_df()
 
 stopifnot(nrow(esdata) > 0)
@@ -504,7 +502,7 @@ tldata <- ReadDatatable(
     "qunit",
     "chapter"
   ),
-  where = paste0("chapter IN (", hs_chapters_str, ")")
+  where = paste0("chapter IN (", hs_chapters, ")")
 )
 
 stopifnot(nrow(tldata) > 0)

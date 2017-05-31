@@ -27,7 +27,9 @@ adaptTradeDataTypes <- function(tradedata, origin) {
 
   tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, hs),
-            funs(non_numeric = !grepl("^[[:digit:]]+$", .)))
+            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %>%
+    mutate_(novalue = ~is.na(value),
+            noqty   = ~is.na(weight) & is.na(qty))
 
   rprt(tradedata, "rawtradedata", tradedataname)
 

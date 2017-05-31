@@ -47,9 +47,6 @@ set.seed(2507)
 # Size for sampling. Set NULL if no sampling is required.
 samplesize <- NULL
 
-# List to store debug/report datasets
-rprt_data <- list()
-
 # Logging level
 # There are following levels:
 # trace, debug, info, warn, error, fatal
@@ -1247,8 +1244,3 @@ flog.info(
 
 # Restore changed options
 options(old_options)
-
-# Save list with report data
-saveRDS(rprt_data, file = file.path(reportdir, "report_data.rds"))
-
-

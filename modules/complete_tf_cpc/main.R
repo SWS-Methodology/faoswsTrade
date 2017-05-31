@@ -37,13 +37,15 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 # Package build ID
 # It is included into report directory name
 build_id <- "master"
-stopaftermapping <- FALSE
+# Should we stop after HS-FCL mapping?
+stop_after_mapping <- FALSE
+# Should we stop after reports on raw data?
+stop_after_pre_process <- FALSE
 
 set.seed(2507)
 
-# Size for Eurostat sampling. Set NULL if no sampling is required.
+# Size for sampling. Set NULL if no sampling is required.
 samplesize <- NULL
-debughsfclmap <- TRUE
 
 # List to store debug/report datasets
 rprt_data <- list()
@@ -192,12 +194,73 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 
 ##+ hschapters, eval = TRUE
 
-hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53)
+hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
+  formatC(width = 2, format = "d", flag = "0") %>%
+  as.character %>%
+  shQuote(type = "sh") %>%
+  paste(collapse = ", ")
 
 flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
 startTime = Sys.time()
+
+# Load raw data (ES and TL) ####
+
+flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
+
+esdata <- ReadDatatable(
+  paste0("ce_combinednomenclature_unlogged_", year),
+  columns = c(
+    "period",
+    "declarant",
+    "partner",
+    "flow",
+    "product_nc",
+    "value_1k_euro",
+    "qty_ton",
+    "sup_quantity",
+    "stat_regime"
+  ),
+  where = paste0("chapter IN (", hs_chapters, ")")
+) %>% tbl_df()
+
+stopifnot(nrow(esdata) > 0)
+
+## Download TL data ####
+
+flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
+
+tldata <- ReadDatatable(
+  paste0("ct_tariffline_unlogged_", year),
+  columns = c(
+    "tyear",
+    "rep",
+    "prt",
+    "flow",
+    "comm",
+    "tvalue",
+    "weight",
+    "qty",
+    "qunit",
+    "chapter"
+  ),
+  where = paste0("chapter IN (", hs_chapters, ")")
+)
+
+stopifnot(nrow(tldata) > 0)
+
+##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
+
+esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
+tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+
+##' 1. Use standard (common) variable types.
+
+esdata <- adaptTradeDataTypes(esdata, "ES")
+tldata <- adaptTradeDataTypes(tldata, "TL")
+
+if(stop_after_pre_process) stop("Stop after reports on raw data")
 
 # Loading of help datasets ####
 
@@ -206,7 +269,6 @@ startTime = Sys.time()
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
 
-message(sprintf("[%s] Reading in hs-fcl mapping", PID))
 flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
@@ -300,12 +362,6 @@ data("comtradeunits", package = "faoswsTrade", envir = environment())
 
 EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
-hs_chapters_str <-
-  formatC(hs_chapters, width = 2, format = "d", flag = "0") %>%
-  as.character %>%
-  shQuote(type = "sh") %>%
-  paste(collapse = ", ")
-
 # hs6fclmap ####
 
 flog.trace("Extraction of HS6 mapping table", name = "dev")
@@ -327,27 +383,7 @@ rprt(hs6fclmap, "hs6fclmap")
 
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
-message(sprintf("[%s] Reading in Eurostat data", PID))
-flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 flog.info(toupper("##### Eurostat trade data #####"))
-
-esdata <- ReadDatatable(
-  paste0("ce_combinednomenclature_unlogged_", year),
-  columns = c(
-    "period",
-    "declarant",
-    "partner",
-    "flow",
-    "product_nc",
-    "value_1k_euro",
-    "qty_ton",
-    "sup_quantity",
-    "stat_regime"
-  ),
-  where = paste0("chapter IN (", hs_chapters_str, ")")
-) %>% tbl_df()
-
-stopifnot(nrow(esdata) > 0)
 
 if(!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
@@ -368,11 +404,6 @@ esdata <- esdata %>%
   filter_(~declarant != "EU")
 
 flog.info("Records after filtering by 4th stat regime and removing EU totals: %s", nrow(esdata))
-
-##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
-
-esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
-esdata <- adaptTradeDataTypes(esdata, "ES")
 
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.
@@ -404,8 +435,6 @@ esdata <- esdata %>%
 
 flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
 
-esdata <- tbl_df(esdata)
-
 ##' 1. Remove reporters with area codes that are not included in MDB commodity
 ##' mapping area list.
 
@@ -414,7 +443,6 @@ esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
 rprt_writetable(esdata_not_area_in_fcl_mapping)
-
 
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
@@ -486,38 +514,10 @@ esdata <- esdata %>%
 
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
-## Download TL data ####
-
-message(sprintf("[%s] Reading in Tariffline data", PID))
-flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
-tldata <- ReadDatatable(
-  paste0("ct_tariffline_unlogged_", year),
-  columns = c(
-    "tyear",
-    "rep",
-    "prt",
-    "flow",
-    "comm",
-    "tvalue",
-    "weight",
-    "qty",
-    "qunit",
-    "chapter"
-  ),
-  where = paste0("chapter IN (", hs_chapters_str, ")")
-)
-
-stopifnot(nrow(tldata) > 0)
-
 if(!is.null(samplesize)) {
   tldata <- sample_n(tldata, samplesize)
   warning(sprintf("Tariffline data was sampled with size %d", samplesize))
 }
-
-##' 1. Use standard (common) variable names (e.g., `rep` becomes `reporter`).
-
-tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
-tldata <- adaptTradeDataTypes(tldata, "TL")
 
 # Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
 tldata <- as.data.table(tldata)
@@ -558,8 +558,6 @@ tldata <- tldata %>%
 ##' 1. Tariffline M49 codes (which are different from official M49)
 ##' are converted in FAO country codes using a specific convertion
 ##' table provided by Team ENV.
-
-message(sprintf("[%s] Converting from comtrade to FAO codes", PID))
 
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
@@ -649,7 +647,7 @@ tldata <- tldata %>%
 flog.info("TL records after removing non-mapped HS codes: %s",
           nrow(tldata))
 
-if(stopaftermapping) stop("Stop after HS->FCL mapping")
+if(stop_after_mapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
 
 ##' Add FCL units. ####
@@ -1211,7 +1209,6 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
 
 
-message(sprintf("[%s] Writing data to session/database", PID))
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 stats <- SaveData("trade",
                   "completed_tf_cpc_m49",
@@ -1220,7 +1217,6 @@ stats <- SaveData("trade",
 
 ## remove value only
 
-message(sprintf("[%s] Session/database write completed!", PID))
 flog.trace("[%s] Session/database write completed!", PID, name = "dev")
 
 sprintf(

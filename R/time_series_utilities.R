@@ -62,8 +62,14 @@ extract_rprt_elem <- function(collection_path = NULL,
   stopifnot(!is.null(prefix))
   stopifnot(!is.null(elem))
   stopifnot(length(prefix) == 1L)
-  stopifnot(length(elem) == 1L)
 
+  if (length(elem) > 1L) {
+    return(lapply(elem,
+                  extract_rprt_elem,
+                  collection_path = collection_path,
+                  prefix = prefix
+                  ))
+  }
 
   rprt_dirs <- list_rprt_dirs(collection_path, prefix)
   rprt_years <- extract_rprt_year(rprt_dirs, prefix)

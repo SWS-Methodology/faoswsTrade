@@ -273,6 +273,75 @@ tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 esdata <- adaptTradeDataTypes(esdata, "ES")
 tldata <- adaptTradeDataTypes(tldata, "TL")
 
+
+##' 1. Convert ES geonomenclature country/area codes to FAO codes.
+
+##+ geonom2fao
+esdata <- esdata %>%
+  mutate(
+    reporter = convertGeonom2FAO(reporter),
+    partner = convertGeonom2FAO(partner)
+  )
+
+
+# M49 to FAO area list ####
+
+##' 1. Tariffline M49 codes (which are different from official M49)
+##' are converted in FAO country codes using a specific convertion
+##' table provided by Team ENV.
+
+flog.trace("TL: converting M49 to FAO area list", name = "dev")
+
+tldata <- tldata %>%
+  left_join(
+    unsdpartnersblocks %>%
+      select_(
+        wholepartner = ~rtCode,
+        part = ~formula
+      ) %>%
+      # Exclude EU grouping and old countries
+      filter_(
+        ~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)
+      ),
+    by = c("partner" = "part")
+  ) %>%
+  mutate_(
+    partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
+    m49rep = ~reporter,
+    m49par = ~partner,
+    # Conversion from Comtrade M49 to FAO area list
+    reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
+    partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
+  )
+
+
+# XXX this is a duplication: a function should be created.
+tmp <- bind_rows(
+  esdata %>% select(year, reporter, partner, flow),
+  tldata %>% filter(!(reporter %in% unique(esdata$reporter))) %>% select(year, reporter, partner, flow)
+) %>%
+mutate(flow = recode(flow, '4' = 1L, '3' = 2L))
+
+total_flows <- bind_rows(
+    tmp %>%
+      count(reporter, flow) %>%
+      rename(area = reporter) %>%
+      ungroup(),
+    data.frame(
+      area = rep(unique(tmp$partner), each = 2),
+      flow = sort(unique(tmp$flow)),
+      n = 0
+    )
+  ) %>%
+  group_by(area, flow) %>%
+  summarise(n = sum(n, na.rm = TRUE)) %>%
+  ungroup()
+
+to_mirror <- total_flows %>%
+  filter(n == 0) %>%
+  select(-n)
+
+
 if(stop_after_pre_process) stop("Stop after reports on raw data")
 
 # Loading of help datasets ####
@@ -421,14 +490,10 @@ esdata <- esdata %>%
   setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
 
-##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
-##+ geonom2fao
+##' 1. Remove code 252
+
 esdata <- esdata %>%
-  mutate(
-    reporter = convertGeonom2FAO(reporter),
-    partner = convertGeonom2FAO(partner)
-  ) %>%
   filter(partner != 252)
 
 flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
@@ -550,36 +615,6 @@ tldata <- tldata %>%
   setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
   setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
-
-# M49 to FAO area list ####
-
-##' 1. Tariffline M49 codes (which are different from official M49)
-##' are converted in FAO country codes using a specific convertion
-##' table provided by Team ENV.
-
-flog.trace("TL: converting M49 to FAO area list", name = "dev")
-
-tldata <- tldata %>%
-  left_join(
-    unsdpartnersblocks %>%
-      select_(
-        wholepartner = ~rtCode,
-        part = ~formula
-      ) %>%
-      # Exclude EU grouping and old countries
-      filter_(
-        ~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)
-      ),
-    by = c("partner" = "part")
-  ) %>%
-  mutate_(
-    partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
-    m49rep = ~reporter,
-    m49par = ~partner,
-    # Conversion from Comtrade M49 to FAO area list
-    reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
-    partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
-  )
 
 flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
@@ -1245,3 +1280,5 @@ flog.info(
 
 # Restore changed options
 options(old_options)
+
+

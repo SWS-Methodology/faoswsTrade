@@ -37,10 +37,11 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 # Package build ID
 # It is included into report directory name
 build_id <- "master"
-# Should we stop after HS-FCL mapping?
-stop_after_mapping <- FALSE
 # Should we stop after reports on raw data?
 stop_after_pre_process <- FALSE
+# Should we stop after HS-FCL mapping?
+stop_after_mapping <- FALSE
+
 
 set.seed(2507)
 
@@ -224,6 +225,21 @@ esdata <- ReadDatatable(
 
 stopifnot(nrow(esdata) > 0)
 
+flog.info("Raw Eurostat data preview:",
+          rprt_glimpse0(esdata), capture = TRUE)
+
+##' 1. Keep only `stat_regime`=4.
+
+## Only regime 4 is relevant for Eurostat data
+esdata <- esdata %>%
+  filter_(~stat_regime == "4") %>%
+## Removing stat_regime as it is not needed anymore
+  select_(~-stat_regime) %>%
+  # Remove totals
+  filter_(~declarant != "EU")
+
+flog.info("Records after filtering by 4th stat regime and removing EU totals: %s", nrow(esdata))
+
 ## Download TL data ####
 
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
@@ -386,21 +402,6 @@ if(!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
   warning(sprintf("Eurostat data was sampled with size %d", samplesize))
 }
-
-flog.info("Raw Eurostat data preview:",
-          rprt_glimpse0(esdata), capture = TRUE)
-
-##' 1. Keep only `stat_regime`=4.
-
-## Only regime 4 is relevant for Eurostat data
-esdata <- esdata %>%
-  filter_(~stat_regime == "4") %>%
-## Removing stat_regime as it is not needed anymore
-  select_(~-stat_regime) %>%
-  # Remove totals
-  filter_(~declarant != "EU")
-
-flog.info("Records after filtering by 4th stat regime and removing EU totals: %s", nrow(esdata))
 
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.

@@ -36,16 +36,16 @@ flowsToMirror <- function(data = NA, names = FALSE) {
         rename(area = reporter) %>%
         ungroup(),
       data.frame(
-        area  = rep(unique(tmp$partner), each = N),
-        flow  = sort(unique(tmp$flow)),
-        count = 0
+        area  = rep(unique(data$partner), each = N),
+        flow  = sort(unique(data$flow)),
+        n = 0
       )
     ) %>%
     group_by(area, flow) %>%
-    summarise(count = sum(count, na.rm = TRUE)) %>%
+    summarise(n = sum(n, na.rm = TRUE)) %>%
     ungroup() %>%
-    filter(count == 0) %>%
-    select(-count)
+    filter(n == 0) %>%
+    select(-n)
 
   if (names) {
     return(res %>% mutate(name = faoswsTrade::faoAreaName(area)))

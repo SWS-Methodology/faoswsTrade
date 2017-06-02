@@ -106,7 +106,6 @@ ts_write_rprt <- function(rprt = NULL,
 
   stopifnot(!is.null(rprt))
   stopifnot(!is.null(ts_reports_path))
-  stopifnot(length(rprt) == 1L)
 
   if (basename(ts_reports_path) != "ts_reports")
     ts_reports_path <- file.path(ts_reports_path, "ts_reports")

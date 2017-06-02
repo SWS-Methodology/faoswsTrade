@@ -8,6 +8,7 @@
 #'  single-year reports are located (collection_path).
 #'@return NULL inivisibly.
 #'@export
+#'@import dplyr
 #'
 
 ts_all_reports <- function(collection_path = NULL,
@@ -18,10 +19,18 @@ ts_all_reports <- function(collection_path = NULL,
   stopifnot(!is.null(prefix))
   stopifnot(dir.exists(collection_path))
 
-  if (!is.null(ts_reports_path))
-    stopifnot(dir.exists(ts_reports_path)) else
-      ts_reports_path <- collection_path
+  if (!is.null(ts_reports_path)) {
+    if (!dir.exists(ts_reports_path))
+      dir.create(ts_reports_path,
+                 recursive = TRUE,
+                 showWarnings = FALSE)
+      } else ts_reports_path <- collection_path
 
+  ts_hsfcl_nolinks(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "ts_hsfcl_nolinks")
+
+  ts_hsfcl_nolinks_statistic(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "ts_hsfcl_nolinks_statistics")
 
 invisible(NULL)
 }

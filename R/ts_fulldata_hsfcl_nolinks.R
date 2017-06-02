@@ -7,7 +7,6 @@ ts_hsfcl_nolinks <- function(collection_path = NULL, prefix = NULL) {
              "tldata_hsfcl_nolinks")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    bind_rprts() %>%
     bind_rows() %>%
     ungroup() %>%
     select(reporter_fao, reporter, flow, hs = hs_orig, hs_extend, year) %>%

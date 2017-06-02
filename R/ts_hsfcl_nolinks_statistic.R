@@ -1,4 +1,5 @@
 #' Extracts time series of not mapped HS codes number
+#' @inheritParams ts_all_reports
 #' @import dplyr
 #' @return Data frame
 #' @examples

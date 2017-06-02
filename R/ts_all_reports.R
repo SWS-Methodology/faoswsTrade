@@ -9,6 +9,7 @@
 #'@return NULL inivisibly.
 #'@export
 #'@import dplyr
+#'@examples ts_all_reports("/mnt/storage/sws_share/sas", "complete_tf_cpc")
 #'
 
 ts_all_reports <- function(collection_path = NULL,

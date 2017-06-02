@@ -1,13 +1,30 @@
 #' Extract all unmapped HS codes across years
 #'
-#' @import dplyr
+#'@import dplyr
+#'
+#'@examples
+#' library(ggplot2)
+#' library(dplyr)
+#'
+#' uniq_hs <- ts_hsfcl_nolinks("/mnt/storage/sws_share/sas",
+#'                             "complete_tf_cpc")
+#' uniq_hs %>%
+#'   group_by(year, flow) %>%
+#'   summarize(uniq_hs = n()) %>%
+#'   ggplot(aes(as.factor(year), uniq_hs)) +
+#'   geom_bar(stat = "identity") +
+#'   ylab("Number of unique unmapped HS") + xlab("") +
+#'   ggtitle(paste0("There are ",
+#'                  nrow(uniq_hs),
+#'                  " unmapped HS codes"),
+#'           "New reporters absent in the map are not included")
+#'
 ts_hsfcl_nolinks <- function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("esdata_hsfcl_nolinks",
              "tldata_hsfcl_nolinks")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    bind_rprts() %>%
     bind_rows() %>%
     ungroup() %>%
     select(reporter_fao, reporter, flow, hs = hs_orig, hs_extend, year) %>%

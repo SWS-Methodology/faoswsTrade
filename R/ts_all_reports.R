@@ -33,5 +33,8 @@ ts_all_reports <- function(collection_path = NULL,
   ts_hsfcl_nolinks_statistic(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "ts_hsfcl_nolinks_statistics")
 
+  ts_preproc(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "ts_preproc_long_format")
+
 invisible(NULL)
 }

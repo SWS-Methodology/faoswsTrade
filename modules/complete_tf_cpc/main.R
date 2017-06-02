@@ -316,31 +316,15 @@ tldata <- tldata %>%
 
 
 # XXX this is a duplication: a function should be created.
-tmp <- bind_rows(
-  esdata %>% select(year, reporter, partner, flow),
-  tldata %>% filter(!(reporter %in% unique(esdata$reporter))) %>% select(year, reporter, partner, flow)
-) %>%
-mutate(flow = recode(flow, '4' = 1L, '3' = 2L))
-
-total_flows <- bind_rows(
-    tmp %>%
-      count(reporter, flow) %>%
-      rename(area = reporter) %>%
-      ungroup(),
-    data.frame(
-      area = rep(unique(tmp$partner), each = 2),
-      flow = sort(unique(tmp$flow)),
-      n = 0
-    )
+to_mirror_raw <- bind_rows(
+    esdata %>%
+      select(year, reporter, partner, flow),
+    tldata %>%
+      filter(!(reporter %in% unique(esdata$reporter))) %>%
+      select(year, reporter, partner, flow)
   ) %>%
-  group_by(area, flow) %>%
-  summarise(n = sum(n, na.rm = TRUE)) %>%
-  ungroup()
-
-to_mirror <- total_flows %>%
-  filter(n == 0) %>%
-  select(-n)
-
+  mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
+  flowsToMirror(names = TRUE)
 
 if(stop_after_pre_process) stop("Stop after reports on raw data")
 
@@ -1032,24 +1016,24 @@ countries_not_mapping_M49 <- bind_rows(
 ##' and will be mirrored.
 flog.trace("Mirroring", name = "dev")
 
-total_flows <- bind_rows(
+to_mirror <- bind_rows(
     tradedata %>%
       count(reporter, flow) %>%
       rename(area = reporter) %>%
       ungroup(),
     data.frame(
-      area = rep(unique(tradedata$partner), each = 2),
-      flow = sort(unique(tradedata$flow)),
-      n = 0
+      area  = rep(unique(tradedata$partner), each = 2),
+      flow  = sort(unique(tradedata$flow)),
+      count = 0
     )
   ) %>%
   group_by(area, flow) %>%
-  summarise(n = sum(n, na.rm = TRUE)) %>%
+  summarise(count = sum(count, na.rm = TRUE)) %>%
   ungroup()
+  filter(count == 0) %>%
+  select(-count) %>%
+  flowsToMirror()
 
-to_mirror <- total_flows %>%
-  filter(n == 0) %>%
-  select(-n)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).

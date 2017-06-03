@@ -1,4 +1,5 @@
 #' Extract all unmapped HS codes across years
+#' @inheritParams ts_all_reports
 #'
 #'@import dplyr
 #'

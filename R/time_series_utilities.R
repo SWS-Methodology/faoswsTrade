@@ -94,3 +94,33 @@ extract_rprt_elem <- function(collection_path = NULL,
 
   dplyr::bind_rows(elems_list)
 }
+
+#' Writes table with time series report to specific directory as csv file.
+#'
+#' @param rprt Data frame to save.
+#' @param ts_reports_path Directory path to save csv file.
+#'
+ts_write_rprt <- function(rprt = NULL,
+                          ts_reports_path = NULL,
+                          rprt_name = NULL) {
+
+  stopifnot(!is.null(rprt))
+  stopifnot(!is.null(ts_reports_path))
+
+  if (basename(ts_reports_path) != "ts_reports")
+    ts_reports_path <- file.path(ts_reports_path, "ts_reports")
+
+  if (!dir.exists(ts_reports_path))
+    dir.create(ts_reports_path,
+               showWarnings = FALSE,
+               recursive = TRUE)
+
+  write.table(rprt,
+              file = file.path(ts_reports_path,
+                               paste0(rprt_name, ".csv")),
+              sep = ",",
+              row.names = FALSE)
+
+  invisible(NULL)
+
+}

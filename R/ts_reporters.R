@@ -16,8 +16,8 @@
 
 ts_reporters = function(collection_path = NULL, prefix = NULL) {
 
-  elems <- c("esdata_hs2fcl_mapped_links",
-             "tldata_hs2fcl_mapped_links")
+  elems <- c("esdata_rawdata_hslength",
+             "tldata_rawdata_hslength")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%

@@ -326,6 +326,8 @@ to_mirror_raw <- bind_rows(
   mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
   flowsToMirror(names = TRUE)
 
+rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
+
 if(stop_after_pre_process) stop("Stop after reports on raw data")
 
 # Loading of help datasets ####

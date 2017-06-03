@@ -20,6 +20,6 @@ NULL invisibly.
 Function to produce the list of reporters cointained in the file.
 }
 \examples{
-ts_non_reporters("/mnt/storage/sws_share/sas", "esdata_hs2fcl_mapped_links")
+ts_reporters("/mnt/storage/sws_share/sas", "esdata_hs2fcl_mapped_links")
 
 }

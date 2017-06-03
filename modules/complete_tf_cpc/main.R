@@ -325,7 +325,6 @@ to_mirror_raw <- bind_rows(
   ) %>%
   mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
   flowsToMirror(names = TRUE)
-rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
 
 if(stop_after_pre_process) stop("Stop after reports on raw data")
 
@@ -1017,24 +1016,7 @@ countries_not_mapping_M49 <- bind_rows(
 ##' and will be mirrored.
 flog.trace("Mirroring", name = "dev")
 
-to_mirror <- bind_rows(
-    tradedata %>%
-      count(reporter, flow) %>%
-      rename(area = reporter) %>%
-      ungroup(),
-    data.frame(
-      area  = rep(unique(tradedata$partner), each = 2),
-      flow  = sort(unique(tradedata$flow)),
-      count = 0
-    )
-  ) %>%
-  group_by(area, flow) %>%
-  summarise(count = sum(count, na.rm = TRUE)) %>%
-  ungroup()
-  filter(count == 0) %>%
-  select(-count) %>%
-  flowsToMirror()
-
+to_mirror <- flowsToMirror(tradedata)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).

@@ -17,14 +17,11 @@ ts_non_reporters = function(collection_path = NULL, prefix = NULL) {
   elems <- c("flows_to_mirror_raw")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    bind_rprts() %>%
     bind_rows() %>%
     ungroup() %>%
     select(area, flow, name, year) %>%
     mutate(exist = 1) %>%
     arrange(year, name, flow) %>%
     tidyr::spread(year, exist)
-
-  invisible(NULL)
 
 }

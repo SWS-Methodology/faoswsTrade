@@ -36,5 +36,11 @@ ts_all_reports <- function(collection_path = NULL,
   ts_preproc(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "ts_preproc_long_format")
 
+  ts_reporters(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "ts_reporters")
+
+  ts_non_reporters(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "ts_non_reporters")
+
 invisible(NULL)
 }

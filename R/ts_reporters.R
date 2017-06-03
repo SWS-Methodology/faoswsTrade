@@ -9,7 +9,7 @@
 #' @return NULL invisibly.
 #' @export
 #' @import dplyr
-#' @examples ts_non_reporters("/mnt/storage/sws_share/sas", "esdata_hs2fcl_mapped_links")
+#' @examples ts_reporters("/mnt/storage/sws_share/sas", "esdata_hs2fcl_mapped_links")
 #'
 
 
@@ -20,13 +20,11 @@ ts_reporters = function(collection_path = NULL, prefix = NULL) {
              "tldata_hs2fcl_mapped_links")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    bind_rprts() %>%
     bind_rows() %>%
     ungroup() %>%
     select(reporter, flow, year) %>%
     arrange(year, reporter, flow) %>%
     select(year, reporter, flow)
 
-  invisible(NULL)
 
 }

@@ -43,6 +43,9 @@ ts_all_reports <- function(collection_path = NULL,
   ts_content_check(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "Table_4_ts_check_content")
 
+  ts_flows_check(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "Table_6_ts_flows_check")
+
   ts_preproc(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "ts_preproc_long_format")
 

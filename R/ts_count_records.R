@@ -11,6 +11,5 @@ ts_count_records <- function(collection_path = NULL, prefix = NULL) {
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
-    select(reporter, name, flow, records_count, year) %>%
-    tidyr::spread(year, records_count)
+    select(reporter, name, year, flow, hslength, records_count)
 }

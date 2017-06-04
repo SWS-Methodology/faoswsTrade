@@ -27,7 +27,17 @@ adaptTradeDataTypes <- function(tradedata, origin) {
 
   tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, hs),
-            funs(non_numeric = !grepl("^[[:digit:]]+$", .)))
+            funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %>%
+    mutate_(novalue = ~is.na(value),
+            noqty   = ~is.na(weight) & is.na(qty))
+
+  # When building preprocess time series we need to bind TL and ES reports. In
+  # his local copies of raw trade data sets Alex has differences in type of
+  # flows, so we convert flow to integer before calling preprocess reports.
+  #
+  # It is a temporary workaround and can be removed if all sources have flow as
+  # a character variable.
+  tradedata$flow <- as.integer(tradedata$flow)
 
   rprt(tradedata, "rawtradedata", tradedataname)
 

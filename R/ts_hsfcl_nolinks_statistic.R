@@ -1,5 +1,7 @@
 #' Extracts time series of not mapped HS codes number
+#' @inheritParams ts_all_reports
 #' @import dplyr
+#' @return Data frame
 #' @examples
 #' library(ggplot2)
 #' library(dygraph)
@@ -12,7 +14,7 @@
 #'   summarize(total_nolinks = sum(nolinks)) %>%
 #'   ungroup() %>%
 #'   ggplot(aes(year, total_nolinks)) +
-#'   geom_bin(stat = "identity")
+#'   geom_bar(stat = "identity")
 #'
 #' ts1 %>%
 #'   group_by(year) %>%
@@ -29,7 +31,6 @@ ts_hsfcl_nolinks_statistic <- function(collection_path = NULL, prefix = NULL) {
              "tldata_hsfcl_nolinks_statistic")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    bind_rprts() %>%
     bind_rows() %>%
     ungroup()
 

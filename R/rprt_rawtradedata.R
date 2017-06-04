@@ -14,6 +14,7 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
     tradedata <- add_area_names(tradedata, area_codes_class, "reporter")
   } else warning("No suitable area code list for given trade data name.")
 
+  # Non numeric partners
   rawdata_nonmrc_prtnrs_full <- tradedata %>%
     filter_(~partner_non_numeric) %>%
     select_(~-ends_with("non_numeric"))
@@ -22,6 +23,7 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
                   subdir = "preproc")
 
 
+  # Non numeric hs codes
   rawdata_nonmrc_hs_full <- tradedata %>%
     filter_(~hs_non_numeric) %>%
     select_(~-ends_with("non_numeric"))
@@ -30,14 +32,20 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
                   subdir = "preproc")
 
 
-  # Report non numeric partner and hs codes summary
+  # Report non numeric partner, hs codes summary, missing
+  # value and quantity
   rawdata_nonmrc <- tradedata %>%
     group_by_(~reporter, ~name, ~flow) %>%
-    summarize_(nonmrc_prt = ~sum(partner_non_numeric),
+    summarize_(records_count = ~n(),
+               partners = ~length(unique(partner)),
+               nonmrc_prt = ~sum(partner_non_numeric),
                nonmrc_hs = ~sum(hs_non_numeric),
-               nonmrc_prt_prop = ~nonmrc_prt / n(),
-               nonmrc_hs_prop = ~nonmrc_hs / n()) %>%
-    ungroup()
+               novalue = ~sum(novalue),
+               noqty = ~sum(noqty)) %>%
+    ungroup() %>%
+    mutate_at(vars(nonmrc_prt, nonmrc_hs, novalue, noqty),
+              funs(prop = . / records_count))
+
 
   rprt_writetable(rawdata_nonmrc, prefix = tradedataname, subdir = "preproc")
 

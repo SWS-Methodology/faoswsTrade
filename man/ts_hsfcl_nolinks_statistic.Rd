@@ -6,6 +6,16 @@
 \usage{
 ts_hsfcl_nolinks_statistic(collection_path = NULL, prefix = NULL)
 }
+\arguments{
+\item{collection_path}{String with path where single-year report directories
+are stored.}
+
+\item{prefix}{String with report directory name prefix without trailing
+underscore. By default NULL.}
+}
+\value{
+Data frame
+}
 \description{
 Extracts time series of not mapped HS codes number
 }
@@ -21,7 +31,7 @@ ts1 \%>\%
   summarize(total_nolinks = sum(nolinks)) \%>\%
   ungroup() \%>\%
   ggplot(aes(year, total_nolinks)) +
-  geom_bin(stat = "identity")
+  geom_bar(stat = "identity")
 
 ts1 \%>\%
   group_by(year) \%>\%

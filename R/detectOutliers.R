@@ -31,6 +31,9 @@ detectOutliers <- function(tradedata = NA, method = NA, parameters = NA) {
                                                coef = parameters$out_coef,
                                                do.conf = FALSE)$out) %>%
       ungroup()
+  } else if (method == 'ratiomedian') {
+      tradedata %>%
+        mutate(outlier = ifelse(uv / uvm < 1/100 | uv / uvm > 100, TRUE, FALSE))
   } else {
     stop('Only "boxplot" is currently allowed.')
   }

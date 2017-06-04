@@ -4,8 +4,7 @@
 \alias{extract_rprt_elem}
 \title{Extract an element from list stored in RDS archive in report directory.}
 \usage{
-extract_rprt_elem(collection_path = NULL, prefix = NULL, elem = NULL,
-  rprt_file_name = "report_data.rds")
+extract_rprt_elem(collection_path = NULL, prefix = NULL, elem = NULL)
 }
 \arguments{
 \item{collection_path}{String with path where report directories are stored.}
@@ -14,12 +13,9 @@ extract_rprt_elem(collection_path = NULL, prefix = NULL, elem = NULL,
 underscore. By default NULL.}
 
 \item{elem}{Character vector with names of elements to extract.}
-
-\item{rprt_file_name}{String with name of RDS file with reports.
-`report_data.rds` by defaul.`}
 }
 \value{
-
+List of extracted tables
 }
 \description{
 Extract an element from list stored in RDS archive in report directory.

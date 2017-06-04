@@ -52,69 +52,75 @@ extract_rprt_year <- function(dirname = NULL, prefix = NULL) {
 #' @param prefix A string with report directory name prefix (without trailing
 #'   underscore. By default NULL.
 #' @param elem Character vector with names of elements to extract.
-#' @param rprt_file_name String with name of RDS file with reports.
-#'   `report_data.rds` by defaul.`
-#' @return
+#' @return List of extracted tables
 #'
 
 extract_rprt_elem <- function(collection_path = NULL,
                               prefix = NULL,
-                              elem = NULL,
-                              rprt_file_name = "report_data.rds") {
+                              elem = NULL) {
   stopifnot(!is.null(dirname))
   stopifnot(!is.null(prefix))
   stopifnot(!is.null(elem))
   stopifnot(length(prefix) == 1L)
 
+  if (length(elem) > 1L) {
+    return(lapply(elem,
+                  extract_rprt_elem,
+                  collection_path = collection_path,
+                  prefix = prefix
+                  ))
+  }
+
   rprt_dirs <- list_rprt_dirs(collection_path, prefix)
   rprt_years <- extract_rprt_year(rprt_dirs, prefix)
 
   elems_list <- mapply(function(dir, year) {
-    rprt_file_path <- file.path(collection_path, basename(dir), rprt_file_name)
+    rprt_file_path <- file.path(collection_path,
+                                basename(dir),
+                                "datadir",
+                                paste0(elem, ".rds"))
     stopifnot(file.exists(rprt_file_path))
     rprt_data <- readRDS(rprt_file_path)
-    stopifnot(is.list(rprt_data))
-    stopifnot(all(elem %in% names(rprt_data)))
-    rprt_data <- rprt_data[elem]
-    rprt_data[["year"]] <- year
+    stopifnot("data.frame" %in% class(rprt_data))
+    if (!"year" %in% colnames(rprt_data)) {
+      if (nrow(rprt_data) > 0L) {
+        rprt_data$year <- year
+      } else {
+        rprt_data$year <- integer(0L)
+      }
+    }
     rprt_data
   }, dir = rprt_dirs, year = rprt_years, SIMPLIFY = FALSE)
 
+  dplyr::bind_rows(elems_list)
 }
 
+#' Writes table with time series report to specific directory as csv file.
+#'
+#' @param rprt Data frame to save.
+#' @param ts_reports_path Directory path to save csv file.
+#'
+ts_write_rprt <- function(rprt = NULL,
+                          ts_reports_path = NULL,
+                          rprt_name = NULL) {
 
-#' Bind similar data frames from different years
-#' @param rprt_elems_list List produced by `extract_rprt_elem`.
-#' @return Data frame if there is one report, and list of frames if more.
+  stopifnot(!is.null(rprt))
+  stopifnot(!is.null(ts_reports_path))
 
-bind_rprts <- function(rprt_elems_list) {
-  elem_names <- names(rprt_elems_list[[1]])
-  stopifnot(all(vapply(rprt_elems_list,
-                       function(x) identical(elem_names, names(x)),
-                       logical(1L))))
+  if (basename(ts_reports_path) != "ts_reports")
+    ts_reports_path <- file.path(ts_reports_path, "ts_reports")
 
-  elem_names <- elem_names[elem_names != "year"]
+  if (!dir.exists(ts_reports_path))
+    dir.create(ts_reports_path,
+               showWarnings = FALSE,
+               recursive = TRUE)
 
-  all_years_rpts_list <- lapply(elem_names, function(nm) {
-    dplyr::bind_rows(lapply(rprt_elems_list,
-                            function(one_year_rprt_list) {
-                              year <- one_year_rprt_list$year
-                              elem <- one_year_rprt_list[[nm]]
-                              stopifnot("data.frame" %in% class(elem))
-                              if (!"year" %in% colnames(elem)) {
-                                if (nrow(elem) > 0L) {
-                                  elem$year <- year
-                                } else {
-                                  elem$year <- integer(0L)
-                                }
-                              }
-                              elem
-                            }))
+  write.table(rprt,
+              file = file.path(ts_reports_path,
+                               paste0(rprt_name, ".csv")),
+              sep = ",",
+              row.names = FALSE)
 
-  })
-
-  names(all_years_rpts_list) <- elem_names
-  all_years_rpts_list
+  invisible(NULL)
 
 }
-

@@ -35,19 +35,21 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
   # Report non numeric partner, hs codes summary, missing
   # value and quantity
   rawdata_nonmrc <- tradedata %>%
+    mutate_(hslength = ~stringr::str_length(hs)) %>%
     group_by_(~reporter, ~name, ~flow) %>%
     summarize_(records_count = ~n(),
                partners = ~length(unique(partner)),
                nonmrc_prt = ~sum(partner_non_numeric),
                nonmrc_hs = ~sum(hs_non_numeric),
                novalue = ~sum(novalue),
-               noqty = ~sum(noqty)) %>%
+               noqty = ~sum(noqty),
+               hslength = ~max(hslength)) %>%
     ungroup() %>%
     mutate_at(vars(nonmrc_prt, nonmrc_hs, novalue, noqty),
               funs(prop = . / records_count))
 
-
   rprt_writetable(rawdata_nonmrc, prefix = tradedataname, subdir = "preproc")
+
 
   # Report length of hs code
   rawdata_hslength <- tradedata %>%

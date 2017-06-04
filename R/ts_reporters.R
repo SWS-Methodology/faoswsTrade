@@ -12,8 +12,6 @@
 #' @examples ts_reporters("/mnt/storage/sws_share/sas", "esdata_hs2fcl_mapped_links")
 #'
 
-
-
 ts_reporters = function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("esdata_rawdata_hslength",
@@ -22,9 +20,8 @@ ts_reporters = function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(reporter, flow, year) %>%
-    arrange(year, reporter, flow) %>%
-    select(year, reporter, flow)
-
-
+    select(year, reporter, name, flow, year) %>%
+    mutate(exist = 1) %>%
+    arrange(year, name, flow) %>%
+    tidyr::spread(year, exist)
 }

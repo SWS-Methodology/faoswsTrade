@@ -6,7 +6,9 @@
 #' @param prefix String with report directory name prefix without trailing
 #'   underscore. By default NULL.
 #'
-#' @return NULL invisibly.
+#' @return A table with countries/years where the cell is 9 if the country
+#'   does not report completely for that year, 1 if it does not report
+#'   imports, 2 if it does not report exports.
 #' @export
 #' @import dplyr
 #' @examples ts_non_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
@@ -20,8 +22,10 @@ ts_non_reporters <- function(collection_path = NULL, prefix = NULL) {
     bind_rows() %>%
     ungroup() %>%
     select(area, flow, name, year) %>%
-    mutate(exist = 1) %>%
-    arrange(year, name, flow) %>%
-    tidyr::spread(year, exist)
-
+    group_by(area, year) %>%
+    mutate(n = n()) %>%
+    ungroup() %>%
+    mutate(missing = ifelse(n < 2, flow, 9)) %>%
+    select(area, flow, name, year, missing) %>%
+    tidyr::spread(year, missing)
 }

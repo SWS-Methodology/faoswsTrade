@@ -20,8 +20,9 @@ ts_reporters <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(year, reporter, name, flow, year) %>%
+    select(year, reporter, name, year) %>%
+    distinct() %>%
     mutate(exist = 1) %>%
-    arrange(year, name, flow) %>%
+    arrange(year, name) %>%
     tidyr::spread(year, exist)
 }

@@ -9,10 +9,10 @@
 #' @return NULL invisibly.
 #' @export
 #' @import dplyr
-#' @examples ts_reporters("/mnt/storage/sws_share/sas", "esdata_hs2fcl_mapped_links")
+#' @examples ts_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
 #'
 
-ts_reporters = function(collection_path = NULL, prefix = NULL) {
+ts_reporters <- function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("esdata_rawdata_hslength",
              "tldata_rawdata_hslength")

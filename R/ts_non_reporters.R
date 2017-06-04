@@ -9,10 +9,10 @@
 #' @return NULL invisibly.
 #' @export
 #' @import dplyr
-#' @examples ts_non_reporters("/mnt/storage/sws_share/sas", "flows_to_mirror_raw")
+#' @examples ts_non_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
 #'
 
-ts_non_reporters = function(collection_path = NULL, prefix = NULL) {
+ts_non_reporters <- function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("flows_to_mirror_raw")
 

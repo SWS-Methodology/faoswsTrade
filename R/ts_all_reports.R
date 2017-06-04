@@ -31,15 +31,19 @@ ts_all_reports <- function(collection_path = NULL,
     ts_reports_path <- collection_path
   }
 
+  ts_reporters(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "Table_1_ts_reporters")
+
+  ts_non_reporters(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "Table_2_ts_non_reporters")
+
+  ts_count_records(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "Table_3_ts_preproc_long_format")
+
   ts_preproc(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "ts_preproc_long_format")
 
-  ts_reporters(collection_path, prefix = prefix) %>%
-    ts_write_rprt(ts_reports_path, "ts_reporters")
-
-  ts_non_reporters(collection_path, prefix = prefix) %>%
-    ts_write_rprt(ts_reports_path, "ts_non_reporters")
-
+  # To be used only if the module ran completely (i.e., until the end)
   if (complete) {
     ts_hsfcl_nolinks(collection_path, prefix = prefix) %>%
       ts_write_rprt(ts_reports_path, "ts_hsfcl_nolinks")

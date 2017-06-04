@@ -40,6 +40,9 @@ ts_all_reports <- function(collection_path = NULL,
   ts_count_records(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "Table_3_ts_preproc_long_format")
 
+  ts_content_check(collection_path, prefix = prefix) %>%
+    ts_write_rprt(ts_reports_path, "Table_4_ts_check_content")
+
   ts_preproc(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "ts_preproc_long_format")
 

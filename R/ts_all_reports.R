@@ -20,11 +20,11 @@ ts_all_reports <- function(collection_path = NULL,
 
   stopifnot(!is.null(collection_path))
   stopifnot(!is.null(prefix))
-  stopifnot(dir.exists(collection_path))
+  stopifnot(file.info(collection_path)$isdir)
   stopifnot(is.logical(complete))
 
   if (!is.null(ts_reports_path)) {
-    if (!dir.exists(ts_reports_path)) {
+    if (!file.info(ts_reports_path)$isdir) {
       dir.create(ts_reports_path, recursive = TRUE, showWarnings = FALSE)
     }
   } else {

@@ -5,7 +5,7 @@
 \title{General function to produce all time-series reports}
 \usage{
 ts_all_reports(collection_path = NULL, prefix = NULL,
-  ts_reports_path = NULL)
+  ts_reports_path = NULL, complete = TRUE)
 }
 \arguments{
 \item{collection_path}{String with path where single-year report directories
@@ -17,6 +17,9 @@ underscore. By default NULL.}
 \item{ts_reports_path}{String with path where time series reports should be
 saved. If NULL (default) the directory with TS reports will be saved where
 single-year reports are located (collection_path).}
+
+\item{complete}{Logical If TRUE (default) all reports (raw data, mapping,
+etc.) will be generated, if FALSE only raw data reports will be produced.}
 }
 \value{
 NULL inivisibly.
@@ -26,5 +29,4 @@ General function to produce all time-series reports
 }
 \examples{
 ts_all_reports("/mnt/storage/sws_share/sas", "complete_tf_cpc")
-
 }

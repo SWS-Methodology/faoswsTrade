@@ -44,10 +44,10 @@ ts_all_reports <- function(collection_path = NULL,
     ts_write_rprt(ts_reports_path, "Table_4_ts_check_content")
 
   ts_flows_check(collection_path, prefix = prefix) %>%
-    ts_write_rprt(ts_reports_path, "Table_6_ts_flows_check")
+    ts_write_rprt(ts_reports_path, "Table_5_ts_flows_check")
 
   ts_missing_records(collection_path, prefix = prefix) %>%
-    ts_write_rprt(ts_reports_path, "Table_7_ts_missing_records")
+    ts_write_rprt(ts_reports_path, "Table_6_ts_missing_records")
 
   ts_preproc(collection_path, prefix = prefix) %>%
     ts_write_rprt(ts_reports_path, "ts_preproc_long_format")

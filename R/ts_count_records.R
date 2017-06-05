@@ -1,5 +1,10 @@
 #' Count number of records across years.
 #'
+#' Table with the number of records by reporter/year/flow.
+#' It also contains the maximum HS length, the percentage
+#' difference in trade flows per year and whether the
+#' maximum HS length changed with respect to the previous year.
+#'
 #' @inherit Params ts_all_reports
 #' 
 #' @import dplyr
@@ -11,5 +16,11 @@ ts_count_records <- function(collection_path = NULL, prefix = NULL) {
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
-    select(reporter, name, year, flow, hslength, records_count)
+    select(reporter, name, year, flow, hslength, records_count) %>%
+    arrange(reporter, name, flow, year) %>%
+    group_by(reporter, name, flow) %>%
+    mutate(
+      records_diff = records_count / lag(records_count) - 1,
+      hs_diff = hslength == lag(hslength)
+    )
 }

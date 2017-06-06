@@ -23,7 +23,7 @@ mirrorNonReporters <- function(tradedata = NA, mirror = NA) {
 
   if (missing(mirror)) stop('"mirror" is missing.')
 
-  rprt_writetable(mirror, 'flows_')
+  rprt_writetable(mirror, 'flows')
 
   tradedatanonrep <- tradedata %>%
     left_join(

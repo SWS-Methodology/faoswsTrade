@@ -21,6 +21,6 @@ ts_count_records <- function(collection_path = NULL, prefix = NULL) {
     group_by(reporter, name, flow) %>%
     mutate(
       records_diff = records_count / lag(records_count) - 1,
-      hs_diff = hslength == lag(hslength)
+      hs_diff = hslength != lag(hslength)
     )
 }

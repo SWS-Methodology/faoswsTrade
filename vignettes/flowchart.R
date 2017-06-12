@@ -19,6 +19,8 @@ digraph trade {
   aggregation_fcl [label = 'Trade flow aggregation by FCL']
   complete_trade_flow_1 [label = 'Complete trade flow', shape = '@@1', fillcolor = '@@2']
   complete_trade_flow_2 [label = 'Complete trade flow', shape = '@@1', fillcolor = '@@2']
+  complete_trade_flow_sub [label = 'Complete trade flow', shape = '@@1', fillcolor = '@@2']
+  complete_trade_flow_disseminate [label = 'Complete trade flow', shape = '@@1', fillcolor = '@@3']
   es_conversion [label = 'Conversion factors for fclunits (specific)']
   es_data [label = 'Eurostat data'] 
   es_data_assess [label = 'Data content assessment']
@@ -27,12 +29,14 @@ digraph trade {
     CN8 > FCL,
     FCL units,
     EUR to USD']
-  es_notes [label = 'Application of notes']
+  #es_notes [label = 'Application of notes']
+    validate_tools [label = 'Analysts intervention', shape = '@@4']
+  interactive [label = 'Tools for validation', shape = '@@4']
   flags [label = 'Add flags']
   mirror [label = 'Mirroring for
     non-reporting countries']
-  outliers [label = 'Outlier and missing quantity
-    detection and imputation']
+  #outliers [label = 'Outlier and missing quantity
+  #  detection and imputation']
   tl_conversion [label = 'Conversion factors for
     fclunits (general and specific)']
   tl_data [label = 'UNSD data'] 
@@ -41,27 +45,31 @@ digraph trade {
     country names (M49),
     HS > FCL,
     FCL units']
-  tl_notes [label = 'Application of notes']
+  #tl_notes [label = 'Application of notes']
   tl_preaggregate [label = 'Aggregate individual shipments']
   tl_recode_flows [label = 'Recode re-imports as imports
     and re-exports as exports']
   tl_remove_europe [label = 'Remove European countries']
   total_trade [label = 'Total trade', shape = '@@1', fillcolor = '@@2']
+  total_trade_sub [label = 'Total trade', shape = '@@1', fillcolor = '@@2']
+  total_trade_disseminate [label = 'Total trade', shape = '@@1', fillcolor = '@@3']
   unified_flow_1 [label = 'Unified trade flow', shape = '@@1']
   unified_flow_2 [label = 'Unified trade flow', shape = '@@1']
   uv_calculation [label = 'Unit value calculation']
 
   module [label = 'Module']
   data [label = 'Data', shape = '@@1']
+  validation [label = 'Data for
+    validation', shape = '@@1', fillcolor = '@@2']
   dissemination [label = 'Data for
-    dissemination', shape = '@@1', fillcolor = '@@2']
+    dissemination', shape = '@@1', fillcolor = '@@3']
 
   es_raw ->
   es_data_assess ->
   es_data -> 
   es_mapping ->
   es_conversion ->
-  es_notes ->
+  #es_notes ->
   unified_flow_1
 
   tl_raw ->
@@ -72,12 +80,12 @@ digraph trade {
   tl_recode_flows ->
   tl_mapping ->
   tl_conversion ->
-  tl_notes ->
+  #tl_notes ->
   unified_flow_1
 
   unified_flow_2 ->
   uv_calculation ->
-  outliers ->
+  #outliers ->
   aggregation_fcl ->
   add_cpc_codes ->
   add_m49_codes ->
@@ -95,8 +103,20 @@ digraph trade {
 
     module ->
     data ->
-    dissemination
+    validate_tools ->
+    validation ->
+    dissemination [arrowsize = 0, penwidth = 0]
   }
+
+  complete_trade_flow_sub ->
+  interactive
+
+  total_trade_sub ->
+  interactive
+
+  interactive ->
+  complete_trade_flow_disseminate ->
+  total_trade_disseminate
 
   {rank = same es_data tl_data}
   {rank = same es_mapping tl_mapping}
@@ -104,5 +124,7 @@ digraph trade {
 
 [1]: 'diamond'
 [2]: 'orange'
+[3]: 'lightgreen'
+[4]: 'oval'
 ")
 

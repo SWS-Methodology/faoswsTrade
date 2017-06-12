@@ -30,8 +30,8 @@ digraph trade {
     FCL units,
     EUR to USD']
   #es_notes [label = 'Application of notes']
-    validate_tools [label = 'Analysts intervention', shape = '@@4']
-  interactive [label = 'Tools for validation', shape = '@@4']
+  validate_tools [label = 'Analysts intervention', shape = '@@4']
+  interactive [label = 'Data validation', shape = '@@4']
   flags [label = 'Add flags']
   mirror [label = 'Mirroring for
     non-reporting countries']

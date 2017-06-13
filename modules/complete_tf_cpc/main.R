@@ -268,11 +268,7 @@ stopifnot(nrow(tldata) > 0)
 esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
 tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
 
-##' 1. Use standard (common) variable types.
-
 esdata <- adaptTradeDataTypes(esdata, "ES")
-tldata <- adaptTradeDataTypes(tldata, "TL")
-
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
@@ -293,6 +289,8 @@ esdata <- esdata %>%
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
 tldata <- tldata %>%
+  # Workaround
+  mutate(partner = as.numeric(partner)) %>%
   left_join(
     unsdpartnersblocks %>%
       select_(
@@ -313,6 +311,21 @@ tldata <- tldata %>%
     reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
     partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
   )
+
+flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
+# They will be replaced by ES data
+tldata <- tldata %>%
+  anti_join(
+    esdata %>%
+      select_(~reporter) %>%
+      distinct(),
+    by = "reporter"
+  )
+
+##' 1. Use standard (common) variable types.
+
+
+tldata <- adaptTradeDataTypes(tldata, "TL")
 
 
 # XXX this is a duplication: a function should be created.
@@ -602,15 +615,6 @@ tldata <- tldata %>%
   setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
 
-flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
-# They will be replaced by ES data
-tldata <- tldata %>%
-  anti_join(
-    esdata %>%
-      select_(~reporter) %>%
-      distinct(),
-    by = "reporter"
-  )
 
 ##+ drop_reps_not_in_mdb ####
 

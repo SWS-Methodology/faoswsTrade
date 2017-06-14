@@ -20,7 +20,7 @@ ts_content_check <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(year, reporter, name, flow, noqty) %>%
+    select(year, reporter, name, flow) %>%
     mutate(
       flow = recode(
                flow,
@@ -30,5 +30,5 @@ ts_content_check <- function(collection_path = NULL, prefix = NULL) {
                `4` = 're_imports'
              )
       ) %>%
-    tidyr::spread(flow, noqty)
+    mutate(i=1) %>% tidyr::spread(flow, i, fill = "")
 }

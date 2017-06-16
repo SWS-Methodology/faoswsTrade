@@ -881,6 +881,9 @@ tradedata <- bind_rows(
 tradedata <- tradedata %>%
   mutate_each_(funs(swapFlags(., swap='\\1\\2')), ~starts_with('flag_'))
 
+## Check for double counting f HS codes
+rprt_writetable(tradedata, subdir = 'details')
+
 ##' # Outlier Detection and Imputation
 flog.trace("Outlier detection and imputation", name = "dev")
 ##+ calculate_median_uv

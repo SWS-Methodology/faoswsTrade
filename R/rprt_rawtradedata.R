@@ -10,7 +10,7 @@ rprt_rawtradedata <- function(tradedata = NULL, tradedataname = NULL) {
 
   # Add area name
   if (tradedataname %in% c("esdata", "tldata")) {
-    area_codes_class <- if_else(tradedataname == "esdata", "geonom", "m49")
+    area_codes_class <- if_else(tradedataname == "esdata", "geonom", "fao")
     tradedata <- add_area_names(tradedata, area_codes_class, "reporter")
   } else warning("No suitable area code list for given trade data name.")
 

@@ -30,5 +30,7 @@ ts_content_check <- function(collection_path = NULL, prefix = NULL) {
                `4` = 're_imports'
              )
       ) %>%
+    rename_(rep_code = ~ reporter,
+            rep_name = ~ name) %>%
     mutate(i=1) %>% tidyr::spread(flow, i, fill = "")
 }

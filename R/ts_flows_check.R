@@ -22,5 +22,7 @@ ts_flows_check <- function(collection_path = NULL, prefix = NULL) {
     ungroup() %>%
     select(year, reporter, name, flow, noqty_prop, novalue_prop) %>%
     mutate(qty = 1*(noqty_prop == 1), value = 1*(novalue_prop == 1)) %>%
-    select(-noqty_prop, -novalue_prop)
+    select(-noqty_prop, -novalue_prop) %>%
+    rename_(rep_code = ~ reporter,
+            rep_name = ~ name)
 }

@@ -24,5 +24,7 @@ ts_reporters <- function(collection_path = NULL, prefix = NULL) {
     distinct() %>%
     mutate(exist = 1) %>%
     arrange(year, name) %>%
+    rename_(rep_code = ~ reporter,
+            rep_name = ~ name) %>%
     tidyr::spread(year, exist, fill = '')
 }

@@ -26,7 +26,9 @@ ts_non_reporters <- function(collection_path = NULL, prefix = NULL) {
     mutate(n = n()) %>%
     ungroup() %>%
     mutate(missing = ifelse(n < 2, flow, 9)) %>%
-    group_by(area, name, year) %>%
+    rename_(non_rep_area = ~ area,
+            non_rep_name = ~ name) %>%
+    group_by(non_rep_area, non_rep_name, year) %>%
     summarise(missing = max(missing)) %>%
     tidyr::spread(year, missing, fill = '')
 }

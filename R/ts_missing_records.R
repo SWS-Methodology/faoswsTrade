@@ -1,7 +1,7 @@
 #' Report the number of records with missing quantity/weight.
 #'
 #' @inherit Params ts_all_reports
-#' 
+#'
 #' @import dplyr
 #'
 ts_missing_records <- function(collection_path = NULL, prefix = NULL) {
@@ -24,5 +24,7 @@ ts_missing_records <- function(collection_path = NULL, prefix = NULL) {
     data.table::dcast.data.table(
       reporter + name + year ~ flow,
       value.var = c("noqty", "noqty_prop")
-    )
+    ) %>%
+    rename_(rep_code = ~ reporter,
+            rep_name = ~ name)
 }

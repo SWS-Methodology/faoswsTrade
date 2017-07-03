@@ -6,7 +6,7 @@
 #' maximum HS length changed with respect to the previous year.
 #'
 #' @inherit Params ts_all_reports
-#' 
+#'
 #' @import dplyr
 #'
 ts_count_records <- function(collection_path = NULL, prefix = NULL) {
@@ -17,8 +17,10 @@ ts_count_records <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     select(reporter, name, year, flow, hslength, records_count) %>%
-    arrange(reporter, name, flow, year) %>%
-    group_by(reporter, name, flow) %>%
+    rename_(rep_code = ~ reporter,
+            rep_name = ~ name) %>%
+    arrange(rep_code, rep_name, flow, year) %>%
+    group_by(rep_code, rep_name, flow) %>%
     mutate(
       records_diff = records_count / lag(records_count) - 1,
       hs_diff = hslength != lag(hslength)

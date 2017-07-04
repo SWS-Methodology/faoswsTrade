@@ -23,8 +23,8 @@ library(faoswsUtil)
 library(faoswsTrade)
 library(faoswsFlag)
 library(pander)
-files = dir("C:/Users/mongeau/tmp/faoswsTrade/R", full.names = TRUE)
-sapply(files, source)
+# files = dir("C:/Users/caetano/Documents/Github/faoswsTrade/R", full.names = TRUE)
+# sapply(files, source)
 ```
 
 ## About this document
@@ -34,11 +34,9 @@ This vignette is a detailed guide of the various data sets created for the **Pre
 
 #1 SWS - Datatables
 
-The pre-processing reports should be available on SWS once a specific new domain is created. Once it is available you sould be able to access the reports by selecting the specific domain in the "Datatables" section of SWS, as shown in the next figure.
+The pre-processing reports is available on SWS in **Datatables** under the domain **trade-reports** as shown in the figure below.
 
-![Initial Page of SWS.](C:/Users/mongeau/Dropbox/FAO/validation/pre-processing-reports/sws.png)
-\ 
-
+![SWS](C:/Users/caetano/Documents/Github/faoswsTrade/vignettes/pre-processing-reports/sws-datatables.png)
 
 #2 Tables
 
@@ -46,21 +44,22 @@ The pre-processing reports should be available on SWS once a specific new domain
 
 This table allows you to quickly identify data gaps and facilitate comparisons. It contains the following columns:
 
-* **reporter**: country code of the reporter
-* **name**: country name of the reporter
+* **rep_code**: country code of the reporter
+* **rep_name**: country name of the reporter
 * **years**: years on which the data availability is assessed
 
-If the table contains a **1** it means that there is information for the country in that particular year. If the country did not report for that year, the correspondig cell will be blank.
+If the table contains a **1** it means that there is information for the country in that particular year. If the country did not report for that year, the correspondig cell will be blank. It's name on SWS is **Reporters by years**.
 
 ```{r, echo=FALSE}
-ts_all_reports(
-  collection_path = "//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports", 
-  prefix = "complete_tf_cpc", complete = FALSE
-  )
-table1 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports/ts_reports/Table_1_ts_reporters.csv")
+# ts_all_reports(
+#   collection_path = "//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports", 
+#   prefix = "complete_tf_cpc", complete = FALSE
+#   )
+# \\hqlprsws1.hq.un.fao.org\sws_r_share\mongeau\pre_processing_report\ts_reports
+table1 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_1_ts_reporters.csv")
 # kable(head(table1), format = "markdown", padding = 0)
 set.caption("Country list by year of which reporters are contained in the file")
-pander(rbind(head(table1), tail(table1[name != 'EU-28',])), split.table = 120, style = 'rmarkdown')
+pander(rbind(head(table1), tail(table1)), split.table = 120, style = 'rmarkdown')
 
 ```
 
@@ -70,7 +69,8 @@ It contains the complementary list of countries not reporting for those years by
 
 The variables in the table are:
 
-* **area**: country code
+* **non_rep_area**: country code
+* **non_rep_name**: country name
 * **flow**: the flow, where 1 means imports and 2 exports
 * **name**: country name
 * **years**: years on which the data availability is assessed
@@ -84,7 +84,7 @@ In the table the meaning of the cells is:
 * **2**: the country did not report exports
 * blank cell: the country reported all the flows
 
-Only countries that for which at least in one year did not report at least one flow are reported.
+Only countries that for which at least in one year did not report at least one flow are reported. It's name on SWS is **Non-reporting countries**.
 
 <!-- reporter: country code of the reporter -->
 <!-- name: country name of the reporter -->
@@ -93,7 +93,7 @@ Only countries that for which at least in one year did not report at least one f
 <!-- If the table contains **1** means that there is information for the country in that particular year, but if there is *NA* means not available. -->
 
 ```{r, echo=FALSE}
-table2 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports/ts_reports/Table_2_ts_non_reporters.csv")
+table2 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_2_ts_non_reporters.csv")
 set.caption("List of non-reporting countries")
 pander(rbind(head(table2), tail(table2)), split.table = 120, style = 'rmarkdown')
 # kable(head(table2), format = "markdown", padding = 0)
@@ -105,23 +105,27 @@ It contains the number of records by flow and year per country. It also has the 
 
 **Note**: the **records_diff** variable is reported as $variable_t/variable_{t-1} - 1$ (so, e.g., 0.01 means 1%).
 
+It's name on SWS is **Number records by reporter/year**.
+
 ```{r, echo=FALSE}
-table3 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports/ts_reports/Table_3_ts_preproc_long_format.csv")
+table3 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_3_ts_preproc_long_format.csv")
 # kable(head(table3), format = "markdown", padding = 0)
 set.caption("Number of records by reporter")
-pander(rbind(head(table3), tail(table3[name != 'EU-28',])), split.table = 120, style = 'rmarkdown')
+pander(rbind(head(table3), tail(table3)), split.table = 120, style = 'rmarkdown')
 ```
 
 \newpage
 
 ##2.4 Table 4: Import/export content check
 
-For every reporter for the year in question, a check that the file contains both import data and export data (as well as re-exports and re-imports). If the cell contains a zero, the country reported all the flows, if it contains a number other than zero it means that some flows miss quantity information (and the number indicates how many flows), if it contains NA it means that the coutry ddid not report that flow.
+For every reporter for the year in question, a check that the file contains both import data and export data (as well as re-exports and re-imports). If the cell contains a **1**, the country reported all the flows. If the country did not report for that year, the corresponding cell will be blank.
+It's name on SWS is **Import and export content check**.
+
 
 ```{r, echo=FALSE}
-table4 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports/ts_reports/Table_4_ts_check_content.csv")
+table4 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_4_ts_check_content.csv")
 set.caption("Import/export content check")
-pander(rbind(head(table4), tail(table4[name != 'EU-28',])), split.table = 120, style = 'rmarkdown')
+pander(rbind(head(table4), tail(table4)), split.table = 120, style = 'rmarkdown')
 ```
 
 \newpage
@@ -129,11 +133,13 @@ pander(rbind(head(table4), tail(table4[name != 'EU-28',])), split.table = 120, s
 ##2.5 Table 5: Check that quantities and values are included, by country/flow/year
 
 For every reporter for the year in question, a check if that file contains both quantities and values. A **0** indicates that no information lacks, while **1** indicates that the information is missing.
+It's name on SWS is **Check qty and value included**.
+
 
 ```{r, echo=FALSE}
-table5 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports/ts_reports/Table_5_ts_flows_check.csv")
+table5 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_5_ts_flows_check.csv")
 set.caption("Quantities and values are included, by country/flow/year")
-pander(rbind(head(table5), table5[name == 'Comoros',], tail(table5[name != 'EU-28',])), split.table = 120, style = 'rmarkdown')
+pander(rbind(head(table5), tail(table5)), split.table = 120, style = 'rmarkdown')
 ```
 
 ##2.6 Table 6: Report of records with missing quantities, for each year
@@ -144,8 +150,8 @@ For every reporter for the year in question, a check if that file contains both 
 
 The table contains the following variables:
 
-* **reporter**: country code
-* **name**: country name
+* **rep_code**: country code
+* **rep_name**: country name
 * **year**: year
 * **noqty_export**: number of exports with missing quantities
 * **noqty_import**: number of imports with missing quantities
@@ -156,10 +162,12 @@ The table contains the following variables:
 * **noqty_prop_reexport**: proportion of re-exports with missing quantities
 * **noqty_prop_reimport**: proportion of re-imports with missing quantities
 
-**Note**: the noqty_prop_* variables are reported as shares (so, e.g., 0.01 means 1%).
+**Note**: the noqty_prop_* variables are reported as shares (so, e.g., 0.01 means 1%). 
+It's name on SWS is **Missing data by report**.
+
 
 ```{r, echo=FALSE}
-table6 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/for_reports/ts_reports/Table_6_ts_missing_records.csv")
+table6 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_6_ts_missing_records.csv")
 set.caption("Report of records with missing quantities, for each year")
-pander(rbind(head(table6), tail(table6[name != 'EU-28',])), split.table = 120, style = 'rmarkdown')
+pander(rbind(head(table6), tail(table6)), split.table = 120, style = 'rmarkdown')
 ```

@@ -122,6 +122,9 @@ if(faosws::CheckDebug()){
   })
 }
 
+files = dir("R", full.names = TRUE)
+sapply(files, source)
+
 stopifnot(!any(is.na(USER), USER == ""))
 
 ##' - `year`: year for processing.

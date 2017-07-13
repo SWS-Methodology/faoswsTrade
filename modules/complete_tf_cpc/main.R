@@ -122,7 +122,8 @@ if(faosws::CheckDebug()){
   })
 }
 
-files = dir("R", full.names = TRUE)
+# Always source files in R/ (useful for local runs)
+files <- dir("R", full.names = TRUE)
 sapply(files, source)
 
 stopifnot(!any(is.na(USER), USER == ""))

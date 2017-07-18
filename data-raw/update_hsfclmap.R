@@ -3,7 +3,7 @@ library(dplyr)
 library(readr)
 library(readxl)
 
-map_file <- 'C:/Users/mongeau/Dropbox\\FAO/unmapped_hs-fcl_codes/unmapped_hs_2015_20170717.csv'
+map_file <- 'C:/Users/mongeau/Dropbox\\FAO/unmapped_hs-fcl_codes/mapped_codes_until_20170718.csv'
 fcl_2_cpc_file <- 'C:/Users/mongeau/Dropbox/FAO/datatables/fcl_2_cpc.csv'
 
 hs6standard_file <- 'https://github.com/SWS-Methodology/faoswsTrade/blob/master/data-raw/HS2012-6%20digits%20Standard.xls?raw=true'
@@ -35,7 +35,8 @@ add_map <- read_csv(
       mapped_by = col_character(),
       year = col_integer(),
       reporter_fao = col_integer(),
-      reporter = col_character(),
+      #reporter = col_character(),
+      reporter_name = col_character(),
       flow = col_integer(),
       hs_chap = col_integer(),
       hs = col_double(),
@@ -56,6 +57,11 @@ add_map <- read_csv(
   ) %>%
   arrange(reporter_fao, flow, hs, year)
 
+
+## XXX change some FCL codes that are not valid
+add_map <- add_map %>%
+  mutate(fcl = ifelse(fcl == 389, 390, fcl)) %>%
+  mutate(fcl = ifelse(fcl == 654, 653, fcl))
 
 # Check that all FCL codes are valid
 
@@ -84,10 +90,16 @@ tmp <- add_map %>%
   filter(n > 1)
 
 if (nrow(tmp) > 0) {
-  stop('There are duplicate HS codes by reporter/year/flow.')
+  warning('Removing duplicate HS codes by reporter/year/flow.')
+  
+  add_map <- add_map %>%
+    group_by(reporter_fao, year, flow, hs) %>%
+    mutate(n = n(), i = 1:n(), hs_ext_perc = sum(!is.na(hs_extend))/n()) %>%
+    ungroup() %>%
+    # Prefer cases where hs_extend is available
+    filter(hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1L)) %>%
+    select(-n, -i, -hs_ext_perc)
 }
-
-
 
 #hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
@@ -105,7 +117,7 @@ if (nrow(hsfclmap3) == 0) {
 # Raise warning if countries were NOT in mapping.
 
 if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
-  warning('Some countries were not in the mapping.')
+  warning('Some countries were not in the original mapping.')
 }
 
 tmp_file <- paste0(tempfile(), '.xls')
@@ -144,7 +156,8 @@ adapt_map_sws_format <- function(data) {
       endyear,
       recordnumb,
       details,
-      tl_description = `TL description (if available)`
+      #tl_description = `TL description (if available)`
+      tl_description = tl_description
     )
 }
 
@@ -154,14 +167,16 @@ manual_updated <-
 
 auto_updated <-
   add_map %>%
-  filter(is.na(fcl), is.na(details), is.na(`TL description (if available)`)) %>%
+  #filter(is.na(fcl), is.na(details), is.na(`TL description (if available)`)) %>%
+  filter(is.na(fcl), is.na(details), is.na(tl_description)) %>%
   mutate(hs6 = stringr::str_sub(hs, 1, 6)) %>%
   left_join(
     hs6standard_uniq,
     by = c('hs6' = 'HS2012Code')
   ) %>%
   filter(!is.na(FaoStatCode)) %>%
-  mutate(fcl = FaoStatCode, details = hs6details, `TL description (if available)` = hs6description) %>%
+  #mutate(fcl = FaoStatCode, details = hs6details, `TL description (if available)` = hs6description) %>%
+  mutate(fcl = FaoStatCode, details = hs6details, tl_description = hs6description) %>%
   select(-hs6, -FaoStatCode, -hs6details, -hs6description)
 
 mapped <- bind_rows(manual_updated, auto_updated)
@@ -172,6 +187,9 @@ mapped <- adapt_map_sws_format(mapped)
 
 max_record <- max(hsfclmap3$recordnumb)
 
-mapped$recordnumb <- max_record:(max_record+nrow(mapped)-1)
+mapped$recordnumb <- (max_record+1):(max_record+nrow(mapped))
 
+mapped <- mapped %>%
+  select(-details, -tl_description) %>%
+  mutate(fcl = as.numeric(fcl))
 

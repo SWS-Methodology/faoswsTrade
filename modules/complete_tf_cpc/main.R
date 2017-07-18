@@ -1233,19 +1233,6 @@ stats <- SaveData("trade",
 
 flog.trace("[%s] Session/database write completed!", PID, name = "dev")
 
-sprintf(
-  "Module completed in %1.2f minutes.
-  Values inserted: %s
-  appended: %s
-  ignored: %s
-  discarded: %s",
-  difftime(Sys.time(), startTime, units = "min"),
-  stats[["inserted"]],
-  stats[["appended"]],
-  stats[["ignored"]],
-  stats[["discarded"]]
-)
-
 flog.info(
     "Module completed in %1.2f minutes.
   Values inserted: %s
@@ -1262,4 +1249,16 @@ flog.info(
 # Restore changed options
 options(old_options)
 
+sprintf(
+  "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+  difftime(Sys.time(), startTime, units = "min"),
+  stats[["inserted"]],
+  stats[["appended"]],
+  stats[["ignored"]],
+  stats[["discarded"]]
+)
 

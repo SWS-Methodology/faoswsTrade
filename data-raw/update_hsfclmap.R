@@ -3,6 +3,11 @@ library(dplyr)
 library(readr)
 library(readxl)
 
+# Save current options (will be reset at the end)
+old_options <- options()
+
+options(scipen = 999)
+
 map_file <- 'C:/Users/mongeau/Dropbox\\FAO/unmapped_hs-fcl_codes/mapped_codes_until_20170718.csv'
 fcl_2_cpc_file <- 'C:/Users/mongeau/Dropbox/FAO/datatables/fcl_2_cpc.csv'
 
@@ -192,4 +197,7 @@ mapped$recordnumb <- (max_record+1):(max_record+nrow(mapped))
 mapped <- mapped %>%
   select(-details, -tl_description) %>%
   mutate(fcl = as.numeric(fcl))
+
+# Restore changed options
+options(old_options)
 

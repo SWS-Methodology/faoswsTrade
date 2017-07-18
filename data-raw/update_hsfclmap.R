@@ -3,7 +3,7 @@ library(dplyr)
 library(readr)
 library(readxl)
 
-map_file <- 'C:/Users/mongeau/tmp/to_map.csv'
+map_file <- 'C:/Users/mongeau/Dropbox\\FAO/unmapped_hs-fcl_codes/unmapped_hs_2015_20170717.csv'
 fcl_2_cpc_file <- 'C:/Users/mongeau/Dropbox/FAO/datatables/fcl_2_cpc.csv'
 
 hs6standard_file <- 'https://github.com/SWS-Methodology/faoswsTrade/blob/master/data-raw/HS2012-6%20digits%20Standard.xls?raw=true'
@@ -31,7 +31,8 @@ fcl_codes <- read_csv(fcl_2_cpc_file)$fcl
 add_map <- read_csv(
     map_file,
     col_types = cols(
-      `Mapped by` = col_character(),
+      #`Mapped by` = col_character(),
+      mapped_by = col_character(),
       year = col_integer(),
       reporter_fao = col_integer(),
       reporter = col_character(),
@@ -41,7 +42,8 @@ add_map <- read_csv(
       hs_extend = col_double(),
       fcl = col_integer(),
       details = col_character(),
-      `TL description (if available)` = col_character()
+      #`TL description (if available)` = col_character()
+      tl_description = col_character()
     )
   ) %>%
   filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%

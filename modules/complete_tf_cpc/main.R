@@ -122,7 +122,8 @@ if(faosws::CheckDebug()){
   })
 }
 
-files = dir("R", full.names = TRUE)
+# Always source files in R/ (useful for local runs)
+files <- dir("R", full.names = TRUE)
 sapply(files, source)
 
 stopifnot(!any(is.na(USER), USER == ""))
@@ -1232,19 +1233,6 @@ stats <- SaveData("trade",
 
 flog.trace("[%s] Session/database write completed!", PID, name = "dev")
 
-sprintf(
-  "Module completed in %1.2f minutes.
-  Values inserted: %s
-  appended: %s
-  ignored: %s
-  discarded: %s",
-  difftime(Sys.time(), startTime, units = "min"),
-  stats[["inserted"]],
-  stats[["appended"]],
-  stats[["ignored"]],
-  stats[["discarded"]]
-)
-
 flog.info(
     "Module completed in %1.2f minutes.
   Values inserted: %s
@@ -1261,4 +1249,16 @@ flog.info(
 # Restore changed options
 options(old_options)
 
+sprintf(
+  "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+  difftime(Sys.time(), startTime, units = "min"),
+  stats[["inserted"]],
+  stats[["appended"]],
+  stats[["ignored"]],
+  stats[["discarded"]]
+)
 

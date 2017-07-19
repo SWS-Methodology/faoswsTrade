@@ -20,7 +20,9 @@ ts_content_check <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(year, reporter, name, flow) %>%
+    select(year, reporter, name, flow, nonmrc_hs_prop) %>%
+    filter_(~!nonmrc_hs_prop == 1) %>%
+    select_(~-nonmrc_hs_prop) %>%
     mutate(
       flow = recode(
                flow,

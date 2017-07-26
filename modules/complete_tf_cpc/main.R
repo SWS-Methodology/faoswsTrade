@@ -84,7 +84,7 @@ dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
 options(dplyr.show_progress = FALSE)
 
 # max.print in RStudio is too small
-options(max.print = 99999L)
+options(max.print = 99999L, scipen = 999)
 
 # Libraries ####
 suppressPackageStartupMessages(library(data.table))

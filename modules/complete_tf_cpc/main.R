@@ -331,6 +331,14 @@ tldata <- tldata %>%
 
 tldata <- adaptTradeDataTypes(tldata, "TL")
 
+# XXX create all reporters
+
+tldata_rep_table <- tldata %>%
+  select(reporter, flow) %>%
+  distinct() %>%
+  mutate(name = faoAreaName(reporter, "fao"))
+
+rprt_writetable(tldata_rep_table, subdir = 'preproc')
 
 # XXX this is a duplication: a function should be created.
 to_mirror_raw <- bind_rows(

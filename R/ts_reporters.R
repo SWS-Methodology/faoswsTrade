@@ -15,12 +15,12 @@
 ts_reporters <- function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("esdata_rawdata_hslength",
-             "tldata_rawdata_hslength")
+             "tldata_rep_table")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(year, reporter, name, year) %>%
+    select(year, reporter, name) %>%
     distinct() %>%
     mutate(exist = 1) %>%
     arrange(year, name) %>%

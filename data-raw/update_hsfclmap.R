@@ -2,56 +2,31 @@
 library(dplyr)
 library(readr)
 library(readxl)
+library(faosws)
+library(bit64)
+
+if(CheckDebug()){
+  library(faoswsModules)
+  SETTINGS = ReadSettings("modules/complete_tf_cpc/sws.yml")
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  ## Get session information from SWS. Token must be obtained from web interface
+  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                     token = SETTINGS[["token"]])
+}
+
 
 # Save current options (will be reset at the end)
 old_options <- options()
 
 options(scipen = 999)
 
-map_file <- 'C:/Users/mongeau/Dropbox\\FAO/unmapped_hs-fcl_codes/mapped_codes_until_20170718.csv'
-fcl_2_cpc_file <- 'C:/Users/mongeau/Dropbox/FAO/datatables/fcl_2_cpc.csv'
+#hs6standard_file <- 'https://github.com/SWS-Methodology/faoswsTrade/blob/master/data-raw/HS2012-6%20digits%20Standard.xls?raw=true'
+hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
-hs6standard_file <- 'https://github.com/SWS-Methodology/faoswsTrade/blob/master/data-raw/HS2012-6%20digits%20Standard.xls?raw=true'
-hsfclmap3_file <- 'https://github.com/SWS-Methodology/hsfclmap/blob/master/data/hsfclmap3.RData?raw=true'
+fcl_codes <- as.numeric(tbl_df(faosws::ReadDatatable(table = 'fcl_2_cpc'))$fcl)
 
-#if (CheckDebug()) {
-#  library(faoswsModules)
-#  settings_file <- "modules/complete_tf_cpc/sws.yml"
-#  SETTINGS = faoswsModules::ReadSettings(settings_file)
-#
-#  ## Define where your certificates are stored
-#  SetClientFiles(SETTINGS[["certdir"]])
-#
-#  ## Get session information from SWS.
-#  ## Token must be obtained from web interface
-#  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
-#                     token   = SETTINGS[["token"]])
-#}
-#
-#fcl_codes <- ReadDatatable('fcl_2_cpc')$fcl %>%
-#  as.numeric()
-
-fcl_codes <- read_csv(fcl_2_cpc_file)$fcl
-
-add_map <- read_csv(
-    map_file,
-    col_types = cols(
-      #`Mapped by` = col_character(),
-      mapped_by = col_character(),
-      year = col_integer(),
-      reporter_fao = col_integer(),
-      #reporter = col_character(),
-      reporter_name = col_character(),
-      flow = col_integer(),
-      hs_chap = col_integer(),
-      hs = col_double(),
-      hs_extend = col_double(),
-      fcl = col_integer(),
-      details = col_character(),
-      #`TL description (if available)` = col_character()
-      tl_description = col_character()
-    )
-  ) %>%
+add_map <- tbl_df(ReadDatatable('hsfclmap4')) %>%
   filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
   mutate(
     hs = ifelse(
@@ -108,9 +83,9 @@ if (nrow(tmp) > 0) {
 
 #hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
-tmp_file <- paste0(tempfile(), '.Rdata')
-writeBin(httr::GET(hsfclmap3_file)$content, tmp_file)
-load(tmp_file)
+#tmp_file <- paste0(tempfile(), '.Rdata')
+#writeBin(httr::GET(hsfclmap3_file)$content, tmp_file)
+#load(tmp_file)
 
 
 if (nrow(hsfclmap3) == 0) {
@@ -125,21 +100,21 @@ if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
   warning('Some countries were not in the original mapping.')
 }
 
-tmp_file <- paste0(tempfile(), '.xls')
-writeBin(httr::GET(hs6standard_file)$content, tmp_file)
-hs6standard <- read_excel(tmp_file, sheet = 'Standard_HS12')
+#tmp_file <- paste0(tempfile(), '.xls')
+#writeBin(httr::GET(hs6standard_file)$content, tmp_file)
+#hs6standard <- read_excel(tmp_file, sheet = 'Standard_HS12')
 
-hs6standard_uniq <-
-  hs6standard %>%
-  group_by(HS2012Code) %>%
-  mutate(n = n()) %>%
-  ungroup() %>%
-  filter(n == 1) %>%
-  mutate(
-    hs6details = 'Standard_HS12',
-    hs6description = paste('FaoStatName', FaoStatName, sep = ': ')
-  ) %>%
-  select(HS2012Code, FaoStatCode, hs6details, hs6description)
+#hs6standard_uniq <-
+#  hs6standard %>%
+#  group_by(HS2012Code) %>%
+#  mutate(n = n()) %>%
+#  ungroup() %>%
+#  filter(n == 1) %>%
+#  mutate(
+#    hs6details = 'Standard_HS12',
+#    hs6description = paste('FaoStatName', FaoStatName, sep = ': ')
+#  ) %>%
+#  select(HS2012Code, FaoStatCode, hs6details, hs6description)
 
 
 adapt_map_sws_format <- function(data) {
@@ -170,21 +145,22 @@ manual_updated <-
   add_map %>%
   filter(!is.na(fcl))
 
-auto_updated <-
-  add_map %>%
-  #filter(is.na(fcl), is.na(details), is.na(`TL description (if available)`)) %>%
-  filter(is.na(fcl), is.na(details), is.na(tl_description)) %>%
-  mutate(hs6 = stringr::str_sub(hs, 1, 6)) %>%
-  left_join(
-    hs6standard_uniq,
-    by = c('hs6' = 'HS2012Code')
-  ) %>%
-  filter(!is.na(FaoStatCode)) %>%
-  #mutate(fcl = FaoStatCode, details = hs6details, `TL description (if available)` = hs6description) %>%
-  mutate(fcl = FaoStatCode, details = hs6details, tl_description = hs6description) %>%
-  select(-hs6, -FaoStatCode, -hs6details, -hs6description)
-
-mapped <- bind_rows(manual_updated, auto_updated)
+#auto_updated <-
+#  add_map %>%
+#  #filter(is.na(fcl), is.na(details), is.na(`TL description (if available)`)) %>%
+#  filter(is.na(fcl), is.na(details), is.na(tl_description)) %>%
+#  mutate(hs6 = stringr::str_sub(hs, 1, 6)) %>%
+#  left_join(
+#    hs6standard_uniq,
+#    by = c('hs6' = 'HS2012Code')
+#  ) %>%
+#  filter(!is.na(FaoStatCode)) %>%
+#  #mutate(fcl = FaoStatCode, details = hs6details, `TL description (if available)` = hs6description) %>%
+#  mutate(fcl = FaoStatCode, details = hs6details, tl_description = hs6description) %>%
+#  select(-hs6, -FaoStatCode, -hs6details, -hs6description)
+#
+#mapped <- bind_rows(manual_updated, auto_updated)
+mapped <- manual_updated
 
 unmapped <- anti_join(add_map, mapped, by = c('year', 'reporter_fao', 'flow', 'hs'))
 
@@ -196,7 +172,11 @@ mapped$recordnumb <- (max_record+1):(max_record+nrow(mapped))
 
 mapped <- mapped %>%
   select(-details, -tl_description) %>%
-  mutate(fcl = as.numeric(fcl))
+  mutate(
+    fcl      = as.numeric(fcl),
+    fromcode = gsub(' ', '', fromcode),
+    tocode   = gsub(' ', '', tocode)
+  )
 
 # Restore changed options
 options(old_options)

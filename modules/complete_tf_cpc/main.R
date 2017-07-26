@@ -98,6 +98,7 @@ library(faosws)
 library(faoswsUtil)
 library(faoswsTrade)
 library(faoswsFlag)
+library(bit64)
 
 # Development (SWS-outside) mode addons ####
 if(faosws::CheckDebug()){

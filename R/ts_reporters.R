@@ -18,6 +18,7 @@ ts_reporters <- function(collection_path = NULL, prefix = NULL) {
              "tldata_rep_table")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
+    lapply(function(x) x %>% mutate(reporter = as.character(reporter))) %>%
     bind_rows() %>%
     ungroup() %>%
     select(year, reporter, name) %>%

@@ -48,7 +48,7 @@ flowsToMirror <- function(data = NA, names = FALSE) {
     select(-n)
 
   if (names) {
-    return(res %>% mutate(name = faoswsTrade::faoAreaName(area)))
+    return(res %>% mutate(name = faoAreaName(area)))
   } else {
     return(res)
   }

@@ -367,6 +367,172 @@ flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
 
+# Extend the endyear of all areas for which the maximum
+# endyear is less than 2050
+hsfclmap3 <-
+  left_join(
+    hsfclmap3,
+    hsfclmap3 %>%
+      group_by(area) %>%
+      summarise(maxy = max(endyear)) %>%
+      mutate(extend = ifelse(maxy < 2050, TRUE, FALSE)),
+    by = 'area'
+  ) %>%
+  mutate(endyear = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
+  select(-maxy, -extend)
+
+# ADD UNMAPPED CODES
+
+
+fcl_codes <- as.numeric(tbl_df(faosws::ReadDatatable(table = 'fcl_2_cpc'))$fcl)
+
+add_map <- tbl_df(ReadDatatable('hsfclmap4')) %>%
+  filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
+  mutate(
+    hs = ifelse(
+           hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0',
+           paste0('0', formatC(hs, format = 'fg')),
+           formatC(hs, format = 'fg')
+         ),
+    hs = stringr::str_replace_all(hs, ' ', '')
+  ) %>%
+  arrange(reporter_fao, flow, hs, year)
+
+
+## XXX change some FCL codes that are not valid
+add_map <- add_map %>%
+  mutate(fcl = ifelse(fcl == 389, 390, fcl)) %>%
+  mutate(fcl = ifelse(fcl == 654, 653, fcl))
+
+# Check that all FCL codes are valid
+
+fcl_diff <- setdiff(unique(add_map$fcl), fcl_codes)
+
+fcl_diff <- fcl_diff[!is.na(fcl_diff)]
+
+if (length(fcl_diff) > 0) {
+  if (!(length(fcl_diff) == 1 & fcl_diff == 0)) {
+    warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
+  }
+}
+
+# Check that years are in a valid range
+
+if (min(add_map$year) < 2000) {
+  warning('The minimum year should not be lower than 2000.')
+}
+
+if (max(add_map$year) > as.numeric(format(Sys.Date(), '%Y'))) {
+  warning('The maximum year should not be greater than the current year.')
+}
+
+# Check that there are no duplicate codes
+
+tmp <- add_map %>%
+  count(reporter_fao, year, flow, hs) %>%
+  filter(n > 1)
+
+if (nrow(tmp) > 0) {
+  warning('Removing duplicate HS codes by reporter/year/flow.')
+  
+  # XXX
+  add_map <- add_map %>%
+    group_by(reporter_fao, year, flow, hs) %>%
+    mutate(n = n(), i = 1:n(), hs_ext_perc = sum(!is.na(hs_extend))/n()) %>%
+    ungroup() %>%
+    # Prefer cases where hs_extend is available
+    filter(hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1L)) %>%
+    select(-n, -i, -hs_ext_perc)
+}
+
+# Raise warning if countries were NOT in mapping.
+
+if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
+  warning('Some countries were not in the original mapping.')
+}
+
+hs6standard <- ReadDatatable('standard_hs12_6digit')
+
+hs6standard_uniq <-
+  hs6standard %>%
+  group_by(hs2012_code) %>%
+  mutate(n = n()) %>%
+  ungroup() %>%
+  filter(n == 1) %>%
+  mutate(
+    hs6details = 'Standard_HS12',
+    hs6description = paste('FaoStatName', faostat_name, sep = ': ')
+  ) %>%
+  select(hs2012_code, faostat_code, hs6details, hs6description)
+
+
+adapt_map_sws_format <- function(data) {
+  data %>%
+    mutate(
+      startyear = year,
+      endyear = 2050L,
+      fromcode = hs,
+      tocode = hs,
+      recordnumb = NA_integer_
+    ) %>%
+    select(
+      area = reporter_fao,
+      flow,
+      fromcode,
+      tocode,
+      fcl,
+      startyear,
+      endyear,
+      recordnumb,
+      details,
+      tl_description = tl_description
+    )
+}
+
+manual_updated <-
+  add_map %>%
+  filter(!is.na(fcl))
+
+auto_updated <-
+  add_map %>%
+  filter(is.na(fcl), is.na(details), is.na(tl_description)) %>%
+  mutate(hs6 = stringr::str_sub(hs, 1, 6)) %>%
+  left_join(
+    hs6standard_uniq,
+    by = c('hs6' = 'hs2012_code')
+  ) %>%
+  filter(!is.na(faostat_code)) %>%
+  mutate(fcl = faostat_code, details = hs6details, tl_description = hs6description) %>%
+  select(-hs6, -faostat_code, -hs6details, -hs6description)
+
+mapped <- bind_rows(manual_updated, auto_updated)
+
+unmapped <- anti_join(add_map, mapped, by = c('year', 'reporter_fao', 'flow', 'hs'))
+
+mapped <- adapt_map_sws_format(mapped)
+
+max_record <- max(hsfclmap3$recordnumb)
+
+mapped$recordnumb <- (max_record+1):(max_record+nrow(mapped))
+
+mapped <- mapped %>%
+  select(-details, -tl_description) %>%
+  mutate(
+    fcl      = as.numeric(fcl),
+    fromcode = gsub(' ', '', fromcode),
+    tocode   = gsub(' ', '', tocode)
+  )
+
+
+
+hsfclmap3 <- bind_rows(mapped, hsfclmap3) %>%
+  mutate(
+         startyear = as.integer(startyear),
+         endyear = as.integer(endyear)
+         )
+
+# / ADD UNMAPPED CODES
+
 flog.info("HS->FCL mapping table preview:",
           rprt_glimpse0(hsfclmap3), capture = TRUE)
 

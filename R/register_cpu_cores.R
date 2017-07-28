@@ -11,7 +11,13 @@ register_cpu_cores <- function() {
 
     flog.debug("Packages doParallel and foreach are available.", name = "dev")
 
-    cpucores <- parallel::detectCores(all.tests = TRUE)
+    if (CheckDebug()) {
+      cpucores <- parallel::detectCores(all.tests = TRUE) - 1
+    } else {
+      # When running on SWS it is better to limit the
+      # maximum number of cores used.
+      cpucores <- 3
+    }
 
     flog.debug("CPU cores detected: %s.", cpucores, name = "dev")
 

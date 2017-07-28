@@ -4,7 +4,7 @@
 \alias{adaptTradeDataNames}
 \title{Standardise TL or ES variable names.}
 \usage{
-adaptTradeDataNames(tradedata = NA, origin = NA)
+adaptTradeDataNames(tradedata, origin)
 }
 \arguments{
 \item{tradedata}{TL or ES trade data.}

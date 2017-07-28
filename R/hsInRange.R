@@ -94,7 +94,7 @@ hsInRange <- function(uniqhs,
     .parallel = parallel,
     # Windows requires functions and packages to be explicitly exported
     .paropts = list(.packages = "dplyr"),
-    .progress = ifelse(interactive() &
+    .progress = ifelse(CheckDebug() &
                          !parallel &
                          # Don't show progress for quick calculations
                          nrow(uniqhs) > 10^4,

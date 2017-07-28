@@ -16,7 +16,7 @@ rprt_hslength <- function(hslength, tradedataname = NULL) {
 
   hslength <- add_area_names(hslength, "fao")
 
-  rprt_writetable(hslength, prefix = tradedataname)
+  rprt_writetable(hslength, prefix = tradedataname, subdir = "details")
 
   rprt_fulltable(hslength, prefix = tradedataname)
 }

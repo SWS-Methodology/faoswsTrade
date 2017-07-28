@@ -1,0 +1,39 @@
+---
+title: "**Trade Module: Pre-Processing Report**"
+author: |
+        | **Economics and Social Statistics Division (ESS)**
+output:
+  pdf_document:
+    includes:
+      in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages(library(data.table))
+library(knitr)
+library(stringr)
+library(magrittr)
+library(scales)
+library(tidyr, warn.conflicts = FALSE)
+library(futile.logger)
+suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
+library(faosws)
+library(faoswsUtil)
+library(faoswsTrade)
+library(faoswsFlag)
+library(pander)
+# files = dir("C:/Users/caetano/Documents/Github/faoswsTrade/R", full.names = TRUE)
+# sapply(files, source)
+```
+
+## About this document
+
+This vignette is a detailed guide of the various data sets created for the **Pre-Processing** **Report** of the **Trade Module**. In order to have access to those data sets the user must be logged in [**SWS - Q.A**](http://hqlqasws1.hq.un.fao.org:8080/sws).
+
+
+#1 SWS - Datatables
+
+The pre-processing reports should be available on SWS once a specific new domain is created. Once it is available you sould be able to access the reports by selecting the specific domain in the "Datatables" section of SWS, as shown in the next figure.
+
+<!-- ![Initial Page of SWS.](C:/Users/mongeau/Dropbox/FAO/validation/pre-processing-reports/sws.png) -->

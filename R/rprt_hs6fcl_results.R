@@ -22,14 +22,9 @@ rprt_hs6fcl_results <- function(data = NULL, tradedataname = NULL) {
 
   rprt_writetable(hs6fcl_results_by_reporter, prefix = tradedataname)
 
-  hs6_links_not_mapped <- data %>%
-    filter_(~is.na(fcl))
-
   hs6_links_mapped <- data %>%
     filter_(~!is.na(fcl))
 
-  rprt_writetable(hs6_links_not_mapped,
-                  prefix = tradedataname)
   rprt_writetable(hs6_links_mapped,
                   prefix = tradedataname)
 

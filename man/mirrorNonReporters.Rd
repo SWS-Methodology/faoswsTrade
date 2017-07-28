@@ -2,27 +2,28 @@
 % Please edit documentation in R/mirrorNonReporters.R
 \name{mirrorNonReporters}
 \alias{mirrorNonReporters}
-\title{Mirror non-reporting countries.}
+\title{Mirror non-reporting and incomplete countries.}
 \usage{
-mirrorNonReporters(tradedata = NA, nonreporters = NA)
+mirrorNonReporters(tradedata = NA, mirror = NA)
 }
 \arguments{
 \item{tradedata}{Trade data.}
 
-\item{nonreporters}{Vector containing the codes of non-reporting countries.}
+\item{mirror}{data.frame containing the code of the area and the
+flow that should be mirrored.}
 }
 \value{
 \code{tradedata} with mirrored data for non-reporters added.
 }
 \description{
 Use mirror trade flows for imputing trade data for non-reporting
-countries.
+countries and for countries that do not report a flow.
 }
 \details{
-For non-reporting countries exports of reporters will become their
-imports, and vice versa. In order to take into account the different
-international shipping costs, a CIF (Cost, Insurance, Freight) / FOB
-(Free On Board) correction is done. Currently, the CIF/FOB correction
-is set at 12% (imports are increased by 12% the values of reporters'
-exports).
+For non-reporting and incomplete countries exports of reporters will
+become their imports, and vice versa. In order to take into account
+the different international shipping costs, a CIF (Cost, Insurance,
+Freight) / FOB (Free On Board) correction is done. Currently, the
+CIF/FOB correction is set at 12% (imports are increased by 12% the
+values of reporters' exports).
 }

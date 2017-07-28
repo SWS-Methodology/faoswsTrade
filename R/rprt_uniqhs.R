@@ -23,7 +23,8 @@ rprt_uniqhs <- function(uniqhs, tradedataname = NULL) {
     rename_(uniq_hs_flow1 = ~`1`, uniq_hs_flow2 = ~`2`) %>%
     mutate_(total_uniq_hs = ~sum(uniq_hs_flow1, uniq_hs_flow2))
 
-  rprt_writetable(uniq_hs_by_reporter, prefix = tradedataname)
+  rprt_writetable(uniq_hs_by_reporter, prefix = tradedataname,
+                  subdir = "details")
 
   rprt_fulltable(uniq_hs_by_reporter, prefix = tradedataname,
                  area_code_class = "fao")

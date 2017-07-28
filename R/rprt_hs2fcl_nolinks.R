@@ -20,9 +20,11 @@ rprt_hs2fcl_nolinks <- function(uniqhs, tradedataname = NULL) {
 
   hsfcl_nolinks <- uniqhs %>%
     filter_(~is.na(fcl)) %>%
+    mutate_(hschap = ~stringr::str_sub(hs, end = 2L)) %>%
     select_(reporter_fao = ~reporter,
             reporter = ~name,
             ~flow,
+            ~hschap,
             hs_orig = ~hs,
             hs_extend = ~hsext,
             ~fcl)

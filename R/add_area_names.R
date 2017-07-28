@@ -17,11 +17,12 @@ add_area_names <- function(data, code_class = NULL,
   stopifnot(!is.null(code_class))
   code_class <- tolower(code_class)
 
-  if(code_class != "fao") stop("Only FAO area codes are supported now.")
+  if (!code_class %in% c("fao", "m49", "geonom"))
+    stop("Unknown area code class. Please use `fao`, `m49` or `geonom`.")
 
   columns2change <- colnames(data)[colnames(data) %in% area_columns]
 
-  if(length(columns2change) == 0L) {
+  if (length(columns2change) == 0L) {
     message("No suitable columns detected. Nothing to do.")
     return(data)
   }

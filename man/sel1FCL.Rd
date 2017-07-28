@@ -4,13 +4,15 @@
 \alias{sel1FCL}
 \title{Select one record from multiple matches during HS->FCL mapping process.}
 \usage{
-sel1FCL(hsfclmatch, maptable)
+sel1FCL(hsfclmatch, maptable, cur_yr = NULL)
 }
 \arguments{
 \item{hsfclmatch}{Data frame with columns reporter, flow, hs, hsext, fcl,
 datumid, maplinkid}
 
 \item{maptable}{Data frame with HS->FCL mapping table.}
+
+\item{cur_yr}{Integer, year the trade module run on.}
 }
 \value{
 Data frame similar to hsfclmatch but with all duplicates removed.

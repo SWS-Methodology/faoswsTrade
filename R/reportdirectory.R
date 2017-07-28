@@ -27,8 +27,12 @@ reportdirectory <- function(sws_user, year, build_id, create = TRUE, browsedir =
   reportdir <- normalizePath(reportdir,
                              winslash='/',
                              mustWork = FALSE)
-  stopifnot(!file.exists(reportdir))
-  dir.create(reportdir, recursive = TRUE)
+
+  if (file.exists(reportdir)) {
+    warning('A previous reportdir exists: it will be overwritten')
+  } else {
+    dir.create(reportdir, recursive = TRUE)
+  }
 
   # Open report directory in system default file browser
   if(browsedir & interactive()) browseURL(reportdir)

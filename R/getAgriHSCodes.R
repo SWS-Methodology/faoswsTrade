@@ -6,7 +6,11 @@
 
 getAgriHSCodes <- function() {
 
-  hs6faointerest <- faosws::ReadDatatable('hs6faointerest')
+  hs6faointerest <- try(faosws::ReadDatatable('hs6faointerest'))
+
+  if (inherits(hs6faointerest, 'try-error')) {
+    stop('The "hs6faointerest" table is not available.')
+  }
 
   return(hs6faointerest$hs6_code)
 }

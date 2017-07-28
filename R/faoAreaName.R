@@ -2,8 +2,8 @@
 #' @export
 
 faoAreaName <- function(areacode,
-                    swsdomain = "faostatOne",
-                    swsdataset = "faostatOne",
+                    swsdomain = "faostat_one",
+                    swsdataset = "FS1_SUA_UPD",
                     swsdimension = "geographicAreaFS") {
 
 

@@ -27,7 +27,7 @@ rprt_hschanged <- function(uniqhs, tradedataname = NULL) {
     filter_(~otherlength) %>%
     select_(~-otherlength)
 
-  rprt_writetable(hschange, prefix = tradedataname)
+  rprt_writetable(hschange, prefix = tradedataname, subdir = "details")
 
   hschange_statistic <- hschange_all %>%
     group_by_(~reporter, ~name) %>%
@@ -35,7 +35,8 @@ rprt_hschanged <- function(uniqhs, tradedataname = NULL) {
                changed = ~sum(otherlength),
                changedprop = ~changed / all)
 
-  rprt_writetable(hschange_statistic, prefix = tradedataname)
+  rprt_writetable(hschange_statistic, prefix = tradedataname,
+                  subdir = "details")
 
   hschange_statistic <- hschange_statistic %>%
     arrange_(~desc(changedprop)) %>%

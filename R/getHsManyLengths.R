@@ -21,7 +21,11 @@ getHsManyLengths <- function(data) {
                                               flow + hs6 + fclunit ~ ncharac,
                                             value.var = "totValue")
 
-  tradedatareportPartManyHs = tradedataaggregatedHS6[apply(tradedataaggregatedHS6[, -c(1:6)], 1, function(x)  sum(!is.na(x))) > 1, ]
+
+  # HT Sebastian
+  tradedataaggregatedHS6_num_cols <- tradedataaggregatedHS6[, mget(grep("^[[:digit:]]{1,2}$", names(tradedataaggregatedHS6), value = TRUE))]
+
+  tradedatareportPartManyHs = tradedataaggregatedHS6[apply(tradedataaggregatedHS6_num_cols, 1, function(x)  sum(!is.na(x))) > 1, ]
 
   tradedatareportPartManyHs[, geographicAreaM49Reporter := fs2m49(as.character(reporter))]
   tradedatareportPartManyHs[, geographicAreaM49Partner := fs2m49(as.character(partner))]

@@ -14,12 +14,14 @@ are stored.}
 underscore. By default NULL.}
 }
 \value{
-NULL invisibly.
+A table with countries/years where the cell is 9 if the country
+  does not report completely for that year, 1 if it does not report
+  imports, 2 if it does not report exports.
 }
 \description{
 Function to produce the list of non-reporting countries.
 }
 \examples{
-ts_non_reporters("/mnt/storage/sws_share/sas", "flows_to_mirror_raw")
+ts_non_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
 
 }

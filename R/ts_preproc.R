@@ -1,6 +1,6 @@
 #' Extracts time series data from preprocessing reports
 #'
-#' @inheritParams ts_all_reports
+#' @inherit Params ts_all_reports
 #' @import dplyr
 #'
 ts_preproc <- function(collection_path = NULL, prefix = NULL) {
@@ -9,6 +9,8 @@ ts_preproc <- function(collection_path = NULL, prefix = NULL) {
              "tldata_rawdata_nonmrc")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    bind_rows()
+    bind_rows() %>%
+    rename_(rep_code = ~ reporter,
+            rep_name = ~ name)
 
 }

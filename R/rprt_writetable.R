@@ -12,16 +12,16 @@
 rprt_writetable <- function(dataset, prefix = NULL, subdir = NULL) {
 
   stopifnot(exists("reportdir"))
-  stopifnot(dir.exists(reportdir))
+  stopifnot(file.exists(reportdir))
 
   # Dir for RDS files
   datadir <- normalizePath(file.path(reportdir, "datadir"), mustWork = FALSE)
-  if (!dir.exists(datadir)) dir.create(datadir)
+  if (!file.exists(datadir)) dir.create(datadir)
 
   # Dir for detailed csv
   if (!is.null(subdir)) {
     reportdir <- normalizePath(file.path(reportdir, subdir), mustWork = FALSE)
-    if (!dir.exists(reportdir)) dir.create(reportdir)
+    if (!file.exists(reportdir)) dir.create(reportdir)
   }
 
 

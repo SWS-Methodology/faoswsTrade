@@ -8,7 +8,10 @@
 list_rprt_dirs <- function(collection_path = NULL, prefix = NULL) {
   stopifnot(!is.null(collection_path))
   stopifnot(!is.null(prefix))
-  stopifnot(dir.exists(collection_path))
+
+  collection_path <- file.path(collection_path)
+
+  stopifnot(file.exists(collection_path))
 
   prefix <- paste0(prefix, "_\\d{4}_")
 
@@ -107,10 +110,12 @@ ts_write_rprt <- function(rprt = NULL,
   stopifnot(!is.null(rprt))
   stopifnot(!is.null(ts_reports_path))
 
+  ts_reports_path <- file.path(ts_reports_path)
+
   if (basename(ts_reports_path) != "ts_reports")
     ts_reports_path <- file.path(ts_reports_path, "ts_reports")
 
-  if (!dir.exists(ts_reports_path))
+  if (!file.exists(ts_reports_path))
     dir.create(ts_reports_path,
                showWarnings = FALSE,
                recursive = TRUE)

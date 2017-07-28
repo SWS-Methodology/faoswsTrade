@@ -26,6 +26,10 @@ adaptTradeDataTypes <- function(tradedata, origin) {
                    "qty", "hs") %in% colnames(tradedata)))
 
   tradedata <- tradedata %>%
+    mutate_at(vars(reporter, partner),
+              as.character)
+
+  tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, hs),
             funs(non_numeric = !grepl("^[[:digit:]]+$", .))) %>%
     mutate_(novalue = ~is.na(value),

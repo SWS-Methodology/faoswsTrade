@@ -44,7 +44,7 @@ sel1FCL <- function(hsfclmatch, maptable, cur_yr = NULL) {
     mutate_(inrange = ~startyear <= cur_yr & endyear >= cur_yr,
             rangedist = ~pmin.int(abs(startyear - cur_yr),
                                   abs(endyear - cur_yr)),
-            rangedist = ~if_else(inrange, 0L, rangedist)) %>%
+            rangedist = ~ifelse(inrange, 0, rangedist)) %>%
     filter_(~rangedist == min(rangedist))
 
   if(nrow(hsfclmatch) > 1L) {

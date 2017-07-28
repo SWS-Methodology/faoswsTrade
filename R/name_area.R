@@ -18,25 +18,29 @@ name_area <- function (areacode, code_class = NULL) {
     data("faocountrycode", package = "faoswsTrade", envir = environment())
 
     fao_country_code %>%
-      rename_(area = ~reporter,
-              area_name = ~country_name)
+      rename_(area = ~reporter, area_name = ~country_name)
   }
 
   load_m49 <- function() {
     data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
+    data("m49", package = "faoswsTrade", envir = environment())
 
+    bind_rows(
+    m49 %>%
+      select_(area = ~code, area_name = ~abbr) %>%
+      distinct(),
     unsdpartnersblocks %>%
-      select_(area = ~formula,
-              area_name = ~crNameE.1) %>%
-      distinct()
+      select(area = formula, area_name = crNameE.1) %>%
+      distinct() %>%
+      filter(!(area %in% m49$code))
+    )
   }
 
   load_geonom <- function() {
     data("geonom2fao", package = "faoswsTrade", envir = environment())
 
     geonom2fao %>%
-      select_(area = ~code,
-              area_name = ~name) %>%
+      select_(area = ~code, area_name = ~name) %>%
       distinct() %>%
       mutate_(area_name = ~stringr::str_trim(area_name))
   }

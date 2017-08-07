@@ -83,6 +83,9 @@ for(i in 1:nrow(corrections)) {
                                        "5908", "5909", "5910", "5922", "5938", "5939", "5930"),
                           year = as.character(corr_year))
 
+  # Remove self trade
+  data = data[geographicAreaM49Reporter != geographicAreaM49Partner,]
+
   data$flow = ifelse(
     substr(data$measuredElementTrade, 1, 2) == "56", 1, 2)
 

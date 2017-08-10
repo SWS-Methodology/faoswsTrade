@@ -12,6 +12,11 @@
 ##'    pdf_document
 ##' ---
 
+startTime = Sys.time()
+
+# Always source files in R/ (useful for local runs)
+sapply(dir("R", full.names = TRUE), source)
+
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
@@ -31,25 +36,23 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 ##
 ## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")
 
-
 # Settings ####
 
-# Package build ID
-# It is included into report directory name
+# Package build ID (it is included into report directory name)
 build_id <- "master"
+
 # Should we stop after reports on raw data?
 stop_after_pre_process <- FALSE
+
 # Should we stop after HS-FCL mapping?
 stop_after_mapping <- FALSE
-
 
 set.seed(2507)
 
 # Size for sampling. Set NULL if no sampling is required.
 samplesize <- NULL
 
-# Logging level
-# There are following levels:
+# Logging level. There are following levels:
 # trace, debug, info, warn, error, fatal
 # Level `trace` shows everything in the log
 
@@ -57,9 +60,8 @@ samplesize <- NULL
 futile.logger::flog.logger("dev", "TRACE")
 futile.logger::flog.threshold("TRACE", name = "dev")
 
-# Parallel backend will be used only if required packages
-# are installed
-# It will be switched to FALSE if packages are not available
+# Parallel backend will be used only if required packages are installed.
+# It will be switched to FALSE if packages are not available.
 multicore <- TRUE
 
 ## If true, the reported values will be in $
@@ -123,26 +125,34 @@ if(faosws::CheckDebug()){
   })
 }
 
-# Always source files in R/ (useful for local runs)
-files <- dir("R", full.names = TRUE)
-sapply(files, source)
-
 stopifnot(!any(is.na(USER), USER == ""))
+
+# Read SWS module run parameters ####
+
+stopifnot(!is.null(swsContext.computationParams$out_coef))
+stopifnot(!is.null(swsContext.computationParams$year))
+
+##' # Parameters
 
 ##' - `year`: year for processing.
 year <- as.integer(swsContext.computationParams$year)
+flog.info("Year: %s", year)
+
+##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
+##' the *Outlier Detection and Imputation* section.
+# See coef argument in ?boxplot.stats
+out_coef <- as.numeric(swsContext.computationParams$out_coef)
+flog.info("Coefficient for outlier detection: %s", out_coef)
 
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 
 # Send general log messages
 if(general_log2console) {
   # to console and a file
-    flog.appender(appender.tee(file.path(reportdir,
-                                       "report.txt")))
+  flog.appender(appender.tee(file.path(reportdir, "report.txt")))
 } else {
   # to a file only
-  flog.appender(appender.file(file.path(reportdir,
-                                        "report.txt")))
+  flog.appender(appender.file(file.path(reportdir, "report.txt")))
 }
 
 # Send technical log messages to a file and console
@@ -180,18 +190,6 @@ if(multicore) multicore <- register_cpu_cores()
 ## install.packages("faosws",
 ##                  repos = "http://hqlprsws1.hq.un.fao.org/fao-sws-cran/")
 
-# Read SWS module run parameters ####
-
-stopifnot(
-  !is.null(swsContext.computationParams$out_coef))
-
-##' # Parameters
-
-##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
-##' the *Outlier Detection and Imputation* section.
-# See coef argument in ?boxplot.stats
-out_coef <- as.numeric(swsContext.computationParams$out_coef)
-flog.info("Coefficient for outlier detection: %s", out_coef)
 ##'   can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
@@ -205,8 +203,6 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
 
 flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
-
-startTime = Sys.time()
 
 # Load raw data (ES and TL) ####
 
@@ -230,15 +226,14 @@ esdata <- ReadDatatable(
 
 stopifnot(nrow(esdata) > 0)
 
-flog.info("Raw Eurostat data preview:",
-          rprt_glimpse0(esdata), capture = TRUE)
+flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
 ##' 1. Keep only `stat_regime`=4.
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata %>%
   filter_(~stat_regime == "4") %>%
-## Removing stat_regime as it is not needed anymore
+  ## Removing stat_regime as it is not needed anymore
   select_(~-stat_regime) %>%
   # Remove totals
   filter_(~declarant != "EU")

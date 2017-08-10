@@ -65,17 +65,10 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
   # Bind both subsets and then calculate number of matching
   # fcl codes per each hs6
   flog.trace("HS6 map: counting FCL matches per HS6", name = "dev")
+
   bind_rows(maptable_0range, maptable_range) %>%
-    arrange_(~reporter, ~flow, ~hs6, ~fcl) %>%
-    distinct() %>%
-    # Split by chunks to be efficient in parallel execution
-    plyr::ddply(.variables = c("reporter", "flow"),
-                function(df) {
-                  df %>%
-                    group_by_(~hs6) %>%
-                    mutate_(fcl_links = ~length(unique(fcl))) %>%
-                    ungroup()
-                },
-                .parallel = parallel,
-                .paropts = list(.packages = "dplyr"))
+  group_by(reporter, flow, hs6) %>%
+  mutate(fcl_links = n_distinct(fcl)) %>%
+  ungroup() %>%
+  distinct()
 }

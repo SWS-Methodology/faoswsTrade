@@ -103,7 +103,7 @@ library(faoswsFlag)
 library(bit64)
 
 # Development (SWS-outside) mode addons ####
-if(faosws::CheckDebug()){
+if (faosws::CheckDebug()){
   set_sws_dev_settings(dev_sws_set_file)
 } else {
   # In order to have all columns aligned. Issue #119
@@ -147,7 +147,7 @@ flog.info("Coefficient for outlier detection: %s", out_coef)
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 
 # Send general log messages
-if(general_log2console) {
+if (general_log2console) {
   # to console and a file
   flog.appender(appender.tee(file.path(reportdir, "report.txt")))
 } else {
@@ -178,7 +178,7 @@ check_versions(c("faoswsUtil", "faoswsTrade",
                c('0.2.11', '0.1.1', '0.5.0'))
 
 # Register CPU cores ####
-if(multicore) multicore <- register_cpu_cores()
+if (multicore) multicore <- register_cpu_cores()
 
 ##+ swsdebug
 
@@ -377,7 +377,7 @@ to_mirror_raw <- bind_rows(
 
 rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
 
-if(stop_after_pre_process) stop("Stop after reports on raw data")
+if (stop_after_pre_process) stop("Stop after reports on raw data")
 
 # Loading of help datasets ####
 
@@ -575,7 +575,7 @@ hsfclmap <- hsfclmap %>%
 
 from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
 
-if(length(from_gt_to) > 0)
+if (length(from_gt_to) > 0)
   flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
                  paste0(from_gt_to, collapse = ", ")))
 
@@ -590,7 +590,7 @@ stopifnot(nrow(hsfclmap) > 0)
 flog.info("Rows in mapping table after filtering by year: %s",
           nrow(hsfclmap))
 
-if(use_adjustments) {
+if (use_adjustments) {
 
   ##' - `adjustments`: Adjustment notes containing manually added conversion
   ##' factors to transform from non-standard units of measurement to standard
@@ -668,7 +668,7 @@ rprt(hs6fclmap, "hs6fclmap")
 
 flog.info(toupper("##### Eurostat trade data #####"))
 
-if(!is.null(samplesize)) {
+if (!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
   warning(sprintf("Eurostat data was sampled with size %d", samplesize))
 }
@@ -778,7 +778,7 @@ esdata <- esdata %>%
 
 ##' 1. Download raw data from SWS, filtering by `hs_chapters`.
 
-if(!is.null(samplesize)) {
+if (!is.null(samplesize)) {
   tldata <- sample_n(tldata, samplesize)
   warning(sprintf("Tariffline data was sampled with size %d", samplesize))
 }
@@ -872,7 +872,7 @@ tldata <- tldata %>%
 flog.info("TL records after removing non-mapped HS codes: %s",
           nrow(tldata))
 
-if(stop_after_mapping) stop("Stop after HS->FCL mapping")
+if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
 
 ##' Add FCL units. ####
@@ -932,7 +932,7 @@ fcl_spec_mt_conv <- tldata %>%
   select_(~fcl, ~wco) %>%
   distinct
 
-if(NROW(fcl_spec_mt_conv) > 0){
+if (NROW(fcl_spec_mt_conv) > 0){
 
   conversion_factors_fcl <- tldata %>%
     filter(!is.na(weight) & !is.na(qty)) %>%

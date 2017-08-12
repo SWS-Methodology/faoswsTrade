@@ -614,8 +614,10 @@ unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
 ##' tonnes, animals in heads or 1000 heads and for certain commodities,
 ##' only the value is provided.
 
-data("fclunits", package = "faoswsTrade", envir = environment())
-#fclunits <- tbl_df(ReadDatatable("fclunits"))
+#data("fclunits", package = "faoswsTrade", envir = environment())
+fclunits <- tbl_df(ReadDatatable("fclunits")) %>%
+  rename(fcl = fcu_fcl, fclunit = fcu_fclunit) %>%
+  mutate(fcl = as.integer(fcl))
 
 ##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
 ##' quantity units) in Tariffline data into intelligible unit of measurement,

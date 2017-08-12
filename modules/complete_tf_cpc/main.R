@@ -272,7 +272,13 @@ flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 esdata <- adaptTradeDataNames(esdata)
 tldata <- adaptTradeDataNames(tldata)
 
+##' 1. Remove non numeric reporters / partners / hs codes.
+
+esdata <- removeNonNumeric(esdata)
+tldata <- removeNonNumeric(tldata)
+
 esdata <- adaptTradeDataTypes(esdata)
+tldata <- adaptTradeDataTypes(tldata)
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
@@ -293,8 +299,6 @@ esdata <- esdata %>%
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
 tldata <- tldata %>%
-  # Workaround
-  mutate(partner = as.numeric(partner)) %>%
   left_join(
     unsdpartnersblocks %>%
       select_(

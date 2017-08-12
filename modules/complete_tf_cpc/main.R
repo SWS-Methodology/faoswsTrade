@@ -269,10 +269,10 @@ flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
-esdata <- adaptTradeDataNames(tradedata = esdata, origin = "ES")
-tldata <- adaptTradeDataNames(tradedata = tldata, origin = "TL")
+esdata <- adaptTradeDataNames(esdata)
+tldata <- adaptTradeDataNames(tldata)
 
-esdata <- adaptTradeDataTypes(esdata, "ES")
+esdata <- adaptTradeDataTypes(esdata)
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
@@ -357,7 +357,7 @@ tldata <- tldata %>%
 ##' 1. Use standard (common) variable types.
 
 
-tldata <- adaptTradeDataTypes(tldata, "TL")
+tldata <- adaptTradeDataTypes(tldata)
 
 # XXX create all reporters
 

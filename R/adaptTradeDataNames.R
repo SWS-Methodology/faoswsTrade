@@ -15,15 +15,15 @@ adaptTradeDataNames <- function(tradedata) {
 
   if (missing(tradedata)) stop('"tradedata" should be set.')
 
-  origin <- tolower(lazyeval::expr_text(tradedata))
+  tradedataname <- tolower(lazyeval::expr_text(tradedata))
 
-  if (origin == "tldata")
+  if (tradedataname == "tldata")
     old_common_names <- c(
       "tyear", "rep", "prt",
       "flow", "comm", "tvalue",
       "weight", "qty")
 
-  if (origin == "esdata")
+  if (tradedataname == "esdata")
     old_common_names <- c(
       "period", "declarant", "partner",
       "flow", "product_nc", "value_1k_euro",

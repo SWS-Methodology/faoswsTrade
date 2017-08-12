@@ -276,7 +276,7 @@ esdata <- adaptTradeDataTypes(esdata, "ES")
 esdata <- esdata %>%
   mutate(
     reporter = convertGeonom2FAO(reporter),
-    partner = convertGeonom2FAO(partner)
+    partner  = convertGeonom2FAO(partner)
   )
 
 
@@ -295,7 +295,7 @@ tldata <- tldata %>%
     unsdpartnersblocks %>%
       select_(
         wholepartner = ~rtCode,
-        part = ~formula
+        part         = ~formula
       ) %>%
       # Exclude EU grouping and old countries
       filter_(
@@ -304,12 +304,12 @@ tldata <- tldata %>%
     by = c("partner" = "part")
   ) %>%
   mutate_(
-    partner = ~ifelse(is.na(wholepartner), partner, wholepartner),
-    m49rep = ~reporter,
-    m49par = ~partner,
+    partner  = ~ifelse(is.na(wholepartner), partner, wholepartner),
+    m49rep   = ~reporter,
+    m49par   = ~partner,
     # Conversion from Comtrade M49 to FAO area list
     reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
-    partner = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
+    partner  = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
   )
 
 # Create a table with valid reporters
@@ -550,9 +550,9 @@ mapped <- mapped %>%
 
 hsfclmap3 <- bind_rows(mapped, hsfclmap3) %>%
   mutate(
-         startyear = as.integer(startyear),
-         endyear = as.integer(endyear)
-         )
+    startyear = as.integer(startyear),
+    endyear = as.integer(endyear)
+  )
 
 # / ADD UNMAPPED CODES
 
@@ -562,14 +562,12 @@ flog.info("HS->FCL mapping table preview:",
 rprt(hsfclmap3, "hsfclmap", year)
 
 hsfclmap <- hsfclmap3 %>%
-  filter_(~startyear <= year &
-            endyear >= year) %>%
+  filter_(~startyear <= year & endyear >= year) %>%
   select_(~-startyear, ~-endyear)
 
 # Workaround issue #123
 hsfclmap <- hsfclmap %>%
-  mutate_at(vars(ends_with("code")),
-                 funs(num = as.numeric)) %>%
+  mutate_at(vars(ends_with("code")), funs(num = as.numeric)) %>%
   mutate_(fromgtto = ~fromcode_num > tocode_num) %>%
   select(-ends_with("code_num"))
 
@@ -648,10 +646,15 @@ EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 # hs6fclmap ####
 
 flog.trace("Extraction of HS6 mapping table", name = "dev")
+
 flog.trace("Universal (all years) HS6 mapping table", name = "dev")
+
 hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+
 flog.trace("Current year specific HS6 mapping table", name = "dev")
+
 hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+
 hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
   filter_(~fcl_links == 1L) %>%
   distinct()
@@ -711,8 +714,7 @@ rprt_writetable(esdata_not_area_in_fcl_mapping)
 esdata <- esdata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-flog.info("Records after removing areas absent in HS->FCL map: %s",
-          nrow(esdata))
+flog.info("Records after removing areas not in HS->FCL map: %s", nrow(esdata))
 
 # ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
@@ -721,18 +723,17 @@ message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
-esdatalinks <- mapHS2FCL(tradedata = esdata,
-                         maptable = hsfclmap3,
+esdatalinks <- mapHS2FCL(tradedata   = esdata,
+                         maptable    = hsfclmap3,
                          hs6maptable = hs6fclmap,
-                         year = year,
-                         parallel = multicore)
+                         year        = year,
+                         parallel    = multicore)
 
 esdata <- add_fcls_from_links(esdata,
                               hs6links = esdatahs6links,
-                              links = esdatalinks)
+                              links    = esdatalinks)
 
-flog.info("Records after HS-FCL mapping: %s",
-          nrow(esdata))
+flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
@@ -741,8 +742,7 @@ rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 esdata <- esdata %>%
   filter_(~!(is.na(fcl)))
 
-flog.info("ES records after removing non-mapped HS codes: %s",
-          nrow(esdata))
+flog.info("ES records after removing non-mapped HS codes: %s", nrow(esdata))
 
 ##' 1. Add FCL units.
 
@@ -852,11 +852,11 @@ tldata <- tldata %>%
 
 tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
 
-tldatalinks <- mapHS2FCL(tradedata = tldata,
-                         maptable = hsfclmap3,
+tldatalinks <- mapHS2FCL(tradedata   = tldata,
+                         maptable    = hsfclmap3,
                          hs6maptable = hs6fclmap,
-                         year = year,
-                         parallel = multicore)
+                         year        = year,
+                         parallel    = multicore)
 
 tldata <- add_fcls_from_links(tldata,
                               hs6links = tldatahs6links,
@@ -869,8 +869,7 @@ flog.trace("TL: dropping unmapped records", name = "dev")
 tldata <- tldata %>%
   filter_(~!is.na(fcl))
 
-flog.info("TL records after removing non-mapped HS codes: %s",
-          nrow(tldata))
+flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
 if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 #############Units of measurment in TL ####
@@ -883,8 +882,7 @@ tldata <- addFCLunits(tradedata = tldata, fclunits = fclunits)
 
 tldata <- tldata %>%
   mutate_(qunit = ~as.integer(qunit)) %>%
-  left_join(comtradeunits %>%
-              select_(~qunit, ~wco),
+  left_join(comtradeunits %>% select_(~qunit, ~wco),
             by = "qunit")
 
 ## Dataset with all matches between Comtrade and FAO units
@@ -905,16 +903,16 @@ flog.trace("TL: conversion factors", name = "dev")
 
 ctfclunitsconv$conv <- 0
 # Missing quantity
-ctfclunitsconv[qunit == 1,                                conv :=   NA]
+ctfclunitsconv[qunit == 1,                               conv :=   NA]
 # Missing quantity
-ctfclunitsconv[fclunit == "$ value only",                 conv :=   NA]
-ctfclunitsconv[fclunit == "mt"         & wco == "l",      conv := .001]
-ctfclunitsconv[fclunit == "heads"      & wco == "u" ,     conv :=    1]
-ctfclunitsconv[fclunit == "1000 heads" & wco == "u" ,     conv := .001]
-ctfclunitsconv[fclunit == "number"     & wco == "u"  ,    conv :=    1]
-ctfclunitsconv[fclunit == "mt"         & wco == "kg"  ,   conv := .001]
-ctfclunitsconv[fclunit == "mt"         & wco == "m³"   ,  conv :=    1]
-ctfclunitsconv[fclunit == "mt"         & wco == "carat" , conv := 5e-6]
+ctfclunitsconv[fclunit == "$ value only",                conv :=   NA]
+ctfclunitsconv[fclunit == "mt"         & wco == "l",     conv := .001]
+ctfclunitsconv[fclunit == "heads"      & wco == "u",     conv :=    1]
+ctfclunitsconv[fclunit == "1000 heads" & wco == "u",     conv := .001]
+ctfclunitsconv[fclunit == "number"     & wco == "u",     conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "kg",    conv := .001]
+ctfclunitsconv[fclunit == "mt"         & wco == "m³",    conv :=    1]
+ctfclunitsconv[fclunit == "mt"         & wco == "carat", conv := 5e-6]
 
 
 ##### Add conv factor to the dataset
@@ -981,7 +979,7 @@ tldata <- tldata %>%
 
 ######### Value from USD to thousands of USD
 
-if (dollars){
+if (dollars) {
   esdata <- esdata %>%
     mutate(value = value * 1000) %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
@@ -1109,7 +1107,8 @@ tradedata$uv <- round(tradedata$uv, 10)
 ##' 1. Outlier detection by using the logarithm of the unit value.
 
 if (detect_outliers) {
-  tradedata <- detectOutliers(tradedata = tradedata, method = "boxplot",
+  tradedata <- detectOutliers(tradedata = tradedata,
+                              method = "boxplot",
                               parameters = list(out_coef = out_coef))
 } else {
   tradedata$outlier <- FALSE
@@ -1204,7 +1203,7 @@ no_mapping_fcl2cpc = tradedata %>%
 flog.trace("Convert FAO area codes to M49", name = "dev")
 tradedata <- tradedata %>%
   mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
-          partnerM49 = ~fs2m49(as.character(partner)))
+          partnerM49  = ~fs2m49(as.character(partner)))
 
 # Report of countries mapping to NA in M49
 # 2011: fal 252: "Unspecified" in FAOSTAT area list
@@ -1339,17 +1338,17 @@ complete_trade_flow_cpc <- tradedata %>%
   select_(~-fcl) %>%
   filter_(~!(is.na(cpc))) %>%
   transmute_(geographicAreaM49Reporter = ~reporterM49,
-             geographicAreaM49Partner = ~partnerM49,
-             flow = ~flow,
-             timePointYears = ~year,
-             flagObservationStatus_v = ~flagSTATUS_v,
-             flagObservationStatus_q = ~flagSTATUS_q,
-             flagMethod_v = ~flagMETHOD_v,
-             flagMethod_q = ~flagMETHOD_q,
-             measuredItemCPC = ~cpc,
-             qty = ~qty,
-             unit = ~fclunit,
-             value = ~value) %>%
+             geographicAreaM49Partner  = ~partnerM49,
+             flow                      = ~flow,
+             timePointYears            = ~year,
+             flagObservationStatus_v   = ~flagSTATUS_v,
+             flagObservationStatus_q   = ~flagSTATUS_q,
+             flagMethod_v              = ~flagMETHOD_v,
+             flagMethod_q              = ~flagMETHOD_q,
+             measuredItemCPC           = ~cpc,
+             qty                       = ~qty,
+             unit                      = ~fclunit,
+             value                     = ~value) %>%
   ## unit of monetary values is "1000 $"
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
@@ -1432,7 +1431,7 @@ stats <- SaveData("trade",
 flog.trace("[%s] Session/database write completed!", PID, name = "dev")
 
 flog.info(
-    "Module completed in %1.2f minutes.
+  "Module completed in %1.2f minutes.
   Values inserted: %s
   appended: %s
   ignored: %s

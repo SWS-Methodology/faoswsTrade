@@ -625,8 +625,10 @@ fclunits <- tbl_df(ReadDatatable("fclunits")) %>%
 ##' Customs Organization* (WCO) (e.g., `qunit`=8 correspond to *kg*).
 ##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
-data("comtradeunits", package = "faoswsTrade", envir = environment())
-#comtradeunits <- tbl_df(ReadDatatable("comtradeunits"))
+#data("comtradeunits", package = "faoswsTrade", envir = environment())
+comtradeunits <- tbl_df(ReadDatatable("comtradeunits")) %>%
+  rename(qunit = ctu_qunit, wco = ctu_wco, desc = ctu_desc) %>%
+  mutate(qunit = as.integer(qunit))
 
 ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 

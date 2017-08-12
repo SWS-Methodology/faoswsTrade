@@ -1143,8 +1143,9 @@ for (var in flag_vars) {
 
 tradedata_flags <- tradedata %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
-  summarise_each_(funs(sumFlags(flags = .)), vars = ~starts_with('flag_')) %>%
-  ungroup()
+  summarise_each_(funs(sum(.)), vars = ~starts_with('flag_')) %>%
+  ungroup() %>%
+  mutate_each_(funs(as.integer(. > 0)), vars = ~starts_with('flag_'))
 
 # Aggregation by fcl
 flog.trace("Aggregation by FCL", name = "dev")

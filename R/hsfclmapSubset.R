@@ -29,8 +29,6 @@ hsfclmapSubset <- function(map = NA, year = NA) {
     select_(~-yeardistance) %>%
     ## and add trailing 9 to tocode, where it is shorter
     ## TODO: check how many such cases and, if possible, move to manualCorrectoins
-    mutate_(tocode = ~faoswsTrade::trailingDigits(fromcode,
-                                                 tocode,
-                                                 digit = 9))
+    mutate_(tocode = ~trailingDigits(fromcode, tocode, digit = 9))
 
 }

@@ -312,8 +312,8 @@ tldata <- tldata %>%
     m49rep   = ~reporter,
     m49par   = ~partner,
     # Conversion from Comtrade M49 to FAO area list
-    reporter = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49rep)),
-    partner  = ~as.integer(faoswsTrade::convertComtradeM49ToFAO(m49par))
+    reporter = ~as.integer(convertComtradeM49ToFAO(m49rep)),
+    partner  = ~as.integer(convertComtradeM49ToFAO(m49par))
   )
 
 # Create a table with valid reporters

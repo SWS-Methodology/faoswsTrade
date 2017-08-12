@@ -19,8 +19,7 @@ adaptTradeDataTypes <- function(tradedata) {
                    "qty", "hs") %in% colnames(tradedata)))
 
   tradedata <- tradedata %>%
-    mutate_at(vars(reporter, partner),
-              as.character)
+    mutate_at(vars(reporter, partner), as.character)
 
   tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, hs),

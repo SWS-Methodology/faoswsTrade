@@ -304,8 +304,12 @@ tldata <- tldata %>%
   left_join(
     unsdpartnersblocks %>%
       select_(
-        wholepartner = ~rtCode,
-        part         = ~formula
+        wholepartner = ~unsdpb_rtcode,
+        part         = ~unsdpb_formula
+      ) %>%
+      mutate(
+        wholepartner = as.numeric(wholepartner),
+        part         = as.numeric(part)
       ) %>%
       # Exclude EU grouping and old countries
       filter_(
@@ -602,8 +606,8 @@ if (use_adjustments) {
 ##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
 ##' Minor Outlying Islands.
 
-data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
-#unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
+#data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
+unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
 
 ##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in

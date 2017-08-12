@@ -4,13 +4,10 @@
 \alias{adaptTradeDataNames}
 \title{Standardise TL or ES variable names.}
 \usage{
-adaptTradeDataNames(tradedata, origin)
+adaptTradeDataNames(tradedata)
 }
 \arguments{
 \item{tradedata}{TL or ES trade data.}
-
-\item{origin}{String: "TL" or "ES", for Tariff Line or Eurostat data
-respectively.}
 }
 \value{
 TL or ES data with common names (TL will also have "qunit").

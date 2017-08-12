@@ -277,6 +277,8 @@ tldata <- adaptTradeDataNames(tldata)
 esdata <- removeNonNumeric(esdata)
 tldata <- removeNonNumeric(tldata)
 
+##' 1. Use standard (common) variable types.
+
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
 
@@ -320,33 +322,11 @@ tldata <- tldata %>%
     partner  = ~as.integer(convertComtradeM49ToFAO(m49par))
   )
 
-# Create a table with valid reporters
-valid_reporters <-
-  GetCodeList(
-    domain    = 'faostat_one',
-    dataset   = 'FS1_SUA_UPD',
-    dimension = 'geographicAreaFS'
-  ) %>%
-  filter(type != 'group') %>%
-  mutate(
-    startDate = as.numeric(stringr::str_sub(startDate, 1, 4)),
-    endDate   = as.numeric(stringr::str_sub(endDate, 1, 4))
-  ) %>%
-  select(-selectionOnly, -type) %>%
-  filter(startDate <= year, endDate >= year)
+##' 1. Remove invalid repoters.
 
-reporters_to_drop <- setdiff(unique(tldata$reporter), valid_reporters$code)
+tldata <- removeInvalidReporters(tldata)
 
-if (length(reporters_to_drop) > 0) {
-  flog.trace("TL: dropping invalid reporters", name = "dev")
-  x <- ifelse(length(reporters_to_drop) == 1, 'y', 'ies')
-  warning(paste0('The following countr', x, ' did not exist in ', year, ': ',
-                paste(reporters_to_drop, collapse=' ')))
-
-  # Keep valid reporters
-  tldata <- tldata %>%
-    filter(reporter %in% valid_reporters$code)
-}
+##' 1. Remove European repoters from tldata.
 
 flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
@@ -357,11 +337,6 @@ tldata <- tldata %>%
       distinct(),
     by = "reporter"
   )
-
-##' 1. Use standard (common) variable types.
-
-
-tldata <- adaptTradeDataTypes(tldata)
 
 # XXX create all reporters
 

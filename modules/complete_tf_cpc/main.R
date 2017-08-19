@@ -306,8 +306,8 @@ tldata <- tldata %>%
   left_join(
     unsdpartnersblocks %>%
       select_(
-        wholepartner = ~unsdpb_rtcode,
-        part         = ~unsdpb_formula
+        wholepartner = ~rtCode,
+        part         = ~formula
       ) %>%
       mutate(
         wholepartner = as.numeric(wholepartner),

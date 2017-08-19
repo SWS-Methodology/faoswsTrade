@@ -289,7 +289,9 @@ esdata <- esdata %>%
   mutate(
     reporter = convertGeonom2FAO(reporter),
     partner  = convertGeonom2FAO(partner)
-  )
+  ) %>%
+  # XXX issue 147
+  filter(!is.na(partner))
 
 
 # M49 to FAO area list ####

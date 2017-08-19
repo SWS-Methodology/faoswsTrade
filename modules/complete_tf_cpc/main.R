@@ -1197,7 +1197,9 @@ no_mapping_fcl2cpc = tradedata %>%
 flog.trace("Convert FAO area codes to M49", name = "dev")
 tradedata <- tradedata %>%
   mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
-          partnerM49  = ~fs2m49(as.character(partner)))
+          partnerM49  = ~fs2m49(as.character(partner))) %>%
+  # XXX issue 34
+  mutate(partnerM49 = ifelse(partner == 252, 896, partner))
 
 # Report of countries mapping to NA in M49
 # 2011: fal 252: "Unspecified" in FAOSTAT area list

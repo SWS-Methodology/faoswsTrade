@@ -1223,7 +1223,8 @@ countries_not_mapping_M49 <- bind_rows(
 ##' and will be mirrored.
 flog.trace("Mirroring", name = "dev")
 
-to_mirror <- flowsToMirror(tradedata)
+to_mirror <- flowsToMirror(tradedata) %>%
+	filter(area != 252)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).

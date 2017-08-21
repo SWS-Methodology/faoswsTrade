@@ -289,7 +289,9 @@ esdata <- esdata %>%
   mutate(
     reporter = convertGeonom2FAO(reporter),
     partner  = convertGeonom2FAO(partner)
-  )
+  ) %>%
+  # XXX issue 147
+  filter(!is.na(partner))
 
 
 # M49 to FAO area list ####
@@ -307,8 +309,8 @@ tldata <- tldata %>%
   left_join(
     unsdpartnersblocks %>%
       select_(
-        wholepartner = ~unsdpb_rtcode,
-        part         = ~unsdpb_formula
+        wholepartner = ~rtCode,
+        part         = ~formula
       ) %>%
       mutate(
         wholepartner = as.numeric(wholepartner),
@@ -1198,7 +1200,9 @@ no_mapping_fcl2cpc = tradedata %>%
 flog.trace("Convert FAO area codes to M49", name = "dev")
 tradedata <- tradedata %>%
   mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
-          partnerM49  = ~fs2m49(as.character(partner)))
+          partnerM49  = ~fs2m49(as.character(partner))) %>%
+  # XXX issue 34
+  mutate(partnerM49 = ifelse(partner == 252, '896', partner))
 
 # Report of countries mapping to NA in M49
 # 2011: fal 252: "Unspecified" in FAOSTAT area list
@@ -1222,7 +1226,8 @@ countries_not_mapping_M49 <- bind_rows(
 ##' and will be mirrored.
 flog.trace("Mirroring", name = "dev")
 
-to_mirror <- flowsToMirror(tradedata)
+to_mirror <- flowsToMirror(tradedata) %>%
+	filter(area != 252)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).

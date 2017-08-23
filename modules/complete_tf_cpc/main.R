@@ -1202,7 +1202,7 @@ tradedata <- tradedata %>%
   mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
           partnerM49  = ~fs2m49(as.character(partner))) %>%
   # XXX issue 34
-  mutate(partnerM49 = ifelse(partner == 252, '896', partner))
+  mutate(partnerM49 = ifelse(partner == 252, '896', partnerM49))
 
 # Report of countries mapping to NA in M49
 # 2011: fal 252: "Unspecified" in FAOSTAT area list

@@ -1251,7 +1251,7 @@ tradedata <- tradedata %>%
 flog.trace("Flags XXX (for adults only?)", name = "dev")
 
 tradedata <- tradedata %>%
-  setFlag2(!is.na(mirrored), type = 'status', flag = 'E', var = 'all') %>%
+  setFlag2(!is.na(mirrored), type = 'status', flag = 'T', var = 'all') %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'i', var = 'value') %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
   select(-mirrored)

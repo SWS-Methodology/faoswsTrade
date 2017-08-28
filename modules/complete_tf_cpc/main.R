@@ -318,7 +318,7 @@ tldata <- tldata %>%
       ) %>%
       # Exclude EU grouping and old countries
       filter_(
-        ~wholepartner %in% c(251, 381, 579, 581, 711, 757, 842)
+        ~wholepartner %in% c(251, 381, 579, 581, 757, 842)
       ),
     by = c("partner" = "part")
   ) %>%

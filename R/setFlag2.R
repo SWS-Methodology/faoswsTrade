@@ -32,8 +32,8 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
 
   if (missing(flag)) {
     stop("Please, set 'flag' to one flag value.")
-  } else if (type == 'status' & !(flag %in% c('E', 'I', 'X'))) {
-    stop(paste("'flag' should be one of 'E', 'I', 'X'"))
+  } else if (type == 'status' & !(flag %in% c('T', 'E', 'I', 'X'))) {
+    stop(paste("'flag' should be one of 'T', 'E', 'I', 'X'"))
   } else if (type == 'method' & !(flag %in% c('c', 'i', 'e', 's', 'h'))) {
     stop(paste("'flag' should be one of 'c', 'i', 'e', 's', 'h'"))
   }

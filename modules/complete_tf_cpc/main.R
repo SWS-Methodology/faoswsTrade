@@ -1,3 +1,4 @@
+##' ---
 ##' title: "Appendix: `complete_tf_cpc` module"
 ##' author:
 ##'   - Marco Garieri

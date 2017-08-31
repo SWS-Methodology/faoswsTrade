@@ -229,6 +229,11 @@ esdata <- ReadDatatable(
 
 stopifnot(nrow(esdata) > 0)
 
+if (!is.null(samplesize)) {
+  esdata <- sample_n(esdata, samplesize)
+  warning(sprintf("Eurostat data was sampled with size %d", samplesize))
+}
+
 flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
 ##' 1. Tariff line data (TL)
@@ -253,6 +258,11 @@ tldata <- ReadDatatable(
 )
 
 stopifnot(nrow(tldata) > 0)
+
+if (!is.null(samplesize)) {
+  tldata <- sample_n(tldata, samplesize)
+  warning(sprintf("Tariffline data was sampled with size %d", samplesize))
+}
 
 flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
 
@@ -676,12 +686,6 @@ hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
 
 rprt(hs6fclmap, "hs6fclmap")
 
-if (!is.null(samplesize)) {
-  esdata <- sample_n(esdata, samplesize)
-  warning(sprintf("Eurostat data was sampled with size %d", samplesize))
-}
-
-
 ##' 1. Add variables that will contain flags.
 
 esdata <- generateFlagVars(data = esdata)
@@ -720,7 +724,7 @@ flog.info("Records after removing areas not in HS->FCL map: %s", nrow(esdata))
 # ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-##' 1. Map HS to FCL.
+##' 1. Map HS to FCL, ES.
 
 esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
@@ -771,18 +775,7 @@ esdata <- esdata %>%
   setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
   select_(~-conv)
 
-
-# TARIFFLINE DATA ####
-##' # Extract UNSD Tariffline Data
-
-##+ tradeload
-
-##' 1. Download raw data from SWS, filtering by `hs_chapters`.
-
-if (!is.null(samplesize)) {
-  tldata <- sample_n(tldata, samplesize)
-  warning(sprintf("Tariffline data was sampled with size %d", samplesize))
-}
+##' 1. Do mathematical conversions on specific `qunit`s (6, 9, and 11 become 5)
 
 # Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
 tldata <- as.data.table(tldata)
@@ -822,7 +815,7 @@ tldata <- tldata %>%
 
 ##' 1. Area codes not mapping to any FAO country code are removed.
 
-# We drop reporters what are absent in MDB hsfcl map
+# We drop reporters that are absent in MDB hsfcl map
 # because in any case we can proceed their data
 
 tldata_not_area_in_fcl_mapping <- tldata %>%
@@ -834,10 +827,9 @@ flog.trace("TL: dropping reporters not found in the mapping table", name = "dev"
 tldata <- tldata %>%
   filter_(~reporter %in% unique(hsfclmap$area))
 
-
 ##+ reexptoexp ####
-flog.trace("TL: recoding reimport/reexport", name = "dev")
 ##' 1. Re-imports become imports and re-exports become exports.
+flog.trace("TL: recoding reimport/reexport", name = "dev")
 
 # { "id": "1", "text": "Import" },
 # { "id": "2", "text": "Export" },
@@ -847,7 +839,7 @@ flog.trace("TL: recoding reimport/reexport", name = "dev")
 tldata <- tldata %>%
   mutate_(flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
-# TF: Map HS to FCL ####
+##' 1. Map HS to FCL, TL.
 ##+ tl_hs2fcl ####
 
 tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
@@ -872,7 +864,8 @@ tldata <- tldata %>%
 flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
 if (stop_after_mapping) stop("Stop after HS->FCL mapping")
-#############Units of measurment in TL ####
+
+############# Units of measurment in TL ####
 
 ##' Add FCL units. ####
 
@@ -1049,8 +1042,8 @@ esdata <- esdata %>%
 #  mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
 #               ~starts_with('flag_'))
 
-##' 1. Assign 'qty' flags to 'weight' flags in ES but
-##' only when 'fclunit' is different from 'mt'.
+##' 1. Assign `qty` flags to `weight` flags in ES but
+##' only when `fclunit` is different from "mt".
 
 esdata <- esdata %>%
   mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
@@ -1059,7 +1052,7 @@ esdata <- esdata %>%
 ##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
 ##' to single data set.
 ##'     - TL: assign `weight` to `qty`
-##'     - ES: assign `weight` to `qty` if `fclunit` is `mt`, else keep `qty`
+##'     - ES: assign `weight` to `qty` if `fclunit` is "mt", else keep `qty`
 
 ##+ combine_es_tl
 flog.trace("Combine TL and ES data sets", name = "dev")
@@ -1081,7 +1074,7 @@ tradedata <- bind_rows(
 tradedata <- tradedata %>%
   mutate_each_(funs(swapFlags(., swap='\\1\\2')), ~starts_with('flag_'))
 
-### Check for double counting f HS codes
+### Check for double counting of HS codes
 #hs_many_lengths = getHsManyLengths(tradedata)
 #rprt_writetable(hs_many_lengths, subdir = 'details')
 
@@ -1178,7 +1171,7 @@ for (var in flag_vars) {
 }
 tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
 
-##' 1. Se flags for aggregated values/quantities XXX.
+##' 1. Set flags for aggregated values/quantities.
 
 tradedata <- tradedata %>%
   setFlag2(nfcl > 1,  type = 'method', flag = 's', variable = 'all')
@@ -1200,6 +1193,8 @@ no_mapping_fcl2cpc = tradedata %>%
 
 ##' 1. Map FAO area codes to M49.
 
+##' 1. Countries with FAOSTAT code 252 are converted to M49 896 ("Other nei").
+
 # Converting back to M49 for the system
 flog.trace("Convert FAO area codes to M49", name = "dev")
 tradedata <- tradedata %>%
@@ -1209,7 +1204,6 @@ tradedata <- tradedata %>%
   mutate(partnerM49 = ifelse(partner == 252, '896', partnerM49))
 
 # Report of countries mapping to NA in M49
-# 2011: fal 252: "Unspecified" in FAOSTAT area list
 countries_not_mapping_M49 <- bind_rows(
   tradedata %>% select_(fc = ~reporter, m49 = ~reporterM49),
   tradedata %>% select_(fc = ~partner, m49 = ~partnerM49)) %>%
@@ -1251,8 +1245,8 @@ tradedata <- tradedata %>%
     by = c('reporter' = 'area', 'flow')
   )
 
-##' 1. Set flags XXX.
-flog.trace("Flags XXX (for adults only?)", name = "dev")
+##' 1. Set flags to mirrored flows.
+flog.trace("Flags to mirrored flows", name = "dev")
 
 tradedata <- tradedata %>%
   setFlag2(!is.na(mirrored), type = 'status', flag = 'T', var = 'all') %>%
@@ -1260,9 +1254,7 @@ tradedata <- tradedata %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
   select(-mirrored)
 
-##' ## Flag management
-
-##' **Note**: work on this section is currently in progress.
+##' ## Flag aggregation
 
 ################################################
 # TODO Rethink/refactor: clean flags for fclunit != "$ value only"

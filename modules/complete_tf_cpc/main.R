@@ -12,13 +12,14 @@
 ##'    pdf_document
 ##' ---
 
+
+##+ setup, include=FALSE
+knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
+
 startTime = Sys.time()
 
 # Always source files in R/ (useful for local runs)
 sapply(dir("R", full.names = TRUE), source)
-
-##+ setup, include=FALSE
-knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 ##' This document gives a faithful step-by-step sequence of the operations
 ##' performed in the `complete_tf_cpc` module. For a narrative version of

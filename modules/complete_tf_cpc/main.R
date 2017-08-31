@@ -287,6 +287,14 @@ tldata <- removeNonNumeric(tldata)
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
 
+##' 1. Filter HS codes of interest
+
+# Fiter out HS codes which don't participate in futher processing
+# Such solution drops all HS codes shorter than 6 digits.
+
+esdata <- filterHS6FAOinterest(esdata)
+tldata <- filterHS6FAOinterest(tldata)
+
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao
@@ -673,12 +681,6 @@ if (!is.null(samplesize)) {
   warning(sprintf("Eurostat data was sampled with size %d", samplesize))
 }
 
-##' Filter HS codes of interest
-
-# Fiter out HS codes which don't participate in futher processing
-# Such solution drops all HS codes shorter than 6 digits.
-
-esdata <- filterHS6FAOinterest(esdata)
 
 ##' 1. Add variables that will contain flags.
 
@@ -805,7 +807,6 @@ tldata <- generateFlagVars(data = tldata)
 tldata <- tldata %>%
   setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
 
-tldata <- filterHS6FAOinterest(tldata)
 
 ##' 1. Generate Observation Status X flag.
 tldata <- tldata %>%

@@ -205,9 +205,9 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
-# Load raw data (ES and TL) ####
+##' # Download raw data
 
-## Download TL data ####
+##' 1. Eurostat data (ES)
 
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
@@ -231,7 +231,7 @@ stopifnot(nrow(esdata) > 0)
 
 flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
-## Download TL data ####
+##' 1. Tariff line data (TL)
 
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 
@@ -256,7 +256,11 @@ stopifnot(nrow(tldata) > 0)
 
 flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
 
-##' 1. Keep only `stat_regime`=4.
+##' # Basic operations on raw data
+
+##' 1. Keep only `stat_regime` = 4 for ES
+
+##' 1. Remove European-aggregated data (i.e., totals) from ES
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata %>%
@@ -268,17 +272,17 @@ esdata <- esdata %>%
 
 flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
-##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
+##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`) in ES and TL.
 
 esdata <- adaptTradeDataNames(esdata)
 tldata <- adaptTradeDataNames(tldata)
 
-##' 1. Remove non numeric reporters / partners / hs codes.
+##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
 
 esdata <- removeNonNumeric(esdata)
 tldata <- removeNonNumeric(tldata)
 
-##' 1. Use standard (common) variable types.
+##' 1. Use standard (common) variable types in ES and TL.
 
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
@@ -297,9 +301,10 @@ esdata <- esdata %>%
 
 # M49 to FAO area list ####
 
-##' 1. Tariffline M49 codes (which are different from official M49)
-##' are converted in FAO country codes using a specific convertion
-##' table provided by Team ENV.
+##' 1. TL M49 codes (which are different from official M49) are
+##' converted in FAO country codes using a specific convertion
+##' table provided by Team ENV. See below for the description
+##' of the `unsdpartnersblocks` table.
 
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
@@ -332,11 +337,12 @@ tldata <- tldata %>%
     partner  = ~as.integer(convertComtradeM49ToFAO(m49par))
   )
 
-##' 1. Remove invalid repoters.
+##' 1. Remove invalid repoters (i.e., keep contries/areas that
+##' existed in the year considered).
 
 tldata <- removeInvalidReporters(tldata)
 
-##' 1. Remove European repoters from tldata.
+##' 1. Remove ES repoters from TL.
 
 flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
@@ -378,6 +384,8 @@ if (stop_after_pre_process) stop("Stop after reports on raw data")
 ##' used to archive information existing in the previous trade system
 ##' (Shark/Jellyfish). This mapping is provided by a separate package:
 ##' https://github.com/SWS-Methodology/hsfclmap
+##' Unmapped codes in this table are supplemented by newly created links
+##' stored in the `hsfclmap4` table.
 
 flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
@@ -640,6 +648,8 @@ comtradeunits <- tbl_df(ReadDatatable("comtradeunits")) %>%
 
 EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
+##' # HSFCLMAP6 map
+
 # hs6fclmap ####
 
 flog.trace("Extraction of HS6 mapping table", name = "dev")
@@ -658,20 +668,12 @@ hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
 
 rprt(hs6fclmap, "hs6fclmap")
 
-# EUROSTAT DATA  -----------------
-##' # Extract Eurostat Combined Nomenclature Data
-
-##+ es-extract
-##  Download ES data ===============
-
-##' 1. Download raw data from SWS, filtering by `hs_chapters`.
-
-flog.info(toupper("##### Eurostat trade data #####"))
-
 if (!is.null(samplesize)) {
   esdata <- sample_n(esdata, samplesize)
   warning(sprintf("Eurostat data was sampled with size %d", samplesize))
 }
+
+##' Filter HS codes of interest
 
 # Fiter out HS codes which don't participate in futher processing
 # Such solution drops all HS codes shorter than 6 digits.

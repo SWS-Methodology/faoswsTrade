@@ -6,8 +6,7 @@
 ##'   - Christian A. Mongeau Ospina
 ##'   - Bo Werth\
 ##'
-##'     Food and Agriculture Organization
-##'     of the United Nations
+##'     Food and Agriculture Organization of the United Nations
 ##' date: "`r format(Sys.time(), '%e %B %Y')`"
 ##' output:
 ##'    pdf_document

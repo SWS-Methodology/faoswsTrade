@@ -144,19 +144,20 @@ out_coef <- as.numeric(swsContext.computationParams$out_coef)
 flog.info("Coefficient for outlier detection: %s", out_coef)
 
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
+report_txt <- file.path(reportdir, "report.txt")
+dev_log <- file.path(reportdir, "development.log")
 
 # Send general log messages
 if (general_log2console) {
   # to console and a file
-  flog.appender(appender.tee(file.path(reportdir, "report.txt")))
+  flog.appender(appender.tee(report_txt))
 } else {
   # to a file only
-  flog.appender(appender.file(file.path(reportdir, "report.txt")))
+  flog.appender(appender.file(report_txt))
 }
 
 # Send technical log messages to a file and console
-flog.appender(appender.tee(file.path(reportdir, "development.log")),
-              name = "dev")
+flog.appender(appender.tee(dev_log), name = "dev")
 
 flog.info("SWS-session is run by user %s", USER, name = "dev")
 

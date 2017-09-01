@@ -380,7 +380,10 @@ if (stop_after_pre_process) stop("Stop after reports on raw data")
 
 flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
-hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap3"))
+# XXX Notice that it is pulling now v5
+hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap5")) %>%
+  # FCL codes can be overwritten by corrections
+  mutate(fcl = ifelse(!is.na(correction_fcl), correction_fcl, fcl))
 
 # Extend the endyear of all areas for which the maximum
 # endyear is less than 2050

@@ -29,12 +29,11 @@ output:
 ## Data
 
 Raw data are provided by the SWS Team (subunit of Team F) for both
-UNSD Tariffline and Eurostat Data. The data is prefiltered as
-shown below. In all cases, the module downloads only records of
-commodities of interest. The HS chapters are the following:
+UNSD Tariff line and Eurostat Data. The data is prefiltered by
+downloading only chapters of interest, which are:
 
   01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-  19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 42, 43, 50, 51, 52, 53.
+  19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 43, 50, 51, 52, 53.
 
 In the future, if other commodities become of interest for
 the division, it is important to include additional chapters in
@@ -48,10 +47,31 @@ the first step of the downloading.
   ## 5      184     504 21050020    1 2009 379.96200     NA  NA     1 210500
   ## 6       90      36     5203    1 2009  36.37752     NA  NA     1   5203
 
+Besides filtering by chapters, only some HS codes inside the
+chapters are considered. These codes are given in the
+`hs6faointerest` datatable:
+
+  ## hs6faointerest
+  ##        hs6_code
+  ##     1:   010100
+  ##     2:   010101
+  ##     3:   010102
+  ##     4:   010103
+  ##     5:   010104
+  ##    ---         
+  ## 21209:   530596
+  ## 21210:   530597
+  ## 21211:   530598
+  ## 21212:   530599
+  ## 21213:   530810
+
+Both Eurostat and Tariff line data are given the same variable
+names and data types before being processed further.
+
 ### Eurostat
 
 - only numeric codes of reporters and partners are kept (letters
-  are not allowed).
+  are not allowed; basically this removes the "EU" total).
 
 - only numeric CN8 codes (`hs`) are kept (letters are not
   allowed).
@@ -78,42 +98,43 @@ the first step of the downloading.
 
 ## Process
 
-### Aggregate UNSD Tariffline individual Shipments
+### Aggregate UNSD Tariff line individual Shipments
 
 The tariffline data from UNSD contains multiple rows with
 identical combination of reporter / partner / commodity / flow /
-year / qunit. Those are separate registered transactions and the
-rows containinig non-missing values and quantities are summed.
-Missing variables of the same type are also summed, as they will
-produce a missing aggregated value for missing disaggregated
-values while correctly summing the remaining variables.
+year / qunit. Those are transactions registered separately, thus
+rows containinig non-missing values and quantities can be aggregated.
+Missing variables of the same type are also aggregated if they are
+all missing, as they will produce a missing aggregated value for
+missing disaggregated values while correctly summing the remaining
+variables.
 
-### Mapping UNSD Tariffline and Eurostat data
+### Mapping UNSD Tariff line and Eurostat data
 
 At this stage a standardization/mapping step is performed. The
-details are divided between UNSD Tariffline and Eurostat due to
+details are divided between UNSD Tariff line and Eurostat due to
 the nature of the differences among the two datasets.
 
-#### UNSD Tariffline {-}
+#### UNSD Tariff line {-}
 
-1. UNSD Tariffline data reports area code with Tariffline M49
+1. UNSD Tariff line data reports area code with Tariff line M49
    standard (which are different for official M49). The area code
    is converted in FAO country code using a specific convertion
    table provided by Team ENV.
 
 1. European countries are removed.
 
-1.  Area codes not mapping to any FAO country code or mapping to
-    code 252 (which correponds to undefined areas) are separately
-    saved and removed from further analyses.
+1. Area codes not mapping to any FAO country code or mapping to
+   code 252 (which correponds to undefined areas) are separately
+   saved and removed from further analyses.
 
-     ##     m49 fao
-     ## 164 270  75
-     ## 26  280  79
-     ## 294 716 181
-     ## 241 634 179
-     ## 38  471 252
-     ## 106  51   1
+    ##     m49 fao
+    ## 164 270  75
+    ## 26  280  79
+    ## 294 716 181
+    ## 241 634 179
+    ## 38  471 252
+    ## 106  51   1
 
 1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).
@@ -210,7 +231,7 @@ the nature of the differences among the two datasets.
 1. Commodity codes are reported in CN8 codes (*Combined
    Nomenclature 8 digits*). The codes are converted in FCL (*FAO
    Commodity List*) codes. This step is performed using the same
-   package (`hsfclmap`) as for UNSD Tariffline. If a specific
+   package (`hsfclmap`) as for UNSD Tariff line. If a specific
    record has a CN8 code not mapping to any specific FCL code,
    then the record is reported and removed. If a country is not
    included in the package of the mapping for that specific year,
@@ -237,7 +258,7 @@ the nature of the differences among the two datasets.
 
 ### Unified Official Trade Flows Dataset
 
-UNSD Tariffline and Eurostat datasets are ready to be merged
+UNSD Tariff line and Eurostat datasets are ready to be merged
 togheter. The final tables has all the countries worldwide.
 
 ### Standardization, editing and outlier detection
@@ -440,12 +461,12 @@ module.
 - In the vignettes folder, a sample of pre-analysis is given, but
   not integrated in the main module (file name:
   preanalysis\_2009.Rmd). The pre-analysis script calculate the
-  total number of records for both Eurostat and UNSD Tariffline
+  total number of records for both Eurostat and UNSD Tariff line
   datasets and the distribution of length of the commodty HS codes
-  (for UNSD Tariffline and CN8 for Eurostat) is performed. For
+  (for UNSD Tariff line and CN8 for Eurostat) is performed. For
   each country we report if data includes imports, exports,
   re-exports and re-imports at all possible length. All records
-  with hs-length (for UNSD Tariffline) or CN8-length (for
+  with hs-length (for UNSD Tariff line) or CN8-length (for
   Eurostat) less than 6 are removed. The pre-analysis script
   produces a html file.
 
@@ -546,7 +567,7 @@ module.
   mapping. This results in higher risk of data loss due to
   unsolved mapping.
 
-- A direct map from Comtrade M49 (Tariffline UNSD) to M49 and from
+- A direct map from Comtrade M49 (Tariff line UNSD) to M49 and from
   Geonomenclature (Eurostat) to M49 would be ideal.
 
 ## Flag management

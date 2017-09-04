@@ -105,7 +105,7 @@ identical combination of reporter / partner / commodity / flow /
 year / qunit. Those are transactions registered separately, thus
 rows containinig non-missing values and quantities can be aggregated.
 Missing variables of the same type are also aggregated if they are
-all missing, as they will produce a missing aggregated value for
+*all* missing, as they will produce a missing aggregated value for
 missing disaggregated values while correctly summing the remaining
 variables.
 
@@ -119,10 +119,11 @@ the nature of the differences among the two datasets.
 
 1. UNSD Tariff line data reports area code with Tariff line M49
    standard (which are different for official M49). The area code
-   is converted in FAO country code using a specific convertion
+   is converted in FAO country code using a specific conversion
    table provided by Team ENV.
 
-1. European countries are removed.
+1. European countries are removed when reporters, as they are
+   given in Eurostat data.
 
 1. Area codes not mapping to any FAO country code or mapping to
    code 252 (which correponds to undefined areas) are separately

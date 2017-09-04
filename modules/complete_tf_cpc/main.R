@@ -210,6 +210,10 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
+## Only regime 4 is relevant for Eurostat data
+## Removing stat_regime as it is not needed anymore
+# Remove totals from declarant
+
 esdata <- ReadDatatable(
   paste0("ce_combinednomenclature_unlogged_", year),
   columns = c(
@@ -220,15 +224,16 @@ esdata <- ReadDatatable(
     "product_nc",
     "value_1k_euro",
     "qty_ton",
-    "sup_quantity",
-    "stat_regime"
+    "sup_quantity"
   ),
-  where = paste0("chapter IN (", hs_chapters, ")")
+  where = paste0("chapter IN (", hs_chapters, ") AND stat_regime = '4' AND declarant != 'EU'")
 ) %>% tbl_df()
 
 stopifnot(nrow(esdata) > 0)
 
 flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
+
+flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
 ## Download TL data ####
 
@@ -254,18 +259,6 @@ tldata <- ReadDatatable(
 stopifnot(nrow(tldata) > 0)
 
 flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
-
-##' 1. Keep only `stat_regime`=4.
-
-## Only regime 4 is relevant for Eurostat data
-esdata <- esdata %>%
-  filter_(~stat_regime == "4") %>%
-  ## Removing stat_regime as it is not needed anymore
-  select_(~-stat_regime) %>%
-  # Remove totals
-  filter_(~declarant != "EU")
-
-flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`).
 
@@ -335,7 +328,7 @@ tldata <- tldata %>%
 
 tldata <- removeInvalidReporters(tldata)
 
-##' 1. Remove European repoters from tldata.
+##' 1. Remove European reporters from tldata.
 
 flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
 # They will be replaced by ES data
@@ -452,7 +445,7 @@ tmp <- add_map %>%
 
 if (nrow(tmp) > 0) {
   warning('Removing duplicate HS codes by reporter/year/flow.')
-  
+
   # XXX
   add_map <- add_map %>%
     group_by(reporter_fao, year, flow, hs) %>%

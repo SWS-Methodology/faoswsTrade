@@ -37,7 +37,7 @@ set_sws_dev_settings <- function(localsettingspath = NULL) {
 
     share_drive <- file.path(SETTINGS[['share']])
 
-    if (!is.na(share_drive) & file.exists(share_drive)) {
+    if (!is.null(share_drive) && !is.na(share_drive) && length(share_drive) > 0L && file.exists(share_drive)) {
       flog.debug("A valid 'share' variable was found in %s",
                  localsettingspath, name = "dev")
       Sys.setenv("R_SWS_SHARE_PATH" = share_drive)

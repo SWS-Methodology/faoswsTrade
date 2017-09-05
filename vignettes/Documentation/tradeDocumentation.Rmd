@@ -119,8 +119,7 @@ the nature of the differences among the two datasets.
 1. UNSD Tariff line data reports area code with Tariff line M49
    standard (which are different for official M49). The area code
    is converted in FAO country code using a specific conversion
-   table provided by Team ENV (stored on SWS as "UNSD Partners
-   Block" in the "trade-reference-files" domain).
+   table provided by Team ENV.
 
 1. Countries that are not supposed to exist in the year for which
    the module runs are removed from the data (e.g., Serbia did not

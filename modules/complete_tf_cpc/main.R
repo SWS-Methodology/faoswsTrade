@@ -18,6 +18,20 @@ knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 startTime = Sys.time()
 
+# Libraries ####
+suppressPackageStartupMessages(library(data.table))
+library(stringr)
+library(magrittr)
+library(scales)
+library(tidyr, warn.conflicts = FALSE)
+library(futile.logger)
+suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
+library(faosws)
+library(faoswsUtil)
+library(faoswsTrade)
+library(faoswsFlag)
+library(bit64)
+
 # Always source files in R/ (useful for local runs)
 sapply(dir("R", full.names = TRUE), source)
 
@@ -86,20 +100,6 @@ options(dplyr.show_progress = FALSE)
 
 # max.print in RStudio is too small
 options(max.print = 99999L, scipen = 999)
-
-# Libraries ####
-suppressPackageStartupMessages(library(data.table))
-library(stringr)
-library(magrittr)
-library(scales)
-library(tidyr, warn.conflicts = FALSE)
-library(futile.logger)
-suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
-library(faosws)
-library(faoswsUtil)
-library(faoswsTrade)
-library(faoswsFlag)
-library(bit64)
 
 # Development (SWS-outside) mode addons ####
 if (faosws::CheckDebug()){

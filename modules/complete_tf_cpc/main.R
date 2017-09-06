@@ -202,9 +202,11 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
-##' # Download raw data
+##'
 
-##' 1. Eurostat data (ES)
+##' # Download raw data and basic operations
+
+##' 1. Download Eurostat data (ES)
 
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
@@ -235,7 +237,7 @@ if (!is.null(samplesize)) {
 
 flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
-##' 1. Tariff line data (TL)
+##' 1. Download Tariff line data (TL)
 
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 
@@ -266,8 +268,6 @@ if (!is.null(samplesize)) {
 }
 
 flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
-
-##' # Basic operations on raw data
 
 ##' 1. Keep only `stat_regime` = 4 for ES
 
@@ -663,7 +663,7 @@ comtradeunits <- tbl_df(ReadDatatable("comtradeunits")) %>%
 
 EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
-##' # Generate HSFCLMAP6 map
+##' Generate HSFCLMAP6 map
 
 # hs6fclmap ####
 
@@ -683,7 +683,8 @@ hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
 
 rprt(hs6fclmap, "hs6fclmap")
 
-##' 1. Add variables that will contain flags.
+##' 1. Add variables that will contain flags. (Note: flags are set in various
+##' steps in the code. Please, refer to the "flag_management.docx" document.)
 
 esdata <- generateFlagVars(esdata)
 
@@ -861,7 +862,7 @@ if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 
 ############# Units of measurment in TL ####
 
-##' Add FCL units. ####
+##' 1. Add FCL units.
 
 flog.trace("TL: add FCL units", name = "dev")
 
@@ -1070,7 +1071,7 @@ tradedata <- tradedata %>%
 #hs_many_lengths = getHsManyLengths(tradedata)
 #rprt_writetable(hs_many_lengths, subdir = 'details')
 
-##' # Outlier Detection and Imputation
+##' # Imputation
 flog.trace("Outlier detection and imputation", name = "dev")
 ##+ calculate_median_uv
 
@@ -1089,8 +1090,6 @@ tradedata$uv <- round(tradedata$uv, 10)
 
 ##+ boxplot_uv
 
-##' 1. Outlier detection by using the logarithm of the unit value.
-
 if (detect_outliers) {
   tradedata <- detectOutliers(tradedata = tradedata,
                               method = "boxplot",
@@ -1102,7 +1101,7 @@ if (detect_outliers) {
 ##+ impute_qty_uv
 
 ##' 1. Imputation of missing quantities and quantities categorized as outliers by
-##' applying the method presented in the *Outlier Detection and Imputation* section.
+##' applying the method presented in the *Missing Quantities Imputation* section.
 ##' The `flagTrade` variable is given a value of 1 if an imputation was performed.
 
 ## These flags are also assigned to monetary values. This may need to be revised
@@ -1248,6 +1247,8 @@ tradedata <- tradedata %>%
   select(-mirrored)
 
 ##' ## Flag aggregation
+
+##' Flags are aggregated as explained in the *Flags* section in the main documentation.
 
 ################################################
 # TODO Rethink/refactor: clean flags for fclunit != "$ value only"

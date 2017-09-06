@@ -6,6 +6,13 @@
 \usage{
 ts_count_records(collection_path = NULL, prefix = NULL)
 }
+\arguments{
+\item{collection_path}{String with path where single-year report directories
+are stored.}
+
+\item{prefix}{String with report directory name prefix without trailing
+underscore. By default NULL.}
+}
 \description{
 Table with the number of records by reporter/year/flow.
 It also contains the maximum HS length, the percentage

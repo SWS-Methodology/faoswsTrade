@@ -382,8 +382,12 @@ flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 # XXX Notice that it is pulling now v5
 hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap5")) %>%
-  # FCL codes can be overwritten by corrections
-  mutate(fcl = ifelse(!is.na(correction_fcl), correction_fcl, fcl))
+  # FCL, startyear, endyear codes can be overwritten by corrections
+  mutate(
+    fcl       = ifelse(!is.na(correction_fcl), correction_fcl, fcl),
+    startyear = ifelse(!is.na(correction_startyear), correction_startyear, startyear),
+    endyear   = ifelse(!is.na(correction_endyear), correction_endyear, endyear)
+  )
 
 # Extend the endyear of all areas for which the maximum
 # endyear is less than 2050

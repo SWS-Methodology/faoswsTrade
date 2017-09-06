@@ -1,6 +1,6 @@
 #' Extracts time series data from preprocessing reports
 #'
-#' @inherit Params ts_all_reports
+#' @inheritParams ts_all_reports
 #' @import dplyr
 #'
 ts_preproc <- function(collection_path = NULL, prefix = NULL) {

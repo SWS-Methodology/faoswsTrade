@@ -1,6 +1,6 @@
 #' Report the number of records with missing quantity/weight.
 #'
-#' @inherit Params ts_all_reports
+#' @inheritParams ts_all_reports
 #'
 #' @import dplyr
 #'

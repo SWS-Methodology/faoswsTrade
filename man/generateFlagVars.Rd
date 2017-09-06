@@ -4,7 +4,7 @@
 \alias{generateFlagVars}
 \title{Generate flag variables in trade data.}
 \usage{
-generateFlagVars(data = stop("'data' needs to be set."), status = c("E",
+generateFlagVars(data = stop("'data' needs to be set."), status = c("T",
   "I", "X"), method = c("c", "i", "e", "s", "h"))
 }
 \description{

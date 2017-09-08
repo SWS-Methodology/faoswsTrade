@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RScript xmlns="http://www.fao.org/rScript">
+    <Name>Trade Validation CPC</Name>
+    <Description>Build the dataset for interactive validation</Description>
+    <Category>Validation</Category>
+    <Authors>
+        <Author>
+            <Name>Christian Mongeau</Name>
+            <Mail>christian.mongeau@fao.org</Mail>
+        </Author>
+    </Authors>
+    <Params>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>startyear</Code>
+            <Label>Start year</Label>
+            <Description>Start year</Description>
+            <Compulsory>true</Compulsory>
+            <Min>2000</Min>
+            <Max>2016</Max>
+      </Param>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>endyear</Code>
+            <Label>End year</Label>
+            <Description>End year</Description>
+            <Compulsory>true</Compulsory>
+            <Min>2000</Min>
+            <Max>2016</Max>
+      </Param>
+    </Params>
+    <Datasets>
+        <MainDataset>
+            <Code>completed_tf_cpc_m49</Code>
+            <SelectableDimensions>
+                <SelectableDimension compulsory="true">geographicAreaM49Reporter</SelectableDimension>
+                <SelectableDimension compulsory="true">geographicAreaM49Partner</SelectableDimension>
+                <SelectableDimension compulsory="true">timePointYears</SelectableDimension>
+                <SelectableDimension compulsory="true">measuredItemCPC</SelectableDimension>
+                <SelectableDimension compulsory="true">measuredElementTrade</SelectableDimension>
+            </SelectableDimensions>
+        </MainDataset>
+    </Datasets>
+    <InteractiveValidation>false</InteractiveValidation>
+    <Background>false</Background>
+</RScript>

@@ -457,7 +457,15 @@ db_save <- db_myfun_build_db_for_app %>%
   ) %>%
   # Team BC suggested to remove mirrorred data
   # (flag_value is more general)
-  filter(!grepl('^T', flag_value))
+  filter(!grepl('^T', flag_value)) %>%
+  # Adding percentages of values and quantities.
+  group_by(flow, geographicAreaM49Reporter, timePointYears) %>%
+  mutate(tot.value = sum(value, na.rm = TRUE), perc.value = value / tot.value) %>%
+  group_by(flow, geographicAreaM49Reporter, measuredItemCPC, timePointYears) %>%
+  mutate(tot.qty = sum(qty, na.rm = TRUE), perc.qty = qty / tot.qty) %>%
+  ungroup() %>%
+  select(-tot.value, -tot.qty)
+
 
 
 str(db_save)

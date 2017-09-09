@@ -392,7 +392,7 @@ invisible(gc())
 
 start_time <- Sys.time()
 
-db_myfun_build_db_for_app <- plyr::mdply(
+db_save <- plyr::mdply(
     sub('.rds', '', dir(DB_rds_storage)),
     .fun      = myfun_build_db_for_app,
     .parallel = multicore,
@@ -436,7 +436,7 @@ print(end_time - start_time)
 
 parallel::stopCluster(cl)
 
-db_save <- db_myfun_build_db_for_app %>%
+db_save <- db_save %>%
   select(
          flow,
          geographicAreaM49Reporter,
@@ -465,6 +465,47 @@ db_save <- db_myfun_build_db_for_app %>%
   mutate(tot.qty = sum(qty, na.rm = TRUE), perc.qty = qty / tot.qty) %>%
   ungroup() %>%
   select(-tot.value, -tot.qty)
+
+geographicAreaM49Reporter_names <- db_save %>%
+  select(geographicAreaM49Reporter) %>%
+  distinct() %>%
+  data.table::as.data.table() %>%
+  faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
+  rename(reporter_name = geographicAreaM49Reporter_description)
+
+geographicAreaM49Partner_names <- db_save %>%
+  select(geographicAreaM49Partner) %>%
+  distinct() %>%
+  data.table::as.data.table() %>%
+  faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
+  rename(partner_name = geographicAreaM49Partner_description)
+
+measuredItemCPC_names <- db_save %>%
+  select(measuredItemCPC) %>%
+  distinct() %>%
+  data.table::as.data.table() %>%
+  faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
+  rename(item_name = measuredItemCPC_description) %>%
+  # https://github.com/SWS-Methodology/tradeValidationTool/issues/9
+  mutate(item_name = sub('Mat. leaves', 'Mate leaves', item_name))
+
+db_save <- left_join(
+  db_save,
+  geographicAreaM49Reporter_names,
+  by = 'geographicAreaM49Reporter'
+)
+
+db_save <- left_join(
+  db_save,
+  geographicAreaM49Partner_names,
+  by = 'geographicAreaM49Partner'
+)
+
+db_save <- left_join(
+  db_save,
+  measuredItemCPC_names,
+  by = 'measuredItemCPC'
+)
 
 
 

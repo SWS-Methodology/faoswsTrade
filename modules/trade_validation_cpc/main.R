@@ -454,7 +454,11 @@ db_save <- db_myfun_build_db_for_app %>%
          outp,
          outM2,
          outM
-  )
+  ) %>%
+  # Team BC suggested to remove mirrorred data
+  # (flag_value is more general)
+  filter(!grepl('^T', flag_value))
+
 
 str(db_save)
 

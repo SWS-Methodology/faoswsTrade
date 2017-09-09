@@ -16,10 +16,6 @@ library(dplyr)
 # stringr, zoo, RcppRoll, robustbase
 
 if (CheckDebug()) {
-  ######################################################################
-  setwd('C:/Users/mongeau/tmp/faoswsTrade')
-  ######################################################################
-
   library(faoswsModules)
   settings_file <- "modules/timeseries_complete_tf_cpc/sws.yml"
   SETTINGS = faoswsModules::ReadSettings(settings_file)
@@ -32,18 +28,19 @@ if (CheckDebug()) {
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token   = SETTINGS[["token"]])
 
-  dir_to_save <- 'C:/Users/mongeau/tmp/'
-  DB_rds_storage <- paste0(dir_to_save, 'DB_rds_storage/')
-  name_to_save <- 'db_save_test.rds'
+  dir_to_save <- paste0(Sys.getenv('HOME'), '/tmp/')
 } else {
   dir_to_save <- '/work/SWS_R_Share/trade/validation_tool_files/tmp/'
-  DB_rds_storage <- paste0(dir_to_save, 'DB_rds_storage/')
-  name_to_save <- 'db_save_test.rds'
 }
+
+DB_rds_storage <- paste0(dir_to_save, 'DB_rds_storage/')
+name_to_save <- 'db.rds'
 
 stopifnot(!is.null(swsContext.computationParams$startyear))
 stopifnot(!is.null(swsContext.computationParams$endyear))
 
+print(swsContext.computationParams$startyear)
+print(swsContext.computationParams$endyear)
 
 if (!file.exists(dir_to_save)) dir.create(dir_to_save, recursive = TRUE)
 if (!file.exists(DB_rds_storage)) dir.create(DB_rds_storage, recursive = TRUE)
@@ -113,7 +110,7 @@ computeData <- function(reporter = NA) {
 
     # XXX this should be the mimimum, but it's not necessarily true.
     # (a zero-row df will be returned for non-existing countries, in
-    # any case (e.g., USSR before 1991)
+    # any case (e.g., USSR before 1991))
     if (nrow(data) > 10) {
       data <- data %>%
         reshapeTrade() %>%
@@ -149,8 +146,10 @@ computeData <- function(reporter = NA) {
           measuredItemCPC
         ) %>%
         dplyr::mutate(
-          ma_v_bck_nan = RcppRoll::roll_mean(lag(value), morder, fill = NA, align = 'right', na.rm = rmNA),
-          ma_q_bck_nan = RcppRoll::roll_mean(lag(qty),   morder, fill = NA, align = 'right', na.rm = rmNA)
+          ma_v_bck_nan = RcppRoll::roll_mean(lag(value),
+                           morder, fill = NA, align = 'right', na.rm = rmNA),
+          ma_q_bck_nan = RcppRoll::roll_mean(lag(qty),
+                           morder, fill = NA, align = 'right', na.rm = rmNA)
         ) %>%
         dplyr::arrange(
           flow,
@@ -166,8 +165,10 @@ computeData <- function(reporter = NA) {
           measuredItemCPC
         ) %>%
         dplyr::mutate(
-          ma_v_fwd_nan = RcppRoll::roll_mean(lead(value), morder, fill = NA, align = 'right', na.rm = rmNA),
-          ma_q_fwd_nan = RcppRoll::roll_mean(lead(qty),   morder, fill = NA, align = 'right', na.rm = rmNA)
+          ma_v_fwd_nan = RcppRoll::roll_mean(lead(value),
+                           morder, fill = NA, align = 'right', na.rm = rmNA),
+          ma_q_fwd_nan = RcppRoll::roll_mean(lead(qty),
+                           morder, fill = NA, align = 'right', na.rm = rmNA)
         ) %>%
         dplyr::arrange(
           flow,
@@ -182,7 +183,8 @@ computeData <- function(reporter = NA) {
           mavn      = ifelse(x <= morder, ma_v_fwd_nan, ma_v_bck_nan),
           man       = mavn/maqn,
           ratio_man = uv/man,
-          outn      = if_else(between(ratio_man, 1-threshold, 1+threshold), 0, 1, 0)
+          outn      = if_else(between(ratio_man, 1-threshold, 1+threshold),
+                        0, 1, 0)
         ) %>%
       dplyr::ungroup()
 
@@ -204,7 +206,8 @@ computeData <- function(reporter = NA) {
 
 }
 
-boxB1 <- function (x, method = "asymmetric", k = 1.5, id = NULL, exclude = NA, logt = FALSE) {
+boxB1 <- function (x, method = "asymmetric", k = 1.5,
+                   id = NULL, exclude = NA, logt = FALSE) {
     if (is.null(id)) id <- 1:length(x)
 
     tst <- x %in% exclude
@@ -312,8 +315,6 @@ myfun_build_db_for_app <- function(rep = NA) {
 }
 
 
-print('xxx1')
-
 if (multicore) {
   # XXX is this actually required?
   #if (CheckDebug()) {
@@ -364,9 +365,6 @@ if (multicore) {
 }
 
 
-print('xxx2')
-
-
 start_time <- Sys.time()
 plyr::m_ply(
   #expand.grid(
@@ -389,14 +387,9 @@ invisible(gc())
 
 
 
-print('xxx3')
 
 
 
-
-
-
-############### 20170523
 start_time <- Sys.time()
 
 db_myfun_build_db_for_app <- plyr::mdply(
@@ -443,24 +436,25 @@ print(end_time - start_time)
 
 parallel::stopCluster(cl)
 
-db_save <- db_myfun_build_db_for_app[, c(
-                                         'flow',
-                                         'geographicAreaM49Reporter',
-                                         'geographicAreaM49Partner',
-                                         'measuredItemCPC',
-                                         'timePointYears',
-                                         'qty',
-                                         'value',
-                                         'flag_qty',
-                                         'flag_value',
-                                         'unit_value',
-                                         'movav_unit_value',
-                                         'outman',
-                                         'outmw100',
-                                         'outp',
-                                         'outM2',
-                                         'outM'
-                                         )]
+db_save <- db_myfun_build_db_for_app %>%
+  select(
+         flow,
+         geographicAreaM49Reporter,
+         geographicAreaM49Partner,
+         measuredItemCPC,
+         timePointYears,
+         qty,
+         value,
+         flag_qty,
+         flag_value,
+         unit_value,
+         movav_unit_value,
+         outman,
+         outmw100,
+         outp,
+         outM2,
+         outM
+  )
 
 str(db_save)
 

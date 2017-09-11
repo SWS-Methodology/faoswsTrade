@@ -488,7 +488,7 @@ measuredItemCPC_names <- db_save %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
   rename(item_name = measuredItemCPC_description) %>%
   # https://github.com/SWS-Methodology/tradeValidationTool/issues/9
-  mutate(item_name = sub('Mat. leaves', 'Mate leaves', item_name))
+  mutate(item_name = gsub('\\b([Mm]at).\\b', '\\1e', item_name))
 
 db_save <- left_join(
   db_save,

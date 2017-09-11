@@ -17,7 +17,7 @@ library(dplyr)
 
 if (CheckDebug()) {
   library(faoswsModules)
-  settings_file <- "modules/timeseries_complete_tf_cpc/sws.yml"
+  settings_file <- "modules/trade_validation_cpc/sws.yml"
   SETTINGS = faoswsModules::ReadSettings(settings_file)
 
   ## Define where your certificates are stored

@@ -514,10 +514,8 @@ str(db_save)
 
 head(db_save)
 
-print(paste0('DB will be saved in: ', dir_to_save, name_to_save))
-
-# Questo qui sotto è sufficiente: le cose sotto era quando volevo calcolare e conservare le statistiche nei dati grezzi
 saveRDS(db_save, paste0(dir_to_save, name_to_save))
 
-print('xxx4')
+print(paste0('The dataset for validation should have been saved in ',
+            dir_to_save, name_to_save))
 

@@ -16,16 +16,6 @@ sel1FCL <- function(hsfclmatch, maptable, cur_yr = NULL) {
   stopifnot(!is.null(cur_yr))
   stopifnot(is.integer(cur_yr))
 
-  if(length(unique(hsfclmatch$datumid)) > 1L) return(
-    hsfclmatch %>%
-      group_by_(~datumid) %>%
-      do(sel1FCL(., maptable, cur_yr)) %>%
-      ungroup
-  )
-
-  # Return original record if there is no multiple matches
-  if(nrow(hsfclmatch) == 1L) return(hsfclmatch)
-
   # Choose records suitable by start/end year values in the mapping table
   # Firstly calculate distance to years interval:
   # 0 if the record is inside of interval
@@ -38,30 +28,19 @@ sel1FCL <- function(hsfclmatch, maptable, cur_yr = NULL) {
                         ~recordnumb,
                         ~fromcodeext,
                         ~tocodeext),
-              by = "recordnumb")
-
-  hsfclmatch <- hsfclmatch %>%
+              by = "recordnumb") %>%
+    mutate_(hsrange = ~tocodeext - fromcodeext) %>%
     mutate_(inrange = ~startyear <= cur_yr & endyear >= cur_yr,
             rangedist = ~pmin.int(abs(startyear - cur_yr),
                                   abs(endyear - cur_yr)),
             rangedist = ~ifelse(inrange, 0, rangedist)) %>%
-    filter_(~rangedist == min(rangedist))
-
-  if(nrow(hsfclmatch) > 1L) {
-  # Selection of the narrowest hs range
-  hsfclmatch <- hsfclmatch %>%
-    mutate_(hsrange = ~tocodeext - fromcodeext) %>%
-    filter_(~hsrange == min(hsrange))
-  }
-
-  # If there are still several options
-  # we choose the yougest
-  if(nrow(hsfclmatch) > 1L) {
-    hsfclmatch <- hsfclmatch %>%
-      filter_(~recordnumb == max(recordnumb))
-  }
-
-  stopifnot(nrow(hsfclmatch) == 1L)
+    group_by(datumid) %>%
+    filter_(~rangedist == min(rangedist)) %>%
+    # If there are still several options choose narrowest hs range
+    filter_(~hsrange == min(hsrange)) %>%
+    # If there are still several options choose the yougest
+    filter_(~recordnumb == max(recordnumb)) %>%
+    ungroup()
 
   hsfclmatch %>%
     select_(~reporter, ~flow, ~datumid, ~hs, ~hsext, ~fcl, ~recordnumb)

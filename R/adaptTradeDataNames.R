@@ -7,28 +7,23 @@
 #' variables the same name in both datasets.
 #'
 #' @param tradedata TL or ES trade data.
-#' @param origin String: "TL" or "ES", for Tariff Line or Eurostat data
-#'   respectively.
 #' @return TL or ES data with common names (TL will also have "qunit").
 #' @import dplyr
 #' @export
 
-adaptTradeDataNames <- function(tradedata, origin) {
+adaptTradeDataNames <- function(tradedata) {
 
   if (missing(tradedata)) stop('"tradedata" should be set.')
 
-  origin <- toupper(origin)
-  if (missing(origin) | (origin!="TL" & origin!="ES")) {
-    stop('"origin" needs to be "TL" or "ES"')
-  }
+  tradedataname <- tolower(lazyeval::expr_text(tradedata))
 
-  if (origin == "TL")
+  if (tradedataname == "tldata")
     old_common_names <- c(
       "tyear", "rep", "prt",
       "flow", "comm", "tvalue",
       "weight", "qty")
 
-  if (origin == "ES")
+  if (tradedataname == "esdata")
     old_common_names <- c(
       "period", "declarant", "partner",
       "flow", "product_nc", "value_1k_euro",

@@ -37,6 +37,7 @@ digraph trade {
     non-reporting countries']
   #outliers [label = 'Outlier and missing quantity
   #  detection and imputation']
+  outliers [label = 'Missing quantity imputation']
   tl_conversion [label = 'Conversion factors for
     fclunits (general and specific)']
   tl_data [label = 'UNSD data'] 
@@ -85,7 +86,7 @@ digraph trade {
 
   unified_flow_2 ->
   uv_calculation ->
-  #outliers ->
+  outliers ->
   aggregation_fcl ->
   add_cpc_codes ->
   add_m49_codes ->

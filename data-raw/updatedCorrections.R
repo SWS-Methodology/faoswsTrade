@@ -66,14 +66,33 @@ getSubsetDataSWS <- function(reporter = NA, partner = NA, item = NA, elements = 
 
 
 toBeFilled = list()
+orig_data = list()
 for(i in 1:nrow(corrections)) {
 
-  data = getSubsetDataSWS(reporter = corrections[i, 1],
-                          partner = corrections[i, 2],
-                          item = corrections[i, 4],
-                          elements = c("5610", "5622", "5630",
-                                       "5910", "5922", "5930"),
-                          year = as.character(corrections[i, 3]))
+  isMirror <- FALSE # default
+
+  corr_reporter  <- corrections[i, 'reporter']
+  corr_partner   <- corrections[i, 'partner']
+  corr_item      <- corrections[i, 'item']
+  corr_year      <- corrections[i, 'year']
+  corr_flow      <- corrections[i, 'flow']
+  corr_data_orig <- corrections[i, 'data_original']
+  corr_input     <- corrections[i, 'correction_input']
+
+  data = getSubsetDataSWS(reporter = corr_reporter,
+                          partner = corr_partner,
+                          item = corr_item,
+                          elements = c("5608", "5609", "5610", "5622", "5638", "5639", "5630",
+                                       "5908", "5909", "5910", "5922", "5938", "5939", "5930"),
+                          year = as.character(corr_year))
+
+  # Remove self trade
+  data = data[geographicAreaM49Reporter != geographicAreaM49Partner,]
+
+  # Some values can be NA if they were "refreshed"
+  data = data[!is.na(Value),]
+
+  orig_data[[i]] <- data
 
   data$flow = ifelse(
     substr(data$measuredElementTrade, 1, 2) == "56", 1, 2)
@@ -82,72 +101,79 @@ for(i in 1:nrow(corrections)) {
 
   data[, lastElement := substr(data$measuredElementTrade, 3, 4)]
 
+  data$type = ifelse(
+    substr(data$lastElement, 1, 2) %in% c("08", "09", "10"), "qty", ifelse(substr(data$lastElement, 1, 2) == "22", "value", "unit_value"))
+
   # check whether the partner has a mirror data or not
 
-  oldQtyReporter = data[geographicAreaM49Reporter == corrections[i, 1] & flow == corrections[i, 5] &
-                          lastElement == 10, Value]
+  oldQtyReporter = data[geographicAreaM49Reporter == corr_reporter & flow == corr_flow &
+                          type == "qty", Value]
 
-  conditional = data[geographicAreaM49Partner == corrections[i, 1] & flow == ifelse(corrections[i, 5] == 1, 2, 1) &
-         lastElement == 10]
+  conditional = data[geographicAreaM49Partner == corr_reporter & flow == ifelse(corr_flow == 1, 2, 1) &
+         type == "qty"]
 
+  if (nrow(conditional) > 0) {
     isMirror = round(conditional$Value[1], 3) == round(oldQtyReporter, 3) &
-      conditional$flagObservationStatus[1] == "E"
+        conditional$flagObservationStatus[1] == "E"
+  }
 
 
-  ## Modifying reporter:compute the qty
+  ## Modifying reporter: compute the qty
 
-  data[geographicAreaM49Reporter == corrections[i, 1] &
-         flow == corrections[i, 5] &  lastElement == 10 &
-         round(Value, 3) == round(corrections[i, 6], 3),
-       Value := corrections[i, 10]]
+  data[geographicAreaM49Reporter == corr_reporter &
+         flow == corr_flow & type == "qty" &
+         round(Value, 3) == round(corr_data_orig, 3),
+       Value := corr_input]
 
   ## to compute the unit value
 
-  oldMonetValueReporter = data[geographicAreaM49Reporter == corrections[i, 1] &
-                                 flow == corrections[i, 5] & lastElement == 22, Value]
+  oldMonetValueReporter = data[geographicAreaM49Reporter == corr_reporter &
+                                 flow == corr_flow & type == "value", Value]
 
-  newQtyReporter = data[geographicAreaM49Reporter == corrections[i, 1] &
-                          flow == corrections[i, 5] &  lastElement == 10, Value]
+  newQtyReporter = corr_input
 
   # computing new unit value
-  data[geographicAreaM49Reporter == corrections[i, 1] &
-         flow == corrections[i, 5] & lastElement == 30, Value := oldMonetValueReporter/newQtyReporter * 1000]
+  data[geographicAreaM49Reporter == corr_reporter &
+         flow == corr_flow & type == "unit_value", Value := oldMonetValueReporter/newQtyReporter * 1000]
 
   ## Change flagObservationStatus for qty and unit value
 
-  data[geographicAreaM49Reporter == corrections[i, 1] &
-         flow == corrections[i, 5] &  lastElement == 10, flagObservationStatus := "I"]
+  data[geographicAreaM49Reporter == corr_reporter &
+         flow == corr_flow & type == "qty", flagObservationStatus := "I"]
 
-  data[geographicAreaM49Reporter == corrections[i, 1] &
-         flow == corrections[i, 5] & lastElement == 30, flagObservationStatus := "I"]
+  data[geographicAreaM49Reporter == corr_reporter &
+         flow == corr_flow & type == "unit_value", flagObservationStatus := "I"]
 
   # Change flagMethod for qty
-  data[geographicAreaM49Reporter == corrections[i, 1] &
-         flow == corrections[i, 5] &  lastElement == 10, flagMethod := "e"]
+  data[geographicAreaM49Reporter == corr_reporter &
+         flow == corr_flow & type == "qty", flagMethod := "e"]
 
 
-  if(isMirror == T) {
+  if (isMirror == TRUE) {
 
     # modify partner
 
-    data[geographicAreaM49Partner == corrections[i, 1] & flow != corrections[i, 5] &
+    data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
            lastElement == 10, Value := newQtyReporter]
 
-    oldMonetValuePartner = data[geographicAreaM49Partner == corrections[i, 1] &
-                                  flow != corrections[i, 5] & lastElement == 22, Value]
+    oldMonetValuePartner = data[geographicAreaM49Partner == corr_reporter &
+                                  flow != corr_flow & lastElement == 22, Value]
 
-    data[geographicAreaM49Partner == corrections[i, 1] & flow != corrections[i, 5] &
+    data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
            lastElement == 30, Value := oldMonetValuePartner/newQtyReporter * 1000]
 
   }
 
-  data[, c("flow", "lastElement") := NULL]
+  data[, c("flow", "lastElement", "type") := NULL]
 
   toBeFilled[[i]] = data
 
 }
 
 toBeFilled = do.call(rbind, toBeFilled)
+
+# Remove duplicates
+toBeFilled <- distinct(toBeFilled)
 
 stats <- SaveData("trade",
                   "completed_tf_cpc_m49",

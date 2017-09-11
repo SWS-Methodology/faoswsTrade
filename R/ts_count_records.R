@@ -5,7 +5,7 @@
 #' difference in trade flows per year and whether the
 #' maximum HS length changed with respect to the previous year.
 #'
-#' @inherit Params ts_all_reports
+#' @inheritParams ts_all_reports
 #'
 #' @import dplyr
 #'

@@ -50,42 +50,25 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
             ~fcl)
 
   # Map table subset where real hs from-to range exists
-  # and we need to fill numbers
+  # and we need to fill numbers. I.e., the range is expanded
+  # as a vector and each element of this vector is coupled
+  # with the FCL valid for the range where the HS comes from
   flog.trace("HS6 map: convert HS ranges into explicit HS codes",
              name = "dev")
   maptable_range <- maptable %>%
     filter_(~hsrange > 0) %>%
-    plyr::ddply(.variables = c("reporter", "flow"),
-                function(df) {
-                  plyr::adply(df, 1L, function(df){
-                    allhs <- seq.int(df$fromcode, df$tocode)
-                    rows <- length(allhs)
-                    fcl <- rep.int(df$fcl, times = rows)
-                    data_frame(hs6 = allhs,
-                               fcl = fcl)
-                  })
-                },
-                .parallel = parallel,
-                .paropts = list(.packages = "dplyr")) %>%
-    select_(~reporter,
-            ~flow,
-            ~hs6,
-            ~fcl)
+    rowwise() %>%
+    mutate(hs6 = list(fromcode:tocode)) %>%
+    tidyr::unnest() %>%
+    select(reporter, flow, hs6, fcl)
 
   # Bind both subsets and then calculate number of matching
   # fcl codes per each hs6
   flog.trace("HS6 map: counting FCL matches per HS6", name = "dev")
+
   bind_rows(maptable_0range, maptable_range) %>%
-    arrange_(~reporter, ~flow, ~hs6, ~fcl) %>%
-    distinct() %>%
-    # Split by chunks to be efficient in parallel execution
-    plyr::ddply(.variables = c("reporter", "flow"),
-                function(df) {
-                  df %>%
-                    group_by_(~hs6) %>%
-                    mutate_(fcl_links = ~length(unique(fcl))) %>%
-                    ungroup()
-                },
-                .parallel = parallel,
-                .paropts = list(.packages = "dplyr"))
+  group_by(reporter, flow, hs6) %>%
+  mutate(fcl_links = n_distinct(fcl)) %>%
+  ungroup() %>%
+  distinct()
 }

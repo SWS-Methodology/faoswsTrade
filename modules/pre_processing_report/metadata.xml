@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RScript xmlns="http://www.fao.org/rScript" type="datatable">
+    <Name>Pre-Processing Report</Name>
+    <Description>This module creates the the Pre-Processing Report.</Description>
+    <Category>Imputation</Category>
+    <Authors>
+        <Author>
+            <Name>FAODOMAIN/caetano</Name>
+            <Mail>bruno.caetanovidigal@fao.org</Mail>
+        </Author>
+    </Authors>
+    <Params>
+        <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>minYearToProcess</Code>
+            <Label>Min Year to Process</Label>
+            <Description> Please specify the minimum year the PPR should run. Currently is set to 2000.</Description>
+            <Compulsory>true</Compulsory>
+            <Min>2000</Min>
+        </Param>
+        <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Number">
+            <Code>maxYearToProcess</Code>
+            <Label>Max Year to Process</Label>
+            <Description>Please specify the maximum year the the PPR should run.</Description>
+            <Compulsory>true</Compulsory>
+            <Min>2000</Min>
+        </Param>
+    </Params>
+    <Datasets>
+        <MainDataset>
+            <Code>no_dataset</Code>
+        </MainDataset>
+    </Datasets>
+    <InteractiveValidation>false</InteractiveValidation>
+    <Background>false</Background>
+</RScript>

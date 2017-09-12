@@ -1,19 +1,9 @@
 
 dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
 
-# Switch off dplyr's progress bars globally
-options(dplyr.show_progress = FALSE)
-
-# max.print in RStudio is too small
-options(max.print = 99999L)
-
 # Libraries ####
 suppressPackageStartupMessages(library(data.table))
-library(stringr)
-library(magrittr)
-library(scales)
 library(tidyr, warn.conflicts = FALSE)
-library(futile.logger)
 suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
 library(faosws)
 library(faoswsUtil)
@@ -96,8 +86,6 @@ for(i in 1:nrow(corrections)) {
 
   data$flow = ifelse(
     substr(data$measuredElementTrade, 1, 2) == "56", 1, 2)
-
-  # dcast.data.table(data, )
 
   data[, lastElement := substr(data$measuredElementTrade, 3, 4)]
 

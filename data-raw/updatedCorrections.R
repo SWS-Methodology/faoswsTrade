@@ -33,12 +33,13 @@ if(faosws::CheckDebug()){
   })
 }
 
+if (CheckDebug()) {
+  corrections <- readRDS('//hqlprsws1.hq.un.fao.org/sws_r_share/trade/validation_tool_files/corrections_table.rds')
+} else {
+  corrections <- readRDS('/work/SWS_R_Share/trade/validation_tool_files/corrections_table.rds')
+}
 
-
-corrections <- readRDS(gzcon(url('http://campbells-fao:3838/mongeau/files/corrections_table.rds')))
 corrections = data.frame(corrections)
-dim(corrections)
-
 
 getSubsetDataSWS <- function(reporter = NA, partner = NA, item = NA, elements = NA, year = NA) {
   # TODO: use error handling
@@ -59,6 +60,11 @@ toBeFilled = list()
 orig_data = list()
 for(i in 1:nrow(corrections)) {
 
+  if (CheckDebug()) {
+    print(i)
+    flush.console()
+  }
+
   isMirror <- FALSE # default
 
   corr_reporter  <- corrections[i, 'reporter']
@@ -70,11 +76,11 @@ for(i in 1:nrow(corrections)) {
   corr_input     <- corrections[i, 'correction_input']
 
   data = getSubsetDataSWS(reporter = corr_reporter,
-                          partner = corr_partner,
-                          item = corr_item,
+                          partner  = corr_partner,
+                          item     = corr_item,
                           elements = c("5608", "5609", "5610", "5622", "5638", "5639", "5630",
                                        "5908", "5909", "5910", "5922", "5938", "5939", "5930"),
-                          year = as.character(corr_year))
+                          year     = as.character(corr_year))
 
   # Remove self trade
   data = data[geographicAreaM49Reporter != geographicAreaM49Partner,]
@@ -102,7 +108,7 @@ for(i in 1:nrow(corrections)) {
 
   if (nrow(conditional) > 0) {
     isMirror = round(conditional$Value[1], 3) == round(oldQtyReporter, 3) &
-        conditional$flagObservationStatus[1] == "E"
+        conditional$flagObservationStatus[1] == "T"
   }
 
 

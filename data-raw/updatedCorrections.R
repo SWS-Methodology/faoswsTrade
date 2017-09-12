@@ -11,8 +11,13 @@ library(faoswsTrade)
 library(faoswsFlag)
 
 # Development (SWS-outside) mode addons ####
-if(faosws::CheckDebug()){
-  set_sws_dev_settings(dev_sws_set_file)
+if (faosws::CheckDebug()){
+  SETTINGS <- faoswsModules::ReadSettings(dev_sws_set_file)
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  ## Get session information from SWS. Token must be obtained from web interface
+  faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                             token   = SETTINGS[["token"]])
 } else {
   # In order to have all columns aligned. Issue #119
   options(width = 1000L)
@@ -74,6 +79,7 @@ for(i in 1:nrow(corrections)) {
   corr_flow      <- corrections[i, 'flow']
   corr_data_orig <- corrections[i, 'data_original']
   corr_input     <- corrections[i, 'correction_input']
+  corr_data_type <- corrections[i, 'data_type']
 
   data = getSubsetDataSWS(reporter = corr_reporter,
                           partner  = corr_partner,
@@ -90,77 +96,103 @@ for(i in 1:nrow(corrections)) {
 
   orig_data[[i]] <- data
 
-  data$flow = ifelse(
-    substr(data$measuredElementTrade, 1, 2) == "56", 1, 2)
+  data$flow = ifelse(substr(data$measuredElementTrade, 1, 2) == "56", 1, 2)
 
-  data[, lastElement := substr(data$measuredElementTrade, 3, 4)]
+  data$lastElement = substr(data$measuredElementTrade, 3, 4)
 
   data$type = ifelse(
-    substr(data$lastElement, 1, 2) %in% c("08", "09", "10"), "qty", ifelse(substr(data$lastElement, 1, 2) == "22", "value", "unit_value"))
+    data$lastElement %in% c("08", "09", "10"), "qty", ifelse(data$lastElement == "22", "value", "unit_value"))
 
   # check whether the partner has a mirror data or not
 
-  oldQtyReporter = data[geographicAreaM49Reporter == corr_reporter & flow == corr_flow &
-                          type == "qty", Value]
+  oldVarReporter = data[geographicAreaM49Reporter == corr_reporter & flow == corr_flow &
+                          type == corr_data_type, Value]
 
-  conditional = data[geographicAreaM49Partner == corr_reporter & flow == ifelse(corr_flow == 1, 2, 1) &
-         type == "qty"]
+  conditionalMirror = data[geographicAreaM49Partner == corr_reporter & flow == ifelse(corr_flow == 1, 2, 1) &
+         type == corr_data_type]
 
-  if (nrow(conditional) > 0) {
-    isMirror = round(conditional$Value[1], 3) == round(oldQtyReporter, 3) &
-        conditional$flagObservationStatus[1] == "T"
+  if (nrow(conditionalMirror) > 0) {
+    isMirror = conditionalMirror$flagObservationStatus[1] == "T"
+    #isMirror = round(conditionalMirror$Value[1], 3) == round(oldVarReporter, 3) &
+    #    conditionalMirror$flagObservationStatus[1] == "T"
   }
 
-
-  ## Modifying reporter: compute the qty
-
-  data[geographicAreaM49Reporter == corr_reporter &
-         flow == corr_flow & type == "qty" &
-         round(Value, 3) == round(corr_data_orig, 3),
-       Value := corr_input]
-
-  ## to compute the unit value
-
-  oldMonetValueReporter = data[geographicAreaM49Reporter == corr_reporter &
-                                 flow == corr_flow & type == "value", Value]
-
-  newQtyReporter = corr_input
-
-  # computing new unit value
-  data[geographicAreaM49Reporter == corr_reporter &
-         flow == corr_flow & type == "unit_value", Value := oldMonetValueReporter/newQtyReporter * 1000]
-
-  ## Change flagObservationStatus for qty and unit value
-
-  data[geographicAreaM49Reporter == corr_reporter &
-         flow == corr_flow & type == "qty", flagObservationStatus := "I"]
-
-  data[geographicAreaM49Reporter == corr_reporter &
-         flow == corr_flow & type == "unit_value", flagObservationStatus := "I"]
-
-  # Change flagMethod for qty
-  data[geographicAreaM49Reporter == corr_reporter &
-         flow == corr_flow & type == "qty", flagMethod := "e"]
+  # / check whether the partner has a mirror data or not
 
 
-  if (isMirror == TRUE) {
+  oldVarValue <- data[geographicAreaM49Reporter == corr_reporter &
+                      flow == corr_flow & type == corr_data_type &
+                      round(Value, 3) == round(corr_data_orig, 3), Value]
 
-    # modify partner
+  # Only if old data is equal to the data that was corrected
+  if (round(oldVarValue, 3) == round(corr_data_orig, 3)) {
 
-    data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
-           lastElement == 10, Value := newQtyReporter]
+    ## Modifying reporter: compute the qty or value
 
-    oldMonetValuePartner = data[geographicAreaM49Partner == corr_reporter &
-                                  flow != corr_flow & lastElement == 22, Value]
+    data[geographicAreaM49Reporter == corr_reporter &
+           flow == corr_flow & type == corr_data_type,
+         Value := corr_input]
 
-    data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
-           lastElement == 30, Value := oldMonetValuePartner/newQtyReporter * 1000]
+    ## to compute the unit value
 
+    Reporter_qty = data[geographicAreaM49Reporter == corr_reporter &
+                                   flow == corr_flow & type == 'qty', Value]
+
+    Reporter_value = data[geographicAreaM49Reporter == corr_reporter &
+                                   flow == corr_flow & type == 'value', Value]
+
+    # XXX maybe the unit value should be modified outside the loop:
+    # there are some (few) cases where there are both qty and value
+    # corrections, thus it would be computed twice (with two different
+    # values)
+
+    # computing new unit value
+    data[geographicAreaM49Reporter == corr_reporter &
+         flow == corr_flow & type == "unit_value", Value := Reporter_value / Reporter_qty * 1000]
+
+    ## Change flagObservationStatus for qty and unit value
+
+    data[geographicAreaM49Reporter == corr_reporter &
+           flow == corr_flow & type == corr_data_type, flagObservationStatus := "I"]
+
+    data[geographicAreaM49Reporter == corr_reporter &
+           flow == corr_flow & type == "unit_value", flagObservationStatus := "I"]
+
+    # Change flagMethod for qty
+    data[geographicAreaM49Reporter == corr_reporter &
+           flow == corr_flow & type == corr_data_type, flagMethod := "e"]
+
+
+    if (isMirror == TRUE) {
+
+      # modify partner
+
+      # qty
+      data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
+             type == 'qty', Value := Reporter_qty]
+      # / qty
+
+      # value
+      # (if we corrected an import for the reporter, it was an
+      # export for the partner, thus we add 12%, and vice versa)
+      Reporter_value_markup <- ifelse(corr_flow == 1, Reporter_value * 1.12, Reporter_value / 1.12)
+
+      data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
+             type == 'value', Value := Reporter_value_markup]
+      # /value
+
+      # uv
+      # XXX again: this should be done outside the loop
+      data[geographicAreaM49Partner == corr_reporter & flow != corr_flow &
+             type == 'unit_value', Value := Reporter_value_markup / Reporter_qty * 1000]
+      # / uv
+
+    }
+
+    data[, c("flow", "lastElement", "type") := NULL]
+
+    toBeFilled[[i]] = data
   }
-
-  data[, c("flow", "lastElement", "type") := NULL]
-
-  toBeFilled[[i]] = data
 
 }
 

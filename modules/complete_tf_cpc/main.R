@@ -1429,6 +1429,9 @@ complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_correcte
 
 ##+ convert_element
 
+quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
+uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
+
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
                 -geographicAreaM49Partner, -measuredItemCPC, -timePointYears,
@@ -1437,21 +1440,32 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                 -correction_metadata_qty, -correction_metadata_value) %>%
   rowwise() %>%
   mutate_(measuredElementTrade =
-            ~convertMeasuredElementTrade(measuredElementTrade, unit, flow)) %>%
+            ~convertMeasuredElementTrade(measuredElementTrade,
+                                         unit,
+                                         flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
   mutate(
-    correction_metadata = ifelse(
-          measuredElementTrade %in% quantityElements,
-          correction_metadata_qty,
-          ifelse(
-            measuredElementTrade %in% uvElements,
-            paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
-            correction_metadata_value
-          )
-      )
+    correction_metadata_uv = ifelse(
+                               !is.na(correction_metadata_qty),
+                               ifelse(
+                                 !is.na(correction_metadata_value),
+                                 paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
+                                 correction_metadata_qty
+                               ),
+                               correction_metadata_value
+                             ),
+    correction_metadata   = ifelse(
+                              measuredElementTrade %in% quantityElements,
+                              correction_metadata_qty,
+                              ifelse(
+                                measuredElementTrade %in% uvElements,
+                                correction_metadata_uv,
+                                correction_metadata_value
+                              )
+                            )
   ) %>%
-  select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value)
+  select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
 
 
 metad <- complete_trade_flow_cpc %>%
@@ -1471,9 +1485,6 @@ metad <- complete_trade_flow_cpc %>%
     Metadata_Value = correction_metadata
   ) %>%
   select(-correction_metadata)
-
-quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
-uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   select(-correction_metadata) %>%

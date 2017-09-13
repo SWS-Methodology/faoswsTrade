@@ -1437,9 +1437,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                 -correction_metadata_qty, -correction_metadata_value) %>%
   rowwise() %>%
   mutate_(measuredElementTrade =
-            ~convertMeasuredElementTrade(measuredElementTrade,
-                                         unit,
-                                         flow)) %>%
+            ~convertMeasuredElementTrade(measuredElementTrade, unit, flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
   mutate(

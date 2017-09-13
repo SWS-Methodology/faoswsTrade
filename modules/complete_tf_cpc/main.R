@@ -1442,15 +1442,16 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                                          flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
-  mutate(correction_metadata = ifelse(
-                                 !is.na(correction_metadata_qty),
-                                 ifelse(
-                                        !is.na(correction_metadata_value),
-                                        paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
-                                        correction_metadata_qty
-                                 ),
-                                 correction_metadata_value
-                               )
+  mutate(
+    correction_metadata = ifelse(
+          measuredElementTrade %in% quantityElements,
+          correction_metadata_qty,
+          ifelse(
+            measuredElementTrade %in% uvElements,
+            paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
+            correction_metadata_value
+          )
+      )
   ) %>%
   select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value)
 
@@ -1478,20 +1479,24 @@ uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   select(-correction_metadata) %>%
-  mutate(flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
-                                        flagObservationStatus_q,
-                                        flagObservationStatus_v),
-         flagMethod = ifelse(measuredElementTrade %in% quantityElements,
-                                        flagMethod_q,
-                                        flagMethod_v)) %>%
+  mutate(
+    flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
+                                   flagObservationStatus_q,
+                                   flagObservationStatus_v),
+    flagMethod            = ifelse(measuredElementTrade %in% quantityElements,
+                                   flagMethod_q,
+                                   flagMethod_v)
+  ) %>%
   # The Status flag will be equal to the weakest flag between
   # the numerator and the denominator, in this case the denominator.
-  mutate(flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
-                                        flagObservationStatus_q,
-                                        flagObservationStatus),
-         flagMethod = ifelse(measuredElementTrade %in% uvElements,
-                             'i',
-                             flagMethod)) %>%
+  mutate(
+    flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
+                                   flagObservationStatus_q,
+                                   flagObservationStatus),
+    flagMethod = ifelse(measuredElementTrade %in% uvElements,
+                        'i',
+                        flagMethod)
+  ) %>%
   select(-flagObservationStatus_v, -flagObservationStatus_q,
          -flagMethod_v, -flagMethod_q)
 

@@ -1479,10 +1479,10 @@ metad <- complete_trade_flow_cpc %>%
     correction_metadata
   ) %>%
   mutate(
-    Metadata = "GENERAL",
-    Metadata_Element = "COMMENT",
+    Metadata          = "GENERAL",
+    Metadata_Element  = "COMMENT",
     Metadata_Language = "en",
-    Metadata_Value = correction_metadata
+    Metadata_Value    = correction_metadata
   ) %>%
   select(-correction_metadata)
 
@@ -1536,6 +1536,7 @@ flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 stats <- SaveData("trade",
                   "completed_tf_cpc_m49",
                   complete_trade_flow_cpc,
+                  metadata = metad,
                   waitTimeout = 10800)
 
 ## remove value only

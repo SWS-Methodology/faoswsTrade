@@ -1349,6 +1349,77 @@ complete_trade_flow_cpc <- tradedata %>%
   ## unit of monetary values is "1000 $"
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
+
+#' # Use corrections from validation
+if (CheckDebug()) {
+  corrections_table_all <- readRDS('//hqlprsws1.hq.un.fao.org/sws_r_share/trade/validation_tool_files/corrections_table.rds')
+} else {
+  corrections_table_all <- readRDS('/work/SWS_R_Share/trade/validation_tool_files/corrections_table.rds')
+}
+
+corrections_table <- corrections_table_all %>%
+  rename(correction_year = year) %>%
+  filter(correction_year == year, correction_level == 'CPC') %>%
+  select(-correction_year, -correction_level, -correction_hs) %>%
+  # Some of these cases were found, but are probably mistakes: should inform
+  filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
+  # XXX actually, flow should be integer in complete_trade_flow_cpc
+  mutate(flow = as.numeric(flow))
+
+corrections_metadata <- apply(select(corrections_table, name_analyst, data_original, correction_type:date_validation),
+                              1, function(x) paste(names(x), ifelse(x == '', NA, x), collapse = '; ', sep = ': '))
+
+corrections_table <- corrections_table %>%
+  select(-(correction_note:date_validation)) %>%
+  mutate(correction_metadata = gsub('  *', ' ', corrections_metadata))
+
+complete_corrected <- useValidationCorrections(complete_trade_flow_cpc, corrections_table)
+
+complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
+  mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
+  filter(is_mirror) %>%
+  select(-is_mirror)
+
+
+complete_with_corrections_mirror <- complete_corrected$corrected %>%
+  select(
+    geographicAreaM49Reporter = geographicAreaM49Partner,
+    geographicAreaM49Partner  = geographicAreaM49Reporter,
+    flow,
+    measuredItemCPC
+  ) %>%
+  mutate(flow = recode(flow, '2' = 1, '1' = 2), to_correct = TRUE)
+
+complete_mirror_to_correct <- left_join(
+    complete_trade_flow_cpc_mirror,
+    complete_with_corrections_mirror,
+    by = c(
+      'geographicAreaM49Reporter',
+      'geographicAreaM49Partner',
+      'flow',
+      'measuredItemCPC'
+    )
+  ) %>%
+  filter(to_correct) %>%
+  select(-to_correct)
+
+corrections_table_mirror <- corrections_table %>%
+  rename(reporter = partner, partner = reporter) %>%
+  mutate(flow = recode(flow, '2' = 1, '1' = 2)) %>%
+  mutate(correction_input = ifelse(data_type == 'value', ifelse(flow == 1, correction_input * 1.12, correction_input / 1.12), correction_input))
+
+complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct, corrections_table_mirror)
+
+complete_all_corrected <- bind_rows(complete_corrected$corrected, complete_mirror_corrected$corrected)
+
+complete_uncorrected <- anti_join(
+                          complete_trade_flow_cpc,
+                          complete_all_corrected,
+                          by = c('geographicAreaM49Reporter', 'geographicAreaM49Partner', 'flow', 'measuredItemCPC')
+                        )
+
+complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
+
 ##' 1. Transform dataset separating monetary values, quantities and unit values
 ##' in different rows.
 
@@ -1359,11 +1430,11 @@ complete_trade_flow_cpc <- tradedata %>%
 ##+ convert_element
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
-  gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
-                -geographicAreaM49Partner, -measuredItemCPC,
-                -timePointYears,
+  tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
+                -geographicAreaM49Partner, -measuredItemCPC, -timePointYears,
                 -flagObservationStatus_v, -flagObservationStatus_q,
-                -flagMethod_v, -flagMethod_q, -unit, -flow) %>%
+                -flagMethod_v, -flagMethod_q, -unit, -flow,
+                -correction_metadata_qty, -correction_metadata_value) %>%
   rowwise() %>%
   mutate_(measuredElementTrade =
             ~convertMeasuredElementTrade(measuredElementTrade,
@@ -1371,12 +1442,42 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                                          flow)) %>%
   ungroup() %>%
   filter_(~measuredElementTrade != "999") %>%
-  select_(~-flow,~-unit)
+  mutate(correction_metadata = ifelse(
+                                 !is.na(correction_metadata_qty),
+                                 ifelse(
+                                        !is.na(correction_metadata_value),
+                                        paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
+                                        correction_metadata_qty
+                                 ),
+                                 correction_metadata_value
+                               )
+  ) %>%
+  select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value)
+
+
+metad <- complete_trade_flow_cpc %>%
+  filter(!is.na(correction_metadata)) %>%
+  select(
+    geographicAreaM49Reporter,
+    geographicAreaM49Partner,
+    measuredElementTrade,
+    measuredItemCPC,
+    timePointYears,
+    correction_metadata
+  ) %>%
+  mutate(
+    Metadata = "GENERAL",
+    Metadata_Element = "COMMENT",
+    Metadata_Language = "en",
+    Metadata_Value = correction_metadata
+  ) %>%
+  select(-correction_metadata)
 
 quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
 uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
+  select(-correction_metadata) %>%
   mutate(flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
                                         flagObservationStatus_q,
                                         flagObservationStatus_v),

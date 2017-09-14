@@ -1,19 +1,27 @@
 ---
-title: "faoswsTrade"
+title: "faoswsTrade: `complete_tf_cpc` and `total_trade_CPC` modules"
 author:
 - Marco Garieri
 - Christian A. Mongeau Ospina\
   
-  Food and Agriculture Organization
-  of the United Nations
+  Food and Agriculture Organization of the United Nations
 abstract: |
   The trade module is divided in two submodules: `complete_tf_cpc`
-  and `total_trade_CPC`. Each module is year specific. This means
-  that, at the time being, the trade module runs independently for
-  each year. In order to run the `total_trade_CPC`, the output of
-  `complete_tf_cpc` is needed. All tables and graphs present in this
-  documentation are just examples. More details on the data are
-  given in the code.
+  and `total_trade_CPC`. The `complete_tf_cpc` module uses the
+  most disaggregated bilateral transactions between countries
+  (obtained from Eurostat for European countries, and from UNSD
+  for the remaining countries), filters the agriculture-related
+  flows of interest for the Organisation, standarises units of
+  measurement, maps item and country codes to a standard set of
+  codes, imputes missing quantities, and computes unit values. The
+  `total_trade_CPC` aggregates bilateral trade (i.e., the results
+  of `complete_tf_cpc`) at reporter level. Each module is year
+  specific, i.e, the trade modules run independently for each year
+  (not necessarily in a chronological order). To run the
+  `total_trade_CPC` module, the output of the `complete_tf_cpc`
+  module is required. In this document, an overall narrative of
+  what the modules do is presented. A detailed step-by-step
+  illustration of the modules is given in a separate document.
 date: "`r format(Sys.time(), '%e %B %Y')`"
 geometry: margin=1in
 output:

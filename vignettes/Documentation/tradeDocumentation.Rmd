@@ -42,9 +42,10 @@ examples <- readRDS('examples.rds')
 
 ## Data
 
-Raw data are provided by the SWS Team (subunit of Team F) for both
-UNSD Tariff line and Eurostat Data. The data is prefiltered by
-downloading only chapters of interest, which are:
+Raw data are harvested and provided by the SWS Team (subunit of
+Team F) for both UNSD Tariff line and Eurostat Data. The dataset
+is prefiltered by downloading only chapters of interest, which
+are:
 
   01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17,
   18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 43, 50, 51, 52, 53.
@@ -77,15 +78,9 @@ names and data types before being processed further.
 
 ### Eurostat
 
-- only numeric codes of reporters and partners are kept (letters
-  are not allowed; basically this removes the "EU" total).
-
-- only numeric CN8 codes (`hs`) are kept (letters are not
-  allowed).
-
 - only `stat_regime` equal to 4 is kept.
 
-  > In this system ["Statistical regime 4" or "Total trade"], the
+  > In this system *["Statistical regime 4" or "Total trade"]*, the
   > recorded aggregates include all goods entering or leaving the
   > economic territory of a country with the exception of simple
   > transit trade. In particular, all goods received into customs
@@ -98,6 +93,12 @@ names and data types before being processed further.
   See pag. 9 in *DG Trade Statistical Guide*, June 2016,
   http://trade.ec.europa.eu/doclib/docs/2013/may/tradoc_151348.pdf
 
+- only numeric codes of reporters and partners are kept (letters
+  are not allowed; basically this removes the "EU" total).
+
+- only numeric CN8 codes (`hs`) are kept (letters are not
+  allowed).
+
 ### UNSD
 
 - only numeric HS (`hs`) codes are kept (letters are not
@@ -108,22 +109,26 @@ names and data types before being processed further.
 ### Aggregate UNSD Tariff line individual Shipments
 
 The tariffline data from UNSD contains multiple rows with
-identical combination of reporter / partner / commodity / flow /
-year / qunit. Those are transactions registered separately, thus
-rows containinig non-missing values and quantities can be aggregated.
-Missing variables of the same type are also aggregated if they are
-*all* missing, as they will produce a missing aggregated value for
-missing disaggregated values while correctly summing the remaining
-variables.
+identical combination of `reporter` / `partner` / `commodity` /
+`flow` / `year` / `qunit`. Those are transactions registered
+separately, thus rows containinig non-missing values and
+quantities can be aggregated.  Missing variables of the same type
+are also aggregated if they are *all* missing, as they will
+produce a missing aggregated value for missing disaggregated
+values while correctly summing the remaining variables.
 
 ```{r}
 knitr::kable(examples$tldata_multiple, row.names = FALSE,
 caption = 'Example of multiple transactions by
-reporter / partner / flow / hs')
+`reporter` / `partner` / `flow` / `year` / `hs`')
 ```
 
-The result of the aggregation of the previous example is the
-following.
+The results of the aggregation of the previous example are shown
+in  the following table. In this case, even if there is a unique
+combination of `reporter` / `partner` / `flow` / `year` / `hs`,
+the rows are two: indeed, one aggregated the transactions where
+the `weight` variable was not missing, and the other aggregated
+those cases where it was missing.
 
 ```{r}
 knitr::kable(examples$tldata_multiple_aggregated, row.names = FALSE,
@@ -139,13 +144,24 @@ the nature of the differences among the two datasets.
 #### UNSD Tariff line {-}
 
 1. UNSD Tariff line data reports area code with Tariff line M49
-   standard (which are different for official M49). The area code
-   is converted in FAO country code using a specific conversion
-   table provided by Team ENV.
+   standard codes (which are different for official M49). The area
+   code is converted in FAO country code using a specific
+   conversion table provided by Team ENV.
+
+   ```{r}
+   knitr::kable(examples$m49faomap, row.names = FALSE,
+   caption = 'Subset of the M40 to FAO codes mapping table')
+   ```
 
 1. Countries that are not supposed to exist in the year for which
    the module runs are removed from the data (e.g., Serbia did not
-   exist as a single country in 2004).
+   exist as a single official country before 2006).
+
+   ```{r}
+   knitr::kable(examples$reporters_start_end_date, row.names = FALSE,
+   caption = 'Subset of the tables with countries and their
+   `startDate` and `endDate`')
+   ```
 
 1. European countries (as reporters) already in Eurostat data are
    removed.
@@ -197,19 +213,20 @@ the nature of the differences among the two datasets.
    See:
    http://unstats.un.org/unsd/tradekb/Knowledgebase/Reexports-and-Reimports
 
-1. Set all HS codes to the maximum length (by reporter / flow)
-   found in the HS-FCL mapping table valid for the reporter in
-   that year (see below).
+1. Set (extend if required) all HS codes to the maximum length (by
+   reporter / flow) found in the HS-FCL mapping table valid for
+   the reporter in that year (see below).
 
 1. Commodity codes are reported in HS codes (*Harmonized Commodity
    Description and Coding System*). The codes are converted in FCL
    (*FAO Commodity List*) codes. This step is performed using a
-   table incorporated in the SWS. In this step, all the mapping
-   between HS and FCL code is stored. If a country is not included
-   in the package of the mapping for that specific year, all the
-   records for the reporting country are removed. All records
-   without an FCL mapping are filtered out and saved in specific
-   variables.
+   table incorporated in the SWS that was built starting from the
+   MDB files used in the previous system (known as
+   *Shark/Jellyfish*). In this step, all the mapping between HS
+   and FCL code is stored. If a country is not included in the
+   mapping table for that specific year, all the records
+   for the reporting country are removed. All records without an
+   FCL mapping are filtered out and saved in specific variables.
 
    ```{r}
    knitr::kable(examples$hsfclmap[ ,c('area', 'flow', 'fromcode',
@@ -219,15 +236,24 @@ the nature of the differences among the two datasets.
    
    Some codes can be unmapped in the previous table, i.e., no FCL
    code can be assigned to some HS codes. In this case, the
-   module generates a list of this codes that is sent to Team B/C
+   module generates a list of these codes that is sent to Team B/C
    so that they can update the table by including these missing
-   codes. Moreover, some of the original codes in the HS-FCL
+   codes.
+
+   ```{r}
+   knitr::kable(examples$hsfclmap_additions, row.names = FALSE,
+   caption = 'Subset of additions to the HS to FCL mapping table')
+   ```
+
+   Moreover, some of the original codes in the HS-FCL
    mapping can be better mapped to another FCL code: the mapping
-   table has a `correction_fcl` that can be used to override the
-   original `fcl` variable. This feature was requested by Team
+   table has a `correction_fcl` (not shown in the previous
+   example in order to save space) that can be used to override
+   the original `fcl` variable. This feature was requested by Team
    B/C that is responsible for these corrections.
 
-1. Information of the FCL units is added.
+1. Information of the FCL units is added, i.e, to each FCL code
+   its final unit of measurement is assigned.
 
    ```{r}
    knitr::kable(examples$fclunits, row.names = FALSE, caption =
@@ -237,7 +263,7 @@ the nature of the differences among the two datasets.
 1. Data conversion of units of measurements are applied to meet
    FAO standards, where all weights are reported in tonnes,
    animals in heads or 1000 heads and, for some commodities, just
-   the value is provided. For example, if the originally reported
+   the value is provided. For example, if the originally-reported
    quantity is "units" and the FAO unit is "1000 heads", the
    quantity is divided by 1000.
 
@@ -245,36 +271,43 @@ the nature of the differences among the two datasets.
    taking the ratio of the reported weight and quantity (divided
    by 1000), computing the median of this ratio by FCL and the
    originally reported unit of measurement, and finally
-   multiplying it by the reported quantity. To make this clear, an
+   multiplying it by the reported quantity. To make this clear an
    example could be useful: suppose that a country does not report
    the weight of eggs, but reports units, in this case, we compute
    the median of the weight/quantity/1000 ratio for all countries
-   where both weight and quantity are reported and the apply this
+   where both weight and quantity are reported and then apply this
    median in order to have an idea of how many tonnes the reported
-   quantities of that country weighs.
+   quantities of that country weighs. [Probably a weak point of
+   this procedure is that not in all countries eggs weigh the
+   same, thus a more realistic approach would be to compute
+   regional medians (e.g., for Thailand use the Asian median of
+   the weight/quantity/1000 ratio). The first-best approach, in
+   any case, would be to have speficic tables derived from
+   external sources. This is currently under investigation.]
 
 #### Eurostat {-}
 
-1. Eurostat classifies areas in their geonomenclature. These codes
-   are converted in FAO country codes using a specific conversion
-   table, stored in the SWS, provided by Team B/C.  Area codes not
-   mapping to any FAO country code is reported and the records for
-   these area codes are removed. All countries mapping to code 252
-   (which correpond undefined areas) are mapped to the 896 M49
-   code ("Other nei").
+1. Eurostat classifies areas in their "geonomenclature". These
+   codes are converted in FAO country codes using a specific
+   conversion table, stored in the SWS, provided by Team B/C.
 
    ```{r}
    knitr::kable(examples$geonom, row.names = FALSE, caption =
-   'Subset of geonom (Eurostat) codes')
+   'Subset of geonom (Eurostat) to FAO codes mapping')
    ```
+
+   Area codes not mapping to any FAO country code is reported and
+   the records for these area codes are removed. All countries
+   mapping to code 252 (which correpond undefined areas) are
+   mapped to the 896 M49 code ("Other nei").
 
 1. Commodity codes are reported in CN8 codes (*Combined
    Nomenclature 8 digits*). The codes are converted in FCL (*FAO
    Commodity List*) codes. This step is performed using the same
-   package (`hsfclmap`) as for UNSD Tariff line. If a specific
+   HS to FCL mapping table as for UNSD Tariff line. If a specific
    record has a CN8 code not mapping to any specific FCL code,
    then the record is reported and removed. If a country is not
-   included in the package of the mapping for that specific year,
+   included in the mapping table for that specific year,
    all the records for the reporting country are removed.
    
 1. Information of the FCL units is added. This step is
@@ -287,7 +320,7 @@ the nature of the differences among the two datasets.
    commodities, namely: 1057, 1068, 1072, 1079, 1083, 1140, 1181.
 
 1. Values are converted from EUR to USD using the table, stored in
-   the SWS, with avarage EUR/USD exchange rate for each year
+   the SWS, with the average EUR/USD exchange rate for each year
    provided by Team B/C.
 
    ```{r}
@@ -308,10 +341,14 @@ following PPR are available in the "trade-reports" SWS domain:
 1. Check qty and value included
 1. Import and export content check
 
+For a detailed explanation of what the PPR contain and how to
+update them, see the document "Trade Module: Plug-in
+Pre-Processing Report".
+
 ### Unified Official Trade Flows Dataset
 
 UNSD Tariff line and Eurostat datasets are ready to be merged
-togheter. Thus, the resulting table has all the countries
+together. Thus, the resulting table has all the countries
 worldwide.
 
 ### Standardization, editing and outlier detection
@@ -319,43 +356,47 @@ worldwide.
 #### Unit Values computation {-}
 
 For each record having both quantity and value (thus excluding all
-commodity reported just as value), the unit value ($u_v$) is
+commodity reported just as value), the unit value ($uv$) is
 computed as following:
 
-$$u_v = \frac{value}{quantity}$$
+$$uv = \frac{value}{quantity}$$
 
 #### Missing Quantities Imputation {-}
 
-For records in which the commodity has to be reported in quantity
+For records where the commodity has to be reported in quantity
 and the quantity is missing and the value is present, the
 corresponding quantity is imputed dividing the corresponding value
-by the median of the unit values obtained in a specific-to-generic
-fashion (in all cases, the unit values are calculated separately
-for imports and exports). A first attempt is done by calculating
-unit values at the most specific HS level (i.e., the one at which
-the quantity is expressed). If the number of partners for which
-this unit value can be calculated is greater than a certain
-threshold (currently 10) the median unit value across partner is
-calculated and used for imputation. If the first attempt fails
-(i.e., it is not possible to calculate a unit value at the most
-specific HS level), then the same approach is used by taking into
-account more generic HS levels, in particular at eight and six
-digits, and the most specific level for which a sufficient number
-of partners is available is used for calculating the median unit
-value. Usually a suitable median can be calculated at the 8-digit
-level or, at least, at the 6-digit level. However, if the previous
-strategies fail, which implies that there is not a sufficient
-number of partners in order to calculate the median, two attempts
-at calculating a non reporter-specific median unit values (i.e.,
-median unit values valid for all reporters) are sequentially
-undertaken: by HS and by FCL. In most cases it should be possible
-to calculate the median unit value by HS, thus that the FCL level
-is used as the strategy of last resort.  Actually, for
-completeness sake, the very last fallback is the median unit value
-by flow. This is the most generic unit value that can be used for
-imputation and is calculated just for precaution as it is very
-unlikely that an appropriate more specific median unit value can
-not be calculated.
+by a median unit value:
+
+$$quantity = \frac{value}{uv_{median}}$$
+
+The median unit value ($uv_{median}$) is obtained in a
+specific-to-generic fashion (in all cases, the unit values are
+calculated separately for imports and exports). A first attempt is
+done by calculating unit values at the most specific HS level
+(i.e., the one at which the quantity is expressed). If the number
+of partners for which this unit value can be calculated is greater
+than a certain threshold (currently 10) the median unit value
+across partner is calculated and used for imputation. If the first
+attempt fails (i.e., it is not possible to calculate a unit value
+at the most specific HS level), then the same approach is used by
+taking into account more generic HS levels, in particular at eight
+and six digits, and the most specific level for which a sufficient
+number of partners (at least 10) is available is used for
+calculating the median unit value. Usually a suitable median can
+be calculated at the 8-digit level or, at least, at the 6-digit
+level. However, if the previous strategies fail (which implies
+that there is not a sufficient number of partners in order to
+calculate the median) two attempts at calculating a non
+reporter-specific median unit values (i.e., median unit values
+valid for all reporters) are sequentially undertaken: by HS and by
+FCL. In most cases it should be possible to calculate the median
+unit value by HS, thus that the FCL level is used as the strategy
+of last resort.  Actually, for completeness sake, the very last
+*fallback* is the median unit value by flow. This is the most
+generic unit value that can be used for imputation and is
+calculated just for precaution as it is very unlikely that an
+appropriate more specific median unit value can not be calculated.
 
 In short, the first one of the following median unit values that
 can be calculated is used for imputation (import and export unit
@@ -364,8 +405,9 @@ values are always calculated separately):
 1. most specific HS code, across partners;
 1. 8-digit HS level, across partners;
 1. 6-digit HS level, across partners;
-1. most specific HS code, across reporters;
-1. FCL code of the most specific HS code, across reporters;
+1. most specific HS code, across reporters/partners;
+1. FCL code of the most specific HS code, across
+   reporters/partners;
 1. by flow (whithout taking into account any commodity code).
 
 #### Outlier Detection and Imputation {-}
@@ -391,6 +433,12 @@ from the partners inverting the flows. The quantities are the same
 while the values are corrected by a factor of 12% due to the
 CIF/FOB conversion.
 
+There is also another condition for which mirroring is applied:
+when a flow is completely missing for a country when it is a
+reporter. For instance, if in a given year Tanzania did not report
+any flow as export, but did so for imports, the mirroring
+procedure will be used for exports.
+
 ## Flags
 
 The module assigns two types of flags ("Observation Status" and
@@ -400,7 +448,7 @@ The first flags that all data are given are a "BLANK" Observation
 Status flag and an "h" Method flag. They indicate that data are
 official and were harvested, respectively. After these, the
 different kind of flags, and the conditions that should be met in
-order to assign them, are contained in the document "Flag
+order to assign them, are reported in the document "Flag
 Management in the Trade module".
 
 An observation can have multiple Observation Status flags and
@@ -422,30 +470,32 @@ respect the SWS standards:
   the table of conversion 2.1 expanded. If some FCL codes are not
   mapped into CPC ones, the corresponding records are filtered
   out. Since the mapping between FCL and CPC is one-to-one there
-  is no aggregation at this point. The routine just add the
+  is no aggregation at this point. The routine just adds the
   corresponding CPC code.
 
 - Conversion from FAO country code to M49.
 
 - Each row of the final output must be either quantity- or
   value-specific, while so far the module keeps this information
-  in one row. We therefore split this information in two separated
+  in one row. The information is therefore split in two separate
   rows.
 
 The first submodule saves the final output in the
-`completed_tf_cpc_m49` dataset, within the trade domain.
+`completed_tf_cpc_m49` dataset, within the `trade` domain.
 
 # Total trade CPC
 
 This second submodule uses as input the output of the previous
-submodule. This module aggregates total trade flow by reporting
-country for partners countries to a single total trade for each
-unique CPC commodity code.
+submodule. It aggregates total trade flow by reporting country for
+partners countries to a single total trade for each unique CPC
+commodity code.
 
 The module saves the ouput into the dataset `total_trade_cpc_m49`,
-within the trade domain.
+within the `trade` domain.
 
 # Flow Chart Process
+
+The whole process is displayed in the next flow chart.
 
 ```{r, echo = FALSE, out.width = "550px"}
 knitr::include_graphics("assets/trade_1.png")
@@ -464,46 +514,46 @@ module.
 
 ## Outlier identification/imputation
 
-- Outliers were identified in the `complete_tf_cpc` module and
-  imputed automatically by using the median unit value with a
-  specific-to-generic median unit value calculation, as explained
-  above. Results were found to be unsatisfactory, thus automatic
-  imputation was switched off. Said strategy could be supplemented
-  by using information of neighbour or similar countries (e.g.,
-  the median unit value of Asian countries for a detailde HS level
-  can be used for imputing an outlier for an Asian country instead
-  of going up to the HS8 or HS6 level for the country itself as
-  attempted in the specific-to-generic approach.
-  
+Outliers were identified in a previous version of the
+`complete_tf_cpc` module and imputed automatically by using the
+median unit value with a specific-to-generic median unit value
+calculation, as explained above. Results were found to be
+unsatisfactory, thus automatic imputation was switched off. Said
+strategy could be supplemented by using information of neighbour
+or similar countries (e.g., the median unit value of Asian
+countries for a detailde HS level can be used for imputing an
+outlier for an Asian country instead of going up to the HS8 or HS6
+level for the country itself as attempted in the
+specific-to-generic approach).
 
 ### Destination Table
 
-- The `complete_tf_cpc` module produces output for all the records
-  passing all the routines and not filtered out. The module does
-  not check if any commodity is missing. A possible solution would
-  be to have a destination table with all the commodities of
-  interest and the module should fill the destination table. In
-  this way the output validation step should be achieved.
+The `complete_tf_cpc` module produces output for all the records
+passing all the routines and not filtered out. The module does not
+check if any commodity is missing. A possible solution would be to
+have a destination table with all the commodities of interest and
+the module should fill the destination table. In this way the
+output validation step should be achieved.
 
 ## CIF/FOB
 
-- The CIF/FOB correction for mirroring is, at the time being, set
-  up to 12%. This has been suggested by team B/C.
-
-- Additional work might be done in order to assess if the estimate
-  is appropriate. There might be different range of percentages
-  for different type of countries and by distance between
-  reporters and partners. A study can be conducted on available
-  records on both sides: this means records for which the commodity
-  is reported by the reporter and by the partner.
+The CIF/FOB correction for mirroring is, at the time being, set up
+to 12%. This has been suggested by team B/C.  Additional work
+might be done in order to assess if this estimate is appropriate,
+but logic suggests that this is a very crude approximation.
+Indeed, there are different range of percentages for different
+type of countries and by distance between reporters and partners
+(e.g., the cost of transportation of a given commodity is
+definitely different if it is between France and Italy or France
+and Australia). A study can be conducted on available records on
+both sides: this means records for which the commodity is reported
+by the reporter and by the partner.
 
 ## Re-import and Re-export
 
-- All re-imports and re-exports are considered as, respectively,
-  imports and exports.
-
-- More study might be conducted in order to identify countries
-  more prone to report re-imports and re-exports.
+All re-imports and re-exports are considered as, respectively,
+imports and exports. More study might be conducted in order to
+identify countries more prone to report re-imports and re-exports.
 
 ## Self Trade Analysis
 
@@ -528,38 +578,36 @@ module.
 
 ## Pseudo-automatic mapping of commodities
 
-- An additional method has to be added in the future: the
-  algorithm should try to trim the code not mapped and try to map
-  them with shorter HS codes. If any of shorter codes (from right
-  to left) are then not mapped, we can definitely discard the
-  record. If a specific record has a HS code not mapping to any
-  specific FCL code, then the record is reported and removed.
+An additional method could be added in the future: the algorithm
+should try to trim the code not mapped and try to map them with
+shorter HS codes. If any of shorter codes (from right to left) are
+then not mapped, we can definitely discard the record. If a
+specific record has a HS code not mapping to any specific FCL
+code, then the record is reported and removed.
 
 ## Mapping from HS to FCL/CPC
 
-- In the module for commodities we have 2 different mappings. From
-  HS to FCL, using a mapping table produced by team B/C and then
-  from FCL to CPC 2.1. In the future direct mapping from HS to CPC
-  has been asked from management. A possible solution, where
-  adding the column with the one-to-one CPC codes has been sent to
-  Carola (09.06.2016), but anyway this needs revision
-  ([link](https://drive.google.com/drive/folders/0B_Z6srBtmyJRUmtaaXphTllZUDA))
+In the module for commodities we have two different mappings. From
+HS to FCL, using a mapping table produced by team B/C and then
+from FCL to CPC 2.1. In the future direct mapping from HS to CPC
+has been asked from management. A possible solution, where adding
+the column with the one-to-one CPC codes has been sent to Carola
+(09.06.2016), but anyway this needs revision
+([link](https://drive.google.com/drive/folders/0B_Z6srBtmyJRUmtaaXphTllZUDA))
 
 ## Mapping from Comtrade M49 and Geonomenclature directly to M49
 
-- The country codes, as the commodity ones, have two steps of
-  mapping. This results in higher risk of data loss due to
-  unsolved mapping.
-
-- A direct map from Comtrade M49 (Tariff line UNSD) to M49 and from
-  Geonomenclature (Eurostat) to M49 would be ideal.
+The country codes, as the commodity ones, have two steps of
+mapping. This results in higher risk of data loss due to unsolved
+mapping. A direct map from Comtrade M49 (Tariff line UNSD) to M49
+and from Geonomenclature (Eurostat) to M49 would be ideal.
 
 ## Food-aid
 
-- This has to be incorporated also to understand the trend in a
-  time series analysis. This needs special study to understand if
-  we can get the data just from the exports not reported as
-  imports in the partner.
+This has to be incorporated also to understand the trend in a time
+series analysis. This needs special study to understand if we can
+get the data just from the exports not reported as imports in the
+partner.
 
 # Disclaimer {#disclaimer .unnumbered}
 

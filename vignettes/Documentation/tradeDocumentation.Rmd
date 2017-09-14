@@ -34,6 +34,7 @@ output:
 
 ```{r setup, echo=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+# File in vignettes/Documentation
 examples <- readRDS('examples.rds')
 ```
 

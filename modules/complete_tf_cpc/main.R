@@ -400,8 +400,7 @@ if (stop_after_pre_process) stop("Stop after reports on raw data")
 
 ##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
-##' (Shark/Jellyfish). This mapping is provided by a separate package:
-##' https://github.com/SWS-Methodology/hsfclmap
+##' (Shark/Jellyfish).
 ##' Unmapped codes in this table are supplemented by newly created links
 ##' stored in the `hsfclmap4` table.
 

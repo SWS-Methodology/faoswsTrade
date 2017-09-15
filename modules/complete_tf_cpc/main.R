@@ -704,7 +704,7 @@ hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
 
 rprt(hs6fclmap, "hs6fclmap")
 
-##' # Operations on ES
+##' # Specific operations on Eurostat data
 
 ##' 1. Add variables that will contain flags. (Note: flags are set in various
 ##' steps in the code. Please, refer to the "Flag Management in the Trade module"
@@ -745,19 +745,21 @@ flog.info("Records after removing areas not in HS->FCL map: %s", nrow(esdata))
 # ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-##' 1. Map HS to FCL for ES.
+##' 1. Map HS codes to FCL.
 
-##'     1. Use HS6 mapping table.
+##'     1. Extract HS6-FCL mapping table.
 
 esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
-##'     1. Use HS mapping table.
+##'     1. Extract specific HS-FCL mapping table.
 
 esdatalinks <- mapHS2FCL(tradedata   = esdata,
                          maptable    = hsfclmap3,
                          hs6maptable = hs6fclmap,
                          year        = year,
                          parallel    = multicore)
+
+##'     1. Use HS6-FCL or HS-FCL mapping table.
 
 esdata <- add_fcls_from_links(esdata,
                               hs6links = esdatahs6links,
@@ -766,6 +768,8 @@ esdata <- add_fcls_from_links(esdata,
 flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
+
+flog.trace("ES: dropping unmapped records", name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
@@ -777,7 +781,7 @@ flog.info("ES records after removing non-mapped HS codes: %s", nrow(esdata))
 
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
-##' 1. Specific ES conversions: some FCL codes are reported in Eurostat
+##' 1. Specific conversions: some FCL codes are reported in Eurostat
 ##' with different supplementary units than those reported in FAOSTAT,
 ##' thus a conversion is done.
 
@@ -799,7 +803,7 @@ esdata <- esdata %>%
   setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
   select_(~-conv)
 
-##' # Operations on TL
+##' # Specific operations on Tariff line data
 
 ##' 1. Do mathematical conversions on specific `qunit`s (6, 9, and 11 become 5).
 
@@ -812,14 +816,16 @@ tldata <- tbl_df(tldata)
 
 # tl-aggregate-multiple-rows ####
 
-##' 1. Identical combinations of reporter / partner / commodity / flow / year / qunit
-##' are aggregated.
+##' 1. Identical combinations of `reporter` / `partner` / `commodity` /
+##' `flow` / `year` / `qunit` are pre-aggregated.
 
 flog.trace("TL: aggreation of similar flows", name = "dev")
 
 tldata <- preAggregateMultipleTLRows(tldata)
 
-##' 1. Add variables that will contain flags.
+##' 1. Add variables that will contain flags. (Note: flags are set in various
+##' steps in the code. Please, refer to the "Flag Management in the Trade module"
+##' document.)
 
 flog.trace("TL: add flag variables")
 tldata <- generateFlagVars(tldata)
@@ -841,7 +847,8 @@ tldata <- tldata %>%
 
 ##+ drop_reps_not_in_mdb ####
 
-##' 1. Area codes not mapping to any FAO country code are removed.
+##' 1. Area codes not mapping to any FAO country in the HS to FCL mapping
+##' code are removed.
 
 # We drop reporters that are absent in MDB hsfcl map
 # because in any case we can proceed their data
@@ -865,10 +872,14 @@ flog.trace("TL: recoding reimport/reexport", name = "dev")
 
 tldata <- mutate_(tldata, flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
-##' 1. Map HS to FCL, TL.
+##' 1. Map HS codes to FCL.
 ##+ tl_hs2fcl ####
 
+##'     1. Extract HS6-FCL mapping table.
+
 tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
+
+##'     1. Extract specific HS-FCL mapping table.
 
 tldatalinks <- mapHS2FCL(tradedata   = tldata,
                          maptable    = hsfclmap3,
@@ -876,13 +887,19 @@ tldatalinks <- mapHS2FCL(tradedata   = tldata,
                          year        = year,
                          parallel    = multicore)
 
+##'     1. Use HS6-FCL or HS-FCL mapping table.
+
 tldata <- add_fcls_from_links(tldata,
                               hs6links = tldatahs6links,
                               links    = tldatalinks)
 
+flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
+
 rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 flog.trace("TL: dropping unmapped records", name = "dev")
+
+##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
 tldata <- filter_(tldata, ~!is.na(fcl))
 
@@ -915,9 +932,8 @@ flog.trace("TL: conversion factors", name = "dev")
 
 ##### Table for conv. factor
 
-##' 1. General TL conversions: some FCL codes are reported in Tariffline
-##' with different units than those reported in FAOSTAT, thus a conversion
-##' is done.
+##' 1. General conversions: some FCL codes are reported in Tariffline with
+##' different units than those reported in FAOSTAT, thus a conversion is done.
 
 ctfclunitsconv$conv <- 0
 # Missing quantity
@@ -937,7 +953,9 @@ ctfclunitsconv[fclunit == "mt"         & wco == "carat", conv := 5e-6]
 
 tldata <- left_join(tldata, ctfclunitsconv, by = c("qunit", "wco", "fclunit"))
 
-##' 1. Specific TL conversions: some commodities need a specific conversion.
+##' 1. Specific conversions: some FCL codes are reported in Tariff line
+##' with different supplementary units than those reported in FAOSTAT,
+##' thus a conversion is done.
 
 #### Commodity specific conversion
 
@@ -995,6 +1013,8 @@ tldata <- tldata %>%
 
 ######### Value from USD to thousands of USD
 
+##' 1. Convert data in thousands of dollars.
+
 if (dollars) {
   esdata <- esdata %>%
     mutate(value = value * 1000) %>%
@@ -1005,7 +1025,7 @@ if (dollars) {
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 }
 
-##' 1. Aggregate UNSD Tariffline Data to FCL.
+##' 1. Aggregate data to FCL level.
 
 ##+ tl_aggregate
 
@@ -1017,8 +1037,6 @@ tldata <- tldata %>%
   rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
-
-##' # Combine Trade Data Sources
 
   ##' 1. Application of "adjustment notes" to both ES and TL data.
 
@@ -1057,25 +1075,26 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
 esdata <- esdata %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 
-###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
-#
-# NO: this isn't needed as below qty = weight and it has already its own flag
-#
-#tldata <- tldata %>%
-#  mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
-#               ~starts_with('flag_'))
+  ###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
+  #
+  # NO: this isn't needed as below qty = weight and it has already its own flag
+  #
+  #tldata <- tldata %>%
+  #  mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
+  #               ~starts_with('flag_'))
 
-##' 1. Assign `qty` flags to `weight` flags in ES but
-##' only when `fclunit` is different from "mt".
+# Assign `qty` flags to `weight` flags in ES but
+# only when `fclunit` is different from "mt".
 
 esdata <- esdata %>%
   mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
                ~starts_with('flag_'))
 
-##' 1. Combine UNSD Tariffline and Eurostat Combined Nomenclature data sources
-##' to single data set.
-##'     - TL: assign `weight` to `qty`
-##'     - ES: assign `weight` to `qty` if `fclunit` is "mt", else keep `qty`
+##' # Combine Trade Data Sources
+
+##' 1. Combine Tariff line and Eurostat data sources in a single data set:
+##'     - TL: assign `weight` to `qty`.
+##'     - ES: assign `weight` to `qty` if `fclunit` is "mt", else keep `qty`.
 
 ##+ combine_es_tl
 flog.trace("Combine TL and ES data sets", name = "dev")
@@ -1110,7 +1129,7 @@ tradedata <- tradedata %>%
           no_value = ~near(value, 0) | is.na(value))
 
 ##' 1. Unit values are calculated for each observation at the HS level as ratio
-##' of monetary value over quantity `value / qty`.
+##' of monetary value over quantitya: $uv = value / qty$.
 
 tradedata <- mutate_(tradedata,
                      uv = ~ifelse(no_quant | no_value, NA, value / qty))
@@ -1130,12 +1149,14 @@ if (detect_outliers) {
 
 ##+ impute_qty_uv
 
-##' 1. Imputation of missing quantities and quantities categorized as outliers by
-##' applying the method presented in the *Missing Quantities Imputation* section.
-##' The `flagTrade` variable is given a value of 1 if an imputation was performed.
+##' 1. Imputation of missing quantities by applying the method presented
+##' in the *Missing Quantities Imputation* subsection of the *faoswsTrade:
+##' `complete_tf_cpc` and `total_trade_CPC` modules* document
+##' (*Standardization, editing and outlier detection* section). The
+##' `flagTrade` variable is given a value of 1 if an imputation was performed.
 
-## These flags are also assigned to monetary values. This may need to be revised
-## (monetary values are not supposed to be modified).
+## These flags are also assigned to monetary values. This may need to be
+## revised (monetary values are not supposed to be modified).
 
 tradedata <- computeMedianUnitValue(tradedata = tradedata)
 
@@ -1159,13 +1180,13 @@ for (var in flag_vars) {
                select(-x)
 }
 
-##' 1. Aggregate values and quantities by FCL codes.
-
 tradedata_flags <- tradedata %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl) %>%
   summarise_each_(funs(sum(.)), vars = ~starts_with('flag_')) %>%
   ungroup() %>%
   mutate_each_(funs(as.integer(. > 0)), vars = ~starts_with('flag_'))
+
+##' 1. Aggregate values, quantities, and flags by FCL codes.
 
 # Aggregation by fcl
 flog.trace("Aggregation by FCL", name = "dev")
@@ -1192,8 +1213,6 @@ for (var in flag_vars) {
 }
 tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
 
-##' 1. Set flags for aggregated values/quantities.
-
 tradedata <- tradedata %>%
   setFlag2(nfcl > 1,  type = 'method', flag = 's', variable = 'all')
 
@@ -1212,9 +1231,8 @@ no_mapping_fcl2cpc = tradedata %>%
   select_(~fcl) %>%
   unlist()
 
-##' 1. Map FAO area codes to M49.
-
-##' 1. Countries with FAOSTAT code 252 are converted to M49 896 ("Other nei").
+##' 1. Map FAO area codes to M49. Countries with FAOSTAT code 252
+##' ("Unspecified") are converted to M49 code 896 ("Other nei").
 
 # Converting back to M49 for the system
 flog.trace("Convert FAO area codes to M49", name = "dev")
@@ -1267,7 +1285,6 @@ tradedata <-
     by = c('reporter' = 'area', 'flow')
   )
 
-##' 1. Set flags to mirrored flows.
 flog.trace("Flags to mirrored flows", name = "dev")
 
 tradedata <- tradedata %>%
@@ -1278,7 +1295,9 @@ tradedata <- tradedata %>%
 
 ##' ## Flag aggregation
 
-##' Flags are aggregated as explained in the *Flags* section in the main documentation.
+##' Flags are aggregated as mentioined in the *Flags* section in
+##' the main documentation or, more in depth, in the "Flag Management
+##' in the Trade module" document.
 
 ################################################
 # TODO Rethink/refactor: clean flags for fclunit != "$ value only"
@@ -1375,7 +1394,7 @@ complete_trade_flow_cpc <- tradedata %>%
   mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
 
-#' # Use corrections from validation
+##' 1. Use corrections from validation
 if (CheckDebug()) {
   corrections_table_all <- readRDS('//hqlprsws1.hq.un.fao.org/sws_r_share/trade/validation_tool_files/corrections_table.rds')
 } else {
@@ -1492,7 +1511,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   ) %>%
   select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
 
-##' # Generate metadata
+##' 1. Generate metadata for corrections.
 
 metad <- complete_trade_flow_cpc %>%
   filter(!is.na(correction_metadata)) %>%

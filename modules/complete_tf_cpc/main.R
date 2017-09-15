@@ -398,11 +398,22 @@ if (stop_after_pre_process) stop("Stop after reports on raw data")
 
 ##' # Loading of help datasets
 
-##' - `hsfclmap3`: Mapping between HS and FCL codes extracted from MDB files
+##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
-##' (Shark/Jellyfish).
-##' Unmapped codes in this table are supplemented by newly created links
-##' stored in the `hsfclmap4` table.
+##' (Shark/Jellyfish). This mapping table contains (identifier: `hsfclmap5`)
+##' also some "corrections" to the original mapping found in the MDB files.
+##' These are contained in the `correction_*` variables (e.g.,
+##' `corrections_fcl`), and if for a given HS range one or more of these
+##' variables are non-missing they will replace the original corresponding
+##' variable (e.g., if `corresponding_fcl` is non-missing, it will replace
+##' `fcl`). Missing HS to FCL links in the MDB files are mapped by Team B/C
+##' and stored in a table (identifier: `hsfclmap4`) that will extend the
+##' original mapping table. *[Note: for reference, the actual name of the
+##' initial mapping table is `hsfclmap3`; the naming convention of these
+##' tables should probably be made more logical or, at least, more easily
+##' identifiable.]* The resulting mapping table gets subsetted with the
+##' condition that the`startyear` and `endyear` of the HS to FCL links
+##' should satisfy the condition: $startyear <= year <= endyear$.
 
 flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
@@ -434,7 +445,7 @@ hsfclmap3 <-
 
 fcl_codes <- as.numeric(tbl_df(faosws::ReadDatatable(table = 'fcl_2_cpc'))$fcl)
 
-##' - `hsfclmap4`: New mapping between HS and FCL codes (extends `hsfclmap3`).
+##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
 add_map <- tbl_df(ReadDatatable('hsfclmap4')) %>%
   filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
@@ -669,15 +680,19 @@ comtradeunits <- tbl_df(ReadDatatable("comtradeunits")) %>%
 
 EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
-##' # Generate HSFCLMAP6 map
+##' # Generate HS to FCL map at HS6 level
 
 # hs6fclmap ####
 
 flog.trace("Extraction of HS6 mapping table", name = "dev")
 
+##' 1. Universal (all years) HS6 mapping table.
+
 flog.trace("Universal (all years) HS6 mapping table", name = "dev")
 
 hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+
+##' 1. Current year specific HS6 mapping table.
 
 flog.trace("Current year specific HS6 mapping table", name = "dev")
 
@@ -689,8 +704,11 @@ hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
 
 rprt(hs6fclmap, "hs6fclmap")
 
+##' # Operations on ES
+
 ##' 1. Add variables that will contain flags. (Note: flags are set in various
-##' steps in the code. Please, refer to the "flag_management.docx" document.)
+##' steps in the code. Please, refer to the "Flag Management in the Trade module"
+##' document.)
 
 esdata <- generateFlagVars(esdata)
 
@@ -705,14 +723,14 @@ esdata <- esdata %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
 
 
-##' 1. Remove code 252
+##' 1. Remove FAO country code 252 ("Unspecified").
 
 esdata <- filter(esdata, partner != 252)
 
 flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
 
-##' 1. Remove reporters with area codes that are not included in MDB commodity
-##' mapping area list.
+##' 1. Remove in ES those reporters with area codes that are not included in
+##' MDB commodity mapping area list.
 
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
@@ -727,9 +745,13 @@ flog.info("Records after removing areas not in HS->FCL map: %s", nrow(esdata))
 # ES trade data mapping to FCL ####
 message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-##' 1. Map HS to FCL, ES.
+##' 1. Map HS to FCL for ES.
+
+##'     1. Use HS6 mapping table.
 
 esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
+
+##'     1. Use HS mapping table.
 
 esdatalinks <- mapHS2FCL(tradedata   = esdata,
                          maptable    = hsfclmap3,
@@ -745,7 +767,7 @@ flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
-##' 1. Remove unmapped FCL codes.
+##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
 esdata <- filter_(esdata, ~!(is.na(fcl)))
 
@@ -776,6 +798,8 @@ esdata <- esdata %>%
   mutate_(qty = ~ifelse(is.na(conv), qty, qty*conv)) %>%
   setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
   select_(~-conv)
+
+##' # Operations on TL
 
 ##' 1. Do mathematical conversions on specific `qunit`s (6, 9, and 11 become 5).
 

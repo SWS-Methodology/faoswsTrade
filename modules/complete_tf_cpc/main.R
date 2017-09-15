@@ -196,13 +196,14 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
-flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 ##'   - `hs_chapters`: can not be set by the user as it is provided by Team B/C and harcoded).
 ##'   The HS chapters are the following:
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
 ##'
+
+flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 
 ##' # Download raw data and basic operations
 

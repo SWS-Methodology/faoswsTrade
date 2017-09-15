@@ -15,11 +15,6 @@
 ##' module save the ouput into the dataset **total\_trade\_cpc\_m49**,
 ##' within the **Trade** domain.
 ##'
-##' Change Log:
-##'
-##' - add unit values using **flagMethod** `i`
-##' - extend **flagWeightTable** with `X`
-
 
 ##+ setup, echo=FALSE, eval=FALSE
 

@@ -206,7 +206,7 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 
 ##' # Download raw data and basic operations
 
-##' 1. Download Eurostat data (ES)
+##' 1. Download Eurostat data (ES).
 
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
@@ -237,7 +237,7 @@ if (!is.null(samplesize)) {
 
 flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
-##' 1. Download Tariff line data (TL)
+##' 1. Download Tariff line data (TL).
 
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 
@@ -269,9 +269,9 @@ if (!is.null(samplesize)) {
 
 flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
 
-##' 1. Keep only `stat_regime` = 4 for ES
+##' 1. Keep only `stat_regime` = 4 in ES.
 
-##' 1. Remove European-aggregated data (i.e., totals) from ES
+##' 1. Remove European-aggregated data (i.e., totals) from ES.
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata %>%
@@ -298,7 +298,7 @@ tldata <- removeNonNumeric(tldata)
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
 
-##' 1. Filter HS codes of interest, i.e., codes that don't
+##' 1. Filter HS codes of interest, i.e., codes that do not
 ##' participate in further processing. Such solution drops,
 ##' e.g., all HS codes shorter than 6 digits.
 
@@ -435,7 +435,7 @@ hsfclmap3 <-
 
 fcl_codes <- as.numeric(tbl_df(faosws::ReadDatatable(table = 'fcl_2_cpc'))$fcl)
 
-##' - `hsfclmap4`: New mapping between HS and FCL codes (extends `hsfclmap3`)
+##' - `hsfclmap4`: New mapping between HS and FCL codes (extends `hsfclmap3`).
 
 add_map <- tbl_df(ReadDatatable('hsfclmap4')) %>%
   filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
@@ -670,7 +670,7 @@ comtradeunits <- tbl_df(ReadDatatable("comtradeunits")) %>%
 
 EURconversionUSD <- ReadDatatable("eur_conversion_usd")
 
-##' Generate HSFCLMAP6 map
+##' # Generate HSFCLMAP6 map
 
 # hs6fclmap ####
 
@@ -695,7 +695,7 @@ rprt(hs6fclmap, "hs6fclmap")
 
 esdata <- generateFlagVars(esdata)
 
-##' 1. Generate Observation Status "X" flag and Method "h" flag
+##' 1. Generate Observation Status "X" flag and Method "h" flag.
 
 esdata <- esdata %>%
   setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
@@ -778,7 +778,7 @@ esdata <- esdata %>%
   setFlag3(!is.na(conv), type = 'method', flag = 'i', variable = 'quantity') %>%
   select_(~-conv)
 
-##' 1. Do mathematical conversions on specific `qunit`s (6, 9, and 11 become 5)
+##' 1. Do mathematical conversions on specific `qunit`s (6, 9, and 11 become 5).
 
 # Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
 tldata <- as.data.table(tldata)
@@ -959,7 +959,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
 }
 
 ##' 1. If the `weight` variable is available and the final unit
-##' of measurement is tonnes then `weight` is used as `quantity`
+##' of measurement is tonnes then `weight` is used as `quantity`.
 
 cond <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
 
@@ -997,7 +997,7 @@ tldata_mid = tldata
 
 ##' # Combine Trade Data Sources
 
-##' 1. Application of "adjustment notes" to both ES and TL data.
+  ##' 1. Application of "adjustment notes" to both ES and TL data.
 
 # TODO Check quantity/weight
 # The notes should save the results in weight
@@ -1279,9 +1279,11 @@ for (var in flag_vars) {
 
 ##' 1. Filter observations with missing CPC codes.
 
-##' 1. Rename dimensions to comply with SWS standard, e.g., `geographicAreaM49Reporter`
+##' 1. Rename dimensions to comply with SWS standard,
+##' e.g., `geographicAreaM49Reporter`.
 
-##' 1. Calculate unit value (US$ per quantity unit) at CPC level if the quantity is larger than zero
+##' 1. Calculate unit value (US$ per quantity unit) at CPC
+##' level if the quantity is larger than zero.
 
 # Modified in order to have X in the table
 flagWeightTable_status <- frame_data(
@@ -1467,6 +1469,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   ) %>%
   select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
 
+##' # Generate metadata
 
 metad <- complete_trade_flow_cpc %>%
   filter(!is.na(correction_metadata)) %>%

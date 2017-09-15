@@ -135,6 +135,10 @@ knitr::kable(examples$tldata_multiple_aggregated, row.names = FALSE,
 caption = 'Results of the aggregation of multiple transactions')
 ```
 
+After quantity conversions are made or missing quantities get
+imputed (see further) the two different rows in the previous table
+in the table will be aggregated into a single transaction.
+
 ### Mapping UNSD Tariff line and Eurostat data
 
 At this stage a standardization/mapping step is performed. The

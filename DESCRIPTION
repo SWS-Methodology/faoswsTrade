@@ -17,7 +17,8 @@ Imports:
     plyr, 
     scales, 
     stringr, 
-    tidyr
+    tidyr,
+    futile.logger
 Suggests: 
     doParallel,
     parallel,

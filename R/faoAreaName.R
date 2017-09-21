@@ -1,3 +1,5 @@
+#' Assign area names to M49 or geonom codes.
+#'
 #' @import dplyr
 #' @export
 

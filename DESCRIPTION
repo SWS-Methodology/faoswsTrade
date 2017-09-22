@@ -22,7 +22,8 @@ Imports:
 Suggests: 
     doParallel,
     parallel,
-    testthat
+    testthat,
+    faoswsModules
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 NeedsCompilation: no

@@ -5,6 +5,8 @@
 #' the \code{value} or \code{weight} or \code{quantity} variables,
 #' respectively, and 0 otherwise.
 #'
+#' @param data Trade data.
+#' @param condition A logical condition where the flags should be changed.
 #' @param type The type of flag to set: "status" or "method".
 #' @param flag The value of the flag to set (e.g., "e" for estimated data).
 #' @param variable The variable that gets the flag: "value", "weight",

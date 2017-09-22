@@ -31,9 +31,7 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
     # Not using simil() as it would take longer
     fun <- function(x, y, z) cor(x, y)
   } else {
-    library(proxy)
-
-    fun <- function(x, y, z) simil(x, y, method = z, by_rows = FALSE)[1,1]
+    fun <- function(x, y, z) proxy::simil(x, y, method = z, by_rows = FALSE)[1,1]
   }
 
   tmp_accu <- data %>%

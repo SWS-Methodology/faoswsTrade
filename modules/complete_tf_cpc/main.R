@@ -427,19 +427,22 @@ hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap5")) %>%
     endyear   = ifelse(!is.na(correction_endyear), correction_endyear, endyear)
   )
 
-# Extend the endyear of all areas for which the maximum
-# endyear is less than 2050
+# Extend endyear to 2050
+hsfclmap3_extend <- hsfclmap3 %>%
+  group_by(area, flow, fromcode, tocode) %>%
+  summarise(maxy = max(endyear)) %>%
+  mutate(extend = ifelse(maxy < 2050, TRUE, FALSE)) %>%
+  ungroup()
+
 hsfclmap3 <-
   left_join(
     hsfclmap3,
-    hsfclmap3 %>%
-      group_by(area) %>%
-      summarise(maxy = max(endyear)) %>%
-      mutate(extend = ifelse(maxy < 2050, TRUE, FALSE)),
-    by = 'area'
+    hsfclmap3_extend,
+    by = c('area', 'flow', 'fromcode', 'tocode')
   ) %>%
   mutate(endyear = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
   select(-maxy, -extend)
+# / Extend endyear to 2050
 
 # ADD UNMAPPED CODES
 
@@ -1265,7 +1268,7 @@ countries_not_mapping_M49 <- bind_rows(
 flog.trace("Mirroring", name = "dev")
 
 to_mirror <- flowsToMirror(tradedata) %>%
-	filter(area != 252)
+  filter(area != 252)
 
 ##' 1. Swap the reporter and partner dimensions: the value previously appearing
 ##' as reporter country code becomes the partner country code (and vice versa).

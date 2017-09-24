@@ -587,6 +587,18 @@ stopifnot(nrow(hsfclmap) > 0)
 
 flog.info("Rows in mapping table after filtering by year: %s", nrow(hsfclmap))
 
+# HS6standard: will be used as last resort for mapping
+
+hs6standard <-
+  ReadDatatable('standard_hs12_6digit')
+  group_by(hs2012_code) %>%
+  mutate(n = n()) %>%
+  ungroup() %>%
+  filter(n == 1) %>%
+  mutate(hs6 = as.integer(hs2012_code)) %>%
+  select(hs6, hs2012_code, faostat_code)
+
+
 if (use_adjustments) {
 
   ##' - `adjustments`: Adjustment notes containing manually added conversion
@@ -725,6 +737,16 @@ esdata <- add_fcls_from_links(esdata,
                               hs6links = esdatahs6links,
                               links    = esdatalinks)
 
+##'     1. Use HS6 starndard for unmapped codes.
+
+esdata <- esdata %>%
+  left_join(
+    hs6standard %>% select(-hs2012_code),
+    by = 'hs6'
+  ) %>%
+  mutate(fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)) %>%
+  select(-faostat_code)
+
 flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
@@ -852,6 +874,16 @@ tldatalinks <- mapHS2FCL(tradedata   = tldata,
 tldata <- add_fcls_from_links(tldata,
                               hs6links = tldatahs6links,
                               links    = tldatalinks)
+
+##'     1. Use HS6 starndard for unmapped codes.
+
+tldata <- tldata %>%
+  left_join(
+    hs6standard %>% select(-hs2012_code),
+    by = 'hs6'
+  ) %>%
+  mutate(fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)) %>%
+  select(-faostat_code)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
 

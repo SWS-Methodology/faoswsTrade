@@ -1599,6 +1599,9 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 # made after X was chosen as official flag). Thus, change X to <BLANK>.
 complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
 
+# Required to be a data.table
+metad <- as.data.table(metad)
+
 ##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
 
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")

@@ -1600,7 +1600,7 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
 
 # Required to be a data.table
-metad <- as.data.table(metad)
+metad <- select(metad, -correction_metadata) %>% as.data.table()
 
 ##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
 

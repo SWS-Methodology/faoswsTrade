@@ -48,7 +48,7 @@ mapHS2FCL <- function(tradedata,
 
   flog.trace("HS+ mapping: align HS codes from data and table", name = "dev")
 
-  hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
+  hslength <- maxHSLength(uniqhs, maptable)
 
   # Reports full table in the text report and as csv file
   rprt_hslength(hslength, tradedataname = tradedataname)

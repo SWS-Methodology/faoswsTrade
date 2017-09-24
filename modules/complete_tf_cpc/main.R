@@ -689,12 +689,6 @@ esdata <- esdata %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
 
 
-##' 1. Remove FAO country code 252 ("Unspecified").
-
-esdata <- filter(esdata, partner != 252)
-
-flog.info("Records after removing partners' 252 code: %s", nrow(esdata))
-
 ##' 1. Remove in ES those reporters with area codes that are not included in
 ##' MDB commodity mapping area list.
 

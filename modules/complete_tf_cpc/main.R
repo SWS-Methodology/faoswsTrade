@@ -517,69 +517,32 @@ if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
   warning('Some countries were not in the original mapping.')
 }
 
-hs6standard <- ReadDatatable('standard_hs12_6digit')
-
-hs6standard_uniq <-
-  hs6standard %>%
-  group_by(hs2012_code) %>%
-  mutate(n = n()) %>%
-  ungroup() %>%
-  filter(n == 1) %>%
+add_map <- add_map %>%
   mutate(
-    hs6details = 'Standard_HS12',
-    hs6description = paste('FaoStatName', faostat_name, sep = ': ')
+    startyear = year,
+    endyear = 2050L,
+    fromcode = hs,
+    tocode = hs,
+    recordnumb = NA_integer_
   ) %>%
-  select(hs2012_code, faostat_code, hs6details, hs6description)
-
-
-adapt_map_sws_format <- function(data) {
-  data %>%
-    mutate(
-      startyear = year,
-      endyear = 2050L,
-      fromcode = hs,
-      tocode = hs,
-      recordnumb = NA_integer_
-    ) %>%
-    select(
-      area = reporter_fao,
-      flow,
-      fromcode,
-      tocode,
-      fcl,
-      startyear,
-      endyear,
-      recordnumb,
-      details,
-      tl_description = tl_description
-    )
-}
-
-manual_updated <- filter(add_map, !is.na(fcl))
-
-auto_updated <-
-  add_map %>%
-    filter(is.na(fcl), is.na(details), is.na(tl_description)) %>%
-    mutate(hs6 = stringr::str_sub(hs, 1, 6)) %>%
-    left_join(
-      hs6standard_uniq,
-      by = c('hs6' = 'hs2012_code')
-    ) %>%
-    filter(!is.na(faostat_code)) %>%
-    mutate(fcl = faostat_code, details = hs6details, tl_description = hs6description) %>%
-    select(-hs6, -faostat_code, -hs6details, -hs6description)
-
-mapped <- bind_rows(manual_updated, auto_updated)
-
-unmapped <- anti_join(add_map, mapped, by = c('year', 'reporter_fao', 'flow', 'hs'))
-
-mapped <- adapt_map_sws_format(mapped)
+  select(
+    area = reporter_fao,
+    flow,
+    fromcode,
+    tocode,
+    fcl,
+    startyear,
+    endyear,
+    recordnumb,
+    details,
+    tl_description = tl_description
+  )
 
 max_record <- max(hsfclmap3$recordnumb)
 
-mapped$recordnumb <- (max_record+1):(max_record+nrow(mapped))
+add_map$recordnumb <- (max_record+1):(max_record+nrow(add_map))
 
-mapped <- mapped %>%
+add_map <- add_map %>%
   select(-details, -tl_description) %>%
   mutate(
     fcl      = as.numeric(fcl),
@@ -587,9 +550,7 @@ mapped <- mapped %>%
     tocode   = gsub(' ', '', tocode)
   )
 
-
-
-hsfclmap3 <- bind_rows(mapped, hsfclmap3) %>%
+hsfclmap3 <- bind_rows(add_map, hsfclmap3) %>%
   mutate(
     startyear = as.integer(startyear),
     endyear   = as.integer(endyear)

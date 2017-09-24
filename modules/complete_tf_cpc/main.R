@@ -425,7 +425,8 @@ hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap5")) %>%
     fcl       = ifelse(!is.na(correction_fcl), correction_fcl, fcl),
     startyear = ifelse(!is.na(correction_startyear), correction_startyear, startyear),
     endyear   = ifelse(!is.na(correction_endyear), correction_endyear, endyear)
-  )
+  ) %>%
+  select(-starts_with('correction'))
 
 # Extend endyear to 2050
 hsfclmap3_extend <- hsfclmap3 %>%

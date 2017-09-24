@@ -590,7 +590,7 @@ flog.info("Rows in mapping table after filtering by year: %s", nrow(hsfclmap))
 # HS6standard: will be used as last resort for mapping
 
 hs6standard <-
-  ReadDatatable('standard_hs12_6digit')
+  ReadDatatable('standard_hs12_6digit') %>%
   group_by(hs2012_code) %>%
   mutate(n = n()) %>%
   ungroup() %>%

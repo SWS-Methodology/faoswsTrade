@@ -12,6 +12,17 @@ useValidationCorrections <- function(data, corrections) {
 
   corrections <- as.data.table(corrections)
 
+  # NOTE: no aggregation function is indicated in the dcast as NO
+  # duplicate corrections (by reporter, partner, year, item, flow,
+  # data_type, and eventually by correction_level) should exist.
+  # If a duplicate exists dcast will correctly say "Aggregate
+  # function missing, defaulting to 'length'". The table with
+  # corrections should be checked for duplicates (should be removed).
+  # (Indicating and aggregation function does not make sense: if
+  # there is just a combination of corrections it will give it. This
+  # is the required behavious. If there are duplicates no aggregation
+  # should be used.)
+
   corrections <- dcast(
     corrections,
     reporter + partner + item + flow ~ data_type,

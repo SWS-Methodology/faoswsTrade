@@ -3,8 +3,6 @@ multicore <- TRUE
 # Maximum allowed discrepancy in the flow/mirror ratio
 # TODO: should be a parameter
 threshold <- 0.5
-# Years *********** SHOULD BE PARAMETER ****************
-years <- as.character(2000:2015)
 
 # If TRUE, use previously downloaded files
 # (useful mainly for testing)
@@ -41,6 +39,8 @@ stopifnot(!is.null(swsContext.computationParams$endyear))
 
 print(swsContext.computationParams$startyear)
 print(swsContext.computationParams$endyear)
+
+years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
 
 if (!file.exists(dir_to_save)) dir.create(dir_to_save, recursive = TRUE)
 if (!file.exists(DB_rds_storage)) dir.create(DB_rds_storage, recursive = TRUE)
@@ -93,7 +93,7 @@ Keys <- list(
   # Quantity [#], Quantity [head], Quantity [1000 head], Quantity [t], Value [1000 $]
   elements = c('5607', '5608', '5609', '5610', '5622',
                '5907', '5908', '5909', '5910', '5922'),
-  years    = years
+  years    = as.character(years)
 )
 
 

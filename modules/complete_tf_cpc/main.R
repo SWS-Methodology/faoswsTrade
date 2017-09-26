@@ -737,7 +737,7 @@ esdata <- add_fcls_from_links(esdata,
                               hs6links = esdatahs6links,
                               links    = esdatalinks)
 
-##'     1. Use HS6 starndard for unmapped codes.
+##'     1. Use HS6 standard for unmapped codes.
 
 esdata <- esdata %>%
   left_join(

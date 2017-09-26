@@ -1395,73 +1395,90 @@ if (CheckDebug()) {
 
 corrections_table <- corrections_table_all %>%
   rename(correction_year = year) %>%
-  filter(correction_year == year, correction_level == 'CPC') %>%
-  select(-correction_year, -correction_level, -correction_hs) %>%
-  # Some of these cases were found, but are probably mistakes: should inform
-  filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
-  # XXX actually, flow should be integer in complete_trade_flow_cpc
-  mutate(flow = as.numeric(flow)) %>%
-  # XXX Remove duplicate corrections
-  group_by(reporter, partner, item, flow, data_type) %>%
-  arrange(desc(date_correction)) %>%
-  mutate(i = 1:n()) %>%
-  filter(i == 1L) %>%
-  ungroup() %>%
-  select(-i)
+  filter(correction_year == year
 
-corrections_metadata <- apply(select(corrections_table, name_analyst, data_original, correction_type:date_validation),
-                              1, function(x) paste(names(x), ifelse(x == '', NA, x), collapse = '; ', sep = ': '))
+corrections_exist <- nrow(corrections_table) > 0
 
-corrections_table <- corrections_table %>%
-  select(-(correction_note:date_validation)) %>%
-  mutate(correction_metadata = gsub('  *', ' ', corrections_metadata))
+if (corrections_exist) {
+  corrections_table <- corrections_table_all %>%
+    select(correction_level == 'CPC') %>%
+    select(-correction_year, -correction_level, -correction_hs) %>%
+    # Some of these cases were found, but are probably mistakes: should inform
+    filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
+    # XXX actually, flow should be integer in complete_trade_flow_cpc
+    mutate(flow = as.numeric(flow)) %>%
+    # XXX Remove duplicate corrections
+    group_by(reporter, partner, item, flow, data_type) %>%
+    arrange(desc(date_correction)) %>%
+    mutate(i = 1:n()) %>%
+    filter(i == 1L) %>%
+    ungroup() %>%
+    select(-i)
 
-complete_corrected <- useValidationCorrections(complete_trade_flow_cpc, corrections_table)
+  corrections_metadata <- apply(select(corrections_table, name_analyst, data_original, correction_type:date_validation),
+                                1, function(x) paste(names(x), ifelse(x == '', NA, x), collapse = '; ', sep = ': '))
 
-complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
-  mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
-  filter(is_mirror) %>%
-  select(-is_mirror)
+  corrections_table <- corrections_table %>%
+    select(-(correction_note:date_validation)) %>%
+    mutate(correction_metadata = gsub('  *', ' ', corrections_metadata))
 
-
-complete_with_corrections_mirror <- complete_corrected$corrected %>%
-  select(
-    geographicAreaM49Reporter = geographicAreaM49Partner,
-    geographicAreaM49Partner  = geographicAreaM49Reporter,
-    flow,
-    measuredItemCPC
-  ) %>%
-  mutate(flow = recode(flow, '2' = 1, '1' = 2), to_correct = TRUE)
-
-complete_mirror_to_correct <- left_join(
-    complete_trade_flow_cpc_mirror,
-    complete_with_corrections_mirror,
-    by = c(
-      'geographicAreaM49Reporter',
-      'geographicAreaM49Partner',
-      'flow',
-      'measuredItemCPC'
+  complete_corrected <- useValidationCorrections(complete_trade_flow_cpc, corrections_table)
+} else {
+  complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
+    mutate(
+      correction_metadata_qty   = NA_character_,
+      correction_metadata_value = NA_character_,
+      correction_metadata_uv    = NA_character_
     )
-  ) %>%
-  filter(to_correct) %>%
-  select(-to_correct)
+}
 
-corrections_table_mirror <- corrections_table %>%
-  rename(reporter = partner, partner = reporter) %>%
-  mutate(flow = recode(flow, '2' = 1, '1' = 2)) %>%
-  mutate(correction_input = ifelse(data_type == 'value', ifelse(flow == 1, correction_input * 1.12, correction_input / 1.12), correction_input))
 
-complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct, corrections_table_mirror)
+if (corrections_exist) {
+  complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
+    mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
+    filter(is_mirror) %>%
+    select(-is_mirror)
 
-complete_all_corrected <- bind_rows(complete_corrected$corrected, complete_mirror_corrected$corrected)
+  complete_with_corrections_mirror <- complete_corrected$corrected %>%
+    select(
+      geographicAreaM49Reporter = geographicAreaM49Partner,
+      geographicAreaM49Partner  = geographicAreaM49Reporter,
+      flow,
+      measuredItemCPC
+    ) %>%
+    mutate(flow = recode(flow, '2' = 1, '1' = 2), to_correct = TRUE)
 
-complete_uncorrected <- anti_join(
-                          complete_trade_flow_cpc,
-                          complete_all_corrected,
-                          by = c('geographicAreaM49Reporter', 'geographicAreaM49Partner', 'flow', 'measuredItemCPC')
-                        )
+  complete_mirror_to_correct <-
+    left_join(
+      complete_trade_flow_cpc_mirror,
+      complete_with_corrections_mirror,
+      by = c(
+        'geographicAreaM49Reporter',
+        'geographicAreaM49Partner',
+        'flow',
+        'measuredItemCPC'
+      )
+    ) %>%
+    filter(to_correct) %>%
+    select(-to_correct)
 
-complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
+  corrections_table_mirror <- corrections_table %>%
+    rename(reporter = partner, partner = reporter) %>%
+    mutate(flow = recode(flow, '2' = 1, '1' = 2)) %>%
+    mutate(correction_input = ifelse(data_type == 'value', ifelse(flow == 1, correction_input * 1.12, correction_input / 1.12), correction_input))
+
+  complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct, corrections_table_mirror)
+
+  complete_all_corrected <- bind_rows(complete_corrected$corrected, complete_mirror_corrected$corrected)
+
+  complete_uncorrected <- anti_join(
+                            complete_trade_flow_cpc,
+                            complete_all_corrected,
+                            by = c('geographicAreaM49Reporter', 'geographicAreaM49Partner', 'flow', 'measuredItemCPC')
+                          )
+
+  complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
+}
 
 ##' 1. Transform dataset separating monetary values, quantities and unit values
 ##' in different rows.
@@ -1611,12 +1628,23 @@ metad <- select(metad, -correction_metadata) %>% as.data.table()
 
 ##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
 
+#### XXX Setting this to FALSE as on 20170926 there are some issues
+#### on the server when saving metadata.
+corrections_exist <- FALSE
+
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
-stats <- SaveData("trade",
-                  "completed_tf_cpc_m49",
-                  complete_trade_flow_cpc,
-                  metadata = metad,
-                  waitTimeout = 10800)
+if (corrections_exist) {
+  stats <- SaveData("trade",
+                    "completed_tf_cpc_m49",
+                    complete_trade_flow_cpc,
+                    metadata    = metad,
+                    waitTimeout = 10800)
+} else {
+  stats <- SaveData("trade",
+                    "completed_tf_cpc_m49",
+                    complete_trade_flow_cpc,
+                    waitTimeout = 10800)
+}
 
 ## remove value only
 

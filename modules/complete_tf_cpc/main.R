@@ -1400,7 +1400,14 @@ corrections_table <- corrections_table_all %>%
   # Some of these cases were found, but are probably mistakes: should inform
   filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
   # XXX actually, flow should be integer in complete_trade_flow_cpc
-  mutate(flow = as.numeric(flow))
+  mutate(flow = as.numeric(flow)) %>%
+  # XXX Remove duplicate corrections
+  group_by(reporter, partner, item, flow, data_type) %>%
+  arrange(desc(date_correction)) %>%
+  mutate(i = 1:n()) %>%
+  filter(i == 1L) %>%
+  ungroup() %>%
+  select(-i)
 
 corrections_metadata <- apply(select(corrections_table, name_analyst, data_original, correction_type:date_validation),
                               1, function(x) paste(names(x), ifelse(x == '', NA, x), collapse = '; ', sep = ': '))

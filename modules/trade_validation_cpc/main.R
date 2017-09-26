@@ -373,7 +373,7 @@ plyr::m_ply(
   #  ) %>%
   #    as_data_frame() %>%
   #    rename(reporter = Var1, year = Var2),
-  reporters[10],
+  reporters,
   .fun      = computeData,
   .parallel = multicore,
   .progress = 'text'

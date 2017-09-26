@@ -535,7 +535,7 @@ add_map <- add_map %>%
     endyear,
     recordnumb,
     details,
-    tl_description = tl_description
+    tl_description
   )
 
 max_record <- max(hsfclmap3$recordnumb)

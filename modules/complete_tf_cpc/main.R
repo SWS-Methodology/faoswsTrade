@@ -1395,7 +1395,7 @@ if (CheckDebug()) {
 
 corrections_table <- corrections_table_all %>%
   rename(correction_year = year) %>%
-  filter(correction_year == year
+  filter(correction_year == year)
 
 corrections_exist <- nrow(corrections_table) > 0
 

@@ -129,14 +129,21 @@ stopifnot(!any(is.na(USER), USER == ""))
 
 ##' # Parameters
 
+# Below the calls to `exists()` is useful if it the parameters
+# were set in an interactive session
+
 ##' - `year`: year for processing.
-year <- as.integer(swsContext.computationParams$year)
+if (!exists('year', inherits = FALSE)) {
+  year <- as.integer(swsContext.computationParams$year)
+}
 flog.info("Year: %s", year)
 
 ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
 ##' the *Outlier Detection and Imputation* section.
 # See coef argument in ?boxplot.stats
-out_coef <- as.numeric(swsContext.computationParams$out_coef)
+if (!exists('out_coef', inherits = FALSE)) {
+  out_coef <- as.numeric(swsContext.computationParams$out_coef)
+}
 flog.info("Coefficient for outlier detection: %s", out_coef)
 
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())

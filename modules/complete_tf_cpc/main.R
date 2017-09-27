@@ -12,6 +12,13 @@
 ##'    pdf_document
 ##' ---
 
+##' This document gives a faithful step-by-step sequence of the operations
+##' performed in the `complete_tf_cpc` module. For a narrative version of
+##' the module's approach, please see its main document.
+
+# Stop if required parameters were not set
+stopifnot(!is.null(swsContext.computationParams$out_coef))
+stopifnot(!is.null(swsContext.computationParams$year))
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -34,10 +41,6 @@ library(bit64)
 
 # Always source files in R/ (useful for local runs)
 sapply(dir("R", full.names = TRUE), source)
-
-##' This document gives a faithful step-by-step sequence of the operations
-##' performed in the `complete_tf_cpc` module. For a narrative version of
-##' the module's approach, please see its main document.
 
 ##+ init
 
@@ -129,9 +132,6 @@ if (faosws::CheckDebug()){
 stopifnot(!any(is.na(USER), USER == ""))
 
 # Read SWS module run parameters ####
-
-stopifnot(!is.null(swsContext.computationParams$out_coef))
-stopifnot(!is.null(swsContext.computationParams$year))
 
 ##' # Parameters
 

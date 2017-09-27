@@ -56,8 +56,10 @@ sapply(dir("R", full.names = TRUE), source)
 # Package build ID (it is included into report directory name)
 build_id <- "master"
 
-# Should we stop after reports on raw data?
-stop_after_pre_process <- FALSE
+# Should we do just pre-processing reports?
+# If TRUE no auxiliary files will be read (unless they are required)
+# and the module will stop as soon as reports on raw data are done.
+only_pre_process <- TRUE
 
 # Should we stop after HS-FCL mapping?
 stop_after_mapping <- FALSE
@@ -395,7 +397,7 @@ to_mirror_raw <- bind_rows(
 
 rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
 
-if (stop_after_pre_process) stop("Stop after reports on raw data")
+if (only_pre_process) stop("Stop after reports on raw data")
 
 ##' # Loading of help datasets
 

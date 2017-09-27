@@ -50,13 +50,13 @@ sapply(dir("R", full.names = TRUE), source)
 
 # Settings ####
 
-# Package build ID (it is included into report directory name)
-build_id <- "master"
-
 # Should we do just pre-processing reports?
 # If TRUE no auxiliary files will be read (unless they are required)
 # and the module will stop as soon as reports on raw data are done.
-only_pre_process <- TRUE
+only_pre_process <- FALSE
+
+# Package build ID (it is included into report directory name)
+build_id <- "master"
 
 # Should we stop after HS-FCL mapping?
 stop_after_mapping <- FALSE
@@ -208,6 +208,52 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
 
 flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 
+##' # Download helper tables
+
+# If running the whole module (only_pre_process = FALSE) the various
+# helper files will be read before everything else and a check will
+# be done so that if there is any issue in reading any of these tables
+# the module should exit immediately (i.e., it makes no sense to read
+# the whole trade data, do computations, etc. if the module is going
+# to fail because a table could not be read at some later step).
+# They are in ordered based on increasing time required for reading.
+
+# TODO: there are basic checks on the tables (mainly that they have
+# data), but more detailed checks should be needed (see #132)
+
+if (!only_pre_process) {
+  comtradeunits <- ReadDatatable('comtradeunits')
+  stopifnot(nrow(comtradeunits) > 0)
+
+  EURconversionUSD <- ReadDatatable('eur_conversion_usd')
+  stopifnot(nrow(EURconversionUSD) > 0)
+  stopifnot(year %in% EURconversionUSD$eusd_year)
+
+  fclunits <- ReadDatatable('fclunits')
+  stopifnot(nrow(fclunits) > 0)
+
+  fcl_codes <- ReadDatatable('fcl_2_cpc')$fcl
+  stopifnot(length(fcl_codes) > 0)
+
+  hs6standard <- ReadDatatable('standard_hs12_6digit')
+  stopifnot(nrow(hs6standard) > 0)
+
+  add_map <- ReadDatatable('hsfclmap4')
+  stopifnot(nrow(add_map) > 0)
+
+  if (use_adjustments) {
+    adjustments <- ReadDatatable('adjustments')
+    stopifnot(nrow(adjustments) > 0)
+  }
+
+  hsfclmap3 <- ReadDatatable('hsfclmap5')
+  stopifnot(nrow(hsfclmap3) > 0)
+}
+
+# Required in pre-processing
+unsdpartnersblocks <- ReadDatatable('unsdpartnersblocks')
+stopifnot(nrow(unsdpartnersblocks) > 0)
+
 ##' # Download raw data and basic operations
 
 ##' 1. Download Eurostat data (ES).
@@ -331,7 +377,7 @@ esdata <- esdata %>%
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
 # XXX This is also read below when "helper" tables are loaded.
-unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
+unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
 
 tldata <- tldata %>%
   left_join(
@@ -422,7 +468,7 @@ if (only_pre_process) stop("Stop after reports on raw data")
 flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 # XXX Notice that it is pulling now v5
-hsfclmap3 <- tbl_df(ReadDatatable("hsfclmap5")) %>%
+hsfclmap3 <- tbl_df(hsfclmap3) %>%
   # FCL, startyear, endyear codes can be overwritten by corrections
   mutate(
     fcl       = ifelse(!is.na(correction_fcl), correction_fcl, fcl),
@@ -451,11 +497,11 @@ hsfclmap3 <-
 # ADD UNMAPPED CODES
 
 
-fcl_codes <- as.numeric(tbl_df(faosws::ReadDatatable(table = 'fcl_2_cpc'))$fcl)
+fcl_codes <- as.numeric(fcl_codes)
 
 ##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
-add_map <- tbl_df(ReadDatatable('hsfclmap4')) %>%
+add_map <- tbl_df(add_map) %>%
   filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
   mutate(
     hs = ifelse(
@@ -592,8 +638,7 @@ flog.info("Rows in mapping table after filtering by year: %s", nrow(hsfclmap))
 
 # HS6standard: will be used as last resort for mapping
 
-hs6standard <-
-  ReadDatatable('standard_hs12_6digit') %>%
+hs6standard <- hs6standard
   group_by(hs2012_code) %>%
   mutate(n = n()) %>%
   ungroup() %>%
@@ -613,7 +658,7 @@ if (use_adjustments) {
   ## New procedure
   message(sprintf("[%s] Reading in adjustments", PID))
 
-  adjustments <- tbl_df(ReadDatatable("adjustments"))
+  adjustments <- tbl_df(adjustments)
   colnames(adjustments) <- sapply(colnames(adjustments),
                                   function(x) gsub("adj_","",x))
   adj_cols_int <- c("year","flow","fcl","partner","reporter")
@@ -634,7 +679,7 @@ if (use_adjustments) {
 ##' Minor Outlying Islands.
 
 #data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
-unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
+unsdpartnersblocks <- unsdpartnersblocks # already dowloaded
 
 ##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
@@ -642,7 +687,7 @@ unsdpartnersblocks <- tbl_df(ReadDatatable("unsdpartnersblocks"))
 ##' only the value is provided.
 
 #data("fclunits", package = "faoswsTrade", envir = environment())
-fclunits <- tbl_df(ReadDatatable("fclunits")) %>%
+fclunits <- tbl_df(fclunits) %>%
   rename(fcl = fcu_fcl, fclunit = fcu_fclunit) %>%
   mutate(fcl = as.integer(fcl))
 
@@ -653,13 +698,13 @@ fclunits <- tbl_df(ReadDatatable("fclunits")) %>%
 ##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
 #data("comtradeunits", package = "faoswsTrade", envir = environment())
-comtradeunits <- tbl_df(ReadDatatable("comtradeunits")) %>%
+comtradeunits <- tbl_df(comtradeunits) %>%
   rename(qunit = ctu_qunit, wco = ctu_wco, desc = ctu_desc) %>%
   mutate(qunit = as.integer(qunit))
 
 ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
-EURconversionUSD <- ReadDatatable("eur_conversion_usd")
+EURconversionUSD <- EURconversionUSD # already downloaded
 
 ##' # Generate HS to FCL map at HS6 level
 

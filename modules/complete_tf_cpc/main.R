@@ -44,12 +44,6 @@ sapply(dir("R", full.names = TRUE), source)
 
 ##+ init
 
-## Change Log:
-##
-## - Add unit values to output
-## - Remove adjustment factors
-## - Revise flags: add **flagObservationStatus** `X` and **flagMethod** `c`, `i`
-
 ## **Flow chart:**
 ##
 ## ![Aggregate complete_tf to total_trade](assets/diagram/trade_3.png?raw=true "livestock Flow")

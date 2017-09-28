@@ -36,8 +36,8 @@ ts_hsfcl_nolinks <- function(collection_path = NULL, prefix = NULL) {
     select(-age) %>%
     mutate(hs_chap = stringr::str_sub(hs, end = 2L)) %>%
     arrange(year, reporter, flow, hs_chap, hs) %>%
-    mutate(fcl = NA_integer_) %>%
-    select(year, reporter_fao, reporter, flow, hs_chap, hs, hs_extend, fcl)
-
+    mutate(fcl = "", mapped_by = "", details = "", tl_description = "") %>%
+    select(mapped_by, year, reporter_fao, reporter_name = reporter,
+           flow, hs_chap, hs, hs_extend, fcl, details, tl_description)
 }
 

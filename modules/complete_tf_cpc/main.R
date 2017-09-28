@@ -1528,10 +1528,12 @@ if (corrections_exist) {
   complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
 
   if (nrow(complete_corrected$to_drop) > 0) {
+    # XXX this should go in a CSV file
     warning('Some corrections were not applied:')
     complete_corrected$to_drop %>%
       mutate(year = year) %>%
-      select(year, everything())
+      select(year, everything()) %>%
+      as.data.frame()
   }
 
 } else {
@@ -1590,58 +1592,6 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   ) %>%
   select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
 
-complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
-  select(-correction_metadata) %>%
-  mutate(
-    flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
-                                   flagObservationStatus_q,
-                                   flagObservationStatus_v),
-    flagMethod            = ifelse(measuredElementTrade %in% quantityElements,
-                                   flagMethod_q,
-                                   flagMethod_v)
-  ) %>%
-  # The Status flag will be equal to the weakest flag between
-  # the numerator and the denominator, in this case the denominator.
-  mutate(
-    flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
-                                   flagObservationStatus_q,
-                                   flagObservationStatus),
-    flagMethod = ifelse(measuredElementTrade %in% uvElements,
-                        'i',
-                        flagMethod)
-  ) %>%
-  select(-flagObservationStatus_v, -flagObservationStatus_q,
-         -flagMethod_v, -flagMethod_q)
-
-complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
-
-data.table::setcolorder(complete_trade_flow_cpc,
-                        c("geographicAreaM49Reporter",
-                          "geographicAreaM49Partner",
-                          "measuredElementTrade",
-                          "measuredItemCPC",
-                          "timePointYears",
-                          "Value",
-                          "flagObservationStatus",
-                          "flagMethod"))
-
-# XXX Temporary workaround: some NAs are given flags and given
-# that NAs cannot have flags the system refuses to save them.
-# These NAs are unit values computed on a zero quantity. Setting
-# Value to zero.
-complete_trade_flow_cpc[is.na(Value), Value := 0]
-
-# "official" status flag should be <BLANK> instead of X (this was a choice
-# made after X was chosen as official flag). Thus, change X to <BLANK>.
-complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
-
-##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
-
-#### XXX Setting this to FALSE as on 20170926 there are some issues
-#### on the server when saving metadata.
-corrections_exist <- FALSE
-
-flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 if (corrections_exist) {
 ##' 1. Generate metadata for corrections.
 
@@ -1696,7 +1646,61 @@ if (corrections_exist) {
 
   # Required to be a data.table
   metad <- select(metad, -correction_metadata) %>% as.data.table()
+}
 
+complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
+  select(-correction_metadata) %>%
+  mutate(
+    flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
+                                   flagObservationStatus_q,
+                                   flagObservationStatus_v),
+    flagMethod            = ifelse(measuredElementTrade %in% quantityElements,
+                                   flagMethod_q,
+                                   flagMethod_v)
+  ) %>%
+  # The Status flag will be equal to the weakest flag between
+  # the numerator and the denominator, in this case the denominator.
+  mutate(
+    flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
+                                   flagObservationStatus_q,
+                                   flagObservationStatus),
+    flagMethod = ifelse(measuredElementTrade %in% uvElements,
+                        'i',
+                        flagMethod)
+  ) %>%
+  select(-flagObservationStatus_v, -flagObservationStatus_q,
+         -flagMethod_v, -flagMethod_q)
+
+complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
+
+data.table::setcolorder(complete_trade_flow_cpc,
+                        c("geographicAreaM49Reporter",
+                          "geographicAreaM49Partner",
+                          "measuredElementTrade",
+                          "measuredItemCPC",
+                          "timePointYears",
+                          "Value",
+                          "flagObservationStatus",
+                          "flagMethod"))
+
+# XXX Temporary workaround: some NAs are given flags and given
+# that NAs cannot have flags the system refuses to save them.
+# These NAs are unit values computed on a zero quantity. Setting
+# Value to zero.
+complete_trade_flow_cpc[is.na(Value), Value := 0]
+
+# "official" status flag should be <BLANK> instead of X (this was a choice
+# made after X was chosen as official flag). Thus, change X to <BLANK>.
+complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
+
+##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
+
+#### XXX Setting this to FALSE as on 20170926 there are some issues
+#### on the server when saving metadata.
+corrections_exist <- FALSE
+
+flog.trace("[%s] Writing data to session/database", PID, name = "dev")
+if (corrections_exist) {
   stats <- SaveData("trade",
                     "completed_tf_cpc_m49",
                     complete_trade_flow_cpc,

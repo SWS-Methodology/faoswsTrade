@@ -10,7 +10,9 @@
 
 useValidationCorrections <- function(data, corrections) {
 
-  corrections <- as.data.table(corrections)
+  corrections <- corrections %>%
+    mutate(correction_id = 1:n()) %>%
+    as.data.table()
 
   # NOTE: no aggregation function is indicated in the dcast as NO
   # duplicate corrections (by reporter, partner, year, item, flow,
@@ -26,7 +28,7 @@ useValidationCorrections <- function(data, corrections) {
   corrections <- dcast(
     corrections,
     reporter + partner + item + flow ~ data_type,
-    value.var = c('data_original', 'correction_input', 'correction_type', 'correction_metadata')
+    value.var = c('data_original', 'correction_input', 'correction_type', 'correction_metadata', 'correction_id')
   )
 
   complete_with_corrections <- left_join(
@@ -83,11 +85,31 @@ useValidationCorrections <- function(data, corrections) {
                                 )
     )
 
+  corrections_drop_qty <- complete_with_corrections$correction_id_qty[complete_with_corrections$correction_qty_apply %in% FALSE]
+
+  corrections_drop_value <- complete_with_corrections$correction_id_value[complete_with_corrections$correction_value_apply %in% FALSE]
 
   corrections_to_drop <- corrections_table[c(corrections_drop_qty, corrections_drop_value),]
 
   complete_with_corrections <- complete_with_corrections %>%
-    select(-contains('_qty'), -contains('_value'))
+    select(
+      geographicAreaM49Reporter,
+      geographicAreaM49Partner,
+      flow,
+      timePointYears,
+      flagObservationStatus_v,
+      flagObservationStatus_q,
+      flagMethod_v,
+      flagMethod_q,
+      measuredItemCPC,
+      qty,
+      unit,
+      value,
+      uv,
+      correction_metadata_qty,
+      correction_metadata_value
+    )
+
 
     return(
       list(

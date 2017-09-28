@@ -1480,17 +1480,7 @@ if (corrections_exist) {
     mutate(correction_metadata = gsub('  *', ' ', corrections_metadata))
 
   complete_corrected <- useValidationCorrections(complete_trade_flow_cpc, corrections_table)
-} else {
-  complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
-    mutate(
-      correction_metadata_qty   = NA_character_,
-      correction_metadata_value = NA_character_,
-      correction_metadata_uv    = NA_character_
-    )
-}
 
-
-if (corrections_exist) {
   complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
     mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
     filter(is_mirror) %>%
@@ -1535,6 +1525,14 @@ if (corrections_exist) {
                           )
 
   complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
+
+} else {
+  complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
+    mutate(
+      correction_metadata_qty   = NA_character_,
+      correction_metadata_value = NA_character_,
+      correction_metadata_uv    = NA_character_
+    )
 }
 
 ##' 1. Transform dataset separating monetary values, quantities and unit values

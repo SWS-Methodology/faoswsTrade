@@ -42,22 +42,19 @@ useValidationCorrections <- function(data, corrections) {
     filter(!is.na(correction_input_qty) | !is.na(correction_input_value)) %>%
     # XXX mirror?
     mutate(
-      correction_drop =
-                       ifelse(!is.na(correction_input_qty)   & (qty   < 0.99*data_original_qty   | qty   > 1.01*data_original_qty),   TRUE, FALSE) |
-                       ifelse(!is.na(correction_input_value) & (value < 0.99*data_original_value | value > 1.01*data_original_value), TRUE, FALSE)
-    )
-
-  corrections_to_drop <- filter(complete_with_corrections, correction_drop)
-
-  complete_with_corrections <- complete_with_corrections %>%
-    filter(!correction_drop) %>%
-    select(-correction_drop) %>%
-    mutate(
-      qty                     = ifelse(!is.na(correction_input_qty),   correction_input_qty,   qty),
-      value                   = ifelse(!is.na(correction_input_value), correction_input_value, value),
+      x_qty   = !is.na(correction_input_qty),
+      x_value = !is.na(correction_input_value),
+      y_qty   = (qty   < 0.99 * data_original_qty   | qty   > 1.01 * data_original_qty),
+      y_value = (value < 0.99 * data_original_value | value > 1.01 * data_original_value),
+      correction_qty_apply    = x_qty & !y_qty,
+      correction_qty_apply    = ifelse(is.na(!x_qty & y_qty), NA, correction_qty_apply),
+      correction_value_apply  = x_value & !y_value,
+      correction_value_apply  = ifelse(is.na(!x_value & y_value), NA, correction_value_apply),
+      qty                     = ifelse(correction_qty_apply,   correction_input_qty, qty),
+      value                   = ifelse(correction_value_apply, correction_input_value, value),
       uv                      = ifelse(qty > 0, value * 1000 / qty, NA),
       flagObservationStatus_q = ifelse(
-                                  !is.na(correction_input_qty),
+                                  correction_qty_apply,
                                   ifelse(
                                     correction_type_qty != 'None',
                                     ifelse(correction_type_qty == 'Mirror flow', 'T', 'I'),
@@ -66,7 +63,7 @@ useValidationCorrections <- function(data, corrections) {
                                   flagObservationStatus_q
                                 ),
       flagObservationStatus_v = ifelse(
-                                  !is.na(correction_input_value),
+                                  correction_value_apply,
                                   ifelse(
                                     correction_type_value != 'None',
                                     ifelse(correction_type_value == 'Mirror flow', 'T', 'I'),
@@ -75,20 +72,22 @@ useValidationCorrections <- function(data, corrections) {
                                   flagObservationStatus_v
                                 ),
       flagMethod_q            = ifelse(
-                                  !is.na(correction_input_qty),
+                                  correction_qty_apply,
                                   ifelse(correction_type_qty != 'None', 'e', flagMethod_q),
                                   flagMethod_q
                                 ),
       flagMethod_v            = ifelse(
-                                  !is.na(correction_input_value),
+                                  correction_value_apply,
                                   ifelse(correction_type_value != 'None', 'e', flagMethod_v),
                                   flagMethod_v
                                 )
-    ) %>%
-    select(
-      -data_original_qty,   -correction_input_qty,   -correction_type_qty,
-      -data_original_value, -correction_input_value, -correction_type_value
     )
+
+
+  corrections_to_drop <- corrections_table[c(corrections_drop_qty, corrections_drop_value),]
+
+  complete_with_corrections <- complete_with_corrections %>%
+    select(-contains('_qty'), -contains('_value'))
 
     return(
       list(

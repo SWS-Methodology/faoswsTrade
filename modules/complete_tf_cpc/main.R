@@ -1460,7 +1460,7 @@ corrections_exist <- nrow(corrections_table) > 0
 if (corrections_exist) {
   corrections_table <- corrections_table %>%
     filter(correction_level == 'CPC') %>%
-    select(-year, -correction_level, -correction_hs) %>%
+    select(-correction_year, -correction_level, -correction_hs) %>%
     # Some of these cases were found, but are probably mistakes: should inform
     filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
     # XXX actually, flow should be integer in complete_trade_flow_cpc
@@ -1526,6 +1526,13 @@ if (corrections_exist) {
                           )
 
   complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
+
+  if (nrow(complete_corrected$to_drop) > 0) {
+    warning('Some corrections were not applied:')
+    complete_corrected$to_drop %>%
+      mutate(year = year) %>%
+      select(year, everything())
+  }
 
 } else {
   complete_trade_flow_cpc <- complete_trade_flow_cpc %>%

@@ -1458,9 +1458,9 @@ corrections_table <- corrections_table_all %>%
 corrections_exist <- nrow(corrections_table) > 0
 
 if (corrections_exist) {
-  corrections_table <- corrections_table_all %>%
-    select(correction_level == 'CPC') %>%
-    select(-correction_year, -correction_level, -correction_hs) %>%
+  corrections_table <- corrections_table %>%
+    filter(correction_level == 'CPC') %>%
+    select(-year, -correction_level, -correction_hs) %>%
     # Some of these cases were found, but are probably mistakes: should inform
     filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
     # XXX actually, flow should be integer in complete_trade_flow_cpc

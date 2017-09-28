@@ -535,7 +535,7 @@ fcl_diff <- setdiff(unique(add_map$fcl), fcl_codes)
 
 fcl_diff <- fcl_diff[!is.na(fcl_diff)]
 
-fcl_diff <- setdiff(fcl_codes, 0)
+fcl_diff <- setdiff(fcl_diff, 0)
 
 if (length(fcl_diff) > 0) {
     warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))

@@ -1582,57 +1582,6 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   ) %>%
   select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
 
-##' 1. Generate metadata for corrections.
-
-metad <- complete_trade_flow_cpc %>%
-  filter(!is.na(correction_metadata)) %>%
-  select(
-    geographicAreaM49Reporter,
-    geographicAreaM49Partner,
-    measuredElementTrade,
-    measuredItemCPC,
-    timePointYears,
-    correction_metadata
-  ) %>%
-  mutate(
-    Metadata          = "GENERAL",
-    Metadata_Element  = "COMMENT",
-    Metadata_Language = "en",
-    Metadata_Value    = correction_metadata
-  ) #%>%
-  ### NOTE: metadata can be splitted as shown below, though there is
-  ### still some work to do on how to store metadata of unit values
-  #separate(
-  #  correction_metadata, # Or Metadata_Value, if computed above
-  #  into = c(
-  #    'name_analyst',
-  #    'data_original',
-  #    'correction_type',
-  #    'correction_note',
-  #    'note_analyst',
-  #    'note_supervisor',
-  #    'name_supervisor',
-  #    'date_correction',
-  #    'date_validation'
-  #  ),
-  #  sep = ' *; *'
-  #) %>%
-  #gather(
-  #  key,
-  #  value,
-  #  name_analyst,
-  #  data_original,
-  #  correction_type,
-  #  correction_note,
-  #  note_analyst,
-  #  note_supervisor,
-  #  name_supervisor,
-  #  date_correction,
-  #  date_validation
-  #) %>%
-  #select(-key) %>%
-  #rename(Metadata_Value = value)
-
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   select(-correction_metadata) %>%
   mutate(
@@ -1678,9 +1627,6 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 # made after X was chosen as official flag). Thus, change X to <BLANK>.
 complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
 
-# Required to be a data.table
-metad <- select(metad, -correction_metadata) %>% as.data.table()
-
 ##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
 
 #### XXX Setting this to FALSE as on 20170926 there are some issues
@@ -1689,6 +1635,60 @@ corrections_exist <- FALSE
 
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 if (corrections_exist) {
+##' 1. Generate metadata for corrections.
+
+  metad <- complete_trade_flow_cpc %>%
+    filter(!is.na(correction_metadata)) %>%
+    select(
+      geographicAreaM49Reporter,
+      geographicAreaM49Partner,
+      measuredElementTrade,
+      measuredItemCPC,
+      timePointYears,
+      correction_metadata
+    ) %>%
+    mutate(
+      Metadata          = "GENERAL",
+      Metadata_Element  = "COMMENT",
+      Metadata_Language = "en",
+      Metadata_Value    = correction_metadata
+    ) #%>%
+    ### NOTE: metadata can be splitted as shown below, though there is
+    ### still some work to do on how to store metadata of unit values
+    #separate(
+    #  correction_metadata, # Or Metadata_Value, if computed above
+    #  into = c(
+    #    'name_analyst',
+    #    'data_original',
+    #    'correction_type',
+    #    'correction_note',
+    #    'note_analyst',
+    #    'note_supervisor',
+    #    'name_supervisor',
+    #    'date_correction',
+    #    'date_validation'
+    #  ),
+    #  sep = ' *; *'
+    #) %>%
+    #gather(
+    #  key,
+    #  value,
+    #  name_analyst,
+    #  data_original,
+    #  correction_type,
+    #  correction_note,
+    #  note_analyst,
+    #  note_supervisor,
+    #  name_supervisor,
+    #  date_correction,
+    #  date_validation
+    #) %>%
+    #select(-key) %>%
+    #rename(Metadata_Value = value)
+
+  # Required to be a data.table
+  metad <- select(metad, -correction_metadata) %>% as.data.table()
+
   stats <- SaveData("trade",
                     "completed_tf_cpc_m49",
                     complete_trade_flow_cpc,

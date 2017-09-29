@@ -190,7 +190,7 @@ if (smooth_trade) {
   Sys.time()
   a1 <- a %>%
     group_by(geographicAreaM49Reporter, geographicAreaM49Partner, measuredItemCPC,  flow) %>%
-    mutate(ratio_mirr_movav = movav(ratio_mirror, n = 3)) # almost 13 mins
+    mutate(ratio_mirr_movav = RcppRoll::roll_mean(ratio_mirror, n = 3, fill = NA, na.rm = TRUE))
   Sys.time()
 
   # after loading a1

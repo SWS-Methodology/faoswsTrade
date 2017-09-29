@@ -167,7 +167,7 @@ tradedata <- tradedata %>%
 invisible(gc())
 
 # If smooth_trade == TRUE it means that we will use moving averages of
-# the mirrot ratio, thus we need to expand the data set for all years.
+# the mirror ratio, thus we need to expand the data set for all years.
 if (smooth_trade) {
   tradedata <- tradedata %>%
     mutate(orig = 1)

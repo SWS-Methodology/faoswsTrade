@@ -15,7 +15,7 @@ threshold <- 1.5
 # Years
 years <- as.character(2000:2014)
 # Whether to smooth trade or not
-smooth_trade <- FALSE
+smooth_trade <- TRUE
 
 library(faosws)
 library(dplyr)
@@ -109,8 +109,8 @@ Keys <- list( #reporters = rep,
              items    = GetCodeList2(dimension = Vars[['items']])[, code],
              # Quantity [#], Quantity [head], Quantity [1000 head], Quantity [t], Value [1000 $]
              elements = c('5607', '5608', '5609', '5610', '5622',
-                          '5907', '5908', '5909', '5910', '5922')
-             #years    = as.character(year))
+                          '5907', '5908', '5909', '5910', '5922'),
+             years    = as.character(years)
              )
 
 if (multicore) {

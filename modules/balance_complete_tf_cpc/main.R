@@ -1,4 +1,8 @@
-setwd('C:/Users/mongeau/Dropbox/GitHub/SWS-Methodology/faoswsTrade')
+setwd('C:/Users/mongeau/tmp/faoswsTrade')
+
+######################################################################
+for ( i in  dir("R/", full.names = TRUE) ) source(i)
+######################################################################
 
 
 # Parameters
@@ -127,10 +131,6 @@ if (multicore) {
   parallel::clusterEvalQ(cl, library(faosws))
 }
 
-
-######################################################################
-for ( i in  dir("R/", full.names = TRUE) ) source(i)
-######################################################################
 
 
 start_time <- Sys.time()

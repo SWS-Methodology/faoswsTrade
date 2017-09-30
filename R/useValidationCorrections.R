@@ -31,6 +31,18 @@ useValidationCorrections <- function(data, corrections) {
     value.var = c('data_original', 'correction_input', 'correction_type', 'correction_metadata', 'correction_id')
   )
 
+  if (!('data_original_value' %in% names(corrections))) {
+    for (i in corrections %>% select(ends_with('qty')) %>% names()) {
+      corrections[[sub('_qty', '_value', i)]] = NA
+    }
+  }
+
+  if (!('data_original_qty' %in% names(corrections))) {
+    for (i in corrections %>% select(ends_with('value')) %>% names()) {
+      corrections[[sub('_value', '_qty', i)]] = NA
+    }
+  }
+
   complete_with_corrections <- left_join(
     data,
     corrections,

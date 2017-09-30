@@ -1,4 +1,4 @@
-setwd('C:/Users/mongeau/tmp/faoswsTrade')
+#setwd('C:/Users/mongeau/tmp/faoswsTrade')
 
 ######################################################################
 for ( i in  dir("R/", full.names = TRUE) ) source(i)
@@ -9,11 +9,20 @@ for ( i in  dir("R/", full.names = TRUE) ) source(i)
 
 # For parallel computation
 multicore <- TRUE
+
 # Maximum allowed discrepancy in the flow/mirror ratio
 # TODO: should be a parameter
 threshold <- 1.5
+
 # Years
-years <- as.character(2000:2014)
+stopifnot(!is.null(swsContext.computationParams$startyear))
+stopifnot(!is.null(swsContext.computationParams$endyear))
+
+print(swsContext.computationParams$startyear)
+print(swsContext.computationParams$endyear)
+
+years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
+
 # Whether to smooth trade or not
 smooth_trade <- TRUE
 
@@ -22,7 +31,7 @@ library(dplyr)
 #library(tidyr)
 # igraph, stringr, reshape2
 
-if(CheckDebug()){
+if (CheckDebug()) {
   library(faoswsModules)
   settings_file <- "modules/balance_complete_tf_cpc/sws.yml"
   SETTINGS = faoswsModules::ReadSettings(settings_file)
@@ -34,8 +43,13 @@ if(CheckDebug()){
   ## Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])
+
+  dir_to_save <- paste0(Sys.getenv('HOME'), '/tmp/')
+} else {
+  dir_to_save <- '/work/SWS_R_Share/trade/validation_tool_files/tmp/'
 }
 
+name_to_save <- 'db_balance.rds'
 
 #GetCodeList('trade', 'completed_tf_cpc_m49', 'measuredItemCPC')
 #GetDatasetConfig('trade', 'completed_tf_cpc_m49')
@@ -273,5 +287,5 @@ select(-flow, -type) %>%
 filter(!(measuredElementTrade %in% c('56NA', '59NA')))
 
 
-saveRDS(final_db, file = 'T:/Team_working_folder/A/FBS-Modules/Trade module/data/mirror/analytical_trade_2000-2014.rds')
+saveRDS(final_db, file = paste0(dir_to_save, name_to_save))
 

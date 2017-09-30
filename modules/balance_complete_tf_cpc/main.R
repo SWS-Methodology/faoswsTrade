@@ -1,3 +1,11 @@
+stopifnot(!is.null(swsContext.computationParams$startyear))
+stopifnot(!is.null(swsContext.computationParams$endyear))
+stopifnot(!is.null(swsContext.computationParams$threshold))
+print(swsContext.computationParams$startyear)
+print(swsContext.computationParams$endyear)
+print(swsContext.computationParams$threshold)
+
+
 #setwd('C:/Users/mongeau/tmp/faoswsTrade')
 
 ######################################################################
@@ -12,15 +20,9 @@ multicore <- TRUE
 
 # Maximum allowed discrepancy in the flow/mirror ratio
 # TODO: should be a parameter
-threshold <- 1.5
+threshold <- as.numeric(swsContext.computationParams$threshold)
 
 # Years
-stopifnot(!is.null(swsContext.computationParams$startyear))
-stopifnot(!is.null(swsContext.computationParams$endyear))
-
-print(swsContext.computationParams$startyear)
-print(swsContext.computationParams$endyear)
-
 years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
 
 # Whether to smooth trade or not

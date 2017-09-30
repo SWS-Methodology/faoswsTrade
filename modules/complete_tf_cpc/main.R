@@ -1695,10 +1695,6 @@ complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '
 
 ##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
 
-#### XXX Setting this to FALSE as on 20170926 there are some issues
-#### on the server when saving metadata.
-corrections_exist <- FALSE
-
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 if (corrections_exist) {
   stats <- SaveData("trade",

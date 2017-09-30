@@ -134,9 +134,11 @@ if (multicore) {
   cl <- parallel::makeCluster(n_cores)
   doParallel::registerDoParallel(cl)
 
-  parallel::clusterExport(cl, c('SETTINGS', ls(pattern = 'swsContext')))
+  parallel::clusterExport(cl, c(ls(pattern = 'swsContext')))
 
   if(CheckDebug()) {
+    parallel::clusterExport(cl, 'SETTINGS')
+
     parallel::clusterEvalQ(cl, {
       ## Define where your certificates are stored
       faosws::SetClientFiles(SETTINGS[["certdir"]])
@@ -173,13 +175,13 @@ print(end_time-start_time)
 tradedata <- db_list %>%
   meltTradeData()
 
-cpc_units <- tradedata
+cpc_units <- tradedata %>%
   select(measuredElementTrade, measuredItemCPC) %>%
   mutate(
          measuredElementTrade = stringr::str_sub(measuredElementTrade, 3, 4)
          ) %>%
   distinct() %>%
-  filter(!(measuredElementTrade == '22'))
+  filter(measuredElementTrade != '22')
 
 rm(db_list)
 invisible(gc())

@@ -35,17 +35,17 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
   }
 
   tmp_accu <- data %>%
-    filter(complete.cases(qty, qty_m, cpc)) %>%
-    group_by(reporter, flow, partner) %>%
+    filter(complete.cases(qty, qty_m, measuredItemCPC)) %>%
+    group_by(geographicAreaM49Reporter, flow, geographicAreaM49Partner) %>%
     summarise(correl = fun(qty, qty_m, method), n = n()) %>%
-    group_by(reporter) %>%
+    group_by(geographicAreaM49Reporter) %>%
     mutate(tot = sum(n, na.rm = TRUE), wt = n/tot) %>%
     ungroup() %>%
     filter(n > 1) %>%
     mutate(score = correl*wt)
 
   # These can be non-reporters or (less likely) countries with a single flow
-  nonrep <- unique(data$reporter)[!(unique(data$reporter) %in% unique(tmp_accu$reporter))]
+  nonrep <- unique(data$geographicAreaM49Reporter)[!(unique(data$geographicAreaM49Reporter) %in% unique(tmp_accu$geographicAreaM49Reporter))]
 
   # Giving the minimun score to coutries that never show as reporters
   tmp_accu <-
@@ -53,7 +53,7 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
               tmp_accu,
               tmp_accu[rep(1, length(nonrep)),] %>%
                 mutate(
-                       reporter = nonrep,
+                       geographicAreaM49Reporter = nonrep,
                        correl   = NA,
                        n        = 0,
                        tot      = 0,
@@ -64,21 +64,21 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
 
   if (type == 'local') {
     accu <- tmp_accu %>%
-              group_by(reporter) %>%
+              group_by(geographicAreaM49Reporter) %>%
               summarise(accu_score = sum(score, na.rm = TRUE)) %>%
               ungroup() %>%
-              rename(country = reporter) %>%
+              rename(country = geographicAreaM49Reporter) %>%
               mutate(
                      accu_rank  = rank(-accu_score),
                      accu_group = ntile(accu_rank, 10)
                      )
   } else {
     global_accu <- tmp_accu %>%
-      group_by(reporter, partner) %>%
+      group_by(geographicAreaM49Reporter, geographicAreaM49Partner) %>%
       summarise(score = sum(score, na.rm = TRUE)) %>%
       ungroup() %>%
-      tidyr::spread(partner, score) %>%
-      select(-reporter) %>%
+      tidyr::spread(geographicAreaM49Partner, score) %>%
+      select(-geographicAreaM49Reporter) %>%
       as.matrix()
 
     global_accu[is.na(global_accu)] <- 0

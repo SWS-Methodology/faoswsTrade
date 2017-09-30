@@ -157,6 +157,15 @@ print(end_time-start_time)
 tradedata <- db_list %>%
   meltTradeData()
 
+cpc_units <- db_list %>%
+  meltTradeData() %>%
+  select(measuredElementTrade, measuredItemCPC) %>%
+  mutate(
+         measuredElementTrade = stringr::str_sub(measuredElementTrade, 3, 4)
+         ) %>%
+  distinct() %>%
+  filter(!(measuredElementTrade == '22'))
+
 rm(db_list)
 invisible(gc())
 
@@ -248,16 +257,6 @@ tradedata_final <- tradedata %>%
                   into   = c('flagObservationStatus', 'flagMethod'),
                   remove = TRUE
                   )
-
-cpc_units <- db_list %>%
-  meltTradeData() %>%
-  select(measuredElementTrade, measuredItemCPC) %>%
-  mutate(
-         measuredElementTrade = stringr::str_sub(measuredElementTrade, 3, 4)
-         ) %>%
-  distinct() %>%
-  filter(!(measuredElementTrade == '22'))
-
 
 
 

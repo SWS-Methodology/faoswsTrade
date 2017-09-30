@@ -23,7 +23,7 @@ addMirror <- function(data = NA) {
            geographicAreaM49Reporter,
            geographicAreaM49Partner,
            flow,
-           cpc,
+           measuredItemCPC,
            qty,
            value,
            flag_qty,

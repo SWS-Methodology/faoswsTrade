@@ -5,7 +5,7 @@
 \title{Prepares for numerical comparison vector of hs codes from
 trade dataset with hs codes range from mapping table.}
 \usage{
-maxHSLength(uniqhs, mapdataset, parallel = FALSE)
+maxHSLength(uniqhs, mapdataset)
 }
 \arguments{
 \item{uniqhs}{Data frame with columns `reporter`, `flow` and `hs` containing

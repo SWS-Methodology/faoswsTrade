@@ -337,7 +337,7 @@ esdata <- esdata %>%
   filter_(~stat_regime == "4") %>%
   ## Removing stat_regime as it is not needed anymore
   select_(~-stat_regime) %>%
-  # Remove totals, 1010 = 'European Union', 1011 = 'Extra-european Union', see
+  # Remove totals, 1010 = 'European Union', 1011 = 'Extra-European Union', see
   # http://ec.europa.eu/eurostat/documents/3859598/5889816/KS-BM-05-002-EN.PDF
   filter_(~!(declarant == 'EU' | partner %in% c('1010', '1011')))
 

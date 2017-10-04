@@ -1544,7 +1544,6 @@ if (corrections_exist) {
       as.data.frame()
 
     rprt_writetable(corrections_not_applied, subdir = 'preproc')
-
   }
 
 } else {

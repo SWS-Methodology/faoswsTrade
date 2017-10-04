@@ -63,9 +63,9 @@ useValidationCorrections <- function(data, corrections) {
       correction_qty_apply    = x_qty & !y_qty,
       correction_qty_apply    = ifelse(is.na(!x_qty & y_qty), NA, correction_qty_apply),
       correction_value_apply  = x_value & !y_value,
-      correction_value_apply  = ifelse(is.na(!x_value & y_value), NA, correction_value_apply),
-      qty                     = ifelse(correction_qty_apply,   correction_input_qty, qty),
-      value                   = ifelse(correction_value_apply, correction_input_value, value),
+      correction_value_apply  = ifelse(is.na(!x_value & y_value), NA,    correction_value_apply),
+      qty                     = ifelse(correction_qty_apply   %in% TRUE, correction_input_qty, qty),
+      value                   = ifelse(correction_value_apply %in% TRUE, correction_input_value, value),
       uv                      = ifelse(qty > 0, value * 1000 / qty, NA),
       flagObservationStatus_q = ifelse(
                                   correction_qty_apply,

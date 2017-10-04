@@ -1537,11 +1537,14 @@ if (corrections_exist) {
 
   if (nrow(complete_corrected$to_drop) > 0) {
     # XXX this should go in a CSV file
-    warning('Some corrections were not applied:')
-    complete_corrected$to_drop %>%
+    warning('Some corrections were not applied. See reports.')
+    corrections_not_applied <- complete_corrected$to_drop %>%
       mutate(year = year) %>%
       select(year, everything()) %>%
       as.data.frame()
+
+    rprt_writetable(corrections_not_applied, subdir = 'preproc')
+
   }
 
 } else {

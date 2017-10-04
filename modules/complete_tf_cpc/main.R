@@ -230,38 +230,38 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
 # data), but more detailed checks should be needed (see #132)
 
 if (!only_pre_process) {
-  flog.trace("[%s] Reading in comtradeunits datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'comtradeunits' datatable", PID, name = "dev")
   comtradeunits <- ReadDatatable('comtradeunits')
   stopifnot(nrow(comtradeunits) > 0)
 
-  flog.trace("[%s] Reading in EURconversionUSD datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'eur_conversion_usd' datatable", PID, name = "dev")
   EURconversionUSD <- ReadDatatable('eur_conversion_usd')
   stopifnot(nrow(EURconversionUSD) > 0)
   stopifnot(year %in% EURconversionUSD$eusd_year)
 
-  flog.trace("[%s] Reading in fclunits datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'fclunits' datatable", PID, name = "dev")
   fclunits <- ReadDatatable('fclunits')
   stopifnot(nrow(fclunits) > 0)
 
-  flog.trace("[%s] Reading in fcl_codes datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'fcl_codes' datatable", PID, name = "dev")
   fcl_codes <- ReadDatatable('fcl_2_cpc')$fcl
   stopifnot(length(fcl_codes) > 0)
 
-  flog.trace("[%s] Reading in hs6standard datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')
   stopifnot(nrow(hs6standard) > 0)
 
-  flog.trace("[%s] Reading in add_map datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
   add_map <- ReadDatatable('hsfclmap4')
   stopifnot(nrow(add_map) > 0)
 
   if (use_adjustments) {
-    flog.trace("[%s] Reading in adjustments datatable", PID, name = "dev")
+    flog.trace("[%s] Reading in 'adjustments' datatable", PID, name = "dev")
     adjustments <- ReadDatatable('adjustments')
     stopifnot(nrow(adjustments) > 0)
   }
 
-  flog.trace("[%s] Reading in hsfclmap3 datatable", PID, name = "dev")
+  flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
   hsfclmap3 <- ReadDatatable('hsfclmap5')
   stopifnot(nrow(hsfclmap3) > 0)
 }

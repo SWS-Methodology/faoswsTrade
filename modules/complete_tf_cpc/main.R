@@ -293,6 +293,9 @@ esdata <- ReadDatatable(
   where = paste0("chapter IN (", hs_chapters, ")")
 ) %>% tbl_df()
 
+# Use the smallest value that rounded is equal to zero for "zero" mt.
+esdata$qty_ton = ifelse(near(esdata$qty_ton, 0), 0.0005, esdata$qty_ton)
+
 stopifnot(nrow(esdata) > 0)
 
 # Sample, if required
@@ -1017,42 +1020,71 @@ tldata <- left_join(tldata, ctfclunitsconv, by = c("qunit", "wco", "fclunit"))
 
 #### Commodity specific conversion
 
+# For converting qty to metric tonnes
 fcl_spec_mt_conv <- tldata %>%
   filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
-  distinct
+  distinct()
 
+# For converting weight to 'heads', '1000 heads', 'units'.
+fcl_spec_head_conv <- tldata %>%
+  select(fcl, fclunit, wco) %>%
+  distinct() %>%
+  filter(wco == 'kg', fclunit %in% c('heads', '1000 heads', 'units'))
+
+# XXX probably this check should be removed.
 if (NROW(fcl_spec_mt_conv) > 0) {
 
-  conversion_factors_fcl <- tldata %>%
+  # weight > mt
+  conversion_factors_fcl_mt <- tldata %>%
     filter(!is.na(weight) & !is.na(qty)) %>%
     mutate(qw = (weight/qty)/1000) %>%
     group_by(fcl, wco) %>%
-    summarise(convspec = median(qw, na.rm = TRUE)) %>%
+    summarise(convspec_mt = median(qw, na.rm = TRUE)) %>%
     ungroup()
 
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
-    left_join(conversion_factors_fcl, by = c("fcl", "wco"))
+    left_join(conversion_factors_fcl_mt, by = c("fcl", "wco"))
 
-  fcl_spec_mt_conv$convspec[is.na(fcl_spec_mt_conv$convspec)] <- 0
+  fcl_spec_mt_conv$convspec_mt[is.na(fcl_spec_mt_conv$convspec_mt)] <- 0
+
+  # weight > heads
+  fcl_spec_head_conv <- livestockWeightsTable() %>%
+    left_join(fcl_spec_head_conv, by = 'fcl') %>%
+    filter(!is.na(fclunit)) %>%
+    mutate(liveweight = ifelse(fclunit == '1000 heads', liveweight * 1000, liveweight)) %>%
+    filter(!is.na(liveweight), liveweight > 0) %>%
+    rename(convspec_head = liveweight)
 
   ### Add commodity specific conv.factors to dataset
 
-  tldata <- tldata %>%
-    left_join(fcl_spec_mt_conv,
-              by = c("fcl", "wco"))
+  tldata <- left_join(tldata, fcl_spec_mt_conv, by = c("fcl", "wco"))
+
+  tldata <- left_join(tldata, fcl_spec_head_conv,
+                      by = c("reporter", "fcl", "fclunit", "wco"))
+
   ########## Conversion of units
 
   #### FCL specific conv
 
-  tldata$qtyfcl <- tldata$qty * tldata$convspec
+  tldata <- tldata %>%
+    mutate(qtyfcl =
+      ifelse(
+        !is.na(convspec_mt),
+        qty * convspec_mt,
+        ifelse(
+          !is.na(convspec_head),
+          round(weight / convspec_head, 0),
+          #### Common conv
+          # If no specific conv. factor, we apply general
+          qty * conv
+        )
+      )
+    )
 
-  #### Common conv
-  # If no specific conv. factor, we apply general
-
-  tldata$qtyfcl <- ifelse(is.na(tldata$convspec),
-                          tldata$qty * tldata$conv,
-                          tldata$qtyfcl)
+  # To avoid problems with UV
+  tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0) & tldata$fclunit == '1000 heads', 0.1, tldata$qtyfcl)
+  tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0), 1, tldata$qtyfcl)
 } else {
   tldata$qtyfcl = NA
 }

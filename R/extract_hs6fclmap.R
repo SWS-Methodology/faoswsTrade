@@ -34,11 +34,11 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
   # calculate from-to range
   flog.trace("HS6 map: calculation of HS ranges", name = "dev")
   maptable <- maptable %>%
-    mutate_at(vars(ends_with("code")),
+    dplyr::mutate_at(vars(ends_with("code")),
               funs(str_sub(., end = 6L))) %>%
-    mutate_at(vars(ends_with("code")),
+    dplyr::mutate_at(vars(ends_with("code")),
               as.integer) %>%
-    mutate_(hsrange = ~tocode - fromcode)
+    dplyr::mutate_(hsrange = ~tocode - fromcode)
 
   # Subset maptable with zero from-to hs range
   # where we don't need to add intermediate codes
@@ -58,7 +58,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
   maptable_range <- maptable %>%
     filter_(~hsrange > 0) %>%
     rowwise() %>%
-    mutate(hs6 = list(fromcode:tocode)) %>%
+    dplyr::mutate(hs6 = list(fromcode:tocode)) %>%
     tidyr::unnest() %>%
     select(reporter, flow, hs6, fcl)
 
@@ -68,7 +68,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
 
   bind_rows(maptable_0range, maptable_range) %>%
   group_by(reporter, flow, hs6) %>%
-  mutate(fcl_links = n_distinct(fcl)) %>%
+  dplyr::mutate(fcl_links = n_distinct(fcl)) %>%
   ungroup() %>%
   distinct()
 }

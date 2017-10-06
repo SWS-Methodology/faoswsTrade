@@ -42,7 +42,7 @@ rprt_hs2fcl_nolinks <- function(uniqhs, tradedataname = NULL) {
 
   hsfcl_nolinks_statistic <- hsfcl_nolinks_statistic %>%
     group_by_(~flow) %>%
-    arrange_(~desc(nolinks)) %>%
+    arrange_(~dplyr::desc(nolinks)) %>%
     mutate_(nolinks_prop = ~scales::percent(nolinks_prop)) %>%
     ungroup()
 

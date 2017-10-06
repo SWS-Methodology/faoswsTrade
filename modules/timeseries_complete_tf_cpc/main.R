@@ -92,7 +92,7 @@ calculateOnDataSWS <- function(data = NA) {
   # XXX this should be the mimimum, but it's not necessarily true.
   if (nrow(data) > 10) {
     ## Number of yearly points by commodity
-    #plot(x %>% group_by(geographicAreaM49Partner, measuredItemCPC) %>% count() %$% table(n))
+    #plot(x %>% group_by(geographicAreaM49Partner, measuredItemCPC) %>% dplyr::count() %$% table(n))
 
     N <- length(unique(data$timePointYears))
     morder <- ifelse(N <= movav_order, N, movav_order)
@@ -100,7 +100,7 @@ calculateOnDataSWS <- function(data = NA) {
     tradedata <- data %>%
       reshapeTrade() %>%
       # XXX should be "value only" items
-      filter(!is.na(qty)) %>%
+      dplyr::filter(!is.na(qty)) %>%
       dplyr::mutate(uv = value / qty) %>%
       tidyr::complete(
         tidyr::nesting(
@@ -116,7 +116,7 @@ calculateOnDataSWS <- function(data = NA) {
         geographicAreaM49Reporter,
         geographicAreaM49Partner,
         measuredItemCPC,
-        desc(timePointYears)
+        dplyr::desc(timePointYears)
       ) %>%
       dplyr::group_by(
         flow,
@@ -165,7 +165,7 @@ calculateOnDataSWS <- function(data = NA) {
         qty_new  = if_else(out == 1, value/ma, qty),
         uv_new   = value/qty_new
       ) %>%
-      #filter(nna_ma > 0)
+      #dplyr::filter(nna_ma > 0)
       dplyr::ungroup()
   
     invisible(gc())
@@ -231,7 +231,7 @@ db_list <- plyr::mlply(
   #  stringsAsFactors = FALSE
   #  ) %>%
   #    as_data_frame() %>%
-  #    rename(reporter = Var1, year = Var2),
+  #    dplyr::rename(reporter = Var1, year = Var2),
   data_frame(reporter = reporters),
   .fun = computeData,
   .parallel = multicore,
@@ -276,7 +276,7 @@ for (reporter in new_reporters) {
   p$tick()$print()
 
   db_tmp <- db_list[[reporter]] %>%
-  filter(!is.na(qty) | !is.na(value)) %>%
+  dplyr::filter(!is.na(qty) | !is.na(value)) %>%
   select(
     geographicAreaM49Reporter,
     geographicAreaM49Partner,
@@ -315,11 +315,11 @@ for (reporter in new_reporters) {
       into   = c('flagObservationStatus', 'flagMethod'),
       remove = TRUE
     ) %>%
-    mutate(flagMethod = 'i') %>%
-    rename(Value = uv) %>%
+    dplyr::mutate(flagMethod = 'i') %>%
+    dplyr::rename(Value = uv) %>%
     # As on 2017-03-20 this works (see the element list at the beginning),
     # but it's not probably the best way to do it.
-    mutate(
+    dplyr::mutate(
       measuredElementTrade = stringr::str_replace(
                                                   measuredElementTrade_q,
                                                   '^(..).(.)$',
@@ -341,7 +341,7 @@ for (reporter in new_reporters) {
   db_q_v <- db_tmp %>%
     select(-uv) %>%
     tidyr::gather(type, Value, qty, value) %>%
-    mutate(flag = ifelse(type == 'qty', flag_qty, flag_value)) %>%
+    dplyr::mutate(flag = ifelse(type == 'qty', flag_qty, flag_value)) %>%
     select(-flag_qty, -flag_value) %>%
     tidyr::separate(
       flag,
@@ -349,14 +349,14 @@ for (reporter in new_reporters) {
       into   = c('flagObservationStatus', 'flagMethod'),
       remove = TRUE
     ) %>%
-    mutate(
+    dplyr::mutate(
       measuredElementTrade = ifelse(
                                     type != 'value',
                                     measuredElementTrade_q,
                                     ifelse(flow == 1, '5622', '5922')
                                     )
     ) %>%
-    mutate(
+    dplyr::mutate(
       flagObservationStatus = ifelse(
                                      type == 'qty' & out == 1,
                                      'I',

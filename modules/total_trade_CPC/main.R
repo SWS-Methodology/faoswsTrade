@@ -138,7 +138,7 @@ total_trade_cpc_wo_uv <- completetrade %>%
   summarise_(Value = ~sum(Value, na.rm = TRUE),
              flagObservationStatus = ~aggregateObservationFlag(flagObservationStatus, flagTable = flagWeightTable_status)) %>%
   ungroup() %>%
-  mutate(flagMethod = "s")
+  dplyr::mutate(flagMethod = "s")
 
 ##' # Calculate Unit Values
 ##'
@@ -167,13 +167,13 @@ addUV <- function(data) {
 
   copyData_quantity <-
     copyData %>%
-    filter(unit == "quantity") %>%
+    dplyr::filter(unit == "quantity") %>%
     select(-unit, measuredElementTrade.qty = measuredElementTrade, -flagMethod)
     ## select(-unit) # must keep to assign proper elemnt code to unit value
 
   copyData_monetary <-
     copyData %>%
-    filter(unit == "monetary") %>%
+    dplyr::filter(unit == "monetary") %>%
     select(-unit, -measuredElementTrade, -flagObservationStatus, -flagMethod)
 
   me_qty_uv <- data.frame(flow = c(rep("import", 3), rep("export", 3)),
@@ -186,11 +186,11 @@ addUV <- function(data) {
     left_join(copyData_monetary,
               by = c("geographicAreaM49", "timePointYears", "measuredItemCPC","flow"),
               suffix = c(".qty", ".mon")) %>%
-    mutate(Value = ifelse(Value.qty > 0, Value.mon * 1000 / Value.qty, NA)
+    dplyr::mutate(Value = ifelse(Value.qty > 0, Value.mon * 1000 / Value.qty, NA)
            ) %>%
     left_join(me_qty_uv) %>%
     ## ## only keep columns already present in input data set
-    mutate(flagMethod = "i") %>%
+    dplyr::mutate(flagMethod = "i") %>%
     subset(., select = names(data))
 
   return(copyData_uv)
@@ -199,7 +199,7 @@ addUV <- function(data) {
 
 total_trade_cpc_uv <-
   addUV(total_trade_cpc_wo_uv) %>%
-  filter(!is.na(Value))
+  dplyr::filter(!is.na(Value))
 
 
 total_trade_cpc_w_uv <-

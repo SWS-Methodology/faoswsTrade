@@ -21,9 +21,9 @@ ts_count_records <- function(collection_path = NULL, prefix = NULL) {
     select_(~-nonmrc_hs_prop) %>%
     rename_(rep_code = ~ reporter,
             rep_name = ~ name) %>%
-    arrange(rep_code, rep_name, flow, year) %>%
+    dplyr::arrange(rep_code, rep_name, flow, year) %>%
     group_by(rep_code, rep_name, flow) %>%
-    mutate(
+    dplyr::mutate(
       records_diff = records_count / lag(records_count) - 1,
       hs_diff = hslength != lag(hslength)
     )

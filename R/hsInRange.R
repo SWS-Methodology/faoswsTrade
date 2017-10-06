@@ -25,8 +25,8 @@ hsInRange <- function(uniqhs, maptable, parallel = FALSE) {
   # and the RHS data.table needs keys.
 
   df <- uniqhs %>%
-    mutate(datumid = row_number()) %>%
-    mutate(fromcodeext = hsext, tocodeext = hsext) %>%
+    dplyr::mutate(datumid = row_number()) %>%
+    dplyr::mutate(fromcodeext = hsext, tocodeext = hsext) %>%
     as.data.table()
 
   maptable <- as.data.table(maptable)

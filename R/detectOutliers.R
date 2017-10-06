@@ -25,15 +25,15 @@ detectOutliers <- function(tradedata = NA, method = NA, parameters = NA) {
     }
 
     tradedata %>%
-      mutate(l_uv=log(uv)) %>%
+      dplyr::mutate(l_uv=log(uv)) %>%
       group_by_(~year, ~reporter, ~flow, ~hs) %>%
-      mutate_(outlier = ~l_uv %in% boxplot.stats(l_uv,
+      dplyr::mutate_(outlier = ~l_uv %in% boxplot.stats(l_uv,
                                                coef = parameters$out_coef,
                                                do.conf = FALSE)$out) %>%
       ungroup()
   } else if (method == 'ratiomedian') {
       tradedata %>%
-        mutate(outlier = ifelse(uv / uvm < 1/100 | uv / uvm > 100, TRUE, FALSE))
+        dplyr::mutate(outlier = ifelse(uv / uvm < 1/100 | uv / uvm > 100, TRUE, FALSE))
   } else {
     stop('Only "boxplot" is currently allowed.')
   }

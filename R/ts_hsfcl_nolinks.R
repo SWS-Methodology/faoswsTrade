@@ -11,7 +11,7 @@
 #'                             "complete_tf_cpc")
 #' uniq_hs %>%
 #'   group_by(year, flow) %>%
-#'   summarize(uniq_hs = n()) %>%
+#'   dplyr::summarize(uniq_hs = n()) %>%
 #'   ggplot(aes(as.factor(year), uniq_hs)) +
 #'   geom_bar(stat = "identity") +
 #'   ylab("Number of unique unmapped HS") + xlab("") +
@@ -30,13 +30,13 @@ ts_hsfcl_nolinks <- function(collection_path = NULL, prefix = NULL) {
     ungroup() %>%
     select(reporter_fao, reporter, flow, hs = hs_orig, hs_extend, year) %>%
     group_by(reporter, flow, hs) %>%
-    mutate(age = rank(year)) %>%
+    dplyr::mutate(age = rank(year)) %>%
     ungroup() %>%
-    filter(age == 1) %>%
+    dplyr::filter(age == 1) %>%
     select(-age) %>%
-    mutate(hs_chap = stringr::str_sub(hs, end = 2L)) %>%
-    arrange(year, reporter, flow, hs_chap, hs) %>%
-    mutate(fcl = "", mapped_by = "", details = "", tl_description = "") %>%
+    dplyr::mutate(hs_chap = stringr::str_sub(hs, end = 2L)) %>%
+    dplyr::arrange(year, reporter, flow, hs_chap, hs) %>%
+    dplyr::mutate(fcl = "", mapped_by = "", details = "", tl_description = "") %>%
     select(mapped_by, year, reporter_fao, reporter_name = reporter,
            flow, hs_chap, hs, hs_extend, fcl, details, tl_description)
 }

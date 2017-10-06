@@ -225,7 +225,7 @@ livestockWeightsTable <- function() {
   ) %>%
     # Country-specific weights not available. Using generic weights.
     # See Team B/C email (by KB) on 2017-10-04.
-    mutate(
+    dplyr::mutate(
       HORSES              = 400,
       ASSES               = 200,
       MULES               = 350,
@@ -241,9 +241,9 @@ livestockWeightsTable <- function() {
 
   livestock_weights <- livestock_weights %>%
     tidyr::gather(livestock, liveweight, -ADM0_CODE, -FAOSTAT) %>%
-    rename(reporter = FAOSTAT) %>%
+    dplyr::rename(reporter = FAOSTAT) %>%
     # Sorted by FCL
-    mutate(
+    dplyr::mutate(
       reporter = as.integer(reporter),
       fcl = recode(livestock,
                    'CATTLE'              = 866,

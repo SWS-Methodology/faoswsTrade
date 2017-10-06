@@ -32,7 +32,7 @@ name_area <- function (areacode, code_class = NULL) {
     unsdpartnersblocks %>%
       select(area = formula, area_name = crNameE.1) %>%
       distinct() %>%
-      filter(!(area %in% m49$code))
+      dplyr::filter(!(area %in% m49$code))
     )
   }
 

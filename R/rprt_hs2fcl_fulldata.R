@@ -35,7 +35,7 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
                 nolink_value_prop = ~nolink_value / sum(value))
 
   filters <- list(~nolink_count != 0L)
-  sorting <- list(~desc(nolink_prop))
+  sorting <- list(~dplyr::desc(nolink_prop))
 
   nolinks_total <- tradedata %>%
     summarise_(.dots = stats)

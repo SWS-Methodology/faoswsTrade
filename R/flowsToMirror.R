@@ -32,8 +32,8 @@ flowsToMirror <- function(data = NA, names = FALSE) {
 
   res <- bind_rows(
       data %>%
-        count(reporter, flow) %>%
-        rename(area = reporter) %>%
+        dplyr::count(reporter, flow) %>%
+        dplyr::rename(area = reporter) %>%
         ungroup(),
       data.frame(
         area  = rep(unique(data$partner), each = N),
@@ -42,13 +42,13 @@ flowsToMirror <- function(data = NA, names = FALSE) {
       )
     ) %>%
     group_by(area, flow) %>%
-    summarise(n = sum(n, na.rm = TRUE)) %>%
+    dplyr::summarise(n = sum(n, na.rm = TRUE)) %>%
     ungroup() %>%
-    filter(n == 0) %>%
+    dplyr::filter(n == 0) %>%
     select(-n)
 
   if (names) {
-    return(res %>% mutate(name = faoAreaName(area)))
+    return(res %>% dplyr::mutate(name = faoAreaName(area)))
   } else {
     return(res)
   }

@@ -35,14 +35,14 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
   }
 
   tmp_accu <- data %>%
-    filter(complete.cases(qty, qty_m, measuredItemCPC)) %>%
+    dplyr::filter(complete.cases(qty, qty_m, measuredItemCPC)) %>%
     group_by(geographicAreaM49Reporter, flow, geographicAreaM49Partner) %>%
-    summarise(correl = fun(qty, qty_m, method), n = n()) %>%
+    dplyr::summarise(correl = fun(qty, qty_m, method), n = n()) %>%
     group_by(geographicAreaM49Reporter) %>%
-    mutate(tot = sum(n, na.rm = TRUE), wt = n/tot) %>%
+    dplyr::mutate(tot = sum(n, na.rm = TRUE), wt = n/tot) %>%
     ungroup() %>%
-    filter(n > 1) %>%
-    mutate(score = correl*wt)
+    dplyr::filter(n > 1) %>%
+    dplyr::mutate(score = correl*wt)
 
   # These can be non-reporters or (less likely) countries with a single flow
   nonrep <- unique(data$geographicAreaM49Reporter)[!(unique(data$geographicAreaM49Reporter) %in% unique(tmp_accu$geographicAreaM49Reporter))]
@@ -52,7 +52,7 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
     bind_rows(
               tmp_accu,
               tmp_accu[rep(1, length(nonrep)),] %>%
-                mutate(
+                dplyr::mutate(
                        geographicAreaM49Reporter = nonrep,
                        correl   = NA,
                        n        = 0,
@@ -65,17 +65,17 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
   if (type == 'local') {
     accu <- tmp_accu %>%
               group_by(geographicAreaM49Reporter) %>%
-              summarise(accu_score = sum(score, na.rm = TRUE)) %>%
+              dplyr::summarise(accu_score = sum(score, na.rm = TRUE)) %>%
               ungroup() %>%
-              rename(country = geographicAreaM49Reporter) %>%
-              mutate(
+              dplyr::rename(country = geographicAreaM49Reporter) %>%
+              dplyr::mutate(
                      accu_rank  = rank(-accu_score),
                      accu_group = ntile(accu_rank, 10)
                      )
   } else {
     global_accu <- tmp_accu %>%
       group_by(geographicAreaM49Reporter, geographicAreaM49Partner) %>%
-      summarise(score = sum(score, na.rm = TRUE)) %>%
+      dplyr::summarise(score = sum(score, na.rm = TRUE)) %>%
       ungroup() %>%
       tidyr::spread(geographicAreaM49Partner, score) %>%
       select(-geographicAreaM49Reporter) %>%
@@ -92,7 +92,7 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
                    country    = dimnames(global_accu)[[1]],
                    accu_score = igraph::page_rank(g)$vector
                    ) %>%
-            mutate(
+            dplyr::mutate(
                    accu_rank  = rank(-accu_score),
                    accu_group = ntile(accu_rank, 10)
                    )

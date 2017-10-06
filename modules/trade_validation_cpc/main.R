@@ -114,9 +114,9 @@ computeData <- function(reporter = NA) {
     if (nrow(data) > 10) {
       data <- data %>%
         reshapeTrade() %>%
-        mutate(uv = value/qty) %>%
+        dplyr::mutate(uv = value/qty) %>%
         # XXX should be "value only" items
-        filter(!is.na(qty)) %>%
+        dplyr::filter(!is.na(qty)) %>%
         dplyr::mutate(uv = value / qty) %>%
         dplyr::select(
           flow,
@@ -156,7 +156,7 @@ computeData <- function(reporter = NA) {
           geographicAreaM49Reporter,
           geographicAreaM49Partner,
           measuredItemCPC,
-          desc(timePointYears)
+          dplyr::desc(timePointYears)
         ) %>%
         dplyr::group_by(
           flow,
@@ -372,7 +372,7 @@ plyr::m_ply(
   #  stringsAsFactors = FALSE
   #  ) %>%
   #    as_data_frame() %>%
-  #    rename(reporter = Var1, year = Var2),
+  #    dplyr::rename(reporter = Var1, year = Var2),
   reporters,
   .fun      = computeData,
   .parallel = multicore,
@@ -400,9 +400,9 @@ db_save <- plyr::mdply(
   ) %>%
   tbl_df() %>%
   select(-X1) %>%
-  mutate(ratio_man = unit_value / movav_unit_value) %>%
+  dplyr::mutate(ratio_man = unit_value / movav_unit_value) %>%
   group_by(flow, measuredItemCPC, timePointYears) %>%
-  mutate(
+  dplyr::mutate(
     # median_world
     avg_world    = sum(value, na.rm = TRUE)/sum(qty, na.rm = TRUE),
     median_world = median(unit_value, na.rm=TRUE),
@@ -410,18 +410,18 @@ db_save <- plyr::mdply(
     outM2        = as.integer(outM2)
   ) %>%
   group_by(geographicAreaM49Reporter, flow, measuredItemCPC, timePointYears) %>%
-  mutate(
+  dplyr::mutate(
     median = median(unit_value, na.rm=TRUE),
     avg    = sum(value, na.rm = TRUE) / sum(qty, na.rm = TRUE),
     n      = n()
   ) %>%
   group_by(measuredItemCPC) %>%
-  mutate(
+  dplyr::mutate(
     p05n = quantile(ratio_man, 0.05, na.rm=TRUE),
     p95n = quantile(ratio_man, 0.95, na.rm=TRUE)
   ) %>%
   ungroup() %>%
-  mutate(
+  dplyr::mutate(
     outman   = if_else(between(ratio_man, 1-threshold, 1+threshold), 0L, 1L, 0L),
     outmw100 = if_else(unit_value < 0.01*median_world | unit_value > 100*median_world, 1L, 0L, 0L),
     outM     = if_else(outM2 == 1, 1L, 0L, 0L),
@@ -458,12 +458,12 @@ db_save <- db_save %>%
   ) %>%
   # Team BC suggested to remove mirrorred data
   # (flag_value is more general)
-  filter(!grepl('^T', flag_value)) %>%
+  dplyr::filter(!grepl('^T', flag_value)) %>%
   # Adding percentages of values and quantities.
   group_by(flow, geographicAreaM49Reporter, timePointYears) %>%
-  mutate(tot.value = sum(value, na.rm = TRUE), perc.value = value / tot.value) %>%
+  dplyr::mutate(tot.value = sum(value, na.rm = TRUE), perc.value = value / tot.value) %>%
   group_by(flow, geographicAreaM49Reporter, measuredItemCPC, timePointYears) %>%
-  mutate(tot.qty = sum(qty, na.rm = TRUE), perc.qty = qty / tot.qty) %>%
+  dplyr::mutate(tot.qty = sum(qty, na.rm = TRUE), perc.qty = qty / tot.qty) %>%
   ungroup() %>%
   select(-tot.value, -tot.qty)
 
@@ -472,23 +472,23 @@ geographicAreaM49Reporter_names <- db_save %>%
   distinct() %>%
   data.table::as.data.table() %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
-  rename(reporter_name = geographicAreaM49Reporter_description)
+  dplyr::rename(reporter_name = geographicAreaM49Reporter_description)
 
 geographicAreaM49Partner_names <- db_save %>%
   select(geographicAreaM49Partner) %>%
   distinct() %>%
   data.table::as.data.table() %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
-  rename(partner_name = geographicAreaM49Partner_description)
+  dplyr::rename(partner_name = geographicAreaM49Partner_description)
 
 measuredItemCPC_names <- db_save %>%
   select(measuredItemCPC) %>%
   distinct() %>%
   data.table::as.data.table() %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
-  rename(item_name = measuredItemCPC_description) %>%
+  dplyr::rename(item_name = measuredItemCPC_description) %>%
   # https://github.com/SWS-Methodology/tradeValidationTool/issues/9
-  mutate(item_name = gsub('\\b([Mm]at).\\b', '\\1e', item_name))
+  dplyr::mutate(item_name = gsub('\\b([Mm]at).\\b', '\\1e', item_name))
 
 db_save <- left_join(
   db_save,

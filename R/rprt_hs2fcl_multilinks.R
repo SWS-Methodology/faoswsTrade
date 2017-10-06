@@ -40,7 +40,7 @@ rprt_hs2fcl_multilinks <- function(uniqhs, tradedataname = NULL) {
   rprt_writetable(hsfcl_multilinks_statistic, prefix = tradedataname)
 
   hsfcl_multilinks_statistic <- hsfcl_multilinks_statistic %>%
-    arrange_(~desc(multiprop)) %>%
+    arrange_(~dplyr::desc(multiprop)) %>%
     mutate_(multiprop = ~scales::percent(multiprop))
 
   rprt_fulltable(hsfcl_multilinks_statistic, prefix = tradedataname)

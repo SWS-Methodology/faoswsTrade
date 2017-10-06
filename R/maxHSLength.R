@@ -13,20 +13,20 @@
 
 maxHSLength <- function(uniqhs, mapdataset) {
   tab_data <- uniqhs %>%
-    mutate(hslength_data = nchar(hs)) %>%
+    dplyr::mutate(hslength_data = nchar(hs)) %>%
     group_by(reporter, flow) %>%
-    summarise(maxhslength_data = max(hslength_data)) %>%
+    dplyr::summarise(maxhslength_data = max(hslength_data)) %>%
     ungroup()
 
   tab_map <- mapdataset %>%
-    mutate(hslength_from = nchar(fromcode), hslength_to = nchar(tocode)) %>%
+    dplyr::mutate(hslength_from = nchar(fromcode), hslength_to = nchar(tocode)) %>%
     group_by(area, flow) %>%
-    summarise(maxhslength_from = max(hslength_from), maxhslength_to = max(hslength_to)) %>%
+    dplyr::summarise(maxhslength_from = max(hslength_from), maxhslength_to = max(hslength_to)) %>%
     ungroup()
 
   tab_join <- left_join(tab_data, tab_map, by = c('reporter' = 'area', 'flow')) %>%
     rowwise() %>%
-    mutate(maxhslength = max(maxhslength_data, maxhslength_from, maxhslength_to)) %>%
+    dplyr::mutate(maxhslength = max(maxhslength_data, maxhslength_from, maxhslength_to)) %>%
     ungroup() %>%
     select(reporter, flow, maxhslength)
 

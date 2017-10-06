@@ -11,7 +11,7 @@
 useValidationCorrections <- function(data, corrections) {
 
   corrections <- corrections %>%
-    mutate(correction_id = 1:n()) %>%
+    dplyr::mutate(correction_id = 1:n()) %>%
     as.data.table()
 
   # NOTE: no aggregation function is indicated in the dcast as NO
@@ -53,9 +53,9 @@ useValidationCorrections <- function(data, corrections) {
       'flow'
       )
     ) %>%
-    filter(!is.na(correction_input_qty) | !is.na(correction_input_value)) %>%
+    dplyr::filter(!is.na(correction_input_qty) | !is.na(correction_input_value)) %>%
     # XXX mirror?
-    mutate(
+    dplyr::mutate(
       x_qty   = !is.na(correction_input_qty),
       x_value = !is.na(correction_input_value),
       y_qty   = (qty   < 0.99 * data_original_qty   | qty   > 1.01 * data_original_qty),

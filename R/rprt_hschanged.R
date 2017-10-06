@@ -39,7 +39,7 @@ rprt_hschanged <- function(uniqhs, tradedataname = NULL) {
                   subdir = "details")
 
   hschange_statistic <- hschange_statistic %>%
-    arrange_(~desc(changedprop)) %>%
+    arrange_(~dplyr::desc(changedprop)) %>%
     mutate_(changedprop = ~ifelse(is.na(changedprop),
                                   as.character(changedprop),
                                   scales::percent(changedprop)))

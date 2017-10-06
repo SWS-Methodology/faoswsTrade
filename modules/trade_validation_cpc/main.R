@@ -26,12 +26,12 @@ if (CheckDebug()) {
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token   = SETTINGS[["token"]])
 
-  dir_to_save <- paste0(Sys.getenv('HOME'), '/tmp/')
+  dir_to_save <- paste0(Sys.getenv('HOME'), '/')
 } else {
-  dir_to_save <- '/work/SWS_R_Share/trade/validation_tool_files/tmp/'
+  dir_to_save <- '/work/SWS_R_Share/trade/validation_tool_files/'
 }
 
-DB_rds_storage <- paste0(dir_to_save, 'DB_rds_storage/')
+DB_rds_storage <- paste0(dir_to_save, 'tmp/DB_rds_storage/')
 name_to_save <- 'db.rds'
 
 stopifnot(!is.null(swsContext.computationParams$startyear))

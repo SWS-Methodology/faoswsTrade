@@ -373,8 +373,8 @@ tldata <- adaptTradeDataTypes(tldata)
 ##' participate in further processing. Such solution drops,
 ##' e.g., all HS codes shorter than 6 digits.
 
-esdata <- dplyr::filterHS6FAOinterest(esdata)
-tldata <- dplyr::filterHS6FAOinterest(tldata)
+esdata <- filterHS6FAOinterest(esdata)
+tldata <- filterHS6FAOinterest(tldata)
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 

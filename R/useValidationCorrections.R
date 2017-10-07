@@ -68,7 +68,7 @@ useValidationCorrections <- function(data, corrections) {
       value                   = ifelse(correction_value_apply %in% TRUE, correction_input_value, value),
       uv                      = ifelse(qty > 0, value * 1000 / qty, NA),
       flagObservationStatus_q = ifelse(
-                                  correction_qty_apply,
+                                  correction_qty_apply %in% TRUE,
                                   ifelse(
                                     correction_type_qty != 'None',
                                     ifelse(correction_type_qty == 'Mirror flow', 'T', 'I'),
@@ -86,7 +86,7 @@ useValidationCorrections <- function(data, corrections) {
                                   flagObservationStatus_v
                                 ),
       flagMethod_q            = ifelse(
-                                  correction_qty_apply,
+                                  correction_qty_apply %in% TRUE,
                                   ifelse(correction_type_qty != 'None', 'e', flagMethod_q),
                                   flagMethod_q
                                 ),

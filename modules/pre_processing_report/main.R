@@ -30,22 +30,22 @@ DEBUG_MODE <- Sys.getenv("R_DEBUG_MODE")
 
 # This return FALSE if on the Statistical Working System
 if(CheckDebug()){
-  
+
   message("Not on server, so setting up environment...")
-  
+
   library(faoswsModules)
-  SETTINGS <- ReadSettings("sws.yml")
-  
+  SETTINGS <- ReadSettings("modules/pre_processing_report/sws.yml")
+
   # If you're not on the system, your settings will overwrite any others
   R_SWS_SHARE_PATH <- SETTINGS[["share"]]
-  
+
   # Define where your certificates are stored
   SetClientFiles(SETTINGS[["certdir"]])
-  
+
   # Get session information from SWS. Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])
-  
+
   sapply(dir("R", full.names = TRUE), source)
 
 }
@@ -57,7 +57,7 @@ save =  file.path(R_SWS_SHARE_PATH, "trade/pre_processing_report")
 maxYearToProcess = as.numeric(swsContext.computationParams$maxYearToProcess)
 minYearToProcess = as.numeric(swsContext.computationParams$minYearToProcess)
 
-if(any(length(minYearToProcess) == 0, length(maxYearToProcess) == 0)){ 
+if(any(length(minYearToProcess) == 0, length(maxYearToProcess) == 0)){
   stop("Missing min or max year")
 }
 if (maxYearToProcess < minYearToProcess) stop('Max year should be greater or equal than Min year')
@@ -74,7 +74,7 @@ ts_all_reports(
 )
 
 files = dir(
-  paste0(save, "/ts_reports"), 
+  paste0(save, "/ts_reports"),
   full.names = T, pattern = 'Table_'
   )
 
@@ -98,15 +98,15 @@ flog.debug("User's computation parameters:",
 
 
 for(i in 1:length(files)) {
-  
+
   flog.info("Table: %s: %s", i, files[i], name = "dev")
-  
+
   tab <- fread(files[i])
-  
+
   if( i <= 2) {
   names(tab)[3:ncol(tab)] <- paste0("year_", names(tab)[3:ncol(tab)])
     }
-  
+
   ## Delete
   table = allPPRtables[i]
   changeset <- Changeset(table)

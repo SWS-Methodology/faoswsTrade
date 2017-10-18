@@ -48,7 +48,7 @@ This table allows you to quickly identify data gaps and facilitate comparisons. 
 * **rep_name**: country name of the reporter
 * **years**: years on which the data availability is assessed
 
-If the table contains a **1** it means that there is information for the country in that particular year. If the country did not report for that year, the correspondig cell will be blank. It's name on SWS is **Reporters by years**.
+If the table contains a **1** it means that there is information for the country in that particular year. If the country did not report for that year, the correspondig cell will be blank. Its name on SWS is **Reporters by years**.
 
 ```{r, echo=FALSE}
 # ts_all_reports(
@@ -84,7 +84,7 @@ In the table the meaning of the cells is:
 * **2**: the country did not report exports
 * blank cell: the country reported all the flows
 
-Only countries that for which at least in one year did not report at least one flow are reported. It's name on SWS is **Non-reporting countries**.
+Only countries that for which at least in one year did not report at least one flow are reported. Its name on SWS is **Non-reporting countries**.
 
 <!-- reporter: country code of the reporter -->
 <!-- name: country name of the reporter -->
@@ -105,7 +105,7 @@ It contains the number of records by flow and year per country. It also has the 
 
 **Note**: the **records_diff** variable is reported as $variable_t/variable_{t-1} - 1$ (so, e.g., 0.01 means 1%).
 
-It's name on SWS is **Number records by reporter/year**.
+Its name on SWS is **Number records by reporter/year**.
 
 ```{r, echo=FALSE}
 table3 = fread("//hqlprsws1.hq.un.fao.org/sws_r_share/mongeau/pre_processing_report/ts_reports/Table_3_ts_preproc_long_format.csv")
@@ -119,7 +119,7 @@ pander(rbind(head(table3), tail(table3)), split.table = 120, style = 'rmarkdown'
 ##2.4 Table 4: Import/export content check
 
 For every reporter for the year in question, a check that the file contains both import data and export data (as well as re-exports and re-imports). If the cell contains a **1**, the country reported all the flows. If the country did not report for that year, the corresponding cell will be blank.
-It's name on SWS is **Import and export content check**.
+Its name on SWS is **Import and export content check**.
 
 
 ```{r, echo=FALSE}
@@ -133,7 +133,7 @@ pander(rbind(head(table4), tail(table4)), split.table = 120, style = 'rmarkdown'
 ##2.5 Table 5: Check that quantities and values are included, by country/flow/year
 
 For every reporter for the year in question, a check if that file contains both quantities and values. A **0** indicates that no information lacks, while **1** indicates that the information is missing.
-It's name on SWS is **Check qty and value included**.
+Its name on SWS is **Check qty and value included**.
 
 
 ```{r, echo=FALSE}
@@ -163,7 +163,7 @@ The table contains the following variables:
 * **noqty_prop_reimport**: proportion of re-imports with missing quantities
 
 **Note**: the noqty_prop_* variables are reported as shares (so, e.g., 0.01 means 1%). 
-It's name on SWS is **Missing data by report**.
+Its name on SWS is **Missing data by report**.
 
 
 ```{r, echo=FALSE}

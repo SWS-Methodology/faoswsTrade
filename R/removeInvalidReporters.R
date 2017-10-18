@@ -18,13 +18,13 @@ removeInvalidReporters <- function(tradedata) {
       dataset   = 'FS1_SUA_UPD',
       dimension = 'geographicAreaFS'
     ) %>%
-    filter(type != 'group') %>%
-    mutate(
+    dplyr::filter(type != 'group') %>%
+    dplyr::mutate(
       startDate = as.numeric(stringr::str_sub(startDate, 1, 4)),
       endDate   = as.numeric(stringr::str_sub(endDate, 1, 4))
     ) %>%
     select(-selectionOnly, -type) %>%
-    filter(startDate <= year, endDate >= year)
+    dplyr::filter(startDate <= year, endDate >= year)
 
   reporters_to_drop <- setdiff(unique(tradedata$reporter), valid_reporters$code)
 
@@ -36,7 +36,7 @@ removeInvalidReporters <- function(tradedata) {
 
     # Keep valid reporters
     tradedata %>%
-      filter(reporter %in% valid_reporters$code)
+      dplyr::filter(reporter %in% valid_reporters$code)
   } else {
     tradedata
   }

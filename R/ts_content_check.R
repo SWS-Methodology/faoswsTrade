@@ -23,7 +23,7 @@ ts_content_check <- function(collection_path = NULL, prefix = NULL) {
     select(year, reporter, name, flow, nonmrc_hs_prop) %>%
     filter_(~!nonmrc_hs_prop == 1) %>%
     select_(~-nonmrc_hs_prop) %>%
-    mutate(
+    dplyr::mutate(
       flow = recode(
                flow,
                `1` = 'imports',
@@ -34,5 +34,5 @@ ts_content_check <- function(collection_path = NULL, prefix = NULL) {
       ) %>%
     rename_(rep_code = ~ reporter,
             rep_name = ~ name) %>%
-    mutate(i=1) %>% tidyr::spread(flow, i, fill = "")
+    dplyr::mutate(i=1) %>% tidyr::spread(flow, i, fill = "")
 }

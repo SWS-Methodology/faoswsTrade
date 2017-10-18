@@ -18,13 +18,13 @@ ts_reporters <- function(collection_path = NULL, prefix = NULL) {
              "tldata_rep_table")
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
-    lapply(function(x) x %>% mutate(reporter = as.character(reporter))) %>%
+    lapply(function(x) x %>% dplyr::mutate(reporter = as.character(reporter))) %>%
     bind_rows() %>%
     ungroup() %>%
     select(year, reporter, name) %>%
     distinct() %>%
-    mutate(exist = 1) %>%
-    arrange(year, name) %>%
+    dplyr::mutate(exist = 1) %>%
+    dplyr::arrange(year, name) %>%
     rename_(rep_code = ~ reporter,
             rep_name = ~ name) %>%
     tidyr::spread(year, exist, fill = '')

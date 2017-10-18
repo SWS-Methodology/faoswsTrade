@@ -13,8 +13,6 @@ convertHS2FCL <- function(tradedata, hsfclmap, parallel) {
     distinct()
 
   fcltrade <- hsInRange(uniqtrade$hs,
-                        uniqtrade$reporter,
-                        uniqtrade$flow,
                         hsfclmap,
                         parallel = parallel)
 

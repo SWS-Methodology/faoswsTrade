@@ -13,7 +13,7 @@ reshapeTrade <- function(data = NA) {
   data <- data %>%
     # XXX If already a tible, remove
     tbl_df() %>%
-    mutate(
+    dplyr::mutate(
            flow      = ifelse(stringr::str_sub(measuredElementTrade, 1, 2) == '56', 1L, 2L),
            type      = ifelse(measuredElementTrade %in% c('5622', '5922'), 'value', 'qty'),
            flagTrade = paste(flagObservationStatus, flagMethod, sep = '-')
@@ -30,7 +30,7 @@ reshapeTrade <- function(data = NA) {
     tidyr::spread(type, Value)
 
   data_qelement <- data %>%
-    filter(type != 'value') %>%
+    dplyr::filter(type != 'value') %>%
     select(flow, measuredElementTrade, measuredItemCPC) %>%
     unique()
 

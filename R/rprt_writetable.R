@@ -35,12 +35,13 @@ rprt_writetable <- function(dataset, prefix = NULL, subdir = NULL) {
     name <- paste(prefix, name, sep = "_")
   }
 
-  write.table(dataset,
-            file = file.path(reportdir, paste0(name, ".csv")),
-            sep = ",",
-            row.names = FALSE)
+  saveFileForPPR(data = dataset,
+                 file = file.path(reportdir, paste0(name, ".csv")),
+                 type = "csv")
 
-  saveRDS(dataset, file = file.path(datadir, paste0(name, ".rds")))
+  saveFileForPPR(data = dataset,
+                 file = file.path(reportdir, paste0(name, ".rds")),
+                 type = "rds")
 
   invisible(dataset)
 

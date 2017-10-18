@@ -14,14 +14,14 @@ ts_missing_records <- function(collection_path = NULL, prefix = NULL) {
     select(reporter, name, year, flow, noqty, noqty_prop, nonmrc_hs_prop) %>%
     filter_(~!nonmrc_hs_prop == 1) %>%
     select_(~-nonmrc_hs_prop) %>%
-    mutate(flow = recode(
+    dplyr::mutate(flow = recode(
                     flow,
                     `1` = 'import',
                     `2` = 'export',
                     `3` = 'reexport',
                     `4` = 'reimport'
        )) %>%
-    arrange(reporter, name, flow, year) %>%
+    dplyr::arrange(reporter, name, flow, year) %>%
     data.table::as.data.table() %>%
     data.table::dcast.data.table(
       reporter + name + year ~ flow,

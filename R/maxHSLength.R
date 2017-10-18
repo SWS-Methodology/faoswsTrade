@@ -11,41 +11,28 @@
 #' @import dplyr
 #' @export
 
-maxHSLength <- function(uniqhs, mapdataset, parallel = FALSE) {
+maxHSLength <- function(uniqhs, mapdataset) {
+  tab_data <- uniqhs %>%
+    dplyr::mutate(hslength_data = nchar(hs)) %>%
+    group_by(reporter, flow) %>%
+    dplyr::summarise(maxhslength_data = max(hslength_data)) %>%
+    ungroup()
 
-  # Vectorizing over reporter and flow in tradedata
+  tab_map <- mapdataset %>%
+    dplyr::mutate(hslength_from = nchar(fromcode), hslength_to = nchar(tocode)) %>%
+    group_by(area, flow) %>%
+    dplyr::summarise(maxhslength_from = max(hslength_from), maxhslength_to = max(hslength_to)) %>%
+    ungroup()
 
-  if(length(unique(uniqhs$reporter)) > 1L |
-     length(unique(uniqhs$flow)) > 1L) return(
-       plyr::ddply(.data = uniqhs,
-                   .variables = c("reporter", "flow"),
-                   .parallel = parallel,
-                   .fun = maxHSLength,
-                   .paropts = list(.packages = "dplyr"),
-                   mapdataset
-       )
-     )
+  tab_join <- left_join(tab_data, tab_map, by = c('reporter' = 'area', 'flow')) %>%
+    rowwise() %>%
+    dplyr::mutate(maxhslength = max(maxhslength_data, maxhslength_from, maxhslength_to)) %>%
+    ungroup() %>%
+    select(reporter, flow, maxhslength)
 
-  # Filter mapping table by current reporter and flow
-  mapdataset <- mapdataset %>%
-    filter_(~area == uniqhs$reporter[1],
-            ~flow == uniqhs$flow[1])
+  apply(tab_join, 1, function(x) if (is.na(x['maxhslength']))
+    message(paste0("For reporter ", x['reporter'], " flow ",
+      x['flow'], ", no records in the mapping table")))
 
-  if(nrow(mapdataset) == 0L) {
-    message(paste0("For reporter ", uniqhs$reporter[1],
-                " flow ", uniqhs$flow[1],
-                ", no records in the mapping table"))
-    return(data_frame(reporter = uniqhs$reporter[1],
-                      flow = uniqhs$flow[1],
-                      maxhslength = NA_integer_))
-  }
-
-  maxhslength   <- max(stringr::str_length(uniqhs$hs))
-  maxfromlength <- max(stringr::str_length(mapdataset$fromcode))
-  maxtolength   <- max(stringr::str_length(mapdataset$tocode))
-  uniqhs$maxhslength  <- max(maxhslength, maxtolength, maxfromlength)
-
-  uniqhs %>%
-    select_(~reporter, ~flow, ~maxhslength) %>%
-    distinct
+  return(tab_join)
 }

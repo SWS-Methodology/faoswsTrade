@@ -24,7 +24,7 @@ uniq_hs <- ts_hsfcl_nolinks("/mnt/storage/sws_share/sas",
                             "complete_tf_cpc")
 uniq_hs \%>\%
   group_by(year, flow) \%>\%
-  summarize(uniq_hs = n()) \%>\%
+  dplyr::summarize(uniq_hs = n()) \%>\%
   ggplot(aes(as.factor(year), uniq_hs)) +
   geom_bar(stat = "identity") +
   ylab("Number of unique unmapped HS") + xlab("") +

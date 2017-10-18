@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 modules
 data-raw
+sandbox
+^\.swsconfig(\.example)?

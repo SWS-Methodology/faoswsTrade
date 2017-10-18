@@ -28,13 +28,13 @@ mirrorNonReporters <- function(tradedata = NA, mirror = NA) {
   tradedatanonrep <- tradedata %>%
     left_join(
       mirror %>%
-        mutate(flow = recode(flow, '1' = 2, '2' = 1)) %>%
-        mutate(i = 1),
+        dplyr::mutate(flow = recode(flow, '1' = 2, '2' = 1)) %>%
+        dplyr::mutate(i = 1),
       by = c("partner" = "area", "flow")
     ) %>%
     filter_(~i == 1) %>%
     select_(~-i) %>%
-    mutate_(
+    dplyr::mutate_(
       partner_mirr = ~reporter,
       partner_mirrM49 = ~reporterM49,
       reporter = ~partner,

@@ -44,13 +44,13 @@ useAdjustments <- function(tradedata = stop('"tradedata" is missing.'),
                                .inform = FALSE,
                                .parallel = parallel))
   tradedata <- tradedata %>%
-                 rename(orig_value=value, orig_weight=weight, orig_qty=qty)
+                 dplyr::rename(orig_value=value, orig_weight=weight, orig_qty=qty)
 
   tradedata_adj %>%
     # TODO (Christian) This join can be simplified by
     # taking into account only a subset of variables
     left_join(tradedata) %>%
-    mutate(
+    dplyr::mutate(
            # Using coalesce to replace NAs with -1 as NAs will expand
            adj_value  = !(near(coalesce(value, -1),  coalesce(orig_value, -1))),
            adj_weight = !(near(coalesce(weight, -1), coalesce(orig_weight, -1))),

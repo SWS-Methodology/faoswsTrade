@@ -10,11 +10,11 @@
 
 addMirror <- function(data = NA) {
   data_mirror <- data %>%
-    rename(
+    dplyr::rename(
            geographicAreaM49Reporter = geographicAreaM49Partner,
            geographicAreaM49Partner  = geographicAreaM49Reporter
            ) %>%
-    mutate(
+    dplyr::mutate(
             flow  = recode(flow, '2' = 1, '1' = 2),
             value = ifelse(flow == 1, value*1.12, value/1.12)
            ) %>%
@@ -23,7 +23,7 @@ addMirror <- function(data = NA) {
            geographicAreaM49Reporter,
            geographicAreaM49Partner,
            flow,
-           cpc,
+           measuredItemCPC,
            qty,
            value,
            flag_qty,
@@ -41,13 +41,13 @@ addMirror <- function(data = NA) {
                           ),
                    suffix = c('_r', '_m')
                    ) %>%
-    rename(
+    dplyr::rename(
            qty = qty_r,
            value = value_r,
            flag_qty = flag_qty_r,
            flag_value = flag_value_r
            ) %>%
-    mutate(ratio_mirror = qty/qty_m)
+    dplyr::mutate(ratio_mirror = qty/qty_m)
 
   return(res)
 }

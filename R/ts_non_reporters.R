@@ -23,12 +23,12 @@ ts_non_reporters <- function(collection_path = NULL, prefix = NULL) {
     ungroup() %>%
     select(area, flow, name, year) %>%
     group_by(area, year) %>%
-    mutate(n = n()) %>%
+    dplyr::mutate(n = n()) %>%
     ungroup() %>%
-    mutate(missing = ifelse(n < 2, flow, 9)) %>%
+    dplyr::mutate(missing = ifelse(n < 2, flow, 9)) %>%
     rename_(non_rep_area = ~ area,
             non_rep_name = ~ name) %>%
     group_by(non_rep_area, non_rep_name, year) %>%
-    summarise(missing = max(missing)) %>%
+    dplyr::summarise(missing = max(missing)) %>%
     tidyr::spread(year, missing, fill = '')
 }

@@ -8,6 +8,10 @@ setFlag2(data = NA, condition = NA, type = NA, flag = NA,
   variable = NA)
 }
 \arguments{
+\item{data}{Trade data.}
+
+\item{condition}{A logical condition where the flags should be changed.}
+
 \item{type}{The type of flag to set: "status" or "method".}
 
 \item{flag}{The value of the flag to set (e.g., "e" for estimated data).}

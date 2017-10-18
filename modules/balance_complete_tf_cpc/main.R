@@ -1,24 +1,39 @@
-setwd('C:/Users/mongeau/Dropbox/GitHub/SWS-Methodology/faoswsTrade')
+stopifnot(!is.null(swsContext.computationParams$startyear))
+stopifnot(!is.null(swsContext.computationParams$endyear))
+stopifnot(!is.null(swsContext.computationParams$threshold))
+print(swsContext.computationParams$startyear)
+print(swsContext.computationParams$endyear)
+print(swsContext.computationParams$threshold)
+
+
+#setwd('C:/Users/mongeau/tmp/faoswsTrade')
+
+######################################################################
+for ( i in  dir("R/", full.names = TRUE) ) source(i)
+######################################################################
 
 
 # Parameters
 
 # For parallel computation
 multicore <- TRUE
+
 # Maximum allowed discrepancy in the flow/mirror ratio
 # TODO: should be a parameter
-threshold <- 1.5
+threshold <- as.numeric(swsContext.computationParams$threshold)
+
 # Years
-years <- as.character(2000:2014)
+years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
+
 # Whether to smooth trade or not
-smooth_trade <- FALSE
+smooth_trade <- TRUE
 
 library(faosws)
 library(dplyr)
 #library(tidyr)
 # igraph, stringr, reshape2
 
-if(CheckDebug()){
+if (CheckDebug()) {
   library(faoswsModules)
   settings_file <- "modules/balance_complete_tf_cpc/sws.yml"
   SETTINGS = faoswsModules::ReadSettings(settings_file)
@@ -30,8 +45,13 @@ if(CheckDebug()){
   ## Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])
+
+  dir_to_save <- paste0(Sys.getenv('HOME'), '/tmp/')
+} else {
+  dir_to_save <- '/work/SWS_R_Share/trade/validation_tool_files/tmp/'
 }
 
+name_to_save <- 'db_balance.rds'
 
 #GetCodeList('trade', 'completed_tf_cpc_m49', 'measuredItemCPC')
 #GetDatasetConfig('trade', 'completed_tf_cpc_m49')
@@ -48,8 +68,8 @@ GetCodeList2 <- function(dimension = NA) {
 #smoothTrade <- function(data = NA) {
 #  data %>%
 #    group_by(reporter, partner, flow, cpc) %>%
-#    arrange(reporter, partner, flow, cpc, year) %>%
-#    mutate(
+#    dplyr::arrange(reporter, partner, flow, cpc, year) %>%
+#    dplyr::mutate(
 #           qty_movav    = movav(qty),
 #           qty_m_movav  = movav(qty_m),
 #           ratio_mirror = qty_movav/qty_m_movav
@@ -81,7 +101,7 @@ GetCodeList2 <- function(dimension = NA) {
 #                   ),
 #           timePointYears = as.character(years)
 #           ) %>%
-#  arrange(
+#  dplyr::arrange(
 #          geographicAreaM49Reporter,
 #          geographicAreaM49Partner,
 #          measuredElementTrade,
@@ -105,8 +125,8 @@ Keys <- list( #reporters = rep,
              items    = GetCodeList2(dimension = Vars[['items']])[, code],
              # Quantity [#], Quantity [head], Quantity [1000 head], Quantity [t], Value [1000 $]
              elements = c('5607', '5608', '5609', '5610', '5622',
-                          '5907', '5908', '5909', '5910', '5922')
-             #years    = as.character(year))
+                          '5907', '5908', '5909', '5910', '5922'),
+             years    = as.character(years)
              )
 
 if (multicore) {
@@ -114,9 +134,11 @@ if (multicore) {
   cl <- parallel::makeCluster(n_cores)
   doParallel::registerDoParallel(cl)
 
-  parallel::clusterExport(cl, c('SETTINGS', ls(pattern = 'swsContext')))
+  parallel::clusterExport(cl, c(ls(pattern = 'swsContext')))
 
   if(CheckDebug()) {
+    parallel::clusterExport(cl, 'SETTINGS')
+
     parallel::clusterEvalQ(cl, {
       ## Define where your certificates are stored
       faosws::SetClientFiles(SETTINGS[["certdir"]])
@@ -128,10 +150,6 @@ if (multicore) {
 }
 
 
-######################################################################
-for ( i in  dir("R/", full.names = TRUE) ) source(i)
-######################################################################
-
 
 start_time <- Sys.time()
 db_list <- plyr::mlply(
@@ -140,7 +158,7 @@ db_list <- plyr::mlply(
                        #stringsAsFactors = FALSE
                        #) %>%
                        #  as_data_frame() %>%
-                       #  rename(reporter = Var1, year = Var2),
+                       #  dplyr::rename(reporter = Var1, year = Var2),
                        data_frame(reporter = reporters),
                        .fun = getComputedDataSWS,
                        .parallel = multicore,
@@ -157,6 +175,14 @@ print(end_time-start_time)
 tradedata <- db_list %>%
   meltTradeData()
 
+cpc_units <- tradedata %>%
+  select(measuredElementTrade, measuredItemCPC) %>%
+  dplyr::mutate(
+         measuredElementTrade = stringr::str_sub(measuredElementTrade, 3, 4)
+         ) %>%
+  distinct() %>%
+  dplyr::filter(measuredElementTrade != '22')
+
 rm(db_list)
 invisible(gc())
 
@@ -167,10 +193,10 @@ tradedata <- tradedata %>%
 invisible(gc())
 
 # If smooth_trade == TRUE it means that we will use moving averages of
-# the mirrot ratio, thus we need to expand the data set for all years.
+# the mirror ratio, thus we need to expand the data set for all years.
 if (smooth_trade) {
   tradedata <- tradedata %>%
-    mutate(orig = 1)
+    dplyr::mutate(orig = 1)
 
   Sys.time()
   a <- tradedata %>%
@@ -190,34 +216,34 @@ if (smooth_trade) {
   Sys.time()
   a1 <- a %>%
     group_by(geographicAreaM49Reporter, geographicAreaM49Partner, measuredItemCPC,  flow) %>%
-    mutate(ratio_mirr_movav = movav(ratio_mirror, n = 3)) # almost 13 mins
+    dplyr::mutate(ratio_mirr_movav = RcppRoll::roll_mean(ratio_mirror, n = 3, fill = NA, na.rm = TRUE))
   Sys.time()
 
   # after loading a1
   Sys.time()
   a2 <- a1 %>%
-    filter(orig == 1) %>%
+    dplyr::filter(orig == 1) %>%
     select(-orig) %>%
-    rename(ratio_mirror_orig = ratio_mirror, ratio_mirror = ratio_mirr_movav) %>%
+    dplyr::rename(ratio_mirror_orig = ratio_mirror, ratio_mirror = ratio_mirr_movav) %>%
     ungroup()
   Sys.time()
 }
 
 tradedata <- tradedata %>%
-  mutate(discrep_mirr = !between(ratio_mirror, 1/threshold, threshold))
+  dplyr::mutate(discrep_mirr = !between(ratio_mirror, 1/threshold, threshold))
 
 # Generate accuracy scores for each country
 accu_table <- accuracyScores(data = tradedata)
 
 tradedata <- left_join(tradedata, accu_table, by = c('geographicAreaM49Reporter' = 'country')) %>%
   left_join(accu_table, by = c('geographicAreaM49Partner' = 'country'), suffix = c('_r', '_m')) %>%
-  rename(
+  dplyr::rename(
          accu_score = accu_score_r,
          accu_rank  = accu_rank_r,
          accu_group = accu_group_r
          ) %>%
   # DEBUG
-  mutate(
+  dplyr::mutate(
          orig_qty        = qty,
          orig_value      = value,
          orig_flag_qty   = flag_qty,
@@ -240,7 +266,7 @@ tradedata_final <- tradedata %>%
          value
          ) %>%
   tidyr::gather(type, Value, qty, value) %>%
-  mutate(flag = ifelse(type == 'qty', flag_qty, flag_value)) %>%
+  dplyr::mutate(flag = ifelse(type == 'qty', flag_qty, flag_value)) %>%
   select(-flag_qty, -flag_value) %>%
   tidyr::separate(
                   flag,
@@ -249,20 +275,10 @@ tradedata_final <- tradedata %>%
                   remove = TRUE
                   )
 
-cpc_units <- db_list %>%
-  meltTradeData() %>%
-  select(measuredElementTrade, measuredItemCPC) %>%
-  mutate(
-         measuredElementTrade = stringr::str_sub(measuredElementTrade, 3, 4)
-         ) %>%
-  distinct() %>%
-  filter(!(measuredElementTrade == '22'))
-
-
 
 
 final_db <- left_join(tradedata_final %>% ungroup(), cpc_units) %>%
-mutate(
+dplyr::mutate(
        measuredElementTrade = ifelse(
                                       type == 'value',
                                       '22',
@@ -270,10 +286,10 @@ mutate(
                                       ),
        flow = ifelse(flow == 1, '56', '59')
        ) %>%
-mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
+dplyr::mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
 select(-flow, -type) %>%
-filter(!(measuredElementTrade %in% c('56NA', '59NA')))
+dplyr::filter(!(measuredElementTrade %in% c('56NA', '59NA')))
 
 
-saveRDS(final_db, file = 'T:/Team_working_folder/A/FBS-Modules/Trade module/data/mirror/analytical_trade_2000-2014.rds')
+saveRDS(final_db, file = paste0(dir_to_save, name_to_save))
 

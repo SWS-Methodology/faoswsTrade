@@ -11,14 +11,14 @@
 #'
 #' ts1 %>%
 #'   group_by(year) %>%
-#'   summarize(total_nolinks = sum(nolinks)) %>%
+#'   dplyr::summarize(total_nolinks = sum(nolinks)) %>%
 #'   ungroup() %>%
 #'   ggplot(aes(year, total_nolinks)) +
 #'   geom_bar(stat = "identity")
 #'
 #' ts1 %>%
 #'   group_by(year) %>%
-#'   summarize(total_nolinks = sum(nolinks)) %>%
+#'   dplyr::summarize(total_nolinks = sum(nolinks)) %>%
 #'   ungroup() %>%
 #'   dygraph(
 #'     ylab = "Total number of unmapped HS (duplicates across years possible)",

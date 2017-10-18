@@ -17,11 +17,19 @@ Imports:
     plyr, 
     scales, 
     stringr, 
-    tidyr
+    tidyr,
+    futile.logger
 Suggests: 
     doParallel,
     parallel,
-    testthat
+    testthat,
+    faoswsModules,
+    igraph,
+    reshape2,
+    zoo,
+    proxy,
+    dygraph,
+    ggplot2
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 NeedsCompilation: no

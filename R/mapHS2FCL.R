@@ -48,14 +48,14 @@ mapHS2FCL <- function(tradedata,
 
   flog.trace("HS+ mapping: align HS codes from data and table", name = "dev")
 
-  hslength <- maxHSLength(uniqhs, maptable, parallel = parallel)
+  hslength <- maxHSLength(uniqhs, maptable)
 
   # Reports full table in the text report and as csv file
   rprt_hslength(hslength, tradedataname = tradedataname)
 
   uniqhs <- uniqhs %>%
     left_join(hslength, by = c("reporter", "flow")) %>%
-    mutate_(hsextchar = ~stringr::str_pad(hs,
+    dplyr::mutate_(hsextchar = ~stringr::str_pad(hs,
                                           width = maxhslength,
                                           side = "right",
                                           pad = "0"),
@@ -71,13 +71,13 @@ mapHS2FCL <- function(tradedata,
     #       97    2           8 01031000 01023999 946      2012    2050    3674617
     #       97    2           8 01040000 01029099 866      2012    2050    3674616
     #      174    1           8 19053320 19053299 110      2012    2050    1779049
-    mutate(
+    dplyr::mutate(
       from_gt_to = as.numeric(fromcode) > as.numeric(tocode),
       fromcode = ifelse(from_gt_to, tocode, fromcode),
       tocode   = ifelse(from_gt_to, fromcode, tocode)
     ) %>%
     select(-from_gt_to) %>%
-    mutate_(fromcodeextchar = ~stringr::str_pad(fromcode,
+    dplyr::mutate_(fromcodeextchar = ~stringr::str_pad(fromcode,
                                          width = maxhslength,
                                          side = "right",
                                          pad = "0"),
@@ -85,7 +85,7 @@ mapHS2FCL <- function(tradedata,
                                        width = maxhslength,
                                        side = "right",
                                        pad = "9")) %>%
-    mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
+    dplyr::mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
             tocodeext   = ~as.numeric(tocodeextchar))
 
   rprt_map_hschanged(maptable, tradedataname = tradedataname)

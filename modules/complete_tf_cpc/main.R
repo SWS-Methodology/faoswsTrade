@@ -397,7 +397,6 @@ esdata <- esdata %>%
 
 flog.trace("TL: converting M49 to FAO area list", name = "dev")
 
-# XXX This is also read below when "helper" tables are loaded.
 unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
 
 tldata <- tldata %>%

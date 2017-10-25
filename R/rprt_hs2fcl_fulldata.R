@@ -29,9 +29,9 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   if(!"hs6" %in% colnames(tradedata))
     tradedata$hs6 <- stringr::str_sub(tradedata$hs, end = 6L)
 
-  stats <- list(nolink_count = ~sum(nolink),
-                nolink_prop  = ~nolink_count / n(),
-                nolink_value = ~sum(value * as.integer(nolink)),
+  stats <- list(nolink_count      = ~sum(nolink),
+                nolink_prop       = ~nolink_count / n(),
+                nolink_value      = ~sum(value * as.integer(nolink)),
                 nolink_value_prop = ~nolink_value / sum(value))
 
   filters <- list(~nolink_count != 0L)
@@ -62,15 +62,15 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   nolinks_byreporterhs6 <- add_area_names(nolinks_byreporterhs6, "fao")
   nolinks_byreporter <- add_area_names(nolinks_byreporter, "fao")
 
-  rprt_writetable(nolinks_total, prefix = tradedataname)
-  rprt_writetable(nolinks_byreporter, prefix = tradedataname)
+  rprt_writetable(nolinks_total,         prefix = tradedataname)
+  rprt_writetable(nolinks_byreporter,    prefix = tradedataname)
   rprt_writetable(nolinks_byreporterhs6, prefix = tradedataname)
-  rprt_writetable(nolinks_byhs6, prefix = tradedataname)
+  rprt_writetable(nolinks_byhs6,         prefix = tradedataname)
 
-  rprt_fulltable(nolinks_total, pretty_prop = TRUE)
-  rprt_fulltable(nolinks_byreporter, pretty_prop = TRUE)
-  rprt_fulltable(nolinks_byreporterhs6, pretty_prop = TRUE)
-  rprt_fulltable(nolinks_byhs6, pretty_prop = TRUE)
+  rprt_fulltable(nolinks_total)
+  rprt_fulltable(nolinks_byreporter)
+  rprt_fulltable(nolinks_byreporterhs6)
+  rprt_fulltable(nolinks_byhs6)
 
 
   # All records with failed mapping
@@ -83,7 +83,7 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   rprt_writetable(hsfcl_nolinks, prefix = tradedataname)
 
   # Canada case (issue #78)
-  if(33 %in% tradedata$reporter) {
+  if (33 %in% tradedata$reporter) {
 
     canada_links <- tradedata %>%
       filter_(~reporter == 33) %>%

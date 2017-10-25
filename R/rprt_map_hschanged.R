@@ -31,9 +31,11 @@ rprt_map_hschanged <- function(maptable, tradedataname = NULL) {
 
   map_hschange_statistic <- map_hschange_all %>%
     group_by_(~reporter, ~name) %>%
-    summarize_(all = ~n(),
-               changed = ~sum(otherlength),
-               changedprop = ~changed / all)
+    summarize_(
+      all         = ~n(),
+      changed     = ~sum(otherlength),
+      changedprop = ~changed / all
+    )
 
   rprt_writetable(map_hschange_statistic, prefix = tradedataname,
                   subdir = "details")

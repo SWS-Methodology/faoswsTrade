@@ -23,12 +23,11 @@ rprt_hsfclmap <- function(maptable, year) {
   hsfclmap_by_reporter_stats <- maptable %>%
     group_by_(~area) %>%
     mutate_(totalrecords = ~n(),
-            hslength = ~stringr::str_length(fromcode),
-            maxhslength = ~max(hslength),
-            minhslength = ~min(hslength)) %>%
+            hslength     = ~stringr::str_length(fromcode),
+            maxhslength  = ~max(hslength),
+            minhslength  = ~min(hslength)) %>%
     ungroup() %>%
-    filter_(~startyear <= year &
-              endyear >= year) %>%
+    filter_(~startyear <= year & endyear >= year) %>%
     group_by_(~area, ~totalrecords, ~maxhslength, ~minhslength) %>%
     # Using dots and setNames to generate column name with year
     summarize_(.dots = setNames(c(

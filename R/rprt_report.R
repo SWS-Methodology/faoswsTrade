@@ -15,8 +15,9 @@ rprt_report <- function(msg, level = "info") {
   # We want pretty format for tables in log messages
   if(any(class(msg) %in% c("tbl_df",  "tbl", "data.frame", "data.table"))) {
     flog_capture <- TRUE
-    if(nrow(msg) > 250)
+    if (nrow(msg) > 250) {
       return(do.call(fnc, list(msg = rprt_glimpse0(msg))))
+    }
   }
 
   do.call(fnc, list(msg = msg, capture = flog_capture))

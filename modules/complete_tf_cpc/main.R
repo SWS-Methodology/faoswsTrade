@@ -453,11 +453,8 @@ rprt_writetable(tldata_rep_table, subdir = 'preproc')
 
 # XXX this is a duplication: a function should be created.
 to_mirror_raw <- bind_rows(
-    esdata %>%
-      select(year, reporter, partner, flow),
-    tldata %>%
-      dplyr::filter(!(reporter %in% unique(esdata$reporter))) %>%
-      select(year, reporter, partner, flow)
+    select(esdata, year, reporter, partner, flow),
+    select(tldata, year, reporter, partner, flow)
   ) %>%
   dplyr::mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
   flowsToMirror(names = TRUE)

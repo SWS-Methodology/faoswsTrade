@@ -1751,7 +1751,7 @@ if (remove_nonexistent_transactions) {
   key <- DatasetKey(domain     = 'trade',
                     dataset    = 'completed_tf_cpc_m49',
                     dimensions = list(
-                      Dimension(name = 'geographicAreaM49Reporter', keys = Keys[['partners']]),
+                      Dimension(name = 'geographicAreaM49Reporter', keys = Keys[['reporters']]),
                       Dimension(name = 'geographicAreaM49Partner',  keys = Keys[['partners']]),
                       Dimension(name = 'measuredItemCPC',           keys = Keys[['items']]),
                       Dimension(name = 'measuredElementTrade',      keys = Keys[['elements']]),

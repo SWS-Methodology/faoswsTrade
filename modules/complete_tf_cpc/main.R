@@ -264,6 +264,14 @@ if (!only_pre_process) {
   flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
   hsfclmap3 <- ReadDatatable('hsfclmap5')
   stopifnot(nrow(hsfclmap3) > 0)
+
+  flog.trace("[%s] Reading in corrections dataset", PID, name = "dev")
+  corrections_table_file <-
+    file.path(Sys.getenv('R_SWS_SHARE_PATH'),
+              'trade/validation_tool_files/corrections_table.rds')
+
+  stopifnot(file.exists(corrections_table_file))
+  corrections_table_all <- readRDS(corrections_table_file)
 }
 
 # Required in pre-processing
@@ -1481,11 +1489,6 @@ complete_trade_flow_cpc <- tradedata %>%
 
 
 ##' 1. Use corrections from validation
-if (CheckDebug()) {
-  corrections_table_all <- readRDS('//hqlprsws1.hq.un.fao.org/sws_r_share/trade/validation_tool_files/corrections_table.rds')
-} else {
-  corrections_table_all <- readRDS('/work/SWS_R_Share/trade/validation_tool_files/corrections_table.rds')
-}
 
 corrections_table <- corrections_table_all %>%
   dplyr::rename(correction_year = year) %>%

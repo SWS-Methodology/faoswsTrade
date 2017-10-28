@@ -1102,8 +1102,13 @@ tldata$qtyfcl <- ifelse(cond, tldata$weight*0.001, tldata$qtyfcl)
 
 # XXX
 # Flag on weight as qty (which underwent a change) will populate weight
+#
 tldata <- tldata %>%
   setFlag3(cond, type = 'method', flag = 'i', variable = 'weight')
+#
+tldata <- tldata %>%
+  setFlag3(!is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head),
+           type = 'method', flag = 'i', variable = 'weight')
 
 ######### Value from USD to thousands of USD
 

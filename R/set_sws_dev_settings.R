@@ -31,26 +31,24 @@ set_sws_dev_settings <- function(localsettingspath = NULL) {
   faosws::GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                              token = SETTINGS[["token"]])
 
-  # R_SWS_SHARE_PATH: 1) environment; 2) user; 3) fallback
+  # R_SWS_SHARE_PATH: 1) environment; 2) user; 3) stop
   if (is.na(Sys.getenv("R_SWS_SHARE_PATH", unset = NA))) {
     flog.debug("R_SWS_SHARE_PATH environment variable not found.", name = "dev")
 
     share_drive <- file.path(SETTINGS[['share']])
 
-    if (!is.null(share_drive) && !is.na(share_drive) && length(share_drive) > 0L && file.exists(share_drive)) {
+    if (!is.null(share_drive) && !is.na(share_drive) &&
+        length(share_drive) > 0L && file.exists(share_drive)) {
       flog.debug("A valid 'share' variable was found in %s",
                  localsettingspath, name = "dev")
       Sys.setenv("R_SWS_SHARE_PATH" = share_drive)
-      flog.debug("R_SWS_SHARE_PATH set to %s",
-                 share_drive, name = "dev")
+      flog.debug("R_SWS_SHARE_PATH set to %s", share_drive, name = "dev")
     }
     else {
       # Fall-back R_SWS_SHARE_PATH var
       flog.debug("An invalid/inexistent 'share' variable in %s",
                  localsettingspath, name = "dev")
-      Sys.setenv("R_SWS_SHARE_PATH" = tempdir())
-      flog.debug("R_SWS_SHARE_PATH now points to R temp directory %s",
-                 tempdir(), name = "dev")
+      stop('Please set a share drive valid folder in sws.yml')
     }
   }
   invisible(SETTINGS)

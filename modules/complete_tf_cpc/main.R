@@ -395,7 +395,7 @@ esdata <- esdata %>%
 ##' table provided by Team ENV. See below for the description
 ##' of the `unsdpartnersblocks` table.
 
-flog.trace("TL: converting M49 to FAO area list", name = "dev")
+flog.trace("[%s] TL: converting M49 to FAO area list", PID, name = "dev")
 
 unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
 
@@ -432,7 +432,7 @@ tldata <- removeInvalidReporters(tldata)
 
 ##' 1. Remove ES repoters from TL.
 
-flog.trace("TL: dropping reporters already found in Eurostat data", name = "dev")
+flog.trace("[%s] TL: dropping reporters already found in Eurostat data", PID, name = "dev")
 # They will be replaced by ES data
 tldata <- tldata %>%
   anti_join(
@@ -727,17 +727,17 @@ EURconversionUSD <- EURconversionUSD # already downloaded
 
 # hs6fclmap ####
 
-flog.trace("Extraction of HS6 mapping table", name = "dev")
+flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
 
 ##' 1. Universal (all years) HS6 mapping table.
 
-flog.trace("Universal (all years) HS6 mapping table", name = "dev")
+flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
 
 hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
 
 ##' 1. Current year specific HS6 mapping table.
 
-flog.trace("Current year specific HS6 mapping table", name = "dev")
+flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
 
 hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 
@@ -816,7 +816,7 @@ flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
 rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
-flog.trace("ES: dropping unmapped records", name = "dev")
+flog.trace("[%s] ES: dropping unmapped records", PID, name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
@@ -866,7 +866,7 @@ tldata <- tbl_df(tldata)
 ##' 1. Identical combinations of `reporter` / `partner` / `commodity` /
 ##' `flow` / `year` / `qunit` are pre-aggregated.
 
-flog.trace("TL: aggreation of similar flows", name = "dev")
+flog.trace("[%s] TL: aggreation of similar flows", PID, name = "dev")
 
 tldata <- preAggregateMultipleTLRows(tldata)
 
@@ -874,7 +874,7 @@ tldata <- preAggregateMultipleTLRows(tldata)
 ##' steps in the code. Please, refer to the "Flag Management in the Trade module"
 ##' document.)
 
-flog.trace("TL: add flag variables")
+flog.trace("[%s] TL: add flag variables")
 tldata <- generateFlagVars(tldata)
 
 tldata <- tldata %>%
@@ -905,12 +905,12 @@ tldata_not_area_in_fcl_mapping <- tldata %>%
 
 rprt_writetable(tldata_not_area_in_fcl_mapping)
 
-flog.trace("TL: dropping reporters not found in the mapping table", name = "dev")
+flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
 tldata <- dplyr::filter_(tldata, ~reporter %in% unique(hsfclmap$area))
 
 ##+ reexptoexp ####
 ##' 1. Re-imports become imports and re-exports become exports.
-flog.trace("TL: recoding reimport/reexport", name = "dev")
+flog.trace("[%s] TL: recoding reimport/reexport", PID, name = "dev")
 
 # { "id": "1", "text": "Import" },
 # { "id": "2", "text": "Export" },
@@ -954,7 +954,7 @@ flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
 
 rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 
-flog.trace("TL: dropping unmapped records", name = "dev")
+flog.trace("[%s] TL: dropping unmapped records", PID, name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
@@ -968,7 +968,7 @@ if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 
 ##' 1. Add FCL units.
 
-flog.trace("TL: add FCL units", name = "dev")
+flog.trace("[%s] TL: add FCL units", PID, name = "dev")
 
 tldata <- addFCLunits(tldata, fclunits = fclunits)
 
@@ -985,7 +985,7 @@ ctfclunitsconv <- tldata %>%
   as.data.table()
 
 ################ Conv. factor (TL) ################
-flog.trace("TL: conversion factors", name = "dev")
+flog.trace("[%s] TL: conversion factors", PID, name = "dev")
 
 ##### Table for conv. factor
 
@@ -1117,7 +1117,7 @@ if (dollars) {
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
 # XXX "notes" are applied to weight that is transformed below from qtyfcl
-flog.trace("TL: aggregate to FCL", name = "dev")
+flog.trace("[%s] TL: aggregate to FCL", PID, name = "dev")
 tldata <- tldata %>%
   select(-weight, -qty) %>%
   dplyr::rename(weight = qtyfcl) # XXX weight should probably be dplyr::renamed qty here
@@ -1135,7 +1135,7 @@ tldata_mid = tldata
 # We need to set the flags one by one as adjustments not necessarily
 # (probably never?) adjust all the three variables at the same time
 if (use_adjustments == TRUE) {
-  flog.trace("Apply adjustments", name = "dev")
+  flog.trace("[%s] Apply adjustments", PID, name = "dev")
   esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
                            adjustments = adjustments, parallel = multicore) %>%
     setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
@@ -1183,7 +1183,7 @@ esdata <- esdata %>%
 ##'     - ES: assign `weight` to `qty` if `fclunit` is "mt", else keep `qty`.
 
 ##+ combine_es_tl
-flog.trace("Combine TL and ES data sets", name = "dev")
+flog.trace("[%s] Combine TL and ES data sets", PID, name = "dev")
 tradedata <- bind_rows(
   tldata %>%
     select(year, reporter, partner, flow,
@@ -1207,7 +1207,7 @@ tradedata <- tradedata %>%
 #rprt_writetable(hs_many_lengths, subdir = 'details')
 
 ##' # Imputation
-flog.trace("Outlier detection and imputation", name = "dev")
+flog.trace("[%s] Outlier detection and imputation", PID, name = "dev")
 ##+ calculate_median_uv
 
 tradedata <- tradedata %>%
@@ -1248,7 +1248,7 @@ tradedata <- computeMedianUnitValue(tradedata = tradedata)
 
 tradedata <- doImputation(tradedata = tradedata)
 
-flog.trace("Flag stuff", name = "dev")
+flog.trace("[%s] Flag stuff", PID, name = "dev")
 # XXX using flagTrade for the moment, but should go away
 tradedata <- tradedata %>%
     setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
@@ -1275,7 +1275,7 @@ tradedata_flags <- tradedata %>%
 ##' 1. Aggregate values, quantities, and flags by FCL codes.
 
 # Aggregation by fcl
-flog.trace("Aggregation by FCL", name = "dev")
+flog.trace("[%s] Aggregation by FCL", PID, name = "dev")
 tradedata <- tradedata %>%
   dplyr::mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
@@ -1283,7 +1283,7 @@ tradedata <- tradedata %>%
                   vars = c("qty", "value","flagTrade", "nfcl")) %>%
   ungroup()
 
-flog.trace("Flags again", name = "dev")
+flog.trace("[%s] Flags again", PID, name = "dev")
 tradedata <- left_join(tradedata,
                        tradedata_flags,
                        by = c('year', 'reporter', 'partner', 'flow', 'fcl'))
@@ -1305,7 +1305,7 @@ tradedata <- tradedata %>%
 ##' 1. Map FCL codes to CPC.
 
 # Adding CPC2 extended code
-flog.trace("Add CPC item codes", name = "dev")
+flog.trace("[%s] Add CPC item codes", PID, name = "dev")
 tradedata <- tradedata %>%
   dplyr::mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl), version = "2.1"))
 
@@ -1321,7 +1321,7 @@ no_mapping_fcl2cpc = tradedata %>%
 ##' ("Unspecified") are converted to M49 code 896 ("Other nei").
 
 # Converting back to M49 for the system
-flog.trace("Convert FAO area codes to M49", name = "dev")
+flog.trace("[%s] Convert FAO area codes to M49", PID, name = "dev")
 tradedata <- tradedata %>%
   dplyr::mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
           partnerM49  = ~fs2m49(as.character(partner))) %>%
@@ -1347,7 +1347,7 @@ countries_not_mapping_M49 <- bind_rows(
 ##' never show up as reporters or the reporters that do not
 ##' report a flow will have a number of flows equal to zero
 ##' and will be mirrored.
-flog.trace("Mirroring", name = "dev")
+flog.trace("[%s] Mirroring", PID, name = "dev")
 
 to_mirror <- flowsToMirror(tradedata) %>%
   dplyr::filter(area != 252)
@@ -1371,7 +1371,7 @@ tradedata <-
     by = c('reporter' = 'area', 'flow')
   )
 
-flog.trace("Flags to mirrored flows", name = "dev")
+flog.trace("[%s] Flags to mirrored flows", PID, name = "dev")
 
 tradedata <- tradedata %>%
   setFlag2(!is.na(mirrored), type = 'status', flag = 'T', var = 'all') %>%
@@ -1435,7 +1435,7 @@ flagWeightTable_method <- frame_data(
 )
 
 # XXX This piece of code is really slow. There should be a better way.
-flog.trace("Cycle on status and method flags", name = "dev")
+flog.trace("[%s] Cycle on status and method flags", PID, name = "dev")
 for (i in c('status', 'method')) {
   for (j in c('v', 'q')) {
 
@@ -1459,7 +1459,7 @@ for (i in c('status', 'method')) {
   }
 }
 
-flog.trace("Complete trade flow CPC", name = "dev")
+flog.trace("[%s] Complete trade flow CPC", PID, name = "dev")
 complete_trade_flow_cpc <- tradedata %>%
   dplyr::filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%

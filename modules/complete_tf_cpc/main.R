@@ -1502,6 +1502,8 @@ corrections_table <- corrections_table_all %>%
 corrections_exist <- nrow(corrections_table) > 0
 
 if (corrections_exist) {
+  flog.trace("[%s] Corrections exist", PID, name = "dev")
+
   corrections_table <- corrections_table %>%
     dplyr::filter(correction_level == 'CPC') %>%
     select(-correction_year, -correction_level, -correction_hs) %>%
@@ -1523,6 +1525,8 @@ if (corrections_exist) {
   corrections_table <- corrections_table %>%
     select(-(correction_note:date_validation)) %>%
     dplyr::mutate(correction_metadata = gsub('  *', ' ', corrections_metadata))
+
+  flog.trace("[%s] Apply corrections to reporter", PID, name = "dev")
 
   complete_corrected <- useValidationCorrections(complete_trade_flow_cpc, corrections_table)
 
@@ -1559,6 +1563,8 @@ if (corrections_exist) {
     dplyr::mutate(flow = recode(flow, '2' = 1, '1' = 2)) %>%
     dplyr::mutate(correction_input = ifelse(data_type == 'value', ifelse(flow == 1, correction_input * 1.12, correction_input / 1.12), correction_input))
 
+  flog.trace("[%s] Apply corrections to partner (if mirrored)", PID, name = "dev")
+
   complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct, corrections_table_mirror)
 
   complete_all_corrected <- bind_rows(complete_corrected$corrected, complete_mirror_corrected$corrected)
@@ -1572,7 +1578,8 @@ if (corrections_exist) {
   complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
 
   if (nrow(complete_corrected$to_drop) > 0) {
-    # XXX this should go in a CSV file
+    flog.trace("[%s] Some corrections were not applied", PID, name = "dev")
+
     warning('Some corrections were not applied. See reports.')
     corrections_not_applied <- complete_corrected$to_drop %>%
       dplyr::mutate(year = year) %>%
@@ -1583,6 +1590,8 @@ if (corrections_exist) {
   }
 
 } else {
+  flog.trace("[%s] Corrections do not exist", PID, name = "dev")
+
   complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
     dplyr::mutate(
       correction_metadata_qty   = NA_character_,
@@ -1639,6 +1648,8 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
   select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
 
 if (corrections_exist) {
+  flog.trace("[%s] Generating metadata data.table", PID, name = "dev")
+
 ##' 1. Generate metadata for corrections.
 
   metad <- complete_trade_flow_cpc %>%
@@ -1741,6 +1752,8 @@ complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '
 
 
 if (remove_nonexistent_transactions) {
+  flog.trace("[%s] Remove non-existent transacions (RNET)", PID, name = "dev")
+
   GetCodeList2 <- function(dimension = NA) {
     GetCodeList(
                 domain    = 'trade',
@@ -1765,6 +1778,8 @@ if (remove_nonexistent_transactions) {
                       Dimension(name = 'measuredElementTrade',      keys = Keys[['elements']]),
                       Dimension(name = 'timePointYears',            keys = Keys[['years']])))
 
+  flog.trace("[%s] RNET: Download existent SWS dataset", PID, name = "dev")
+
   existing_data <- GetData(key = key, omitna = TRUE)
 
   # Difference between what was saved and what the module produced:
@@ -1777,17 +1792,22 @@ if (remove_nonexistent_transactions) {
                                     'measuredItemCPC')]
 
   if (nrow(data_diff) > 0) {
+    flog.trace("[%s] RNET: Non-existent transacions set to NA", PID, name = "dev")
+
     data_diff[,`:=`(Value                 = NA_real_,
                     flagObservationStatus = NA_character_,
                     flagMethod            = NA_character_)]
 
     complete_trade_flow_cpc <- rbind(complete_trade_flow_cpc, data_diff)
+  } else {
+    flog.trace("[%s] RNET: There are no non-existent transacions", PID, name = "dev")
   }
 }
 
 ##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
 
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
+
 if (corrections_exist) {
   stats <- SaveData("trade",
                     "completed_tf_cpc_m49",

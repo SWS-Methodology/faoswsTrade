@@ -1752,7 +1752,7 @@ complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '
 
 
 if (remove_nonexistent_transactions) {
-  flog.trace("[%s] Remove non-existent transacions (RNET)", PID, name = "dev")
+  flog.trace("[%s] Remove non-existent transactions (RNET)", PID, name = "dev")
 
   GetCodeList2 <- function(dimension = NA) {
     GetCodeList(
@@ -1792,7 +1792,7 @@ if (remove_nonexistent_transactions) {
                                     'measuredItemCPC')]
 
   if (nrow(data_diff) > 0) {
-    flog.trace("[%s] RNET: Non-existent transacions set to NA", PID, name = "dev")
+    flog.trace("[%s] RNET: Non-existent transactions set to NA", PID, name = "dev")
 
     data_diff[,`:=`(Value                 = NA_real_,
                     flagObservationStatus = NA_character_,
@@ -1800,7 +1800,7 @@ if (remove_nonexistent_transactions) {
 
     complete_trade_flow_cpc <- rbind(complete_trade_flow_cpc, data_diff)
   } else {
-    flog.trace("[%s] RNET: There are no non-existent transacions", PID, name = "dev")
+    flog.trace("[%s] RNET: There are no non-existent transactions", PID, name = "dev")
   }
 }
 

@@ -40,7 +40,7 @@ rprt_writetable <- function(dataset, prefix = NULL, subdir = NULL) {
                  type = "csv")
 
   saveFileForPPR(data = dataset,
-                 file = file.path(reportdir, paste0(name, ".rds")),
+                 file = file.path(datadir, paste0(name, ".rds")),
                  type = "rds")
 
   invisible(dataset)

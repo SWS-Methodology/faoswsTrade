@@ -1081,7 +1081,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
         qty * convspec_mt,
         ifelse(
           !is.na(convspec_head),
-          round(weight / convspec_head, 0),
+          weight / convspec_head,
           #### Common conv
           # If no specific conv. factor, we apply general
           qty * conv
@@ -1089,8 +1089,11 @@ if (NROW(fcl_spec_mt_conv) > 0) {
       )
     )
 
+  # Decimals make no sense for heads
+  tldata$qtyfcl <- ifelse(tldata$fclunit %in% 'heads', round(tldata$qtyfcl, 0), tldata$qtyfcl)
+
   # To avoid problems with UV
-  tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0) & tldata$fclunit == '1000 heads', 0.1, tldata$qtyfcl)
+  tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0) & tldata$fclunit %in% '1000 heads', 0.1, tldata$qtyfcl)
   tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0), 1, tldata$qtyfcl)
 } else {
   tldata$qtyfcl = NA

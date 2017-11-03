@@ -1056,7 +1056,10 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   fcl_spec_head_conv <- livestockWeightsTable() %>%
     left_join(fcl_spec_head_conv, by = 'fcl') %>%
     dplyr::filter(!is.na(fclunit)) %>%
-    dplyr::mutate(liveweight = ifelse(fclunit == '1000 heads', liveweight * 1000, liveweight)) %>%
+    dplyr::mutate(
+      liveweight =
+        ifelse(fclunit == '1000 heads', liveweight * 1000, liveweight)
+    ) %>%
     dplyr::filter(!is.na(liveweight), liveweight > 0) %>%
     dplyr::rename(convspec_head = liveweight)
 

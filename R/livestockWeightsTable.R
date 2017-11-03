@@ -5,7 +5,17 @@
 #' @export
 
 livestockWeightsTable <- function() {
-  livestock_weights <- frame_data(
+
+  # livestock_weights_kat is Katherine's table (from AGA)
+  # livestock_weights_cla is Claudia's table (from Jellyfish)
+  # The suggested approach is to use ALWAYS cla weights and
+  # to fallback to kat weights only when no cla weight exist.
+
+  # livestock_weights_kat's weights are always in kilograms per unit
+  # livestock_weights_cla's weights are in kilograms per units, except
+  # for CHICKENS, DUCKS, GEESE, TURKEYS (maybe also RABBITS, but all NAs)
+
+  livestock_weights_kat <- frame_data(
     ~ADM0_CODE,~CATTLE,~BUFFALOES,~SHEEP,~GOATS,~PIGS,~CHICKENS,~FAOSTAT,
     1,256.3890381,392.8697815,27.84269905,29.05475807,53.65662766,0.672066331,2,
     3,390.8330078,NA,38.36423111,39.83809662,68.80722809,1.439249873,3,
@@ -239,8 +249,8 @@ livestockWeightsTable <- function() {
     )
 
 
-  livestock_weights <- livestock_weights %>%
-    tidyr::gather(livestock, liveweight, -ADM0_CODE, -FAOSTAT) %>%
+  livestock_weights_kat <- livestock_weights_kat %>%
+    tidyr::gather(livestock, liveweight_kat, -ADM0_CODE, -FAOSTAT) %>%
     dplyr::rename(reporter = FAOSTAT) %>%
     # Sorted by FCL
     dplyr::mutate(
@@ -265,6 +275,83 @@ livestockWeightsTable <- function() {
             )
     ) %>%
     select(-ADM0_CODE)
+
+  livestock_weights_cla <- frame_data(
+    ~area_fao,~area_m49,~area_name,
+      ~CATTLE,~BUFFALOES,~SHEEP,~GOATS,~CHICKENS,~DUCKS,~GEESE,
+      ~TURKEYS,~PIGS,~HORSES,~ASSES,~MULES,~CAMELS,~RABBITS,
+    22,533,"Aruba",300,NA,30,30,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,
+    16,50,"Bangladesh",NA,NA,NA,NA,45,60,NA,NA,NA,NA,NA,NA,NA,NA,
+    80,70,"Bosnia Herzg",450,NA,25,30,60,NA,NA,60,80,500,NA,NA,NA,NA,
+    233,854,"Burkina Faso",400,NA,35,35,60,NA,60,NA,NA,400,NA,NA,NA,NA,
+    107,384,"Cote dIvoire",350,NA,35,30,60,NA,66,NA,NA,400,NA,NA,NA,NA,
+    35,132,"Cap Vert",NA,NA,NA,NA,60,NA,NA,NA,NA,400,NA,NA,NA,NA,
+    37,140,"Cent Afr Rep",350,NA,30,30,66,NA,66,66,NA,NA,NA,NA,NA,NA,
+    128,446,"China, Macao",400,NA,NA,NA,166,NA,NA,NA,NA,NA,NA,NA,NA,NA,
+    46,178,"Congo Rep",NA,NA,NA,NA,60,NA,NA,NA,NA,400,NA,NA,NA,NA,
+    48,188,"Costa Rica",300,NA,NA,NA,60,NA,NA,NA,50,400,NA,NA,NA,NA,
+    49,192,"Cuba",NA,NA,NA,NA,60,NA,NA,NA,NA,500,NA,NA,NA,NA,
+    58,218,"Ecuador",NA,NA,55,35,60,NA,NA,70,70,450,450,450,NA,NA,
+    60,222,"El Salvador",390,NA,NA,NA,60,NA,NA,NA,50,350,NA,NA,NA,NA,
+    238,231,"Ethiopia",300,NA,28,NA,NA,66,NA,NA,NA,330,NA,NA,NA,NA,
+    64,234,"Faeroe Is",NA,NA,NA,NA,NA,NA,NA,NA,NA,350,NA,NA,NA,NA,
+    81,288,"Ghana",400,NA,35,150,40,60,NA,48,80,NA,NA,NA,NA,NA,
+    89,320,"Guatemala",300,NA,50,30,60,60,NA,60,50,NA,NA,NA,NA,NA,
+    90,324,"Guinea",NA,NA,NA,NA,45,NA,NA,NA,80,450,NA,NA,NA,NA,
+    91,328,"Guyana",300,NA,30,NA,60,60,NA,NA,50,NA,NA,NA,NA,NA,
+    95,340,"Honduras",300,NA,50,NA,60,60,NA,NA,50,350,NA,350,NA,NA,
+    101,360,"Indonesia",300,NA,30,30,60,NA,NA,NA,80,500,NA,NA,NA,NA,
+    102,364,"Iran",300,NA,35,30,60,NA,NA,30,NA,500,NA,NA,NA,NA,
+    109,388,"Jamaica",NA,NA,30,30,50,50,NA,NA,30,500,NA,100,NA,NA,
+    117,410,"Korea Rep",330,NA,NA,NA,50,71,NA,NA,77,300,NA,NA,NA,NA,
+    121,422,"Lebanon",350,NA,35,60,60,NA,NA,45,NA,450,NA,NA,NA,NA,
+    129,450,"Madagascar",NA,NA,NA,NA,35,NA,NA,NA,NA,NA,NA,NA,NA,NA,
+    136,478,"Mauritania",NA,NA,NA,NA,200,NA,NA,NA,NA,NA,NA,NA,NA,NA,
+    147,516,"Namibia",300,NA,30,35,60,NA,NA,NA,NA,450,NA,NA,NA,NA,
+    153,540,"NewCaledonia",NA,NA,NA,NA,30,NA,NA,NA,NA,NA,NA,NA,NA,NA,
+    157,558,"Nicaragua",450,500,NA,NA,60,NA,NA,NA,50,350,NA,NA,NA,NA,
+    158,562,"Niger",200,NA,45,25,60,NA,NA,80,NA,NA,200,NA,NA,NA,
+    166,591,"Panama",300,NA,NA,60,60,NA,NA,NA,50,350,NA,NA,NA,NA,
+    169,600,"Paraguay",350,NA,35,NA,60,NA,NA,NA,60,350,NA,NA,NA,NA,
+    179,634,"Qatar",300,NA,35,30,60,NA,NA,30,NA,500,NA,NA,NA,NA,
+    184,646,"Rwanda",400,NA,NA,40,100,NA,NA,NA,150,NA,NA,NA,NA,NA,
+    193,678,"Sao Tome",NA,NA,NA,NA,40,60,NA,NA,NA,500,NA,NA,NA,NA,
+    195,686,"Senegal",400,NA,NA,NA,55,NA,NA,45,NA,NA,NA,NA,NA,NA,
+    272,688,"Serbia",500,NA,30,30,60,NA,NA,70,110,500,NA,NA,NA,NA,
+    186,NA,"Serbia-Monte",500,NA,30,20,150,NA,NA,70,80,NA,NA,NA,NA,NA,
+    276,729,"Sudan",450,NA,40,30,60,NA,200,NA,NA,100,NA,NA,NA,NA,
+    207,740,"Suriname",NA,NA,40,NA,60,NA,80,80,80,NA,NA,NA,NA,NA,
+    212,760,"Syria",300,NA,35,30,60,NA,NA,NA,NA,300,NA,NA,NA,NA,
+    215,834,"Tanzania",350,NA,35,35,60,NA,NA,NA,50,300,NA,100,NA,NA,
+    217,768,"Togo",250,NA,NA,30,45,NA,NA,NA,NA,NA,NA,NA,NA,NA,
+    225,784,"Untd Arab Em",350,NA,50,25,60,60,NA,60,30,500,NA,NA,300,NA,
+    155,548,"Vanuatu",NA,NA,NA,NA,60,NA,NA,NA,NA,400,NA,NA,NA,NA,
+    236,862,"Venezuela",450,300,NA,NA,60,NA,NA,80,NA,450,NA,350,NA,NA,
+    251,894,"Zambia",250,NA,30,30,50,NA,NA,NA,80,400,NA,NA,NA,NA,
+    181,716,"Zimbabwe",450,NA,35,NA,NA,60,NA,NA,100,400,NA,100,NA,NA
+  )
+
+  livestock_weights_cla <- livestock_weights_cla %>%
+    tidyr::gather(livestock, liveweight_cla,
+                  -area_fao, -area_m49, -area_name) %>%
+    # livestock_weights_cla's weights are in kilograms per units, except
+    # for CHICKENS, DUCKS, GEESE, TURKEYS (maybe also RABBITS, but all NAs)
+    mutate(
+      liveweight_cla =
+        ifelse(livestock %in% c('CHICKENS', 'DUCKS', 'GEESE', 'TURKEYS'),
+               liveweight_cla * 0.001, liveweight_cla)
+    )
+
+  livestock_weights <- full_join(
+    livestock_weights_kat,
+    livestock_weights_cla,
+    by = c('reporter' = 'area_fao', 'livestock')
+  ) %>%
+  mutate(
+    liveweight = ifelse(!is.na(liveweight_cla), liveweight_cla, liveweight_kat)
+  ) %>%
+  filter(!is.na(liveweight)) %>%
+  select(-area_m49, -area_name, -liveweight_kat, -liveweight_cla, -livestock)
 
   return(livestock_weights)
 }

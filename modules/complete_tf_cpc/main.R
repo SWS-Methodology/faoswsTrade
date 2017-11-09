@@ -157,6 +157,8 @@ if (!exists('out_coef', inherits = FALSE)) {
 }
 flog.info("Coefficient for outlier detection: %s", out_coef)
 
+updateInfoTable(year = year, mode = 'restart')
+
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 report_txt <- file.path(reportdir, "report.txt")
 dev_log <- file.path(reportdir, "development.log")
@@ -1863,6 +1865,8 @@ if (corrections_exist) {
                     complete_trade_flow_cpc,
                     waitTimeout = 10800)
 }
+
+updateInfoTable(year = year, mode = 'save', results = stats)
 
 ## remove value only
 

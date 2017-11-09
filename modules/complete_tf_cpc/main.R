@@ -301,9 +301,6 @@ esdata <- ReadDatatable(
   where = paste0("chapter IN (", hs_chapters, ")")
 ) %>% tbl_df()
 
-# Use the smallest value that rounded is equal to zero for "zero" mt.
-esdata$qty_ton = ifelse(near(esdata$qty_ton, 0), 0.0005, esdata$qty_ton)
-
 stopifnot(nrow(esdata) > 0)
 
 # Sample, if required

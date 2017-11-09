@@ -1267,9 +1267,12 @@ tradedata <- doImputation(tradedata = tradedata)
 
 flog.trace("[%s] Flag stuff", PID, name = "dev")
 # XXX using flagTrade for the moment, but should go away
+# (Team BC: quantities below 1 tonne do not get imputed flag)
 tradedata <- tradedata %>%
-    setFlag2(flagTrade > 0, type = 'status', flag = 'I', var = 'quantity') %>%
-    setFlag2(flagTrade > 0, type = 'method', flag = 'e', var = 'quantity')
+    setFlag2(flagTrade > 0 & qty > 1,
+             type = 'status', flag = 'I', var = 'quantity') %>%
+    setFlag2(flagTrade > 0 & qty > 1,
+             type = 'method', flag = 'e', var = 'quantity')
 
 ##' Separate flags.
 

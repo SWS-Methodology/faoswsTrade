@@ -123,10 +123,13 @@ if (faosws::CheckDebug()){
 
   options(error = function(){
     dump.frames()
+
     filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"),
                           USER,
                           "complete_tf_cpc")
+
     dir.create(filename, showWarnings = FALSE, recursive = TRUE)
+
     save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
@@ -214,7 +217,7 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
 
 ##'
 
-flog.info("HS chapters to be selected:", hs_chapters,  capture = T)
+flog.info("HS chapters to be selected:", hs_chapters,  capture = TRUE)
 
 ##' # Download helper tables
 
@@ -350,12 +353,12 @@ flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
 
 ## Only regime 4 is relevant for Eurostat data
 esdata <- esdata %>%
-  dplyr::filter_(~stat_regime == "4") %>%
+  filter_(~stat_regime == "4") %>%
   ## Removing stat_regime as it is not needed anymore
   select_(~-stat_regime) %>%
   # Remove totals, 1010 = 'European Union', 1011 = 'Extra-European Union', see
   # http://ec.europa.eu/eurostat/documents/3859598/5889816/KS-BM-05-002-EN.PDF
-  dplyr::filter_(~!(declarant == 'EU' | partner %in% c('1010', '1011')))
+  filter_(~!(declarant == 'EU' | partner %in% c('1010', '1011')))
 
 flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
@@ -416,7 +419,7 @@ tldata <- tldata %>%
         part         = as.numeric(part)
       ) %>%
       # Exclude EU grouping and old countries
-      dplyr::filter_(
+      filter_(
         ~wholepartner %in% c(251, 381, 579, 581, 757, 842)
       ),
     by = c("partner" = "part")
@@ -575,11 +578,11 @@ if (nrow(tmp) > 0) {
   # XXX
   add_map <- add_map %>%
     group_by(reporter_fao, year, flow, hs) %>%
-    dplyr::mutate(n = n(), i = 1:n(), hs_ext_perc = sum(!is.na(hs_extend))/n()) %>%
-    ungroup() %>%
+    dplyr::mutate(hs_ext_perc = sum(!is.na(hs_extend))/n()) %>%
     # Prefer cases where hs_extend is available
-    dplyr::filter(hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1L)) %>%
-    select(-n, -i, -hs_ext_perc)
+    dplyr::filter(hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n() == 1)) %>%
+    ungroup() %>%
+    select(-hs_ext_perc)
 }
 
 # Raise warning if countries were NOT in mapping.
@@ -590,10 +593,10 @@ if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
 
 add_map <- add_map %>%
   dplyr::mutate(
-    startyear = year,
-    endyear = 2050L,
-    fromcode = hs,
-    tocode = hs,
+    startyear  = year,
+    endyear    = 2050L,
+    fromcode   = hs,
+    tocode     = hs,
     recordnumb = NA_integer_
   ) %>%
   select(
@@ -635,7 +638,7 @@ flog.info("HS->FCL mapping table preview:",
 rprt(hsfclmap3, "hsfclmap", year)
 
 hsfclmap <- hsfclmap3 %>%
-  dplyr::filter_(~startyear <= year & endyear >= year) %>%
+  filter_(~startyear <= year & endyear >= year) %>%
   select_(~-startyear, ~-endyear)
 
 # Workaround issue #123
@@ -651,7 +654,7 @@ if (length(from_gt_to) > 0)
                  paste0(from_gt_to, collapse = ", ")))
 
 hsfclmap <- hsfclmap %>%
-  dplyr::filter_(~!fromgtto) %>%
+  filter_(~!fromgtto) %>%
   select_(~-fromgtto)
 
 stopifnot(nrow(hsfclmap) > 0)
@@ -662,9 +665,8 @@ flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfcl
 
 hs6standard <- hs6standard %>%
   group_by(hs2012_code) %>%
-  dplyr::mutate(n = n()) %>%
+  dplyr::filter(n() == 1) %>%
   ungroup() %>%
-  dplyr::filter(n == 1) %>%
   dplyr::mutate(hs6 = as.integer(hs2012_code)) %>%
   select(hs6, hs2012_code, faostat_code)
 
@@ -681,10 +683,14 @@ if (use_adjustments) {
   message(sprintf("[%s] Reading in adjustments", PID))
 
   adjustments <- tbl_df(adjustments)
+
   colnames(adjustments) <- sapply(colnames(adjustments),
                                   function(x) gsub("adj_","",x))
+
   adj_cols_int <- c("year","flow","fcl","partner","reporter")
+
   adj_cols_dbl <- c("hs")
+
   adjustments <- adjustments %>%
     dplyr::mutate_each_(funs(as.integer),adj_cols_int) %>%
     dplyr::mutate_each_(funs(as.double),adj_cols_dbl)
@@ -710,7 +716,10 @@ unsdpartnersblocks <- unsdpartnersblocks # already dowloaded
 
 #data("fclunits", package = "faoswsTrade", envir = environment())
 fclunits <- tbl_df(fclunits) %>%
-  dplyr::rename(fcl = fcu_fcl, fclunit = fcu_fclunit) %>%
+  dplyr::rename(
+    fcl     = fcu_fcl,
+    fclunit = fcu_fclunit
+  ) %>%
   dplyr::mutate(fcl = as.integer(fcl))
 
 ##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
@@ -721,7 +730,11 @@ fclunits <- tbl_df(fclunits) %>%
 
 #data("comtradeunits", package = "faoswsTrade", envir = environment())
 comtradeunits <- tbl_df(comtradeunits) %>%
-  dplyr::rename(qunit = ctu_qunit, wco = ctu_wco, desc = ctu_desc) %>%
+  dplyr::rename(
+    qunit = ctu_qunit,
+    wco   = ctu_wco,
+    desc  = ctu_desc
+  ) %>%
   dplyr::mutate(qunit = as.integer(qunit))
 
 ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
@@ -747,7 +760,7 @@ flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
 hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 
 hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
-  dplyr::filter_(~fcl_links == 1L) %>%
+  filter_(~fcl_links == 1L) %>%
   distinct()
 
 rprt(hs6fclmap, "hs6fclmap")
@@ -776,11 +789,11 @@ esdata <- esdata %>%
 
 ##+ es-treat-unmapped
 esdata_not_area_in_fcl_mapping <- esdata %>%
-  dplyr::filter_(~!(reporter %in% unique(hsfclmap$area)))
+  filter_(~!(reporter %in% unique(hsfclmap$area)))
 
 rprt_writetable(esdata_not_area_in_fcl_mapping)
 
-esdata <- dplyr::filter_(esdata, ~reporter %in% unique(hsfclmap$area))
+esdata <- filter_(esdata, ~reporter %in% unique(hsfclmap$area))
 
 flog.info("Records after removing areas not in HS->FCL map: %s", nrow(esdata))
 
@@ -814,7 +827,9 @@ esdata <- esdata %>%
     hs6standard %>% select(-hs2012_code),
     by = 'hs6'
   ) %>%
-  dplyr::mutate(fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)) %>%
+  dplyr::mutate(
+    fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)
+  ) %>%
   select(-faostat_code)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
@@ -825,7 +840,7 @@ flog.trace("[%s] ES: dropping unmapped records", PID, name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
-esdata <- dplyr::filter_(esdata, ~!(is.na(fcl)))
+esdata <- filter_(esdata, ~!(is.na(fcl)))
 
 flog.info("ES records after removing non-mapped HS codes: %s", nrow(esdata))
 
@@ -906,12 +921,12 @@ tldata <- tldata %>%
 # because in any case we can proceed their data
 
 tldata_not_area_in_fcl_mapping <- tldata %>%
-  dplyr::filter_(~!(reporter %in% unique(hsfclmap$area)))
+  filter_(~!(reporter %in% unique(hsfclmap$area)))
 
 rprt_writetable(tldata_not_area_in_fcl_mapping)
 
 flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
-tldata <- dplyr::filter_(tldata, ~reporter %in% unique(hsfclmap$area))
+tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
 
 ##+ reexptoexp ####
 ##' 1. Re-imports become imports and re-exports become exports.
@@ -952,7 +967,9 @@ tldata <- tldata %>%
     hs6standard %>% select(-hs2012_code),
     by = 'hs6'
   ) %>%
-  dplyr::mutate(fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)) %>%
+  dplyr::mutate(
+    fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)
+  ) %>%
   select(-faostat_code)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
@@ -963,7 +980,7 @@ flog.trace("[%s] TL: dropping unmapped records", PID, name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
 
-tldata <- dplyr::filter_(tldata, ~!is.na(fcl))
+tldata <- filter_(tldata, ~!is.na(fcl))
 
 flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
@@ -979,8 +996,7 @@ tldata <- addFCLunits(tldata, fclunits = fclunits)
 
 tldata <- tldata %>%
   dplyr::mutate_(qunit = ~as.integer(qunit)) %>%
-  left_join(comtradeunits %>% select_(~qunit, ~wco),
-            by = "qunit")
+  left_join(comtradeunits %>% select_(~qunit, ~wco), by = "qunit")
 
 ## Dataset with all matches between Comtrade and FAO units
 ctfclunitsconv <- tldata %>%
@@ -1023,7 +1039,7 @@ tldata <- left_join(tldata, ctfclunitsconv, by = c("qunit", "wco", "fclunit"))
 
 # For converting qty to metric tonnes
 fcl_spec_mt_conv <- tldata %>%
-  dplyr::filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
+  filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
   distinct()
 
@@ -1062,10 +1078,9 @@ if (NROW(fcl_spec_mt_conv) > 0) {
 
   ### Add commodity specific conv.factors to dataset
 
-  tldata <- left_join(tldata, fcl_spec_mt_conv, by = c("fcl", "wco"))
-
-  tldata <- left_join(tldata, fcl_spec_head_conv,
-                      by = c("reporter", "fcl", "fclunit", "wco"))
+  tldata <- tldata %>%
+    left_join(fcl_spec_mt_conv, by = c("fcl", "wco")) %>%
+    left_join(fcl_spec_head_conv, by = c("reporter", "fcl", "fclunit", "wco"))
 
   ########## Conversion of units
 
@@ -1087,7 +1102,8 @@ if (NROW(fcl_spec_mt_conv) > 0) {
     )
 
   # Decimals make no sense for heads
-  tldata$qtyfcl <- ifelse(tldata$fclunit %in% 'heads', round(tldata$qtyfcl, 0), tldata$qtyfcl)
+  tldata$qtyfcl <- ifelse(tldata$fclunit %in% 'heads',
+                          round(tldata$qtyfcl, 0), tldata$qtyfcl)
 
   # To avoid problems with UV
   tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0) & tldata$fclunit %in% '1000 heads', 0.1, tldata$qtyfcl)
@@ -1137,7 +1153,7 @@ if (dollars) {
 flog.trace("[%s] TL: aggregate to FCL", PID, name = "dev")
 tldata <- tldata %>%
   select(-weight, -qty) %>%
-  dplyr::rename(weight = qtyfcl) # XXX weight should probably be dplyr::renamed qty here
+  dplyr::rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
 
@@ -1299,8 +1315,9 @@ flog.trace("[%s] Aggregation by FCL", PID, name = "dev")
 tradedata <- tradedata %>%
   dplyr::mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
-  dplyr::summarise_each_(funs(sum(., na.rm = TRUE)),
-                  vars = c("qty", "value","flagTrade", "nfcl")) %>%
+  dplyr::summarise_each_(
+    funs(sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade", "nfcl")
+  ) %>%
   ungroup()
 
 flog.trace("[%s] Flags again", PID, name = "dev")
@@ -1332,7 +1349,7 @@ tradedata <- tradedata %>%
 # Not resolve mapping fcl2cpc
 no_mapping_fcl2cpc = tradedata %>%
   select_(~fcl, ~cpc) %>%
-  dplyr::filter_(~is.na(cpc)) %>%
+  filter_(~is.na(cpc)) %>%
   distinct_(~fcl) %>%
   select_(~fcl) %>%
   unlist()
@@ -1343,17 +1360,19 @@ no_mapping_fcl2cpc = tradedata %>%
 # Converting back to M49 for the system
 flog.trace("[%s] Convert FAO area codes to M49", PID, name = "dev")
 tradedata <- tradedata %>%
-  dplyr::mutate_(reporterM49 = ~fs2m49(as.character(reporter)),
-          partnerM49  = ~fs2m49(as.character(partner))) %>%
+  dplyr::mutate_(
+    reporterM49 = ~fs2m49(as.character(reporter)),
+    partnerM49  = ~fs2m49(as.character(partner))
+  ) %>%
   # XXX issue 34
   dplyr::mutate(partnerM49 = ifelse(partner == 252, '896', partnerM49))
 
 # Report of countries mapping to NA in M49
 countries_not_mapping_M49 <- bind_rows(
   tradedata %>% select_(fc = ~reporter, m49 = ~reporterM49),
-  tradedata %>% select_(fc = ~partner, m49 = ~partnerM49)) %>%
+  tradedata %>% select_(fc = ~partner,  m49 = ~partnerM49)) %>%
   distinct_() %>%
-  dplyr::filter_(~is.na(m49)) %>%
+  filter_(~is.na(m49)) %>%
   select_(~fc) %>%
   unlist()
 
@@ -1384,9 +1403,8 @@ to_mirror <- flowsToMirror(tradedata) %>%
 tradedata <- mirrorNonReporters(tradedata, mirror = to_mirror)
 
 # Add an auxiliary variable "mirrored" that will be removed later
-tradedata <-
+tradedata <- tradedata %>%
   left_join(
-    tradedata,
     to_mirror %>% dplyr::mutate(mirrored = 1L),
     by = c('reporter' = 'area', 'flow')
   )
@@ -1481,9 +1499,9 @@ for (i in c('status', 'method')) {
 
 flog.trace("[%s] Complete trade flow CPC", PID, name = "dev")
 complete_trade_flow_cpc <- tradedata %>%
-  dplyr::filter_(~fcl != 1181) %>% ## Subsetting out bees
+  filter_(~fcl != 1181) %>% ## Subsetting out bees
   select_(~-fcl) %>%
-  dplyr::filter_(~!(is.na(cpc))) %>%
+  filter_(~!(is.na(cpc))) %>%
   transmute_(geographicAreaM49Reporter = ~reporterM49,
              geographicAreaM49Partner  = ~partnerM49,
              flow                      = ~flow,
@@ -1535,7 +1553,8 @@ if (corrections_exist) {
 
   flog.trace("[%s] Apply corrections to reporter", PID, name = "dev")
 
-  complete_corrected <- useValidationCorrections(complete_trade_flow_cpc, corrections_table)
+  complete_corrected <- useValidationCorrections(complete_trade_flow_cpc,
+                                                 corrections_table)
 
   complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
     dplyr::mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
@@ -1551,9 +1570,8 @@ if (corrections_exist) {
     ) %>%
     dplyr::mutate(flow = recode(flow, '2' = 1, '1' = 2), to_correct = TRUE)
 
-  complete_mirror_to_correct <-
+  complete_mirror_to_correct <- complete_trade_flow_cpc_mirror %>%
     left_join(
-      complete_trade_flow_cpc_mirror,
       complete_with_corrections_mirror,
       by = c(
         'geographicAreaM49Reporter',
@@ -1572,17 +1590,21 @@ if (corrections_exist) {
 
   flog.trace("[%s] Apply corrections to partner (if mirrored)", PID, name = "dev")
 
-  complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct, corrections_table_mirror)
+  complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct,
+                                                        corrections_table_mirror)
 
-  complete_all_corrected <- bind_rows(complete_corrected$corrected, complete_mirror_corrected$corrected)
+  complete_all_corrected <- bind_rows(complete_corrected$corrected,
+                                      complete_mirror_corrected$corrected)
 
-  complete_uncorrected <- anti_join(
-                            complete_trade_flow_cpc,
-                            complete_all_corrected,
-                            by = c('geographicAreaM49Reporter', 'geographicAreaM49Partner', 'flow', 'measuredItemCPC')
-                          )
+  complete_uncorrected <- complete_trade_flow_cpc %>%
+    anti_join(
+      complete_all_corrected,
+      by = c('geographicAreaM49Reporter', 'geographicAreaM49Partner',
+             'flow', 'measuredItemCPC')
+    )
 
-  complete_trade_flow_cpc <- bind_rows(complete_uncorrected, complete_all_corrected)
+  complete_trade_flow_cpc <- bind_rows(complete_uncorrected,
+                                       complete_all_corrected)
 
   if (nrow(complete_corrected$to_drop) > 0) {
     flog.trace("[%s] Some corrections were not applied", PID, name = "dev")
@@ -1620,39 +1642,50 @@ quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
 uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
-  tidyr::gather(measuredElementTrade, Value, -geographicAreaM49Reporter,
-                -geographicAreaM49Partner, -measuredItemCPC, -timePointYears,
-                -flagObservationStatus_v, -flagObservationStatus_q,
-                -flagMethod_v, -flagMethod_q, -unit, -flow,
-                -correction_metadata_qty, -correction_metadata_value) %>%
-  rowwise() %>%
-  dplyr::mutate_(measuredElementTrade =
-            ~convertMeasuredElementTrade(measuredElementTrade,
-                                         unit,
-                                         flow)) %>%
-  ungroup() %>%
-  dplyr::filter_(~measuredElementTrade != "999") %>%
-  dplyr::mutate(
-    correction_metadata_uv = ifelse(
-                               !is.na(correction_metadata_qty),
-                               ifelse(
-                                 !is.na(correction_metadata_value),
-                                 paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
-                                 correction_metadata_qty
-                               ),
-                               correction_metadata_value
-                             ),
-    correction_metadata   = ifelse(
-                              measuredElementTrade %in% quantityElements,
-                              correction_metadata_qty,
-                              ifelse(
-                                measuredElementTrade %in% uvElements,
-                                correction_metadata_uv,
-                                correction_metadata_value
-                              )
-                            )
+  tidyr::gather(
+    measuredElementTrade, Value, -geographicAreaM49Reporter,
+    -geographicAreaM49Partner, -measuredItemCPC, -timePointYears,
+    -flagObservationStatus_v, -flagObservationStatus_q,
+    -flagMethod_v, -flagMethod_q, -unit, -flow,
+    -correction_metadata_qty, -correction_metadata_value
   ) %>%
-  select_(~-flow,~-unit, ~-correction_metadata_qty, ~-correction_metadata_value, ~-correction_metadata_uv)
+  rowwise() %>%
+  dplyr::mutate_(
+    measuredElementTrade =
+      ~convertMeasuredElementTrade(
+        measuredElementTrade,
+        unit,
+        flow
+      )
+  ) %>%
+  ungroup() %>%
+  filter_(~measuredElementTrade != "999") %>%
+  dplyr::mutate(
+    correction_metadata_uv =
+      ifelse(
+        !is.na(correction_metadata_qty),
+        ifelse(
+          !is.na(correction_metadata_value),
+          paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
+          correction_metadata_qty
+        ),
+        correction_metadata_value
+      ),
+    correction_metadata =
+      ifelse(
+        measuredElementTrade %in% quantityElements,
+        correction_metadata_qty,
+        ifelse(
+          measuredElementTrade %in% uvElements,
+          correction_metadata_uv,
+          correction_metadata_value
+      )
+    )
+  ) %>%
+  select_(
+    ~-flow, ~-unit, ~-correction_metadata_qty,
+    ~-correction_metadata_value, ~-correction_metadata_uv
+  )
 
 if (corrections_exist) {
   flog.trace("[%s] Generating metadata data.table", PID, name = "dev")
@@ -1709,7 +1742,8 @@ if (corrections_exist) {
     #dplyr::rename(Metadata_Value = value)
 
   # Required to be a data.table
-  metad <- select(metad, -correction_metadata) %>% as.data.table()
+  metad <- select(metad, -correction_metadata) %>%
+    as.data.table()
 }
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
@@ -1728,12 +1762,14 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
     flagObservationStatus = ifelse(measuredElementTrade %in% uvElements,
                                    flagObservationStatus_q,
                                    flagObservationStatus),
-    flagMethod = ifelse(measuredElementTrade %in% uvElements,
-                        'i',
-                        flagMethod)
+    flagMethod            = ifelse(measuredElementTrade %in% uvElements,
+                                   'i',
+                                   flagMethod)
   ) %>%
-  select(-flagObservationStatus_v, -flagObservationStatus_q,
-         -flagMethod_v, -flagMethod_q)
+  select(
+    -flagObservationStatus_v, -flagObservationStatus_q,
+    -flagMethod_v, -flagMethod_q
+  )
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
@@ -1763,10 +1799,10 @@ if (remove_nonexistent_transactions) {
 
   GetCodeList2 <- function(dimension = NA) {
     GetCodeList(
-                domain    = 'trade',
-                dataset   = 'completed_tf_cpc_m49',
-                dimension = dimension
-                )
+      domain    = 'trade',
+      dataset   = 'completed_tf_cpc_m49',
+      dimension = dimension
+    )
   }
 
   Keys <- list(reporters = GetCodeList2(dimension = 'geographicAreaM49Reporter')[type == 'country', code],

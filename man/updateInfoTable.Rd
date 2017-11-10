@@ -4,10 +4,12 @@
 \alias{updateInfoTable}
 \title{Update the table with information of module runs.}
 \usage{
-updateInfoTable(year = NA, mode = NA, results = NA)
+updateInfoTable(year = NA, table = NA, mode = NA, results = NA)
 }
 \arguments{
 \item{year}{The year.}
+
+\item{table}{The datatable with runs information.}
 
 \item{mode}{String: which type of update will be done. "restart" means
 only the "restarted" date string will be updated (it will also update

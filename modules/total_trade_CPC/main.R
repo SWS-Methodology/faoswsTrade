@@ -20,6 +20,7 @@
 ##+ setup, echo=FALSE, eval=FALSE
 
 # Year for processing
+library(data.table)
 library(faoswsTrade)
 library(faosws)
 library(stringr)
@@ -27,7 +28,7 @@ library(scales)
 library(faoswsUtil)
 library(faoswsFlag)
 library(tidyr)
-library(dplyr, warn.conflicts = F)
+library(dplyr, warn.conflicts = FALSE)
 
 # If this is set to TRUE, the module will download the whole dataset
 # saved on SWS (year specific) and will do a setdiff by comparing this
@@ -72,6 +73,9 @@ if(CheckDebug()){
 year <- as.integer(swsContext.computationParams$year)
 
 startTime = Sys.time()
+
+updateInfoTable(year = year, infotable = 'total_tf_runs_info',
+                mode = 'restart')
 
 ##' # Import Data from Complete TF CPC
 ##'
@@ -274,6 +278,9 @@ if (remove_nonexistent_transactions) {
 stats <- SaveData("trade",
                   "total_trade_cpc_m49",
                   total_trade_cpc_w_uv)
+
+updateInfoTable(year = year, infotable = 'total_tf_runs_info',
+                mode = 'save', results = stats)
 
 sprintf(
   "Module completed in %1.2f minutes.

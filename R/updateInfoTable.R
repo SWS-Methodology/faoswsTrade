@@ -1,6 +1,7 @@
 #' Update the table with information of module runs.
 #'
 #' @param year The year.
+#' @param table The datatable with runs information.
 #' @param mode String: which type of update will be done. "restart" means
 #'   only the "restarted" date string will be updated (it will also update
 #'   the "info" variable by setting it to "restarted"; "save" will update the
@@ -16,7 +17,8 @@
 #'
 #' @export
 
-updateInfoTable <- function(year = NA, mode = NA, results = NA) {
+updateInfoTable <- function(year = NA, table = NA,
+                            mode = NA, results = NA) {
 
   if (missing(year)) {
     stop('"year" is missing.')
@@ -30,9 +32,15 @@ updateInfoTable <- function(year = NA, mode = NA, results = NA) {
     stop('"results", i.e., the object returned by SaveData(), is missing.')
   }
 
-  changeset <- Changeset('complete_tf_runs_info')
+  tnames <- c('total_tf_runs_info', 'complete_tf_runs_info')
 
-  existing_tab <- ReadDatatable('complete_tf_runs_info', readOnly = FALSE)
+  if (!(table %in% tnames)) {
+    stop(paste('"table", should be either', paste(tnames, collapse = ' or ')))
+  }
+
+  changeset <- Changeset(table)
+
+  existing_tab <- ReadDatatable(table, readOnly = FALSE)
 
   if (nrow(existing_tab) == 0) {
     warning('The info table is empty. Should it be like that?')
@@ -127,12 +135,14 @@ updateInfoTable <- function(year = NA, mode = NA, results = NA) {
 
     new_infotable_row[, (cols) := lapply(.SD, as.integer), .SDcols = cols]
 
-    hours_passed <- round(as.numeric(difftime(
+    time_unit <- ifelse(table == 'total_tf_runs_info', 'minutes', 'hours')
+
+    time_passed <- round(as.numeric(difftime(
                                        new_infotable_row$saved,
                                        new_infotable_row$restarted,
-                                       units = 'hours')), 2)
+                                       units = time_unit)), 2)
 
-    new_infotable_row$info <- paste(hours_passed, 'hours')
+    new_infotable_row$info <- paste(time_passed, time_unit)
 
     new_infotable <- rbind(info_table_no_last, new_infotable_row)
 

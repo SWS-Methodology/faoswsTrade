@@ -50,15 +50,14 @@ updateInfoTable <- function(year = NA, mode = NA, results = NA) {
 
   Finalise(changeset)
 
-  existing_tab <- existing_tab[, c('year',
-                                   'inserted',
-                                   'appended',
-                                   'ignored',
-                                   'discarded',
-                                   'saved',
-                                   'restarted',
-                                   'info')]
-
+  existing_tab <- existing_tab[, list(year,
+                                      inserted,
+                                      appended,
+                                      ignored,
+                                      discarded,
+                                      saved,
+                                      restarted,
+                                      info)]
 
   if (add_year) {
     new_year_row <-

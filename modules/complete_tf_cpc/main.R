@@ -157,8 +157,10 @@ if (!exists('out_coef', inherits = FALSE)) {
 }
 flog.info("Coefficient for outlier detection: %s", out_coef)
 
-updateInfoTable(year = year, table = 'complete_tf_runs_info',
-                mode = 'restart')
+if (!CheckDebug()) {
+  updateInfoTable(year = year, table = 'complete_tf_runs_info',
+                  mode = 'restart')
+}
 
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 report_txt <- file.path(reportdir, "report.txt")
@@ -1873,8 +1875,10 @@ if (corrections_exist) {
                     waitTimeout = 10800)
 }
 
-updateInfoTable(year = year, table = 'complete_tf_runs_info',
-                mode = 'save', results = stats)
+if (!CheckDebug()) {
+  updateInfoTable(year = year, table = 'complete_tf_runs_info',
+                  mode = 'save', results = stats)
+}
 
 ## remove value only
 

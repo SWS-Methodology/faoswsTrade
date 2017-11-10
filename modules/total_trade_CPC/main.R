@@ -74,7 +74,7 @@ year <- as.integer(swsContext.computationParams$year)
 
 startTime = Sys.time()
 
-updateInfoTable(year = year, infotable = 'total_tf_runs_info',
+updateInfoTable(year = year, table = 'total_tf_runs_info',
                 mode = 'restart')
 
 ##' # Import Data from Complete TF CPC
@@ -279,7 +279,7 @@ stats <- SaveData("trade",
                   "total_trade_cpc_m49",
                   total_trade_cpc_w_uv)
 
-updateInfoTable(year = year, infotable = 'total_tf_runs_info',
+updateInfoTable(year = year, table = 'total_tf_runs_info',
                 mode = 'save', results = stats)
 
 sprintf(

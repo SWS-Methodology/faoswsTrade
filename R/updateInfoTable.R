@@ -135,7 +135,7 @@ updateInfoTable <- function(year = NA, table = NA,
 
     new_infotable_row[, (cols) := lapply(.SD, as.integer), .SDcols = cols]
 
-    time_unit <- ifelse(table == 'total_tf_runs_info', 'minutes', 'hours')
+    time_unit <- ifelse(table == 'total_tf_runs_info', 'mins', 'hours')
 
     time_passed <- round(as.numeric(difftime(
                                        new_infotable_row$saved,

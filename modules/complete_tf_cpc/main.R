@@ -253,6 +253,10 @@ if (!only_pre_process) {
   fcl_codes <- ReadDatatable('fcl_2_cpc')$fcl
   stopifnot(length(fcl_codes) > 0)
 
+  flog.trace("[%s] Reading in 'livestock_weights' datatable", PID, name = "dev")
+  livestock_weights <- ReadDatatable('livestock_weights')
+  stopifnot(nrow(hs6standard) > 0)
+
   flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')
   stopifnot(nrow(hs6standard) > 0)
@@ -1069,7 +1073,9 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   fcl_spec_mt_conv$convspec_mt[is.na(fcl_spec_mt_conv$convspec_mt)] <- 0
 
   # weight > heads
-  fcl_spec_head_conv <- livestockWeightsTable() %>%
+  fcl_spec_head_conv <- livestock_weights %>%
+    tbl_df() %>%
+    select(reporter = reporter_fao, fcl, liveweight) %>%
     left_join(fcl_spec_head_conv, by = 'fcl') %>%
     dplyr::filter(!is.na(fclunit)) %>%
     dplyr::mutate(
@@ -1082,7 +1088,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   ### Add commodity specific conv.factors to dataset
 
   tldata <- tldata %>%
-    left_join(fcl_spec_mt_conv, by = c("fcl", "wco")) %>%
+    left_join(fcl_spec_mt_conv,   by = c("fcl", "wco")) %>%
     left_join(fcl_spec_head_conv, by = c("reporter", "fcl", "fclunit", "wco"))
 
   ########## Conversion of units

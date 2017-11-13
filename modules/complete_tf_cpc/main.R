@@ -257,7 +257,7 @@ if (!only_pre_process) {
 
   flog.trace("[%s] Reading in 'livestock_weights' datatable", PID, name = "dev")
   livestock_weights <- ReadDatatable('livestock_weights')
-  stopifnot(nrow(hs6standard) > 0)
+  stopifnot(nrow(livestock_weights) > 0)
 
   flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')

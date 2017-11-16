@@ -1623,6 +1623,14 @@ if (corrections_exist) {
     warning('Some corrections were not applied. See reports.')
     corrections_not_applied <- complete_corrected$to_drop %>%
       dplyr::mutate(year = year) %>%
+      select(-correction_metadata) %>%
+      left_join(
+        corrections_table_all,
+        by = c('year', 'reporter', 'partner', 'item',
+               'flow', 'data_original',
+               'data_type', 'correction_input',
+               'correction_type')
+      ) %>%
       select(year, everything()) %>%
       as.data.frame()
 

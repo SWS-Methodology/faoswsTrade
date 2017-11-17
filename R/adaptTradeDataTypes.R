@@ -20,8 +20,7 @@ adaptTradeDataTypes <- function(tradedata) {
 
   tradedata <- tradedata %>%
     mutate_at(vars(reporter, partner, flow), as.integer) %>%
-    mutate_at(vars(value, weight, qty), as.numeric) %>%
-    mutate_(hs6 = ~as.integer(stringr::str_sub(hs, 1, 6)))
+    mutate_at(vars(value, weight, qty), as.numeric)
 
   if (tradedataname == "tldata") {
     tradedata %>%

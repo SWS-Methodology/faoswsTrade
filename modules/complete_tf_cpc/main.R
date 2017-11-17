@@ -376,6 +376,9 @@ flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 esdata <- adaptTradeDataNames(esdata)
 tldata <- adaptTradeDataNames(tldata)
 
+esdata <- mutate_(esdata, hs6 = ~as.integer(str_sub(hs, 1, 6)))
+tldata <- mutate_(tldata, hs6 = ~as.integer(str_sub(hs, 1, 6)))
+
 ##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
 
 esdata <- removeNonNumeric(esdata)

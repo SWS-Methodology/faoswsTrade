@@ -379,6 +379,13 @@ tldata <- adaptTradeDataNames(tldata)
 esdata <- mutate_(esdata, hs6 = ~as.integer(str_sub(hs, 1, 6)))
 tldata <- mutate_(tldata, hs6 = ~as.integer(str_sub(hs, 1, 6)))
 
+##' 1. Filter HS codes of interest, i.e., codes that do not
+##' participate in further processing. Such solution drops,
+##' e.g., all HS codes shorter than 6 digits.
+
+esdata <- filterHS6FAOinterest(esdata)
+tldata <- filterHS6FAOinterest(tldata)
+
 ##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
 
 esdata <- removeNonNumeric(esdata)
@@ -388,13 +395,6 @@ tldata <- removeNonNumeric(tldata)
 
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
-
-##' 1. Filter HS codes of interest, i.e., codes that do not
-##' participate in further processing. Such solution drops,
-##' e.g., all HS codes shorter than 6 digits.
-
-esdata <- filterHS6FAOinterest(esdata)
-tldata <- filterHS6FAOinterest(tldata)
 
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 

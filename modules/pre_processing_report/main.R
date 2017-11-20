@@ -15,13 +15,6 @@ suppressMessages({
 futile.logger::flog.logger("dev", "TRACE")
 futile.logger::flog.threshold("TRACE", name = "dev")
 
-if (!CheckDebug()) {
-  options(error = function() {
-    dump.frames()
-    save(last.dump, file = "/work/SWS_R_Share/caetano/last.dump.RData")
-  })
-}
-
 ## set up for the test environment and parameters
 R_SWS_SHARE_PATH <- Sys.getenv("R_SWS_SHARE_PATH")
 DEBUG_MODE <- Sys.getenv("R_DEBUG_MODE")
@@ -46,7 +39,13 @@ if (CheckDebug()) {
 
   sapply(dir("R", full.names = TRUE), source)
 
+} else {
+  options(error = function() {
+    dump.frames()
+    save(last.dump, file = "/work/SWS_R_Share/caetano/last.dump.RData")
+  })
 }
+
 
 initial <- file.path(R_SWS_SHARE_PATH, "mongeau")
 save    <- file.path(R_SWS_SHARE_PATH, "trade/pre_processing_report")

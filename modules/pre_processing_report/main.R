@@ -24,6 +24,10 @@ if (CheckDebug()) {
 
   message("Not on server, so setting up environment...")
 
+  USER <- if_else(.Platform$OS.type == "unix",
+                  Sys.getenv('USER'),
+                  Sys.getenv('USERNAME'))
+
   library(faoswsModules)
   SETTINGS <- ReadSettings("modules/pre_processing_report/sws.yml")
 
@@ -40,9 +44,21 @@ if (CheckDebug()) {
   sapply(dir("R", full.names = TRUE), source)
 
 } else {
-  options(error = function() {
+
+  # Remove domain from username
+  USER <- regmatches(
+    swsContext.username,
+    regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
+  )
+
+  options(error = function(){
     dump.frames()
-    save(last.dump, file = "/work/SWS_R_Share/caetano/last.dump.RData")
+
+    filename <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), USER, "PPR")
+
+    dir.create(filename, showWarnings = FALSE, recursive = TRUE)
+
+    save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
 
@@ -84,9 +100,7 @@ allPPRtables <- c("reporters_years", "non_reporting_countries",
 # Send technical log messages to a file and console
 flog.appender(appender.tee(file.path(save, "development.log")), name = "dev")
 
-user <- swsContext.username
-
-flog.info("SWS-session is run by user %s", user, name = "dev")
+flog.info("SWS-session is run by user %s", USER, name = "dev")
 
 flog.debug("User's computation parameters:",
            swsContext.computationParams, capture = TRUE,

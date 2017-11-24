@@ -6,7 +6,7 @@ threshold <- 0.5
 
 # If TRUE, use previously downloaded files
 # (useful mainly for testing)
-use_previous <- TRUE
+use_previous <- FALSE
 
 library(faosws)
 library(dplyr)

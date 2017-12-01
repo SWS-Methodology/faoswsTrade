@@ -396,6 +396,14 @@ tldata <- removeNonNumeric(tldata)
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
 
+# Specific HS corrections
+#
+# XXX As of 20171130 this is relevant only for a given reporter in
+# a given year, but in the future it should probably be generalised
+
+# esdata <- specificCorrectionsHS(esdata)
+tldata <- specificCorrectionsHS(tldata)
+
 ##' 1. Convert ES geonomenclature country/area codes to FAO codes.
 
 ##+ geonom2fao

@@ -63,6 +63,10 @@ only_pre_process <- FALSE
 # will then be set to NA. See issue #164
 remove_nonexistent_transactions <- TRUE
 
+# If set to TRUE, an automatic HS6 mapping will be created so that
+# unmapped codes with normal mapped can be recovered with HS6 codes
+generate_hs6mapping <- TRUE
+
 # Package build ID (it is included into report directory name)
 build_id <- "master"
 
@@ -761,27 +765,43 @@ comtradeunits <- tbl_df(comtradeunits) %>%
 
 EURconversionUSD <- EURconversionUSD # already downloaded
 
-##' # Generate HS to FCL map at HS6 level
+##' # Generate HS to FCL map at HS6 level (if switched on)
+
+if (generate_hs6mapping) {
 
 # hs6fclmap ####
 
-flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
+  flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
 
 ##' 1. Universal (all years) HS6 mapping table.
 
-flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
+  flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
 
-hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+  hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
 
 ##' 1. Current year specific HS6 mapping table.
 
-flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
+  flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
 
-hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+  hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 
-hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
-  filter_(~fcl_links == 1L) %>%
-  distinct()
+  hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
+    filter_(~fcl_links == 1L) %>%
+    distinct()
+
+} else {
+
+  # A dummy zero-row dataframe needs to be created
+  hs6fclmap <-
+    data_frame(
+      reporter  = integer(),
+      flow      = integer(),
+      hs6       = integer(),
+      fcl       = double(),
+      fcl_links = integer()
+    )
+
+}
 
 rprt(hs6fclmap, "hs6fclmap")
 

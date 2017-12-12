@@ -1140,6 +1140,16 @@ tldata <- tldata %>%
 
 ######### Value from USD to thousands of USD
 
+##+ es_convcur
+
+##' 1. Convert currency of monetary values from EUR to USD using the
+##' `EURconversionUSD` table.
+
+esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
+                                          dplyr::filter(eusd_year == year) %>%
+                                          select(eusd_exchangerate))
+
+
 ##' 1. Convert data in thousands of dollars.
 
 if (dollars) {
@@ -1163,15 +1173,6 @@ tldata <- tldata %>%
   dplyr::rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
-
-##+ es_convcur
-
-##' 1. Convert currency of monetary values from EUR to USD using the
-##' `EURconversionUSD` table.
-
-esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
-                                          dplyr::filter(eusd_year == year) %>%
-                                          select(eusd_exchangerate))
 
 esdata <- esdata %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')

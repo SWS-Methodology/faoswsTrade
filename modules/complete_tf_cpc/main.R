@@ -92,9 +92,6 @@ multicore <- TRUE
 ## If TRUE, reported values will be in $, if FALSE in k$
 dollars <- FALSE
 
-## If TRUE, use adjustments (AKA "conversion notes"), if FALSE don't use them
-use_adjustments <- FALSE
-
 # If TRUE, impute outliers, if FALSE no imputation occurs
 detect_outliers <- FALSE
 
@@ -270,12 +267,6 @@ if (!only_pre_process) {
   flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
   add_map <- ReadDatatable('hsfclmap4')
   stopifnot(nrow(add_map) > 0)
-
-  if (use_adjustments) {
-    flog.trace("[%s] Reading in 'adjustments' datatable", PID, name = "dev")
-    adjustments <- ReadDatatable('adjustments')
-    stopifnot(nrow(adjustments) > 0)
-  }
 
   flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
   hsfclmap3 <- ReadDatatable('hsfclmap5')
@@ -694,31 +685,6 @@ hs6standard <- hs6standard %>%
   dplyr::mutate(hs6 = as.integer(hs2012_code)) %>%
   select(hs6, hs2012_code, faostat_code)
 
-
-if (use_adjustments) {
-
-  ##' - `adjustments`: Adjustment notes containing manually added conversion
-  ##' factors to transform from non-standard units of measurement to standard
-  ##' ones or to obtain quantities from traded values.
-
-  ## Old precedure
-  #data("adjustments", package = "hsfclmap", envir = environment())
-  ## New procedure
-  message(sprintf("[%s] Reading in adjustments", PID))
-
-  adjustments <- tbl_df(adjustments)
-
-  colnames(adjustments) <- sapply(colnames(adjustments),
-                                  function(x) gsub("adj_","",x))
-
-  adj_cols_int <- c("year","flow","fcl","partner","reporter")
-
-  adj_cols_dbl <- c("hs")
-
-  adjustments <- adjustments %>%
-    dplyr::mutate_each_(funs(as.integer),adj_cols_int) %>%
-    dplyr::mutate_each_(funs(as.double),adj_cols_dbl)
-}
 
 ##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
 ##' different list of geographic are codes. The partner dimesion is more
@@ -1198,31 +1164,6 @@ tldata <- tldata %>%
   dplyr::rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
-
-  ##' 1. Application of "adjustment notes" to both ES and TL data.
-
-# TODO Check quantity/weight
-# The notes should save the results in weight
-
-# TODO (Christian) Check this (some ES partners are not TL partners):
-# unique(esdata$partner)[!(unique(esdata$partner) %in% unique(tldata$partner))]
-
-# We need to set the flags one by one as adjustments not necessarily
-# (probably never?) adjust all the three variables at the same time
-if (use_adjustments == TRUE) {
-  flog.trace("[%s] Apply adjustments", PID, name = "dev")
-  esdata <- useAdjustments(tradedata = esdata, year = year, PID = PID,
-                           adjustments = adjustments, parallel = multicore) %>%
-    setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
-    setFlag3(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
-    setFlag3(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
-
-  tldata <- useAdjustments(tradedata = tldata, year = year,
-                           adjustments = adjustments, parallel = multicore) %>%
-    setFlag3(adj_value  == TRUE, type = 'method', flag = 'i', variable = 'value') %>%
-    setFlag3(adj_weight == TRUE, type = 'method', flag = 'i', variable = 'weight') %>%
-    setFlag3(adj_qty    == TRUE, type = 'method', flag = 'i', variable = 'quantity')
-}
 
 ##+ es_convcur
 

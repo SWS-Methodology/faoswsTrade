@@ -1157,7 +1157,6 @@ if (dollars) {
 ##+ tl_aggregate
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
-# XXX "notes" are applied to weight that is transformed below from qtyfcl
 flog.trace("[%s] TL: aggregate to FCL", PID, name = "dev")
 tldata <- tldata %>%
   select(-weight, -qty) %>%

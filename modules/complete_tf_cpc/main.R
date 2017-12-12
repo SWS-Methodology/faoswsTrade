@@ -1184,8 +1184,12 @@ esdata <- esdata %>%
   #  dplyr::mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
   #               ~starts_with('flag_'))
 
+esdata <- esdata %>%
+  dplyr::mutate(qtyfcl = ifelse(fclunit == "mt", weight, qty))
+
 # Assign `qty` flags to `weight` flags in ES but
 # only when `fclunit` is different from "mt".
+
 
 esdata <- esdata %>%
   dplyr::mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
@@ -1206,10 +1210,9 @@ tradedata <- bind_rows(
             qty = weight, value,
             starts_with('flag_')),
   esdata %>%
-    dplyr::mutate(uniqqty = ifelse(fclunit == "mt", weight, qty)) %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
-            qty = uniqqty, value,
+            qty = qtyfcl, value,
             starts_with('flag_'))
 )
 

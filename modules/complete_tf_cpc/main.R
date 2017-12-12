@@ -1149,6 +1149,9 @@ esdata$value <- esdata$value * as.numeric(EURconversionUSD %>%
                                           dplyr::filter(eusd_year == year) %>%
                                           select(eusd_exchangerate))
 
+esdata <- esdata %>%
+    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
+
 
 ##' 1. Convert data in thousands of dollars.
 
@@ -1173,9 +1176,6 @@ tldata <- tldata %>%
   dplyr::rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
 
 tldata_mid = tldata
-
-esdata <- esdata %>%
-    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 
   ###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
   #

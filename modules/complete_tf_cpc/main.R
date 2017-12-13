@@ -1166,7 +1166,6 @@ if (dollars) {
 ##+ tl_aggregate
 
 # Replace weight (first quantity column) by newly produced qtyfcl column
-flog.trace("[%s] TL: aggregate to FCL", PID, name = "dev")
 tldata <- tldata %>%
   select(-weight, -qty) %>%
   dplyr::rename(weight = qtyfcl) # XXX weight should probably be renamed qty here

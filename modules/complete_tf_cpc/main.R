@@ -1069,6 +1069,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
     left_join(conversion_factors_fcl_mt, by = c("fcl", "wco"))
 
+  # Zero quantities will be imputed
   fcl_spec_mt_conv$convspec_mt[is.na(fcl_spec_mt_conv$convspec_mt)] <- 0
 
   # weight > heads

@@ -1119,19 +1119,19 @@ if (NROW(fcl_spec_mt_conv) > 0) {
 ##' 1. If the `weight` variable is available and the final unit
 ##' of measurement is tonnes then `weight` is used as `quantity`.
 
-cond <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
+cond_w <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
 
-tldata$qtyfcl <- ifelse(cond, tldata$weight*0.001, tldata$qtyfcl)
+tldata$qtyfcl <- ifelse(cond_w, tldata$weight*0.001, tldata$qtyfcl)
+
+cond_q <- !is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head)
 
 # XXX
 # Flag on weight as qty (which underwent a change) will populate weight
 #
 tldata <- tldata %>%
-  setFlag3(cond, type = 'method', flag = 'i', variable = 'weight') %>%
-  setFlag3(!is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head),
-           type = 'method', flag = 'i', variable = 'weight') %>%
-  setFlag3(!is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head),
-           type = 'status', flag = 'T', variable = 'weight')
+  setFlag3(cond_w, type = 'method', flag = 'i', variable = 'weight') %>%
+  setFlag3(cond_q, type = 'method', flag = 'i', variable = 'weight') %>%
+  setFlag3(cond_q, type = 'status', flag = 'T', variable = 'weight')
 
 
 ######### Value from USD to thousands of USD

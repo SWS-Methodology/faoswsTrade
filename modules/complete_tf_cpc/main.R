@@ -1053,7 +1053,7 @@ fcl_spec_mt_conv <- tldata %>%
 fcl_spec_head_conv <- tldata %>%
   select(fcl, fclunit, wco) %>%
   distinct() %>%
-  dplyr::filter(wco == 'kg', fclunit %in% c('heads', '1000 heads', 'units'))
+  dplyr::filter(fclunit %in% c('heads', '1000 heads', 'units'))
 
 # XXX probably this check should be removed.
 if (NROW(fcl_spec_mt_conv) > 0) {
@@ -1088,7 +1088,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
 
   tldata <- tldata %>%
     left_join(fcl_spec_mt_conv,   by = c("fcl", "wco")) %>%
-    left_join(fcl_spec_head_conv, by = c("reporter", "fcl", "fclunit", "wco"))
+    left_join(fcl_spec_head_conv, by = c("reporter", "fcl", "fclunit"))
 
   ########## Conversion of units
 
@@ -1198,12 +1198,12 @@ tradedata <- bind_rows(
   tldata %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
-            qty = qtyfcl, value,
+            value, weight, qty = qtyfcl,
             starts_with('flag_')),
   esdata %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
-            qty = qtyfcl, value,
+            value, weight, qty = qtyfcl
             starts_with('flag_'))
 )
 

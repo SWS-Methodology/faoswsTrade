@@ -1096,27 +1096,23 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   #### FCL specific conv
 
   tldata <- tldata %>%
-    dplyr::mutate(qtyfcl =
-      ifelse(
-        !is.na(convspec_mt),
-        qty * convspec_mt,
+    dplyr::mutate(
+      qtyfcl =
         ifelse(
-          !is.na(convspec_head),
-          weight / convspec_head,
-          #### Common conv
-          # If no specific conv. factor, we apply general
-          qty * conv
-        )
-      )
+          !is.na(convspec_mt),
+          qty * convspec_mt,
+          ifelse(
+            !is.na(convspec_head),
+            weight / convspec_head,
+            #### Common conv
+            # If no specific conv. factor, we apply general
+            qty * conv
+          )
+        ),
+      # Decimals make no sense for heads
+      qtyfcl = ifelse(fclunit %in% 'heads', round(qtyfcl, 0), qtyfcl)
     )
 
-  # Decimals make no sense for heads
-  tldata$qtyfcl <- ifelse(tldata$fclunit %in% 'heads',
-                          round(tldata$qtyfcl, 0), tldata$qtyfcl)
-
-  # To avoid problems with UV
-  tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0) & tldata$fclunit %in% '1000 heads', 0.1, tldata$qtyfcl)
-  tldata$qtyfcl <- ifelse(near(tldata$qtyfcl, 0), 1, tldata$qtyfcl)
 } else {
   tldata$qtyfcl = NA
 }

@@ -1165,11 +1165,6 @@ if (dollars) {
 
 ##+ tl_aggregate
 
-# Replace weight (first quantity column) by newly produced qtyfcl column
-tldata <- tldata %>%
-  select(-weight, -qty) %>%
-  dplyr::rename(weight = qtyfcl) # XXX weight should probably be renamed qty here
-
 tldata_mid = tldata
 
   ###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
@@ -1203,7 +1198,7 @@ tradedata <- bind_rows(
   tldata %>%
     select(year, reporter, partner, flow,
             fcl, fclunit, hs,
-            qty = weight, value,
+            qty = qtyfcl, value,
             starts_with('flag_')),
   esdata %>%
     select(year, reporter, partner, flow,

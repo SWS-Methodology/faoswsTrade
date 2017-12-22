@@ -26,7 +26,7 @@ if (CheckDebug()) {
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token   = SETTINGS[["token"]])
 
-  dir_to_save <- paste0(Sys.getenv('HOME'), '/')
+  dir_to_save <- paste0(Sys.getenv('HOME'), '/validation_tool_files/')
 } else {
   dir_to_save <- '/work/SWS_R_Share/trade/validation_tool_files/'
 }
@@ -114,7 +114,6 @@ computeData <- function(reporter = NA) {
     if (nrow(data) > 10) {
       data <- data %>%
         reshapeTrade() %>%
-        dplyr::mutate(uv = value/qty) %>%
         # XXX should be "value only" items
         dplyr::filter(!is.na(qty)) %>%
         dplyr::mutate(uv = value / qty) %>%
@@ -126,9 +125,11 @@ computeData <- function(reporter = NA) {
           timePointYears,
           qty,
           value,
+          weight,
           uv,
           flag_qty,
-          flag_value
+          flag_value,
+          flag_weight
         ) %>%
         tidyr::complete(
           tidyr::nesting(
@@ -304,7 +305,8 @@ myfun_build_db_for_app <- function(rep = NA) {
       maqn,
       mavn,
       flag_qty,
-      flag_value
+      flag_value,
+      flag_weight
     ) %>%
     dplyr::rename(
       unit_value       = uv,
@@ -445,8 +447,10 @@ db_save <- db_save %>%
          timePointYears,
          qty,
          value,
+         weight,
          flag_qty,
          flag_value,
+         flag_weight,
          unit_value,
          out,
          ma,

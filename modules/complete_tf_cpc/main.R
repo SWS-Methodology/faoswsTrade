@@ -1049,9 +1049,13 @@ fcl_spec_mt_conv <- tldata %>%
   select_(~fcl, ~wco) %>%
   distinct()
 
+# Reset conv to NA ad its zero is not useful anymore
+tldata <- tldata %>%
+  dplyr::mutate(conv = ifelse(conv == 0, NA, conv))
+
 # For converting weight to 'heads', '1000 heads', 'units'.
 fcl_spec_head_conv <- tldata %>%
-  select(fcl, fclunit, wco) %>%
+  select(fcl, fclunit) %>%
   distinct() %>%
   dplyr::filter(fclunit %in% c('heads', '1000 heads', 'units'))
 
@@ -1071,16 +1075,23 @@ if (NROW(fcl_spec_mt_conv) > 0) {
     # Zero quantities will be imputed
     mutate(convspec_mt = ifelse(is.na(convspec_mt), 0, convspec_mt))
 
+  # XXX some weights are missing: e.g., reporter = 20, fcl = 946, year = 2015
+  # They can be imputed as the median of existing weights (see below), but this
+  # needs to be discussed:
+  #  livestock_weights %>%
+  #    unite(fcl_live, fcl, livestock, sep = '#') %>%
+  #    complete(reporter_fao, fcl_live) %>%
+  #    separate(fcl_live, c('fcl', 'livestock'), sep = '#') %>%
+  #    mutate(fcl = as.integer(fcl)) %>%
+  #    group_by(fcl) %>%
+  #    mutate(liveweight = ifelse(is.na(liveweight), median(liveweight, na.rm = TRUE), liveweight))
+
   # weight > heads
   fcl_spec_head_conv <- livestock_weights %>%
     tbl_df() %>%
     select(reporter = reporter_fao, fcl, liveweight) %>%
     left_join(fcl_spec_head_conv, by = 'fcl') %>%
     dplyr::filter(!is.na(fclunit)) %>%
-    dplyr::mutate(
-      liveweight =
-        ifelse(fclunit == '1000 heads', liveweight * 1000, liveweight)
-    ) %>%
     dplyr::filter(!is.na(liveweight), liveweight > 0) %>%
     dplyr::rename(convspec_head = liveweight)
 
@@ -1090,11 +1101,33 @@ if (NROW(fcl_spec_mt_conv) > 0) {
     left_join(fcl_spec_mt_conv,   by = c("fcl", "wco")) %>%
     left_join(fcl_spec_head_conv, by = c("reporter", "fcl", "fclunit"))
 
+  tldata$id <- 1:nrow(tldata)
+  tldata$qtyfcl <- NA_real_
+
+  # Maybe better to use case_when (results don't change anyway)
+  tldata_converted <- tldata %>%
+    dplyr::mutate(
+      qtyfcl = ifelse(fclunit == 'mt' & !is.na(weight),                weight / 1000, qtyfcl),
+      qtyfcl = ifelse(fclunit == 'heads' & !is.na(qty) & wco == 'u',             qty, qtyfcl),
+      qtyfcl = ifelse(fclunit == 'number' & !is.na(qty) & wco == 'u',            qty, qtyfcl),
+      # This requires a flag change
+      qtyfcl = ifelse(fclunit == '1000 heads' & !is.na(qty) & wco == 'u', qty / 1000, qtyfcl),
+      # -1 will be set to NA just below
+      qtyfcl = ifelse(fclunit == '$ value only',                                  -1, qtyfcl),
+      # Nothing can be done for these
+      qtyfcl = ifelse(is.na(weight) & is.na(qty),                                 -1, qtyfcl)
+    ) %>%
+    filter(!is.na(qtyfcl)) %>%
+    mutate(qtyfcl = ifelse(qtyfcl == -1, NA, qtyfcl))
+
+  tldata_not_converted <-
+    anti_join(tldata, tldata_converted, by = 'id')
+
   ########## Conversion of units
 
   #### FCL specific conv
 
-  tldata <- tldata %>%
+  tldata_to_convert <- tldata_not_converted %>%
     dplyr::mutate(
       qtyfcl =
         ifelse(
@@ -1108,20 +1141,36 @@ if (NROW(fcl_spec_mt_conv) > 0) {
             qty * conv
           )
         ),
-      # Decimals make no sense for heads
-      qtyfcl = ifelse(fclunit %in% 'heads', round(qtyfcl, 0), qtyfcl)
+      qtyfcl = ifelse(fclunit == '1000 heads', qtyfcl / 1000, qtyfcl)
     )
+
+  tldata <-
+    bind_rows(
+      tldata_converted,
+      tldata_to_convert
+    ) %>%
+    # Decimals make no sense for heads
+    mutate(qtyfcl = ifelse(fclunit %in% 'heads', round(qtyfcl, 0), qtyfcl))
+
+  rm(tldata_converted, tldata_to_convert, tldata_not_converted)
+  invisible(gc())
+
+  # Estimation of weight for livestock will be kept for later,
+  # especifically after doImputation() has been used.
 
 } else {
   tldata$qtyfcl = NA
 }
 
-##' 1. If the `weight` variable is available and the final unit
-##' of measurement is tonnes then `weight` is used as `quantity`.
+###' 1. If the `weight` variable is available and the final unit
+###' of measurement is tonnes then `weight` is used as `quantity`.
+## (already done above)
+#cond_w <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
+#
+#tldata$qtyfcl <- ifelse(cond_w, tldata$weight / 1000, tldata$qtyfcl)
 
-cond_w <- tldata$fclunit == 'mt' & !is.na(tldata$weight) & tldata$weight > 0
-
-tldata$qtyfcl <- ifelse(cond_w, tldata$weight*0.001, tldata$qtyfcl)
+# Weight is always in tonnes
+tldata$weight <- tldata$weight / 1000
 
 cond_q <- !is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head)
 
@@ -1129,9 +1178,9 @@ cond_q <- !is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head)
 # Flag on weight as qty (which underwent a change) will populate weight
 #
 tldata <- tldata %>%
-  setFlag3(cond_w, type = 'method', flag = 'i', variable = 'weight') %>%
-  setFlag3(cond_q, type = 'method', flag = 'i', variable = 'weight') %>%
-  setFlag3(cond_q, type = 'status', flag = 'T', variable = 'weight')
+  setFlag3(weight > 0, type = 'method', flag = 'i', variable = 'weight') %>%
+  setFlag3(cond_q,     type = 'method', flag = 'i', variable = 'weight') %>%
+  setFlag3(cond_q,     type = 'status', flag = 'T', variable = 'weight')
 
 
 ######### Value from USD to thousands of USD
@@ -1196,15 +1245,14 @@ esdata <- esdata %>%
 flog.trace("[%s] Combine TL and ES data sets", PID, name = "dev")
 tradedata <- bind_rows(
   tldata %>%
-    select(year, reporter, partner, flow,
-            fcl, fclunit, hs,
+    select(year, reporter, partner, flow, fcl, fclunit, hs,
             value, weight, qty = qtyfcl,
-            starts_with('flag_')),
+            convspec_head, starts_with('flag_'), wco),
   esdata %>%
-    select(year, reporter, partner, flow,
-            fcl, fclunit, hs,
-            value, weight, qty = qtyfcl
-            starts_with('flag_'))
+    mutate(convspec_head = NA_real_, wco = NA_character_) %>%
+    select(year, reporter, partner, flow, fcl, fclunit, hs,
+            value, weight, qty = qtyfcl,
+            convspec_head, starts_with('flag_'), wco)
 )
 
 # XXX this is fine, but probably the name of the function should be changed
@@ -1220,8 +1268,10 @@ flog.trace("[%s] Outlier detection and imputation", PID, name = "dev")
 ##+ calculate_median_uv
 
 tradedata <- tradedata %>%
-  dplyr::mutate_(no_quant = ~near(qty, 0) | is.na(qty),
-          no_value = ~near(value, 0) | is.na(value))
+  dplyr::mutate(
+    no_quant = fclunit != '$ value only' & (near(qty, 0) | is.na(qty)),
+    no_value = near(value, 0) | is.na(value)
+  )
 
 ##' 1. Unit values are calculated for each observation at the HS level as ratio
 ##' of monetary value over quantitya: $uv = value / qty$.
@@ -1292,9 +1342,16 @@ tradedata <- tradedata %>%
   dplyr::mutate_(nfcl = 1) %>%
   group_by_(~year, ~reporter, ~partner, ~flow, ~fcl, ~fclunit) %>%
   dplyr::summarise_each_(
-    funs(sum(., na.rm = TRUE)), vars = c("qty", "value","flagTrade", "nfcl")
+    funs(sum(., na.rm = TRUE)),
+    vars = c("value", "weight", "qty", "flagTrade", "nfcl")
   ) %>%
   ungroup()
+
+# XXX not all weights were estimated, so after aggregation they are zero
+tradedata <-
+  tradedata %>%
+  mutate(weight = ifelse(near(weight, 0), NA, weight))
+
 
 flog.trace("[%s] Flags again", PID, name = "dev")
 tradedata <- left_join(tradedata,
@@ -1486,17 +1543,34 @@ complete_trade_flow_cpc <- tradedata %>%
              geographicAreaM49Partner  = ~partnerM49,
              flow                      = ~flow,
              timePointYears            = ~year,
+             measuredItemCPC           = ~cpc,
+             value                     = ~value,
+             weight                    = ~weight,
+             qty                       = ~qty,
+             unit                      = ~fclunit,
              flagObservationStatus_v   = ~flagSTATUS_v,
              flagObservationStatus_q   = ~flagSTATUS_q,
              flagMethod_v              = ~flagMETHOD_v,
-             flagMethod_q              = ~flagMETHOD_q,
-             measuredItemCPC           = ~cpc,
-             qty                       = ~qty,
-             unit                      = ~fclunit,
-             value                     = ~value) %>%
+             flagMethod_q              = ~flagMETHOD_q) %>%
   ## unit of monetary values is "1000 $"
   dplyr::mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
+# Keep weight for livestock
+complete_trade_flow_cpc_live <-
+  complete_trade_flow_cpc %>%
+  filter(unit %in% c('heads', '1000 heads')) %>%
+  # XXX for now, no flags
+  select(-starts_with('flag')) %>%
+  mutate(flagObservationStatus = '', flagMethod = '') %>%
+  # we need here just weight
+  mutate(measuredElementTrade = ifelse(flow == 1, '5610', '5910')) %>%
+  select(-value, -qty, -uv, -unit, -flow) %>%
+  rename(Value = weight)
+
+# remove weight as not needed anymore
+complete_trade_flow_cpc <-
+  complete_trade_flow_cpc %>%
+  select(-weight)
 
 ##' 1. Use corrections from validation
 
@@ -1758,6 +1832,14 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
     -flagObservationStatus_v, -flagObservationStatus_q,
     -flagMethod_v, -flagMethod_q
   )
+
+# Adding weights for livestock
+complete_trade_flow_cpc <-
+  bind_rows(
+    complete_trade_flow_cpc,
+    complete_trade_flow_cpc_live
+  )
+
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 

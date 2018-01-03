@@ -60,7 +60,7 @@ local({
 })
 
 
-if(CheckDebug()){
+if (CheckDebug()) {
   library(faoswsModules)
   SETTINGS = ReadSettings("modules/total_trade_CPC/sws.yml")
   ## Define where your certificates are stored

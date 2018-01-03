@@ -17,7 +17,8 @@
 ##' module saves the ouput into the dataset `total\_trade\_cpc\_m49`,
 ##' within the `trade` domain.
 
-##+ setup, echo=FALSE, eval=FALSE
+##+ setup, include=FALSE
+knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # Year for processing
 library(data.table)
@@ -29,6 +30,8 @@ library(faoswsUtil)
 library(faoswsFlag)
 library(tidyr)
 library(dplyr, warn.conflicts = FALSE)
+
+##+ init
 
 # If this is set to TRUE, the module will download the whole dataset
 # saved on SWS (year specific) and will do a setdiff by comparing this
@@ -93,7 +96,7 @@ if (!CheckDebug()) {
 ##' 1. `5622`: Imports (US$)
 ##' 1. `5922`: Exports (US$)
 
-##+ import, echo=FALSE, eval=FALSE
+##+ import
 
 allReporterKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code]
 allPartnerKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Partner")[type == "country", code]
@@ -117,10 +120,10 @@ completetrade <- tbl_df(GetData(completetradekey))
 ##' - ignore missing values in aggregation
 ##' - aggregate flags using the `flagWeightTable`
 
-##+ flagWeightTable, echo=FALSE, eval=TRUE, results='asis'
+##+ flagWeightTable, results='asis'
 knitr::kable(faoswsFlag::flagWeightTable)
 
-##+ aggregate, echo=FALSE, eval=FALSE
+##+ aggregate
 
 completetrade <- completetrade %>%
   mutate_(geographicAreaM49 = ~geographicAreaM49Reporter)
@@ -169,7 +172,7 @@ total_trade_cpc_wo_uv <- completetrade %>%
 ##' - use `flagObservationsStatus` from quantity measures
 ##' - set `flagMethod` to `i` for unit values calculated as identity
 
-##+ unit-value, echo=FALSE, eval=FALSE
+##+ unit-value
 
 addUV <- function(data) {
 
@@ -314,3 +317,5 @@ sprintf(
 #             qty = ~qty,
 #             fclunit = ~fclunit,
 #             value = ~value)
+
+

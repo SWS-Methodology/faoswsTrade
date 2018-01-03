@@ -20,7 +20,6 @@
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
-# Year for processing
 library(data.table)
 library(faoswsTrade)
 library(faosws)

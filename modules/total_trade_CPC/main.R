@@ -102,8 +102,7 @@ if (!CheckDebug()) {
 ##+ import
 
 allReportersDim <-
-  c('840', '170') %>%
-  #GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
+  GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
   Dimension(name = "geographicAreaM49Reporter", keys = .)
 
 allPartnersDim <-

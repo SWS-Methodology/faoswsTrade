@@ -279,39 +279,35 @@ table(total_trade_cpc_w_uv$flagObservationStatus, total_trade_cpc_w_uv$flagMetho
 if (remove_nonexistent_transactions) {
   #flog.trace("[%s] Remove non-existent transactions (RNET)", PID, name = "dev")
 
-  GetCodeList2 <- function(dimension = NA) {
-    GetCodeList(
-      domain    = 'trade',
-      dataset   = 'total_trade_cpc_m49',
-      dimension = dimension
-    )
-  }
 
-  Keys <-
-    list(
-      reporters = GetCodeList2(dimension = 'geographicAreaM49')[type == 'country', code],
-      items     = GetCodeList2(dimension = 'measuredItemCPC')[, code],
-      elements  = GetCodeList2(dimension = 'measuredElementTrade')[, code],
-      years     = as.character(year)
-    )
+  allReportersDim_tot <-
+    GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")[type == "country", code] %>%
+    Dimension(name = "geographicAreaM49", keys = .)
 
-  # TODO: use error handling
-  key <-
+  allElementsDim_tot <-
+    c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922") %>%
+    Dimension(name = "measuredElementTrade", keys = .)
+
+  allItemsDim_tot <-
+    GetCodeList("trade", "total_trade_cpc_m49", "measuredItemCPC")[,code] %>%
+    Dimension(name = "measuredItemCPC", keys = .)
+
+  totaltradekey <-
     DatasetKey(
-      domain     = 'trade',
-      dataset    = 'total_trade_cpc_m49',
-      dimensions =
-        list(
-          Dimension(name = 'geographicAreaM49',    keys = Keys[['reporters']]),
-          Dimension(name = 'measuredItemCPC',      keys = Keys[['items']]),
-          Dimension(name = 'measuredElementTrade', keys = Keys[['elements']]),
-          Dimension(name = 'timePointYears',       keys = Keys[['years']])
-        )
+      domain = "trade",
+      dataset = "total_trade_cpc_m49",
+        dimensions =
+          list(
+            allReportersDim_tot,
+            allElementsDim_tot,
+            allItemsDim_tot,
+            allYearsDim
+          )
     )
 
   #flog.trace("[%s] RNET: Download existent SWS dataset", PID, name = "dev")
 
-  existing_data <- GetData(key = key, omitna = TRUE)
+  existing_data <- GetData(key = totaltradekey, omitna = TRUE)
 
   # Difference between what was saved and what the module produced:
   # whatever is not produced in the run should be set to NA. See #164

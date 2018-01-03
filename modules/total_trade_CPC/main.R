@@ -91,12 +91,12 @@ if (!CheckDebug()) {
 ##'
 ##' 1. `5608`: Import Quantity (heads)
 ##' 1. `5609`: Import Quantity (1000 heads)
-##' 1. `5610`: Import Quantity (tonne)
+##' 1. `5610`: Import Quantity (tonnes)
 ##' 1. `5908`: Export Quantity (heads)
 ##' 1. `5909`: Export Quantity (1000 heads)
-##' 1. `5910`: Export Quantity (tonne)
-##' 1. `5622`: Imports (US$)
-##' 1. `5922`: Exports (US$)
+##' 1. `5910`: Export Quantity (tonnes)
+##' 1. `5622`: Imports (1,000 US$)
+##' 1. `5922`: Exports (1,000 US$)
 
 ##+ import
 

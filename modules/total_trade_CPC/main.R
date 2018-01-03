@@ -163,6 +163,8 @@ flagWeightTable_status <- frame_data(
 flagWeightTable_method <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
   'h',                   1.00,
+  # XXX check why some are blanks
+  '',                    0.99,
   'i',                   0.80,
   'e',                   0.60,
   'c',                   0.40,
@@ -171,10 +173,6 @@ flagWeightTable_method <- frame_data(
 
 total_trade_cpc_wo_uv <-
   completetrade %>%
-  select_(
-    ~geographicAreaM49, ~geographicAreaM49Partner, ~timePointYears,
-    ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagObservationStatus
-  ) %>%
   group_by_(
     ~geographicAreaM49,
     ~timePointYears,
@@ -187,10 +185,17 @@ total_trade_cpc_wo_uv <-
       ~aggregateObservationFlag(
         flagObservationStatus,
         flagTable = flagWeightTable_status
-      )
+      ),
+    flagMethod =
+      ~aggregateObservationFlag(
+        flagMethod,
+        flagTable = flagWeightTable_method
+      ),
+    nobs = ~n()
   ) %>%
   ungroup() %>%
-  dplyr::mutate(flagMethod = "s")
+  dplyr::mutate(flagMethod1 = ifelse(nobs > 1, 's', flagMethod)) %>%
+  select(-nobs)
 
 ##' # Calculate Unit Values
 ##'

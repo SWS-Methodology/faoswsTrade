@@ -185,7 +185,8 @@ total_trade_cpc_wo_uv <-
     Value = ~sum(Value, na.rm = TRUE),
     flagObservationStatus =
       ~aggregateObservationFlag(
-        flagObservationStatus, flagTable = flagWeightTable_status
+        flagObservationStatus,
+        flagTable = flagWeightTable_status
       )
   ) %>%
   ungroup() %>%

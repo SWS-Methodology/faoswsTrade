@@ -102,7 +102,8 @@ if (!CheckDebug()) {
 ##+ import
 
 allReportersDim <-
-  GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
+  c('840', '170') %>%
+  #GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
   Dimension(name = "geographicAreaM49Reporter", keys = .)
 
 allPartnersDim <-
@@ -133,7 +134,10 @@ completetradekey <-
         )
   )
 
-completetrade <- tbl_df(GetData(completetradekey))
+completetrade <-
+  GetData(completetradekey) %>%
+  tbl_df() %>%
+  rename_(geographicAreaM49 = ~geographicAreaM49Reporter)
 
 ##' # Aggregate values across partner dimension
 ##'
@@ -144,9 +148,6 @@ completetrade <- tbl_df(GetData(completetradekey))
 knitr::kable(faoswsFlag::flagWeightTable)
 
 ##+ aggregate
-
-completetrade <- completetrade %>%
-  mutate_(geographicAreaM49 = ~geographicAreaM49Reporter)
 
 flagWeightTable_status <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,

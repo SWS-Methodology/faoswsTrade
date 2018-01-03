@@ -78,8 +78,11 @@ year <- as.integer(swsContext.computationParams$year)
 startTime = Sys.time()
 
 if (!CheckDebug()) {
-  updateInfoTable(year = year, table = 'total_tf_runs_info',
-                  mode = 'restart')
+  updateInfoTable(
+    year  = year,
+    table = 'total_tf_runs_info',
+    mode  = 'restart'
+  )
 }
 
 ##' # Import Data from Complete TF CPC
@@ -98,20 +101,37 @@ if (!CheckDebug()) {
 
 ##+ import
 
-allReporterKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code]
-allPartnerKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Partner")[type == "country", code]
-allElementKeys <- c("5608", "5609", "5610", "5908", "5909", "5910",
-                    "5622", "5922") # monetary values to calculate unit values
-allItemKeys <- GetCodeList("trade", "completed_tf_cpc_m49", "measuredItemCPC")[,code]
+allReportersDim <-
+  GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
+  Dimension(name = "geographicAreaM49Reporter", keys = .)
 
-completetradekey <- DatasetKey(domain = "trade", dataset = "completed_tf_cpc_m49",
-                               dimensions = list(
-                                 geographicAreaM49Reporter = Dimension(name = "geographicAreaM49Reporter", keys = allReporterKeys),
-                                 geographicAreaM49Partner = Dimension(name = "geographicAreaM49Partner", keys = allPartnerKeys),
-                                 measuredElementTrade = Dimension(name = "measuredElementTrade", keys = allElementKeys),
-                                 measuredItemCPC = Dimension(name = "measuredItemCPC", keys = allItemKeys),
-                                 timePointYears = Dimension(name = "timePointYears", keys = as.character(year))
-                               ))
+allPartnersDim <-
+  GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Partner")[type == "country", code] %>%
+  Dimension(name = "geographicAreaM49Partner", keys = .)
+
+allElementsDim <-
+  c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922") %>%
+  Dimension(name = "measuredElementTrade", keys = .)
+
+allItemsDim <-
+  GetCodeList("trade", "completed_tf_cpc_m49", "measuredItemCPC")[,code] %>%
+  Dimension(name = "measuredItemCPC", keys = .)
+
+allYearsDim <- Dimension(name = "timePointYears", keys = as.character(year))
+
+completetradekey <-
+  DatasetKey(
+    domain = "trade",
+    dataset = "completed_tf_cpc_m49",
+      dimensions =
+        list(
+          allReportersDim,
+          allPartnersDim,
+          allElementsDim,
+          allItemsDim,
+          allYearsDim
+        )
+  )
 
 completetrade <- tbl_df(GetData(completetradekey))
 
@@ -148,12 +168,25 @@ flagWeightTable_method <- frame_data(
   's',                   0.20
 )
 
-total_trade_cpc_wo_uv <- completetrade %>%
-  select_(~geographicAreaM49, ~geographicAreaM49Partner, ~timePointYears,
-          ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagObservationStatus) %>%
-  group_by_(~geographicAreaM49, ~timePointYears, ~measuredItemCPC, ~measuredElementTrade) %>%
-  summarise_(Value = ~sum(Value, na.rm = TRUE),
-             flagObservationStatus = ~aggregateObservationFlag(flagObservationStatus, flagTable = flagWeightTable_status)) %>%
+total_trade_cpc_wo_uv <-
+  completetrade %>%
+  select_(
+    ~geographicAreaM49, ~geographicAreaM49Partner, ~timePointYears,
+    ~measuredItemCPC, ~measuredElementTrade, ~Value, ~flagObservationStatus
+  ) %>%
+  group_by_(
+    ~geographicAreaM49,
+    ~timePointYears,
+    ~measuredItemCPC,
+    ~measuredElementTrade
+  ) %>%
+  summarise_(
+    Value = ~sum(Value, na.rm = TRUE),
+    flagObservationStatus =
+      ~aggregateObservationFlag(
+        flagObservationStatus, flagTable = flagWeightTable_status
+      )
+  ) %>%
   ungroup() %>%
   dplyr::mutate(flagMethod = "s")
 
@@ -185,26 +218,41 @@ addUV <- function(data) {
   copyData_quantity <-
     copyData %>%
     dplyr::filter(unit == "quantity") %>%
-    select(-unit, measuredElementTrade.qty = measuredElementTrade, -flagMethod)
+    select(
+      -unit,
+      measuredElementTrade.qty = measuredElementTrade,
+      -flagMethod
+    )
     ## select(-unit) # must keep to assign proper elemnt code to unit value
 
   copyData_monetary <-
     copyData %>%
     dplyr::filter(unit == "monetary") %>%
-    select(-unit, -measuredElementTrade, -flagObservationStatus, -flagMethod)
+    select(
+      -unit,
+      -measuredElementTrade,
+      -flagObservationStatus,
+      -flagMethod
+    )
 
-  me_qty_uv <- data.frame(flow = c(rep("import", 3), rep("export", 3)),
-                          measuredElementTrade.qty = c("5608", "5609", "5610", "5908", "5909", "5910"),
-                          measuredElementTrade = c("5638", "5639", "5630", "5938", "5939", "5930"),
-                          stringsAsFactors = FALSE)
+  me_qty_uv <-
+    data.frame(
+      flow = c(rep("import", 3), rep("export", 3)),
+      measuredElementTrade.qty = c("5608", "5609", "5610", "5908", "5909", "5910"),
+      measuredElementTrade = c("5638", "5639", "5630", "5938", "5939", "5930"),
+      stringsAsFactors = FALSE
+    )
 
   copyData_uv <-
     copyData_quantity %>%
-    left_join(copyData_monetary,
-              by = c("geographicAreaM49", "timePointYears", "measuredItemCPC","flow"),
-              suffix = c(".qty", ".mon")) %>%
-    dplyr::mutate(Value = ifelse(Value.qty > 0, Value.mon * 1000 / Value.qty, NA)
-           ) %>%
+    left_join(
+      copyData_monetary,
+      by = c("geographicAreaM49", "timePointYears", "measuredItemCPC","flow"),
+      suffix = c(".qty", ".mon")
+    ) %>%
+    dplyr::mutate(
+      Value = ifelse(Value.qty > 0, Value.mon * 1000 / Value.qty, NA)
+    ) %>%
     left_join(me_qty_uv) %>%
     ## ## only keep columns already present in input data set
     dplyr::mutate(flagMethod = "i") %>%
@@ -233,25 +281,33 @@ if (remove_nonexistent_transactions) {
 
   GetCodeList2 <- function(dimension = NA) {
     GetCodeList(
-                domain    = 'trade',
-                dataset   = 'total_trade_cpc_m49',
-                dimension = dimension
-                )
+      domain    = 'trade',
+      dataset   = 'total_trade_cpc_m49',
+      dimension = dimension
+    )
   }
 
-  Keys <- list(reporters = GetCodeList2(dimension = 'geographicAreaM49')[type == 'country', code],
-               items     = GetCodeList2(dimension = 'measuredItemCPC')[, code],
-               elements  = GetCodeList2(dimension = 'measuredElementTrade')[, code],
-               years     = as.character(year))
+  Keys <-
+    list(
+      reporters = GetCodeList2(dimension = 'geographicAreaM49')[type == 'country', code],
+      items     = GetCodeList2(dimension = 'measuredItemCPC')[, code],
+      elements  = GetCodeList2(dimension = 'measuredElementTrade')[, code],
+      years     = as.character(year)
+    )
 
   # TODO: use error handling
-  key <- DatasetKey(domain     = 'trade',
-                    dataset    = 'total_trade_cpc_m49',
-                    dimensions = list(
-                      Dimension(name = 'geographicAreaM49',    keys = Keys[['reporters']]),
-                      Dimension(name = 'measuredItemCPC',      keys = Keys[['items']]),
-                      Dimension(name = 'measuredElementTrade', keys = Keys[['elements']]),
-                      Dimension(name = 'timePointYears',       keys = Keys[['years']])))
+  key <-
+    DatasetKey(
+      domain     = 'trade',
+      dataset    = 'total_trade_cpc_m49',
+      dimensions =
+        list(
+          Dimension(name = 'geographicAreaM49',    keys = Keys[['reporters']]),
+          Dimension(name = 'measuredItemCPC',      keys = Keys[['items']]),
+          Dimension(name = 'measuredElementTrade', keys = Keys[['elements']]),
+          Dimension(name = 'timePointYears',       keys = Keys[['years']])
+        )
+    )
 
   #flog.trace("[%s] RNET: Download existent SWS dataset", PID, name = "dev")
 
@@ -285,8 +341,12 @@ stats <- SaveData("trade",
                   total_trade_cpc_w_uv)
 
 if (!CheckDebug()) {
-  updateInfoTable(year = year, table = 'total_tf_runs_info',
-                  mode = 'save', results = stats)
+  updateInfoTable(
+    year    = year,
+    table   = 'total_tf_runs_info',
+    mode    = 'save',
+    results = stats
+  )
 }
 
 sprintf(

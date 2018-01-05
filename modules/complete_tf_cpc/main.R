@@ -1514,28 +1514,32 @@ flagWeightTable_method <- frame_data(
   's',                   0.20
 )
 
-# XXX This piece of code is really slow. There should be a better way.
+# XXX This will need a refactoring
 flog.trace("[%s] Cycle on status and method flags", PID, name = "dev")
 for (i in c('status', 'method')) {
   for (j in c('v', 'q')) {
 
-    dummies <- tradedata %>%
-      select(starts_with(paste0('flag_', i))) %>%
-      select(ends_with(j))
+    dummies <-
+      tradedata %>%
+      select(matches(paste0('flag_', i, '_._', j))) %>%
+      mutate_all(funs(ifelse(equals(., 0), NA, .)))
 
     flags <- sub('.*_(.)_.$', '\\1', colnames(dummies))
 
-    if (i == 'status') {
-      flagWeightTable <- flagWeightTable_status
-    } else {
-      flagWeightTable <- flagWeightTable_method
-    }
+    flagWeightTable <-
+      switch(i, status = flagWeightTable_status, method = flagWeightTable_method)
+
+    found_flags <- flagWeightTable[match(flags, flagWeightTable$flagObservationStatus),]
 
     var <- paste0('flag', toupper(i), '_', j)
 
-    tradedata[[var]] <- apply(dummies, 1, function(x)
-                              ifelse(sum(x)==0, NA,
-                                     aggregateObservationFlag(flags[x==1])))
+    final_flags <- suppressWarnings(apply(t(t(as.matrix(dummies)) * (found_flags$flagObservationWeights)), 1, min, na.rm = TRUE))
+
+    final_flags[is.infinite(final_flags)] <- NA
+
+    final_flags <- found_flags$flagObservationStatus[match(final_flags, found_flags$flagObservationWeights)]
+
+    tradedata[[var]] <- final_flags
   }
 }
 

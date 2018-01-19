@@ -17,7 +17,9 @@
 ##' the module's approach, please see its main document.
 
 # Stop if required parameters were not set
-stopifnot(!is.null(swsContext.computationParams$out_coef))
+# The out_coef was removed as a parameter given that the
+# outlier detection/imputation was disabled.
+#stopifnot(!is.null(swsContext.computationParams$out_coef))
 stopifnot(!is.null(swsContext.computationParams$year))
 
 ##+ setup, include=FALSE
@@ -150,13 +152,16 @@ if (!exists('year', inherits = FALSE)) {
 }
 flog.info("Year: %s", year)
 
-##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
-##' the *Outlier Detection and Imputation* section.
-# See coef argument in ?boxplot.stats
-if (!exists('out_coef', inherits = FALSE)) {
-  out_coef <- as.numeric(swsContext.computationParams$out_coef)
-}
-flog.info("Coefficient for outlier detection: %s", out_coef)
+# ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
+# ##' the *Outlier Detection and Imputation* section.
+# # See coef argument in ?boxplot.stats
+# if (!exists('out_coef', inherits = FALSE)) {
+#   out_coef <- as.numeric(swsContext.computationParams$out_coef)
+# }
+# Note: the outlier detection/imputation is harcoded to be disabled.
+# In any case, the coefficient if left here if eventually required.
+out_coef <- 1000
+# flog.info("Coefficient for outlier detection: %s", out_coef)
 
 if (!CheckDebug()) {
   updateInfoTable(year = year, table = 'complete_tf_runs_info',

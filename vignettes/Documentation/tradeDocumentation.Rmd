@@ -11,7 +11,7 @@ abstract: |
   most disaggregated bilateral transactions between countries
   (obtained from Eurostat for European countries, and from UNSD
   for the remaining countries), filters the agriculture-related
-  flows of interest for the Organisation, standarises units of
+  flows of interest for the Organisation, standardises units of
   measurement, maps item and country codes to a standard set of
   codes, imputes missing quantities, and computes unit values. The
   `total_trade_CPC` aggregates bilateral trade (i.e., the results
@@ -21,7 +21,7 @@ abstract: |
   `total_trade_CPC` module, the output of the `complete_tf_cpc`
   module is required. In this document, an overall narrative of
   what the modules do is presented. A detailed step-by-step
-  illustration of the modules is given in a separate document.
+  illustration of the modules is given in separate documents.
 date: "`r format(Sys.time(), '%e %B %Y')`"
 geometry: margin=1in
 output:
@@ -50,21 +50,38 @@ are:
   01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17,
   18, 19, 20, 21, 22, 23, 24, 33, 35, 38, 40, 41, 43, 50, 51, 52, 53.
 
-In the future, if other commodities become of interest for
-the division, it is important to include additional chapters in
-the first step of the downloading.
+In the following table, an example of filtered UNSD data is shown
+(variable names have been modified). It contains information on
+the reporter, partner, flow (1 = imports; 2 = exports; 3 =
+re-exports; 4 = re-imports), HS codes (variable length), monetary
+value (in USD dollars), weight (in kilograms), supplementary
+quantity, the unit in which the supplementary quantity is given
+(`qunit`, e.g., 8 = kilograms, 7 = liters), and the chapter.
 
 ```{r}
 knitr::kable(examples$tldata_raw, row.names = FALSE, caption =
 'Subset of Tariff line data', digits = 2)
+```
 
+In the following table, an example on filterd Eurostat data is
+reported (also in this case, the original variable names were
+modified). The main differences are: reporter and partner codes
+are "geonomenclature" codes (in UNSD they are "M49"); the HS
+length is maximum 8-digits; monetary values are in thousands of
+euros; weight is reported in tonnes; the supplementary quantity is
+always commodity specific (in Tariff line data it can happend that
+the same HS code is reported in different units).
+
+
+```{r}
 knitr::kable(examples$esdata_raw, row.names = FALSE, caption =
 'Subset of Eurostat data', digits = 2)
 ```
 
 Besides filtering by chapters, only some HS codes inside the
 chapters are considered. These codes are given in the
-`hs6faointerest` datatable:
+`hs6faointerest` datatable, of which the next table shows a
+subset:
 
 ```{r}
 # If a single column, the caption is not shown and next table
@@ -73,8 +90,8 @@ knitr::kable(dplyr::mutate(examples$hs6faointerest, ` ` = ''),
 row.names = FALSE, caption = 'HS-6 codes of interest')
 ```
 
-Both Eurostat and Tariff line data are given the same variable
-names and data types before being processed further.
+As seen before, both Eurostat and Tariff line data are given the
+same variable names and data types before being processed further.
 
 ### Eurostat
 
@@ -97,7 +114,8 @@ names and data types before being processed further.
   are not allowed; basically this removes the "EU" total).
 
 - only numeric CN8 codes (`hs`) are kept (letters are not
-  allowed).
+  allowed; in the example it is possible to see a non numeric HS:
+  it will be removed).
 
 ### UNSD
 
@@ -126,18 +144,18 @@ caption = 'Example of multiple transactions by
 The results of the aggregation of the previous example are shown
 in  the following table. In this case, even if there is a unique
 combination of `reporter` / `partner` / `flow` / `year` / `hs`,
-the rows are two: indeed, one aggregated the transactions where
-the `weight` variable was not missing, and the other aggregated
-those cases where it was missing.
+the rows are two: indeed, one reports the aggregated transactions
+where the `weight` variable was available, and the other reports
+the aggregated cases where it was missing.
 
 ```{r}
 knitr::kable(examples$tldata_multiple_aggregated, row.names = FALSE,
 caption = 'Results of the aggregation of multiple transactions')
 ```
 
-After quantity conversions are made or missing quantities get
-imputed (see further) the two different rows in the previous table
-in the table will be aggregated into a single transaction.
+After quantity conversions are made, or missing quantities get
+imputed (see further), the two different rows in the previous
+table in the table will be aggregated into a single transaction.
 
 ### Mapping UNSD Tariff line and Eurostat data
 
@@ -170,18 +188,15 @@ the nature of the differences among the two datasets.
 1. European countries (as reporters) already in Eurostat data are
    removed.
 
-1. Area codes not mapping to any FAO country code are separately
-   saved and removed from further analyses. All countries mapping
-   to code 252 (which correponds to undefined areas) are mapped to
-   the 896 M49 code ("Other nei").
+1. Area codes not mapping to any FAO country code are removed and
+   will be mirrored in a later step. All countries mapping to code
+   252 (which correponds to undefined areas) are mapped to the 896
+   M49 code ("Other nei").
 
-    ##  m49 fao
-    ##  270  75
-    ##  280  79
-    ##  716 181
-    ##  634 179
-    ##  471 252
-    ##   51   1
+   ```{r}
+   knitr::kable(examples$unmapped_countries, row.names = FALSE,
+   caption = 'Example of unmapped countries')
+   ```
 
 1. The flow codes of re-Import (code 4) are recoded into Import
    (code 1) and codes of re-Export (code 3) to Export (code 2).
@@ -217,9 +232,9 @@ the nature of the differences among the two datasets.
    See:
    http://unstats.un.org/unsd/tradekb/Knowledgebase/Reexports-and-Reimports
 
-1. Set (extend if required) all HS codes to the maximum length (by
-   reporter / flow) found in the HS-FCL mapping table valid for
-   the reporter in that year (see below).
+1. Set all HS codes to the maximum length (by reporter / flow)
+   found in the HS-FCL mapping table valid for the reporter in
+   that year (see below).
 
 1. Commodity codes are reported in HS codes (*Harmonized Commodity
    Description and Coding System*). The codes are converted in FCL
@@ -271,6 +286,8 @@ the nature of the differences among the two datasets.
    quantity is "units" and the FAO unit is "1000 heads", the
    quantity is divided by 1000.
 
+<!-- Next point needs to be revised -->
+
 1. Commodity specific conversions are added. This is done by
    taking the ratio of the reported weight and quantity (divided
    by 1000), computing the median of this ratio by FCL and the
@@ -310,9 +327,11 @@ the nature of the differences among the two datasets.
    Commodity List*) codes. This step is performed using the same
    HS to FCL mapping table as for UNSD Tariff line. If a specific
    record has a CN8 code not mapping to any specific FCL code,
-   then the record is reported and removed. If a country is not
-   included in the mapping table for that specific year,
-   all the records for the reporting country are removed.
+   then it is stored, sent to Team B/C for mapping and
+   re-incorporated after the link has been updated. If a country
+   is not included in the mapping table for that specific year,
+   all the records for the reporting country are removed, and will
+   be mirrored in a subsequent step.
    
 1. Information of the FCL units is added. This step is
    straighforward since for Eurostat the units are for the vast
@@ -323,8 +342,8 @@ the nature of the differences among the two datasets.
    With respect to UNSD data, this is only needed for few
    commodities, namely: 1057, 1068, 1072, 1079, 1083, 1140, 1181.
 
-1. Values are converted from EUR to USD using the table, stored in
-   the SWS, with the average EUR/USD exchange rate for each year
+1. Values are converted from EUR to USD using a table, stored in
+   the SWS, with the official EUR/USD exchange rate for each year
    provided by Team B/C.
 
    ```{r}
@@ -335,8 +354,8 @@ the nature of the differences among the two datasets.
 ### Pre-processing reports
 
 The module generates various indicators/statistics on the raw data
-that are combined into different pre-processing reports (PPR). The
-following PPR are available in the "trade-reports" SWS domain:
+that are combined into different pre-processing reports (PPRs). The
+following PPRs are available in the "trade-reports" SWS domain:
 
 1. Reporters by year
 1. Non-reporting countries
@@ -424,8 +443,28 @@ Indeed, it was found that the *uncorrected* data was overall more
 similar to previous FAOSTAT data. For this reason, automatic
 correction is not currently being used, relying on a semi-automatic
 (guided) correction workflow that is done through an external
-validation tool. In order to have more information on this topic,
-please see the validation tool documentation.
+validation tool. The steps of the guided validation are the
+following:
+
+1. a validation plugin for total trade is used that indicates
+   which `reporter / commodity / flow / year` combination is
+   likely to be an outlier. It computes various outlier detection
+   routines on the data and assign scores based on how many times
+   a transaction has been found to be an outlier. This information
+   is displayed on SWS by increasing levels of colouring that go
+   from pale yellow to red, the last one being the one that
+   indicates that a particular transaction has been found to be an
+   outlier by all methods.
+1. Analysts select the series with outliers (by going from the
+   most to the least severe cases) and use an interactive
+   validation tool that allows to dig into the composition of
+   total trade flows as it uses bilateral data. The tool displays
+   the outliers, allows to use different methods for correcting
+   them, and stores the correction that the analyst deemed
+   required in a `corrections` dataset that is integrated into
+   subsequent runs of the `complete_tf_cpc` trade module. In order
+   to have more information on this topic, please see the
+   validation tool documentation.
 
 ### Mirroring
 
@@ -435,7 +474,9 @@ these countries the mirroring routine is applied: the
 corresponding trade of the non-reporting countries are extracted
 from the partners inverting the flows. The quantities are the same
 while the values are corrected by a factor of 12% due to the
-CIF/FOB conversion.
+CIF/FOB (Cost, Insurance and Freight / Free on Board) conversion
+(i.e., original imports are divided by 1.12, while original
+exports are divided by 1.12).
 
 There is also another condition for which mirroring is applied:
 when a flow is completely missing for a country when it is a
@@ -464,7 +505,7 @@ transactions at the HS level are aggregated in one CPC code, then
 the "s" (for aggregation) Method flag will prevail over the two
 "h" Method flags of each transaction.
 
-## Convertion to FAO SWS standards
+## Conversion to FAO SWS standards
 
 At this point data is almost ready to be saved in the SWS.
 Additional mapping and aggregation are necessary in order to
@@ -490,8 +531,8 @@ The first submodule saves the final output in the
 # Total trade CPC
 
 This second submodule uses as input the output of the previous
-submodule. It aggregates total trade flow by reporting country for
-partners countries to a single total trade for each unique CPC
+submodule. It aggregates total trade flows by reporting country
+for partners countries to a single total trade for each unique CPC
 commodity code.
 
 The module saves the ouput into the dataset `total_trade_cpc_m49`,
@@ -525,7 +566,7 @@ calculation, as explained above. Results were found to be
 unsatisfactory, thus automatic imputation was switched off. Said
 strategy could be supplemented by using information of neighbour
 or similar countries (e.g., the median unit value of Asian
-countries for a detailde HS level can be used for imputing an
+countries for a detailed HS level can be used for imputing an
 outlier for an Asian country instead of going up to the HS8 or HS6
 level for the country itself as attempted in the
 specific-to-generic approach).

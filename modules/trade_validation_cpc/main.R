@@ -4,10 +4,6 @@ multicore <- TRUE
 # TODO: should be a parameter
 threshold <- 0.5
 
-# If TRUE, use previously downloaded files
-# (useful mainly for testing)
-use_previous <- FALSE
-
 library(faosws)
 library(dplyr)
 #library(tidyr)
@@ -36,11 +32,17 @@ name_to_save <- 'db.rds'
 
 stopifnot(!is.null(swsContext.computationParams$startyear))
 stopifnot(!is.null(swsContext.computationParams$endyear))
+stopifnot(!is.null(swsContext.computationParams$useprevious))
 
 print(swsContext.computationParams$startyear)
 print(swsContext.computationParams$endyear)
+print(swsContext.computationParams$useprevious)
 
 years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
+
+# If TRUE, use previously downloaded files
+# (useful mainly for testing)
+use_previous <- as.logical(swsContext.computationParams$useprevious)
 
 if (!file.exists(dir_to_save)) dir.create(dir_to_save, recursive = TRUE)
 if (!file.exists(DB_rds_storage)) dir.create(DB_rds_storage, recursive = TRUE)

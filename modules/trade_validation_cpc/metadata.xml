@@ -26,16 +26,34 @@
             <Min>2000</Min>
             <Max>2016</Max>
       </Param>
+      <Param xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="List">
+            <Code>useprevious</Code>
+            <Label>Use previous data?</Label>
+            <Description>
+              If FALSE (suggested) it will use the most updated data, otherwise old data.
+            </Description>
+            <Compulsory>true</Compulsory>
+            <Options>
+              <Option>
+                <Label>FALSE</Label>
+                <Value>FALSE</Value>
+              </Option>
+              <Option>
+                <Label>TRUE</Label>
+                <Value>TRUE</Value>
+              </Option>
+            </Options>
+      </Param>
     </Params>
     <Datasets>
         <MainDataset>
             <Code>completed_tf_cpc_m49</Code>
             <SelectableDimensions>
-                <SelectableDimension compulsory="true">geographicAreaM49Reporter</SelectableDimension>
-                <SelectableDimension compulsory="true">geographicAreaM49Partner</SelectableDimension>
-                <SelectableDimension compulsory="true">timePointYears</SelectableDimension>
-                <SelectableDimension compulsory="true">measuredItemCPC</SelectableDimension>
-                <SelectableDimension compulsory="true">measuredElementTrade</SelectableDimension>
+                <SelectableDimension compulsory="false">geographicAreaM49Reporter</SelectableDimension>
+                <SelectableDimension compulsory="false">geographicAreaM49Partner</SelectableDimension>
+                <SelectableDimension compulsory="false">timePointYears</SelectableDimension>
+                <SelectableDimension compulsory="false">measuredItemCPC</SelectableDimension>
+                <SelectableDimension compulsory="false">measuredElementTrade</SelectableDimension>
             </SelectableDimensions>
         </MainDataset>
     </Datasets>

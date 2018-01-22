@@ -1691,8 +1691,7 @@ if (corrections_exist) {
   complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
     dplyr::mutate(
       correction_metadata_qty   = NA_character_,
-      correction_metadata_value = NA_character_,
-      correction_metadata_uv    = NA_character_
+      correction_metadata_value = NA_character_
     )
 }
 
@@ -1746,8 +1745,8 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
           measuredElementTrade %in% uvElements,
           correction_metadata_uv,
           correction_metadata_value
+        )
       )
-    )
   ) %>%
   select_(
     ~-flow, ~-unit, ~-correction_metadata_qty,

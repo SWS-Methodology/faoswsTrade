@@ -213,15 +213,15 @@ total_trade_cpc_wo_uv <-
 qty_and_weight <-
     completetrade %>%
     group_by(measuredItemCPC) %>%
-    summarise(n = n_distinct(measuredElementTrade)) %>%
-    filter(n > 4) %>%
-    mutate(out = TRUE) %>%
+    dplyr::summarise(n = n_distinct(measuredElementTrade)) %>%
+    dplyr::filter(n > 4) %>%
+    dplyr::mutate(out = TRUE) %>%
     select(-n)
 
 qty_and_weight <-
   bind_rows(
-    mutate(qty_and_weight, measuredElementTrade = '5610'),
-    mutate(qty_and_weight, measuredElementTrade = '5910')
+    dplyr::mutate(qty_and_weight, measuredElementTrade = '5610'),
+    dplyr::mutate(qty_and_weight, measuredElementTrade = '5910')
   )
 
 # Keep only weights of livestock
@@ -231,7 +231,7 @@ total_trade_cpc_weight_livestock <-
     qty_and_weight,
     by = c("measuredItemCPC", "measuredElementTrade")
   ) %>%
-  filter(out) %>%
+  dplyr::filter(out) %>%
   select(-out)
 
 # Remove weights of livestok (keeping heads)
@@ -241,7 +241,7 @@ total_trade_cpc_wo_uv <-
     qty_and_weight,
     by = c("measuredItemCPC", "measuredElementTrade")
   ) %>%
-  filter(is.na(out)) %>%
+  dplyr::filter(is.na(out)) %>%
   select(-out)
 
 

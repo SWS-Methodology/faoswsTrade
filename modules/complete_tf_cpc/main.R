@@ -1078,7 +1078,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   fcl_spec_mt_conv <- fcl_spec_mt_conv %>%
     left_join(conversion_factors_fcl_mt, by = c("fcl", "wco")) %>%
     # Zero quantities will be imputed
-    mutate(convspec_mt = ifelse(is.na(convspec_mt), 0, convspec_mt))
+    dplyr::mutate(convspec_mt = ifelse(is.na(convspec_mt), 0, convspec_mt))
 
   # XXX some weights are missing: e.g., reporter = 20, fcl = 946, year = 2015
   # They can be imputed as the median of existing weights (see below), but this
@@ -1087,9 +1087,9 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   #    unite(fcl_live, fcl, livestock, sep = '#') %>%
   #    complete(reporter_fao, fcl_live) %>%
   #    separate(fcl_live, c('fcl', 'livestock'), sep = '#') %>%
-  #    mutate(fcl = as.integer(fcl)) %>%
+  #    dplyr::mutate(fcl = as.integer(fcl)) %>%
   #    group_by(fcl) %>%
-  #    mutate(liveweight = ifelse(is.na(liveweight), median(liveweight, na.rm = TRUE), liveweight))
+  #    dplyr::mutate(liveweight = ifelse(is.na(liveweight), median(liveweight, na.rm = TRUE), liveweight))
 
   # weight > heads
   fcl_spec_head_conv <- livestock_weights %>%
@@ -1123,7 +1123,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
       qtyfcl = ifelse(is.na(weight) & is.na(qty),                                 -1, qtyfcl)
     ) %>%
     filter(!is.na(qtyfcl)) %>%
-    mutate(qtyfcl = ifelse(qtyfcl == -1, NA, qtyfcl))
+    dplyr::mutate(qtyfcl = ifelse(qtyfcl == -1, NA, qtyfcl))
 
   tldata_not_converted <-
     anti_join(tldata, tldata_converted, by = 'id')
@@ -1155,7 +1155,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
       tldata_to_convert
     ) %>%
     # Decimals make no sense for heads
-    mutate(qtyfcl = ifelse(fclunit %in% 'heads', round(qtyfcl, 0), qtyfcl))
+    dplyr::mutate(qtyfcl = ifelse(fclunit %in% 'heads', round(qtyfcl, 0), qtyfcl))
 
   rm(tldata_converted, tldata_to_convert, tldata_not_converted)
   invisible(gc())
@@ -1254,7 +1254,7 @@ tradedata <- bind_rows(
             value, weight, qty = qtyfcl,
             convspec_head, starts_with('flag_'), wco),
   esdata %>%
-    mutate(convspec_head = NA_real_, wco = NA_character_) %>%
+    dplyr::mutate(convspec_head = NA_real_, wco = NA_character_) %>%
     select(year, reporter, partner, flow, fcl, fclunit, hs,
             value, weight, qty = qtyfcl,
             convspec_head, starts_with('flag_'), wco)
@@ -1355,7 +1355,7 @@ tradedata <- tradedata %>%
 # XXX not all weights were estimated, so after aggregation they are zero
 tradedata <-
   tradedata %>%
-  mutate(weight = ifelse(near(weight, 0), NA, weight))
+  dplyr::mutate(weight = ifelse(near(weight, 0), NA, weight))
 
 
 flog.trace("[%s] Flags again", PID, name = "dev")
@@ -1518,7 +1518,7 @@ for (i in c('status', 'method')) {
     dummies <-
       tradedata %>%
       select(matches(paste0('flag_', i, '_._', j))) %>%
-      mutate_all(funs(ifelse(equals(., 0), NA, .)))
+      dplyr::mutate_all(funs(ifelse(equals(., 0), NA, .)))
 
     flags <- sub('.*_(.)_.$', '\\1', colnames(dummies))
 
@@ -1566,9 +1566,9 @@ complete_trade_flow_cpc_live <-
   filter(unit %in% c('heads', '1000 heads')) %>%
   # XXX for now, no flags
   select(-starts_with('flag')) %>%
-  mutate(flagObservationStatus = '', flagMethod = '') %>%
+  dplyr::mutate(flagObservationStatus = '', flagMethod = '') %>%
   # we need here just weight
-  mutate(measuredElementTrade = ifelse(flow == 1, '5610', '5910')) %>%
+  dplyr::mutate(measuredElementTrade = ifelse(flow == 1, '5610', '5910')) %>%
   select(-value, -qty, -uv, -unit, -flow) %>%
   rename(Value = weight)
 

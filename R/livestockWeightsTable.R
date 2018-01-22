@@ -336,7 +336,7 @@ livestockWeightsTable <- function() {
                   -area_fao, -area_m49, -area_name) %>%
     # livestock_weights_cla's weights are in kilograms per units, except
     # for CHICKENS, DUCKS, GEESE, TURKEYS (maybe also RABBITS, but all NAs)
-    mutate(
+    dplyr::mutate(
       liveweight_cla =
         ifelse(livestock %in% c('CHICKENS', 'DUCKS', 'GEESE', 'TURKEYS'),
                liveweight_cla * 0.001, liveweight_cla)
@@ -347,7 +347,7 @@ livestockWeightsTable <- function() {
     livestock_weights_cla,
     by = c('reporter' = 'area_fao', 'livestock')
   ) %>%
-  mutate(
+  dplyr::mutate(
     liveweight = ifelse(!is.na(liveweight_cla), liveweight_cla, liveweight_kat)
   ) %>%
   filter(!is.na(liveweight)) %>%

@@ -22,10 +22,10 @@ ts_corrections_not_applied <- function(collection_path = NULL, prefix = NULL) {
       full.names = TRUE
     ) %>%
     data_frame(file = .) %>%
-    arrange(file) %>%
-    mutate(year = sub('.*_([0-9]{4})_.*', '\\1', file)) %>%
+    dplyr::arrange(file) %>%
+    dplyr::mutate(year = sub('.*_([0-9]{4})_.*', '\\1', file)) %>%
     group_by(year) %>%
-    filter(last(file) == file) %>%
+    dplyr::filter(last(file) == file) %>%
     ungroup()
 
   files_info$file %>%

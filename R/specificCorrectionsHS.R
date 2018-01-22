@@ -115,7 +115,7 @@ specificCorrectionsHS <- function(tradedata) {
 
       hs_specific_corrections <-
         dplyr::bind_rows(hs_4, hs_6) %>%
-        mutate(correction_hs = as.integer(correction_hs)) %>%
+        dplyr::mutate(correction_hs = as.integer(correction_hs)) %>%
         rename(reporter = reporter_m49, hs6 = correction_hs)
 
       tradedata <-

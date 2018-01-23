@@ -65,7 +65,7 @@ setFlag2 <- function(data = NA, condition = NA, type = NA, flag = NA, variable =
     alt <- 100L
   }
 
-  data[[flag]] <- ifelse(condition, res, alt)
+  data[[flag]] <- ifelse(condition %in% TRUE, res, alt)
 
   return(data)
 }

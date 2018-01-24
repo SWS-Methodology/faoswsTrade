@@ -1177,6 +1177,9 @@ if (NROW(fcl_spec_mt_conv) > 0) {
 # Weight is always in tonnes
 tldata$weight <- tldata$weight / 1000
 
+# XXX sometimes the condition is TRUE, but it doesn't mean that
+# the conversion factors were indeed used. See, e.g.,
+# tldata %>% filter(year == 2016, reporter == 154, fcl == 1062)
 cond_q <- !is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head)
 
 # XXX
@@ -1184,8 +1187,7 @@ cond_q <- !is.na(tldata$convspec_mt) | !is.na(tldata$convspec_head)
 #
 tldata <- tldata %>%
   setFlag3(weight > 0, type = 'method', flag = 'i', variable = 'weight') %>%
-  setFlag3(cond_q,     type = 'method', flag = 'i', variable = 'weight') %>%
-  setFlag3(cond_q,     type = 'status', flag = 'T', variable = 'weight')
+  setFlag3(cond_q,     type = 'method', flag = 'i', variable = 'weight')
 
 
 ######### Value from USD to thousands of USD

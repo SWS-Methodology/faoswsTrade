@@ -1901,14 +1901,49 @@ if (remove_nonexistent_transactions) {
 
   existing_data <- GetData(key = key, omitna = TRUE)
 
+  flog.trace("[%s] Keep protected data", PID, name = "dev")
+
+  # Some flags are "protected", i.e., data with these flags
+  # should not be overwritten/removed
+  protected_flags <-
+    flagValidTable[Protected == TRUE &
+                   !(flagObservationStatus == 'T' &  flagMethod == 'c') &
+                   !(flagObservationStatus == ''  &  flagMethod == 'c') &
+                   !(flagObservationStatus == ''  &  flagMethod == 'h'),
+                   paste(flagObservationStatus, flagMethod)]
+
+  # Data that should be left untouched
+  protected_data <-
+    existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags,]
+
+  # Remove from saved data
+  existing_data <-
+    existing_data[!protected_data,
+                  on = c('geographicAreaM49Reporter',
+                         'geographicAreaM49Partner',
+                         'measuredElementTrade',
+                         'measuredItemCPC',
+                         'timePointYears')]
+
+  # Remove from new data
+  complete_trade_flow_cpc <-
+    complete_trade_flow_cpc[!protected_data,
+                            on = c('geographicAreaM49Reporter',
+                                   'geographicAreaM49Partner',
+                                   'measuredElementTrade',
+                                   'measuredItemCPC',
+                                   'timePointYears')]
+
+
   # Difference between what was saved and what the module produced:
   # whatever is not produced in the run should be set to NA. See #164
   # (No need of year as key as all data refer to the same year)
-  data_diff <- existing_data[!complete_trade_flow_cpc,
-                             on = c('geographicAreaM49Reporter',
-                                    'geographicAreaM49Partner',
-                                    'measuredElementTrade',
-                                    'measuredItemCPC')]
+  data_diff <-
+    existing_data[!complete_trade_flow_cpc,
+                  on = c('geographicAreaM49Reporter',
+                         'geographicAreaM49Partner',
+                         'measuredElementTrade',
+                         'measuredItemCPC')]
 
   if (nrow(data_diff) > 0) {
     flog.trace("[%s] RNET: Non-existent transactions set to NA", PID, name = "dev")

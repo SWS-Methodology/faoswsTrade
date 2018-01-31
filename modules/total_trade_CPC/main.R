@@ -399,14 +399,16 @@ if (remove_nonexistent_transactions) {
   protected_data <-
     existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags,]
 
+  # XXX If timePointYears will eventually be used they need to
+  # have the same class in existing_data and total_trade_cpc_w_uv
+
   # Remove from saved data
   existing_data <-
     existing_data[!protected_data,
                   on = c('geographicAreaM49Reporter',
                          'geographicAreaM49Partner',
                          'measuredElementTrade',
-                         'measuredItemCPC',
-                         'timePointYears')]
+                         'measuredItemCPC')]
 
   # Remove from new data
   total_trade_cpc_w_uv <-
@@ -414,8 +416,7 @@ if (remove_nonexistent_transactions) {
                             on = c('geographicAreaM49Reporter',
                                    'geographicAreaM49Partner',
                                    'measuredElementTrade',
-                                   'measuredItemCPC',
-                                   'timePointYears')]
+                                   'measuredItemCPC')]
 
 
   # Difference between what was saved and what the module produced:
@@ -425,8 +426,7 @@ if (remove_nonexistent_transactions) {
     existing_data[!total_trade_cpc_w_uv,
                   on = c('geographicAreaM49',
                          'measuredElementTrade',
-                         'measuredItemCPC',
-                         'timePointYears')]
+                         'measuredItemCPC')]
 
   if (nrow(data_diff) > 0) {
     #flog.trace("[%s] RNET: Non-existent transactions set to NA", PID, name = "dev")

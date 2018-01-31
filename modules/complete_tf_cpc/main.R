@@ -1916,14 +1916,16 @@ if (remove_nonexistent_transactions) {
   protected_data <-
     existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags,]
 
+  # XXX If timePointYears will eventually be used they need to
+  # have the same class in existing_data and complete_trade_flow_cpc
+
   # Remove from saved data
   existing_data <-
     existing_data[!protected_data,
                   on = c('geographicAreaM49Reporter',
                          'geographicAreaM49Partner',
                          'measuredElementTrade',
-                         'measuredItemCPC',
-                         'timePointYears')]
+                         'measuredItemCPC')]
 
   # Remove from new data
   complete_trade_flow_cpc <-
@@ -1931,8 +1933,7 @@ if (remove_nonexistent_transactions) {
                             on = c('geographicAreaM49Reporter',
                                    'geographicAreaM49Partner',
                                    'measuredElementTrade',
-                                   'measuredItemCPC',
-                                   'timePointYears')]
+                                   'measuredItemCPC')]
 
 
   # Difference between what was saved and what the module produced:

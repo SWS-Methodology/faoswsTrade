@@ -438,7 +438,9 @@ db_save <- plyr::mdply(
 end_time <- Sys.time()
 print(end_time - start_time)
 
-parallel::stopCluster(cl)
+if (multicore) {
+  parallel::stopCluster(cl)
+}
 
 db_save <- db_save %>%
   select(

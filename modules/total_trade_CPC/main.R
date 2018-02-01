@@ -384,7 +384,7 @@ if (remove_nonexistent_transactions) {
 
   existing_data <- GetData(key = totaltradekey, omitna = TRUE)
 
-  flog.trace("[%s] Keep protected data", PID, name = "dev")
+  #flog.trace("[%s] Keep protected data", PID, name = "dev")
 
   # Some flags are "protected", i.e., data with these flags
   # should not be overwritten/removed
@@ -405,16 +405,14 @@ if (remove_nonexistent_transactions) {
   # Remove from saved data
   existing_data <-
     existing_data[!protected_data,
-                  on = c('geographicAreaM49Reporter',
-                         'geographicAreaM49Partner',
+                  on = c('geographicAreaM49',
                          'measuredElementTrade',
                          'measuredItemCPC')]
 
   # Remove from new data
   total_trade_cpc_w_uv <-
     total_trade_cpc_w_uv[!protected_data,
-                            on = c('geographicAreaM49Reporter',
-                                   'geographicAreaM49Partner',
+                            on = c('geographicAreaM49',
                                    'measuredElementTrade',
                                    'measuredItemCPC')]
 

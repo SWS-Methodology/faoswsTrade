@@ -277,6 +277,10 @@ if (!only_pre_process) {
   hsfclmap3 <- ReadDatatable('hsfclmap5')
   stopifnot(nrow(hsfclmap3) > 0)
 
+  flog.trace("[%s] Reading in 'force_mirroring' datatable", PID, name = "dev")
+  force_mirroring <- ReadDatatable('force_mirroring')
+  stopifnot(nrow(force_mirroring) > 0)
+
   flog.trace("[%s] Reading in corrections dataset", PID, name = "dev")
   corrections_dir <-
     file.path(Sys.getenv('R_SWS_SHARE_PATH'), 'trade/validation_tool_files')
@@ -470,6 +474,22 @@ tldata <- tldata %>%
 ##' existed in the year considered).
 
 tldata <- removeInvalidReporters(tldata)
+
+##' 1. Force mirroring.
+
+esdata <-
+  anti_join(
+    esdata,
+    force_mirroring,
+    by = c('reporter' = 'fao_code', 'year')
+  )
+
+tldata <-
+  anti_join(
+    tldata,
+    force_mirroring,
+    by = c('reporter' = 'fao_code', 'year')
+  )
 
 ##' 1. Remove ES repoters from TL.
 

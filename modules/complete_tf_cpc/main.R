@@ -561,7 +561,7 @@ hsfclmap3 <-
   group_by(area, flow, fromcode, tocode) %>%
   dplyr::mutate(maxy = max(endyear), extend = ifelse(maxy < 2050, TRUE, FALSE)) %>%
   ungroup() %>%
-  dplyr::mutate(endyear1 = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
+  dplyr::mutate(endyear = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
   dplyr::select(-maxy, -extend)
 # / Extend endyear to 2050
 

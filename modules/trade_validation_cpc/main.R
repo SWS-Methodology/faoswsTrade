@@ -110,10 +110,10 @@ computeData <- function(reporter = NA) {
 
     data <- getComputedDataSWS(reporter)
 
-    # XXX this should be the mimimum, but it's not necessarily true.
+    # XXX 10 should be the mimimum, but it's not necessarily true.
     # (a zero-row df will be returned for non-existing countries, in
     # any case (e.g., USSR before 1991))
-    if (nrow(data) > 10) {
+    if (nrow(data) > 10 & any(c(5608, 5609, 5908, 5909) %in% unique(data$measuredElementTrade))) {
       data <- data %>%
         reshapeTrade() %>%
         # XXX should be "value only" items

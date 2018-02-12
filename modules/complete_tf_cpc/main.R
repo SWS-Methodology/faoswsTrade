@@ -556,20 +556,13 @@ hsfclmap3 <- tbl_df(hsfclmap3) %>%
   select(-starts_with('correction'))
 
 # Extend endyear to 2050
-hsfclmap3_extend <- hsfclmap3 %>%
-  group_by(area, flow, fromcode, tocode) %>%
-  dplyr::summarise(maxy = max(endyear)) %>%
-  dplyr::mutate(extend = ifelse(maxy < 2050, TRUE, FALSE)) %>%
-  ungroup()
-
 hsfclmap3 <-
-  left_join(
-    hsfclmap3,
-    hsfclmap3_extend,
-    by = c('area', 'flow', 'fromcode', 'tocode')
-  ) %>%
-  dplyr::mutate(endyear = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
-  select(-maxy, -extend)
+  hsfclmap3 %>%
+  group_by(area, flow, fromcode, tocode) %>%
+  dplyr::mutate(maxy = max(endyear), extend = ifelse(maxy < 2050, TRUE, FALSE)) %>%
+  ungroup() %>%
+  dplyr::mutate(endyear1 = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
+  dplyr::select(-maxy, -extend)
 # / Extend endyear to 2050
 
 # ADD UNMAPPED CODES

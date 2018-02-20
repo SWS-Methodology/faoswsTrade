@@ -176,6 +176,7 @@ flagWeightTable_method <- frame_data(
   '',                    0.99,
   'i',                   0.80,
   'e',                   0.60,
+  'f',                   0.50,
   'c',                   0.40,
   's',                   0.20
 )

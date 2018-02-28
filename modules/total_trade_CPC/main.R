@@ -174,10 +174,13 @@ flagWeightTable_method <- frame_data(
   'h',                   1.00,
   # XXX check why some are blanks
   '',                    0.99,
+  'q',                   0.95,
+  'p',                   0.90,
   'i',                   0.80,
   'e',                   0.60,
   'f',                   0.50,
   'c',                   0.40,
+  '-',                   0.30,
   's',                   0.20
 )
 

@@ -19,9 +19,11 @@ abstract: |
   specific, i.e, the trade modules run independently for each year
   (not necessarily in a chronological order). To run the
   `total_trade_CPC` module, the output of the `complete_tf_cpc`
-  module is required. In this document, an overall narrative of
+  module is required. Data is validated with complimentary tools
+  that detect outliers and allows analysts to correct flows in an
+  informed way. In this document, an overall narrative of
   what the modules do is presented. A detailed step-by-step
-  illustration of the modules is given in separate documents.
+  illustration of the modules/tools is given in separate documents.
 date: "`r format(Sys.time(), '%e %B %Y')`"
 geometry: margin=1in
 output:
@@ -155,7 +157,7 @@ caption = 'Results of the aggregation of multiple transactions')
 
 After quantity conversions are made, or missing quantities get
 imputed (see further), the two different rows in the previous
-table in the table will be aggregated into a single transaction.
+table will be aggregated into a single transaction.
 
 ### Mapping UNSD Tariff line and Eurostat data
 
@@ -166,7 +168,7 @@ the nature of the differences among the two datasets.
 #### UNSD Tariff line {-}
 
 1. UNSD Tariff line data reports area code with Tariff line M49
-   standard codes (which are different for official M49). The area
+   standard codes (which are different from official M49). The area
    code is converted in FAO country code using a specific
    conversion table provided by Team ENV.
 
@@ -260,8 +262,10 @@ the nature of the differences among the two datasets.
    codes.
 
    ```{r}
-   knitr::kable(examples$hsfclmap_additions, row.names = FALSE,
-   caption = 'Subset of additions to the HS to FCL mapping table')
+   knitr::kable(dplyr::select(examples$hsfclmap_additions,
+   -tl_description, -mapped_by,-hs_extend, -hs_chap, -reporter_name),
+   row.names = FALSE, caption = 'Subset of additions to the HS to FCL
+   mapping table')
    ```
 
    Moreover, some of the original codes in the HS-FCL
@@ -286,12 +290,10 @@ the nature of the differences among the two datasets.
    quantity is "units" and the FAO unit is "1000 heads", the
    quantity is divided by 1000.
 
-<!-- Next point needs to be revised -->
-
-1. Commodity specific conversions are added. This is done by
-   taking the ratio of the reported weight and quantity (divided
-   by 1000), computing the median of this ratio by FCL and the
-   originally reported unit of measurement, and finally
+1. Non-livestock commodity specific conversions are added. This is
+   done by taking the ratio of the reported weight and quantity
+   (divided by 1000), computing the median of this ratio by FCL and
+   the originally reported unit of measurement, and finally
    multiplying it by the reported quantity. To make this clear an
    example could be useful: suppose that a country does not report
    the weight of eggs, but reports units, in this case, we compute
@@ -304,7 +306,9 @@ the nature of the differences among the two datasets.
    regional medians (e.g., for Thailand use the Asian median of
    the weight/quantity/1000 ratio). The first-best approach, in
    any case, would be to have speficic tables derived from
-   external sources. This is currently under investigation.]
+   external sources. This is currently under investigation.] This
+   procedure is not applied to livestock: in this case, a country/item
+   specific datatable exists where weights of livestock are present.
 
 #### Eurostat {-}
 
@@ -317,7 +321,7 @@ the nature of the differences among the two datasets.
    'Subset of geonom (Eurostat) to FAO codes mapping')
    ```
 
-   Area codes not mapping to any FAO country code is reported and
+   Area codes not mapping to any FAO country code are reported and
    the records for these area codes are removed. All countries
    mapping to code 252 (which corresponds to undefined areas) are
    mapped to the 896 M49 code ("Other nei").
@@ -366,7 +370,9 @@ following PPRs are available in the "trade-reports" SWS domain:
 
 For a detailed explanation of what the PPR contain and how to
 update them, see the document "Trade Module: Plug-in
-Pre-Processing Report".
+Pre-Processing Report". Note that these tables are *not*
+saved automatically to SWS, but need to be uploaded by using
+the `pre_processing_report` plugin.
 
 ### Unified Official Trade Flows Dataset
 
@@ -404,7 +410,7 @@ across partner is calculated and used for imputation. If the first
 attempt fails (i.e., it is not possible to calculate a unit value
 at the most specific HS level), then the same approach is used by
 taking into account more generic HS levels, in particular at eight
-and six digits, and the most specific level for which a sufficient
+and six digits, and the most generic level for which a sufficient
 number of partners (at least 10) is available is used for
 calculating the median unit value. Usually a suitable median can
 be calculated at the 8-digit level or, at least, at the 6-digit
@@ -418,7 +424,7 @@ unit value by HS, thus that the FCL level is used as the strategy
 of last resort.  Actually, for completeness sake, the very last
 *fallback* is the median unit value by flow. This is the most
 generic unit value that can be used for imputation and is
-calculated just for precaution as it is very unlikely that an
+calculated just for precaution, as it is very unlikely that an
 appropriate more specific median unit value can not be calculated.
 
 In short, the first one of the following median unit values that
@@ -431,7 +437,8 @@ values are always calculated separately):
 1. most specific HS code, across reporters/partners;
 1. FCL code of the most specific HS code, across
    reporters/partners;
-1. by flow (without taking into account any commodity code).
+1. by flow (without taking into account any commodity code; this is
+   very unlikely to be applied).
 
 #### Outlier Detection and Imputation {-}
 
@@ -439,8 +446,8 @@ In the current version of the module, **no automatic outlier
 imputation is carried out**. The reason is that by comparing the
 results of the module by correcting outliers and previous FAOSTAT
 data, the two different datasets presented remarkable differences.
-Indeed, it was found that the *uncorrected* data was overall more
-similar to previous FAOSTAT data. For this reason, automatic
+Indeed, it was found that the *uncorrected* data was on average more
+similar to previous FAOSTAT data. For this reason, **automatic**
 correction is not currently being used, relying on a semi-automatic
 (guided) correction workflow that is done through an external
 validation tool. The steps of the guided validation are the
@@ -449,13 +456,13 @@ following:
 1. a validation plugin for total trade is used that indicates
    which `reporter / commodity / flow / year` combination is
    likely to be an outlier. It computes various outlier detection
-   routines on the data and assign scores based on how many times
+   routines on the data and assigns scores based on how many times
    a transaction has been found to be an outlier. This information
    is displayed on SWS by increasing levels of colouring that go
    from pale yellow to red, the last one being the one that
    indicates that a particular transaction has been found to be an
    outlier by all methods.
-1. Analysts select the series with outliers (by going from the
+1. analysts select the series with outliers (by going from the
    most to the least severe cases) and use an interactive
    validation tool that allows to dig into the composition of
    total trade flows as it uses bilateral data. The tool displays
@@ -466,17 +473,36 @@ following:
    to have more information on this topic, please see the
    validation tool documentation.
 
+When no statistical-based imputation seems appropriate, analysts
+can "force" some values (e.g., obtained by consulting external
+sources) by overwriting the values saved on SWS and using "protected"
+flags. When the modules are run, these protected figures will not
+be overwritten by any figure generated by the module. The list of
+protected flags is shown in the following table ("BLANK" stands for
+an empty flag).
+
+```{r}
+knitr::kable(examples$protected, row.names = FALSE, caption =
+'Protected flags')
+```
+
+The previous set of flags is a subset of the protected flags in
+`faoswsFlag::flagValidTable`. The difference is that as trade is
+concerned, the **(BLANK, c)**, **(BLANK, h)**, and **(T, c)** are
+flags actually given by the module, thus they should not be
+considered protected.
+
 ### Mirroring
 
 The module generates the list of non-reporting countries: these are
 the countries present as partners but missing as reporters. For
 these countries the mirroring routine is applied: the
 corresponding trade of the non-reporting countries are extracted
-from the partners inverting the flows. The quantities are the same
+from the partners, inverting the flows. The quantities are the same
 while the values are corrected by a factor of 12% due to the
 CIF/FOB (Cost, Insurance and Freight / Free on Board) conversion
 (i.e., original imports are divided by 1.12, while original
-exports are divided by 1.12).
+exports are multiplied by 1.12).
 
 There is also another condition for which mirroring is applied:
 when a flow is completely missing for a country when it is a
@@ -503,7 +529,7 @@ be assigned to all flags, and the one with the lowest value
 prevails over the other flags. For instance, if two official
 transactions at the HS level are aggregated in one CPC code, then
 the "s" (for aggregation) Method flag will prevail over the two
-"h" Method flags of each transaction.
+"h" (for harvested) Method flags of each transaction.
 
 ## Conversion to FAO SWS standards
 
@@ -513,7 +539,7 @@ respect the SWS standards:
 
 - Conversion of FCL into CPC codes. This conversion is based on
   the table of conversion 2.1 expanded. If some FCL codes are not
-  mapped into CPC ones, the corresponding records are filtered
+  mapped to CPC, the corresponding records are filtered
   out. Since the mapping between FCL and CPC is one-to-one there
   is no aggregation at this point. The routine just adds the
   corresponding CPC code.
@@ -528,15 +554,61 @@ respect the SWS standards:
 The first submodule saves the final output in the
 `completed_tf_cpc_m49` dataset, within the `trade` domain.
 
+## Use validation corrections
+
+If corrections for the year for which the module is run exits,
+they will replace the data generated by the module. For instance,
+if the module generated 2 million tonnes for some item in some
+country, but in the validation process it was found that this figure
+suffers from an "order of magnitude" problem, because it was saved
+as tonnes while it should have actually be kilograms so that it got
+replaced by 2 thousand tonnes, 2 millions will be replaced by
+2 thousand in the data that is processed. When values are replaced
+by validated figures, they get the **(I, e)** flags combination.
+Moreover, if a mirror flow exists it will be changed accordingly
+(in this case, the flags combination will be set to **(T, e)**).
+
+The "corrections" mechanism was designed so that if the original
+figure that will be replaced is different from what the analyst
+corrected, the correction will be dropped. This can happen for
+different reasons, among which: raw data changed and pre-existing
+errors were corrected; the mapping table of a commodity was modified;
+etc.
+
+Metadata for corrected figures is generated and will be saved on SWS.
+
+## Remove non-existent transactions
+
+The module checks whether there are combinations of `reporter` /
+`partner` / `item` / `element` stored on SWS that is not generated
+by the module. If there is any, said combination(s) will be removed
+from SWS. Indeed, the module should generate all possible combinations
+of those dimensions and combinations that are not generated should
+not exist. These "non-existing" combinations can be present on SWS
+because they were generated in the past but they should not have been.
+Also in this case, possible reasons can be multiple: the module had a
+bug that got corrected; the mapping table was modified; etc. Given
+that the SWS R-API does not have an option to check whether some
+combinations are not going to be overwritten, this needs to be done
+code-side by performing a set difference on the combinations available
+in the module and those generated by the module. Values and flags of
+the resulting combinations will be set to NA as there is actually no
+way to remove the observation. In any case result is substantially the
+same.
+
 # Total trade CPC
 
 This second submodule uses as input the output of the previous
 submodule. It aggregates total trade flows by reporting country
 for partners countries to a single total trade for each unique CPC
-commodity code.
+commodity code. As the previous one, this submodule works by year.
 
 The module saves the output into the dataset `total_trade_cpc_m49`,
 within the `trade` domain.
+
+As for the `complete_tf_cpc`, non-existent transactions are removed.
+In this case, the combinations to compare are composed by `reporter` /
+`item` / `element`.
 
 # Flow Chart Process
 
@@ -552,12 +624,7 @@ knitr::include_graphics("assets/trade_2.png")
 
 # Future work
 
-## Validation Steps
-
-This section represents the most high priority task for the trade
-module.
-
-## Outlier identification/imputation
+## Outlier identification/imputation at the bilateral level
 
 Outliers were identified in a previous version of the
 `complete_tf_cpc` module and imputed automatically by using the
@@ -571,7 +638,7 @@ outlier for an Asian country instead of going up to the HS8 or HS6
 level for the country itself as attempted in the
 specific-to-generic approach).
 
-### Destination Table
+## Destination Table
 
 The `complete_tf_cpc` module produces output for all the records
 passing all the routines and not filtered out. The module does not

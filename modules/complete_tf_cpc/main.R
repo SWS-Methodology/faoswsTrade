@@ -221,7 +221,7 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
-##'   - `hs_chapters`: can not be set by the user as it is provided by Team B/C and harcoded).
+##'   - `hs_chapters`: can not be set by the user as it is provided by Team B/C and hardcoded).
 ##'   The HS chapters are the following:
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
@@ -436,7 +436,7 @@ esdata <- esdata %>%
 # M49 to FAO area list ####
 
 ##' 1. TL M49 codes (which are different from official M49) are
-##' converted in FAO country codes using a specific convertion
+##' converted in FAO country codes using a specific conversion
 ##' table provided by Team ENV. See below for the description
 ##' of the `unsdpartnersblocks` table.
 
@@ -470,7 +470,7 @@ tldata <- tldata %>%
     partner  = ~as.integer(convertComtradeM49ToFAO(m49par))
   )
 
-##' 1. Remove invalid repoters (i.e., keep contries/areas that
+##' 1. Remove invalid reporters (i.e., keep countries/areas that
 ##' existed in the year considered).
 
 tldata <- removeInvalidReporters(tldata)
@@ -491,7 +491,7 @@ tldata <-
     by = c('reporter' = 'fao_code', 'year')
   )
 
-##' 1. Remove ES repoters from TL.
+##' 1. Remove ES reporters from TL.
 
 flog.trace("[%s] TL: dropping reporters already found in Eurostat data", PID, name = "dev")
 # They will be replaced by ES data
@@ -718,7 +718,7 @@ hs6standard <- hs6standard %>%
 
 
 ##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
-##' different list of geographic are codes. The partner dimesion is more
+##' different list of geographic are codes. The partner dimension is more
 ##' detailed than the reporter dimension. Since we can not split trade flows of
 ##' the reporter dimension, trade flows of the corresponding partner dimensions
 ##' have to be assigned the reporter dimension's geographic area code. For
@@ -745,8 +745,8 @@ fclunits <- tbl_df(fclunits) %>%
 
 ##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
 ##' quantity units) in Tariffline data into intelligible unit of measurement,
-##' which correspond to bthe standards of quantity recommended by the *World
-##' Customs Organization* (WCO) (e.g., `qunit`=8 correspond to *kg*).
+##' which correspond to the standards of quantity recommended by the *World
+##' Customs Organization* (WCO) (e.g., `qunit`=8 corresponds to *kg*).
 ##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
 #data("comtradeunits", package = "faoswsTrade", envir = environment())
@@ -938,7 +938,7 @@ tldata <- tldata %>%
   setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
 
 
-##' 1. Generate Observation Status "X" flag and Metdoh "h" flag.
+##' 1. Generate Observation Status "X" flag and Method "h" flag.
 
 tldata <- tldata %>%
   setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
@@ -952,7 +952,7 @@ tldata <- tldata %>%
 ##+ drop_reps_not_in_mdb ####
 
 ##' 1. Area codes not mapping to any FAO country in the HS to FCL mapping
-##' code are removed.
+##' codes are removed.
 
 # We drop reporters that are absent in MDB hsfcl map
 # because in any case we can proceed their data
@@ -1015,7 +1015,7 @@ rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 flog.trace("[%s] TL: dropping unmapped records", PID, name = "dev")
 
-##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
+##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL link).
 
 tldata <- filter_(tldata, ~!is.na(fcl))
 
@@ -1074,7 +1074,7 @@ tldata <- left_join(tldata, ctfclunitsconv, by = c("qunit", "wco", "fclunit"))
 
 #### Commodity specific conversion
 
-# For converting qty to metric tonnes
+# For converting qty to metric tons
 fcl_spec_mt_conv <- tldata %>%
   filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
@@ -1485,7 +1485,7 @@ tradedata <- tradedata %>%
 
 ##' ## Flag aggregation
 
-##' Flags are aggregated as mentioined in the *Flags* section in
+##' Flags are aggregated as mentioned in the *Flags* section in
 ##' the main documentation or, more in depth, in the "Flag Management
 ##' in the Trade module" document.
 
@@ -2044,7 +2044,7 @@ if (remove_nonexistent_transactions) {
   }
 }
 
-##' # Save the `completed_tf_cpc_m49` dataset to the `trade` domain
+##' # Save data in the `completed_tf_cpc_m49` dataset of the `trade` domain
 
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 

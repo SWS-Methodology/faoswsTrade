@@ -63,13 +63,13 @@ knitr::kable(examples$tldata_raw, row.names = FALSE, caption =
 'Subset of Tariff line data', digits = 2)
 ```
 
-In the following table, an example on filterd Eurostat data is
+In the following table, an example on filtered Eurostat data is
 reported (also in this case, the original variable names were
 modified). The main differences are: reporter and partner codes
 are "geonomenclature" codes (in UNSD they are "M49"); the HS
 length is maximum 8-digits; monetary values are in thousands of
 euros; weight is reported in tonnes; the supplementary quantity is
-always commodity specific (in Tariff line data it can happend that
+always commodity specific (in Tariff line data it can happen that
 the same HS code is reported in different units).
 
 
@@ -129,7 +129,7 @@ same variable names and data types before being processed further.
 The tariffline data from UNSD contains multiple rows with
 identical combination of `reporter` / `partner` / `commodity` /
 `flow` / `year` / `qunit`. Those are transactions registered
-separately, thus rows containinig non-missing values and
+separately, thus rows containing non-missing values and
 quantities can be aggregated.  Missing variables of the same type
 are also aggregated if they are *all* missing, as they will
 produce a missing aggregated value for missing disaggregated
@@ -172,7 +172,7 @@ the nature of the differences among the two datasets.
 
    ```{r}
    knitr::kable(examples$m49faomap, row.names = FALSE,
-   caption = 'Subset of the M40 to FAO codes mapping table')
+   caption = 'Subset of the M49 to FAO codes mapping table')
    ```
 
 1. Countries that are not supposed to exist in the year for which
@@ -190,7 +190,7 @@ the nature of the differences among the two datasets.
 
 1. Area codes not mapping to any FAO country code are removed and
    will be mirrored in a later step. All countries mapping to code
-   252 (which correponds to undefined areas) are mapped to the 896
+   252 (which corresponds to undefined areas) are mapped to the 896
    M49 code ("Other nei").
 
    ```{r}
@@ -319,7 +319,7 @@ the nature of the differences among the two datasets.
 
    Area codes not mapping to any FAO country code is reported and
    the records for these area codes are removed. All countries
-   mapping to code 252 (which correpond undefined areas) are
+   mapping to code 252 (which corresponds to undefined areas) are
    mapped to the 896 M49 code ("Other nei").
 
 1. Commodity codes are reported in CN8 codes (*Combined
@@ -334,7 +334,7 @@ the nature of the differences among the two datasets.
    be mirrored in a subsequent step.
    
 1. Information of the FCL units is added. This step is
-   straighforward since for Eurostat the units are for the vast
+   straightforward since for Eurostat the units are for the vast
    majority the same as FAO units.
 
 1. Some commodity specific conversions are needed as Eurostat
@@ -431,11 +431,11 @@ values are always calculated separately):
 1. most specific HS code, across reporters/partners;
 1. FCL code of the most specific HS code, across
    reporters/partners;
-1. by flow (whithout taking into account any commodity code).
+1. by flow (without taking into account any commodity code).
 
 #### Outlier Detection and Imputation {-}
 
-In the currect version of the module, **no automatic outlier
+In the current version of the module, **no automatic outlier
 imputation is carried out**. The reason is that by comparing the
 results of the module by correcting outliers and previous FAOSTAT
 data, the two different datasets presented remarkable differences.
@@ -535,7 +535,7 @@ submodule. It aggregates total trade flows by reporting country
 for partners countries to a single total trade for each unique CPC
 commodity code.
 
-The module saves the ouput into the dataset `total_trade_cpc_m49`,
+The module saves the output into the dataset `total_trade_cpc_m49`,
 within the `trade` domain.
 
 # Flow Chart Process

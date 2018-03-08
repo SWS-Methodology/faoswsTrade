@@ -1165,18 +1165,14 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   tldata_to_convert <- tldata_not_converted %>%
     dplyr::mutate(
       qtyfcl =
-        ifelse(
-          !is.na(convspec_mt),
-          qty * convspec_mt,
-          ifelse(
-            !is.na(convspec_head),
-            weight / convspec_head,
-            #### Common conv
-            # If no specific conv. factor, we apply general
-            qty * conv
-          )
-        ),
-      qtyfcl = ifelse(fclunit == '1000 heads', qtyfcl / 1000, qtyfcl)
+        case_when(
+          !is.na(.$convspec_mt)                               ~ .$qty * .$convspec_mt,
+          !is.na(.$convspec_head) & .$fclunit != '1000 heads' ~ .$weight / .$convspec_head,
+          !is.na(.$convspec_head) & .$fclunit == '1000 heads' ~ .$weight / .$convspec_head / 1000,
+          #### Common conv
+          # If no specific conv. factor, we apply general
+          TRUE                                                ~ .$qty * .$conv
+        )
     )
 
   tldata <-

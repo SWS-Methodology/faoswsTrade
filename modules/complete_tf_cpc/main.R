@@ -16,12 +16,6 @@
 ##' performed in the `complete_tf_cpc` module. For a narrative version of
 ##' the module's approach, please see its main document.
 
-# Stop if required parameters were not set
-# The out_coef was removed as a parameter given that the
-# outlier detection/imputation was disabled.
-#stopifnot(!is.null(swsContext.computationParams$out_coef))
-stopifnot(!is.null(swsContext.computationParams$year))
-
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
@@ -43,6 +37,14 @@ library(bit64)
 
 # Always source files in R/ (useful for local runs)
 sapply(dir("R", full.names = TRUE), source)
+
+##+ check_parameters
+
+# Stop if required parameters were not set
+# The out_coef was removed as a parameter given that the
+# outlier detection/imputation was disabled.
+#stopifnot(!is.null(swsContext.computationParams$out_coef))
+stopifnot(!is.null(swsContext.computationParams$year))
 
 ##+ init
 
@@ -303,7 +305,7 @@ if (!only_pre_process) {
   livestock_weights <- ReadDatatable('livestock_weights')
   stopifnot(nrow(livestock_weights) > 0)
 
-##' `hs6standard`: HS6standard will be used as last resort for mapping.
+##' - `hs6standard`: HS6standard will be used as last resort for mapping.
 
   flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')

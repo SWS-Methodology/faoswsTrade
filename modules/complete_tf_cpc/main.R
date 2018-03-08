@@ -415,7 +415,9 @@ unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
 
 ##' # Download raw data and basic operations
 
-##' 1. Download Eurostat data (ES).
+##' 1. Download Eurostat data (ES) available in
+##' `trade-input-data:ce_combinednomenclature_unlogged_YEAR`
+##' datatables (label: "EU Commission - Combined Nomenclature YEAR").
 
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
@@ -446,7 +448,9 @@ if (!is.null(samplesize)) {
 
 flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
-##' 1. Download Tariff line data (TL).
+##' 1. Download Tariff line data (TL) available in
+##' `trade-input-data:ct_tariffline_unlogged_YEAR`
+##' datatables (label: "UNSD Tariffline YEAR").
 
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 
@@ -518,8 +522,11 @@ tldata <- removeNonNumeric(tldata)
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
 
-# Specific HS corrections
-#
+##' 1. Apply specific HS corrections. Some HS codes in some countries
+##' need specific HS corrections. As on 2018-03-08 only a subset of
+##' HS codes for a given TL reporter are corrected (tonnes were reported
+##' instead of kilograms, so raw data was multiplied by 1000).
+
 # XXX As of 20171130 this is relevant only for a given reporter in
 # a given year, but in the future it should probably be generalised
 
@@ -542,8 +549,8 @@ esdata <- esdata %>%
 
 ##' 1. TL M49 codes (which are different from official M49) are
 ##' converted in FAO country codes using a specific conversion
-##' table provided by Team ENV. See below for the description
-##' of the `unsdpartnersblocks` table.
+##' table (`unsdpartnersblocks`) provided by Team ENV. Then,
+##' these M49 codes are converted to FAO codes.
 
 flog.trace("[%s] TL: converting M49 to FAO area list", PID, name = "dev")
 
@@ -578,7 +585,8 @@ tldata <- tldata %>%
 
 tldata <- removeInvalidReporters(tldata)
 
-##' 1. Force mirroring.
+##' 1. Force mirroring, i.e., remove countries that appear as official
+##' reporters so that the mirroring procedure will estimate their data.
 
 esdata <-
   anti_join(
@@ -627,6 +635,8 @@ rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
 
 if (only_pre_process) stop("Stop after reports on raw data")
 
+##' 1. Apply explicit corrections to the HS-FCL mapping.
+
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 # XXX Notice that it is pulling now v5
 hsfclmap3 <- tbl_df(hsfclmap3) %>%
@@ -638,6 +648,9 @@ hsfclmap3 <- tbl_df(hsfclmap3) %>%
   ) %>%
   select(-starts_with('correction'))
 
+##' 1. Extend the `endyear` for those combinations of `area` / `flow` /
+##' `fromcode` / `tocode` for which `endyear` < `year`.
+
 # Extend endyear to 2050
 hsfclmap3 <-
   hsfclmap3 %>%
@@ -648,8 +661,8 @@ hsfclmap3 <-
   dplyr::select(-maxy, -extend)
 # / Extend endyear to 2050
 
-# ADD UNMAPPED CODES
 
+# ADD UNMAPPED CODES
 
 # Check that all FCL codes are valid
 
@@ -731,6 +744,9 @@ add_map <- add_map %>%
     tocode   = gsub(' ', '', tocode)
   )
 
+##' 1. Add additional codes that were not present in the HS-FCL
+##' original mapping file.
+
 hsfclmap3 <- bind_rows(add_map, hsfclmap3) %>%
   dplyr::mutate(
     startyear = as.integer(startyear),
@@ -743,6 +759,8 @@ flog.info("HS->FCL mapping table preview:",
           rprt_glimpse0(hsfclmap3), capture = TRUE)
 
 rprt(hsfclmap3, "hsfclmap", year)
+
+##' 1. Keep HS-FCL links for which `startyear` <= `year` & `endyear` >= `year`
 
 hsfclmap <- hsfclmap3 %>%
   filter_(~startyear <= year & endyear >= year) %>%
@@ -768,7 +786,7 @@ stopifnot(nrow(hsfclmap) > 0)
 
 flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
 
-##' # Generate HS to FCL map at HS6 level (if switched on)
+##' 1. Generate HS to FCL map at HS6 level (if switched on)
 
 if (generate_hs6mapping) {
 
@@ -776,13 +794,13 @@ if (generate_hs6mapping) {
 
   flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
 
-##' 1. Universal (all years) HS6 mapping table.
+##'     1. Universal (all years) HS6 mapping table.
 
   flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
 
   hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
 
-##' 1. Current year specific HS6 mapping table.
+##'     1. Current year specific HS6 mapping table.
 
   flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
 
@@ -816,7 +834,6 @@ rprt(hs6fclmap, "hs6fclmap")
 
 esdata <- generateFlagVars(esdata)
 
-##' 1. Generate Observation Status "X" flag and Method "h" flag.
 
 esdata <- esdata %>%
   setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
@@ -881,13 +898,14 @@ rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
 flog.trace("[%s] ES: dropping unmapped records", PID, name = "dev")
 
-##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL ' link).
+##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL link).
 
 esdata <- filter_(esdata, ~!(is.na(fcl)))
 
 flog.info("ES records after removing non-mapped HS codes: %s", nrow(esdata))
 
-##' 1. Add FCL units.
+##' 1. Add FCL units, i.e., the target units of measurement of the items
+##' (e.g., tonnes, heads).
 
 esdata <- addFCLunits(tradedata = esdata, fclunits = fclunits)
 
@@ -915,7 +933,9 @@ esdata <- esdata %>%
 
 ##' # Specific operations on Tariff line data
 
-##' 1. Do mathematical conversions on specific `qunit`s (6, 9, and 11 become 5).
+##' 1. Do mathematical conversions on specific `qunit`s: 6 (pairs),
+##' 9 (thousands), and 11 (dozens) become 5 (units), by multiplying
+##' them by 2, 1000, and 12, respectively.
 
 # Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
 tldata <- as.data.table(tldata)
@@ -943,8 +963,6 @@ tldata <- generateFlagVars(tldata)
 tldata <- tldata %>%
   setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
 
-
-##' 1. Generate Observation Status "X" flag and Method "h" flag.
 
 tldata <- tldata %>%
   setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
@@ -1031,7 +1049,8 @@ if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 
 ############# Units of measurment in TL ####
 
-##' 1. Add FCL units.
+##' 1. Add FCL units, i.e., the target units of measurement of the items
+##' (e.g., tonnes, heads).
 
 flog.trace("[%s] TL: add FCL units", PID, name = "dev")
 
@@ -1141,7 +1160,6 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   tldata$id <- 1:nrow(tldata)
   tldata$qtyfcl <- NA_real_
 
-  # Maybe better to use case_when (results don't change anyway)
   tldata_converted <- tldata %>%
     dplyr::mutate(
       qtyfcl =
@@ -1221,13 +1239,14 @@ tldata <- tldata %>%
   setFlag3(weight > 0, type = 'method', flag = 'i', variable = 'weight') %>%
   setFlag3(cond_q,     type = 'method', flag = 'i', variable = 'weight')
 
+##' # Combine Trade Data Sources
 
 ######### Value from USD to thousands of USD
 
 ##+ es_convcur
 
 ##' 1. Convert currency of monetary values from EUR to USD using the
-##' `EURconversionUSD` table.
+##' `EURconversionUSD` table (required only for ES).
 
 eur_usd <- as.numeric(EURconversionUSD[eusd_year == year,]$eusd_exchangerate)
 
@@ -1248,8 +1267,6 @@ if (dollars) {
     dplyr::mutate(value = value / 1000) %>%
     setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 }
-
-##' 1. Aggregate data to FCL level.
 
 ##+ tl_aggregate
 
@@ -1274,7 +1291,6 @@ esdata <- esdata %>%
   dplyr::mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
                ~starts_with('flag_'))
 
-##' # Combine Trade Data Sources
 
 ##' 1. Combine Tariff line and Eurostat data sources in a single data set:
 ##'     - TL: assign `weight` to `qty`.
@@ -1313,7 +1329,7 @@ tradedata <- tradedata %>%
   )
 
 ##' 1. Unit values are calculated for each observation at the HS level as ratio
-##' of monetary value over quantitya: $uv = value / qty$.
+##' of monetary value over quantity: $uv = value / qty$.
 
 tradedata <- dplyr::mutate_(tradedata,
                      uv = ~ifelse(no_quant | no_value, NA, value / qty))
@@ -1355,7 +1371,7 @@ tradedata <- tradedata %>%
     setFlag2(flagTrade > 0 & qty > 1,
              type = 'method', flag = 'e', var = 'quantity')
 
-##' Separate flags.
+##' 1. Separate flags.
 
 ###### TODO (Christian) Rethink/refactor
 # separate flag_method and flag_status into 2 variables each one: _v and _q
@@ -1411,7 +1427,7 @@ tradedata <- tradedata[-grep('^flag_.*[vq]$', colnames(tradedata))]
 tradedata <- tradedata %>%
   setFlag2(nfcl > 1,  type = 'method', flag = 's', variable = 'all')
 
-##' 1. Map FCL codes to CPC.
+##' 1. Map FCL codes to CPC (version 2.1).
 
 # Adding CPC2 extended code
 flog.trace("[%s] Add CPC item codes", PID, name = "dev")
@@ -1489,7 +1505,7 @@ tradedata <- tradedata %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
   select(-mirrored)
 
-##' ## Flag aggregation
+##' # Flag aggregation
 
 ##' Flags are aggregated as mentioned in the *Flags* section in
 ##' the main documentation or, more in depth, in the "Flag Management
@@ -1594,6 +1610,10 @@ complete_trade_flow_cpc <- tradedata %>%
   ## unit of monetary values is "1000 $"
   dplyr::mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
+##' 1. Keep officially reported weight in kilograms for livestock.
+##' Besides of quantities in "heads" or "1000 heads" if a country
+##' reported also the weight, it will be kept and saved to SWS.
+
 # Keep weight for livestock
 complete_trade_flow_cpc_live <-
   complete_trade_flow_cpc %>%
@@ -1611,7 +1631,7 @@ complete_trade_flow_cpc <-
   complete_trade_flow_cpc %>%
   select(-weight)
 
-##' 1. Use corrections from validation
+##' 1. Use corrections set by analysts during the validation process.
 
 corrections_table <- corrections_table_all %>%
   dplyr::rename(correction_year = year) %>%
@@ -1632,10 +1652,8 @@ if (corrections_exist) {
     # XXX Remove duplicate corrections
     group_by(reporter, partner, item, flow, data_type) %>%
     dplyr::arrange(dplyr::desc(date_correction)) %>%
-    dplyr::mutate(i = 1:n()) %>%
-    dplyr::filter(i == 1L) %>%
-    ungroup() %>%
-    select(-i)
+    dplyr::slice(1) %>%
+    ungroup()
 
   corrections_metadata <- apply(select(corrections_table, name_analyst, data_original, correction_type:date_validation),
                                 1, function(x) paste(names(x), ifelse(x == '', NA, x), collapse = '; ', sep = ': '))
@@ -1752,7 +1770,7 @@ if (corrections_exist) {
       file = file.path(corrections_dir, 'unapplied', paste0(year, '.rds'))
     )
 
-    # Original corrections with the unappilied ones removed
+    # Original corrections with the unapplied ones removed
     corrections_table_all_rm_unapplied <-
       anti_join(
         corrections_table_all,
@@ -1961,6 +1979,11 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
 
 
+##' 1. Removed "protected" data from the module's output.
+
+##' 1. Remove transactions saved on SWS that are not generated
+##' by the module.
+
 if (remove_nonexistent_transactions) {
   flog.trace("[%s] Remove non-existent transactions (RNET)", PID, name = "dev")
 
@@ -2050,7 +2073,10 @@ if (remove_nonexistent_transactions) {
   }
 }
 
-##' # Save data in the `completed_tf_cpc_m49` dataset of the `trade` domain
+##' # Save data
+
+##' Finally, data is saved in the `completed_tf_cpc_m49` dataset of
+##' the `trade` domain.
 
 flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 

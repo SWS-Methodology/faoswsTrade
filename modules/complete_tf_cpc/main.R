@@ -1318,7 +1318,6 @@ tradedata <- tradedata %>%
 #hs_many_lengths = getHsManyLengths(tradedata)
 #rprt_writetable(hs_many_lengths, subdir = 'details')
 
-##' # Imputation
 flog.trace("[%s] Outlier detection and imputation", PID, name = "dev")
 ##+ calculate_median_uv
 
@@ -1347,6 +1346,8 @@ if (detect_outliers) {
   tradedata$outlier <- FALSE
 }
 
+##' # Imputation
+
 ##+ impute_qty_uv
 
 ##' 1. Imputation of missing quantities by applying the method presented
@@ -1370,6 +1371,8 @@ tradedata <- tradedata %>%
              type = 'status', flag = 'I', var = 'quantity') %>%
     setFlag2(flagTrade > 0 & qty > 1,
              type = 'method', flag = 'e', var = 'quantity')
+
+##' # Additional operations
 
 ##' 1. Separate flags.
 

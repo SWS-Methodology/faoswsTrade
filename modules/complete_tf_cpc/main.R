@@ -221,8 +221,8 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
   shQuote(type = "sh") %>%
   paste(collapse = ", ")
 
-##'   - `hs_chapters`: can not be set by the user as it is provided by Team B/C and hardcoded).
-##'   The HS chapters are the following:
+##'   - `hs_chapters`: can not be set by the user as it is provided by
+##'   Team B/C and hardcoded). The HS chapters are the following:
 
 ##'     `r paste(formatC(hs_chapters, width = 2, format = "d", flag = "0"), collapse = ' ')`
 
@@ -244,42 +244,131 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = TRUE)
 # data), but more detailed checks should be needed (see #132)
 
 if (!only_pre_process) {
+##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
+##' quantity units) in Tariffline data into intelligible unit of measurement,
+##' which correspond to the standards of quantity recommended by the *World
+##' Customs Organization* (WCO) (e.g., `qunit`=8 corresponds to *kg*).
+##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
+
   flog.trace("[%s] Reading in 'comtradeunits' datatable", PID, name = "dev")
   comtradeunits <- ReadDatatable('comtradeunits')
   stopifnot(nrow(comtradeunits) > 0)
+
+  #data("comtradeunits", package = "faoswsTrade", envir = environment())
+  comtradeunits <- tbl_df(comtradeunits) %>%
+    dplyr::rename(
+      qunit = ctu_qunit,
+      wco   = ctu_wco,
+      desc  = ctu_desc
+    ) %>%
+    dplyr::mutate(qunit = as.integer(qunit))
+
+##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
   flog.trace("[%s] Reading in 'eur_conversion_usd' datatable", PID, name = "dev")
   EURconversionUSD <- ReadDatatable('eur_conversion_usd')
   stopifnot(nrow(EURconversionUSD) > 0)
   stopifnot(year %in% EURconversionUSD$eusd_year)
 
+  EURconversionUSD <- EURconversionUSD # already downloaded
+
+##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
+##' meet FAO standards. According to FAO standard, all weights are reported in
+##' tonnes, animals in heads or 1000 heads and for certain commodities,
+##' only the value is provided.
+
   flog.trace("[%s] Reading in 'fclunits' datatable", PID, name = "dev")
   fclunits <- ReadDatatable('fclunits')
   stopifnot(nrow(fclunits) > 0)
+
+  #data("fclunits", package = "faoswsTrade", envir = environment())
+  fclunits <- tbl_df(fclunits) %>%
+    dplyr::rename(
+      fcl     = fcu_fcl,
+      fclunit = fcu_fclunit
+    ) %>%
+    dplyr::mutate(fcl = as.integer(fcl))
+
+##' - `fclcodes`: List of valid FCL codes.
 
   flog.trace("[%s] Reading in 'fcl_codes' datatable", PID, name = "dev")
   fcl_codes <- ReadDatatable('fcl_2_cpc')$fcl
   stopifnot(length(fcl_codes) > 0)
 
+  fcl_codes <- as.numeric(fcl_codes)
+
+##' - `livestockweights`: List of valid FCL codes.
+
   flog.trace("[%s] Reading in 'livestock_weights' datatable", PID, name = "dev")
   livestock_weights <- ReadDatatable('livestock_weights')
   stopifnot(nrow(livestock_weights) > 0)
+
+##' `hs6standard`: HS6standard will be used as last resort for mapping.
 
   flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')
   stopifnot(nrow(hs6standard) > 0)
 
+  hs6standard <- hs6standard %>%
+    group_by(hs2012_code) %>%
+    dplyr::filter(n() == 1) %>%
+    ungroup() %>%
+    dplyr::mutate(hs6 = as.integer(hs2012_code)) %>%
+    select(hs6, hs2012_code, faostat_code)
+
+##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
+
   flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
   add_map <- ReadDatatable('hsfclmap4')
   stopifnot(nrow(add_map) > 0)
+
+  add_map <- tbl_df(add_map) %>%
+    dplyr::filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
+    dplyr::mutate(
+      hs = ifelse(
+             hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0',
+             paste0('0', formatC(hs, format = 'fg')),
+             formatC(hs, format = 'fg')
+           ),
+      hs = stringr::str_replace_all(hs, ' ', '')
+    ) %>%
+    dplyr::arrange(reporter_fao, flow, hs, year)
+
+  ## XXX change some FCL codes that are not valid
+  add_map <- add_map %>%
+    dplyr::mutate(fcl = ifelse(fcl == 389, 390, fcl)) %>%
+    dplyr::mutate(fcl = ifelse(fcl == 654, 653, fcl))
+
+##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
+##' used to archive information existing in the previous trade system
+##' (Shark/Jellyfish). This mapping table contains (identifier: `hsfclmap5`)
+##' also some "corrections" to the original mapping found in the MDB files.
+##' These are contained in the `correction_*` variables (e.g.,
+##' `corrections_fcl`), and if for a given HS range one or more of these
+##' variables are non-missing they will replace the original corresponding
+##' variable (e.g., if `corresponding_fcl` is non-missing, it will replace
+##' `fcl`). Missing HS to FCL links in the MDB files are mapped by Team B/C
+##' and stored in a table (identifier: `hsfclmap4`) that will extend the
+##' original mapping table. *[Note: for reference, the actual name of the
+##' initial mapping table is `hsfclmap3`; the naming convention of these
+##' tables should probably be made more logical or, at least, more easily
+##' identifiable.]* The resulting mapping table gets subsetted with the
+##' condition that the`startyear` and `endyear` of the HS to FCL links
+##' should satisfy the condition: $startyear <= year <= endyear$.
 
   flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
   hsfclmap3 <- ReadDatatable('hsfclmap5')
   stopifnot(nrow(hsfclmap3) > 0)
 
+##' - `force_mirroring`: Datatables for those reported that need to be
+##' treated as non-reporters as mirroring is required.
+
   flog.trace("[%s] Reading in 'force_mirroring' datatable", PID, name = "dev")
   force_mirroring <- ReadDatatable('force_mirroring')
   stopifnot(nrow(force_mirroring) > 0)
+
+##' - `corrections_table`: Table with corrections applied during the
+##' validation process.
 
   flog.trace("[%s] Reading in corrections dataset", PID, name = "dev")
   corrections_dir <-
@@ -303,10 +392,24 @@ if (!only_pre_process) {
 
 }
 
-# Required in pre-processing
+# (unsdpartnersblocks is required in pre-processing)
+#
+##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
+##' different list of geographic are codes. The partner dimension is more
+##' detailed than the reporter dimension. Since we can not split trade flows of
+##' the reporter dimension, trade flows of the corresponding partner dimensions
+##' have to be assigned the reporter dimension's geographic area code. For
+##' example, the code 842 is used for the United States includes Virgin Islands
+##' and Puerto Rico and thus the reported trade flows of those territories.
+##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
+##' Minor Outlying Islands.
+
 flog.trace("[%s] Reading in unsdpartnersblocks datatable", PID, name = "dev")
 unsdpartnersblocks <- ReadDatatable('unsdpartnersblocks')
 stopifnot(nrow(unsdpartnersblocks) > 0)
+
+unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
+
 
 ##' # Download raw data and basic operations
 
@@ -442,8 +545,6 @@ esdata <- esdata %>%
 
 flog.trace("[%s] TL: converting M49 to FAO area list", PID, name = "dev")
 
-unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
-
 tldata <- tldata %>%
   left_join(
     unsdpartnersblocks %>%
@@ -524,26 +625,6 @@ rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
 
 if (only_pre_process) stop("Stop after reports on raw data")
 
-##' # Loading of help datasets
-
-##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
-##' used to archive information existing in the previous trade system
-##' (Shark/Jellyfish). This mapping table contains (identifier: `hsfclmap5`)
-##' also some "corrections" to the original mapping found in the MDB files.
-##' These are contained in the `correction_*` variables (e.g.,
-##' `corrections_fcl`), and if for a given HS range one or more of these
-##' variables are non-missing they will replace the original corresponding
-##' variable (e.g., if `corresponding_fcl` is non-missing, it will replace
-##' `fcl`). Missing HS to FCL links in the MDB files are mapped by Team B/C
-##' and stored in a table (identifier: `hsfclmap4`) that will extend the
-##' original mapping table. *[Note: for reference, the actual name of the
-##' initial mapping table is `hsfclmap3`; the naming convention of these
-##' tables should probably be made more logical or, at least, more easily
-##' identifiable.]* The resulting mapping table gets subsetted with the
-##' condition that the`startyear` and `endyear` of the HS to FCL links
-##' should satisfy the condition: $startyear <= year <= endyear$.
-
-flog.debug("[%s] Reading in hs-fcl mapping", PID, name = "dev")
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
 # XXX Notice that it is pulling now v5
 hsfclmap3 <- tbl_df(hsfclmap3) %>%
@@ -567,28 +648,6 @@ hsfclmap3 <-
 
 # ADD UNMAPPED CODES
 
-
-fcl_codes <- as.numeric(fcl_codes)
-
-##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
-
-add_map <- tbl_df(add_map) %>%
-  dplyr::filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
-  dplyr::mutate(
-    hs = ifelse(
-           hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0',
-           paste0('0', formatC(hs, format = 'fg')),
-           formatC(hs, format = 'fg')
-         ),
-    hs = stringr::str_replace_all(hs, ' ', '')
-  ) %>%
-  dplyr::arrange(reporter_fao, flow, hs, year)
-
-
-## XXX change some FCL codes that are not valid
-add_map <- add_map %>%
-  dplyr::mutate(fcl = ifelse(fcl == 389, 390, fcl)) %>%
-  dplyr::mutate(fcl = ifelse(fcl == 654, 653, fcl))
 
 # Check that all FCL codes are valid
 
@@ -706,61 +765,6 @@ hsfclmap <- hsfclmap %>%
 stopifnot(nrow(hsfclmap) > 0)
 
 flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
-
-# HS6standard: will be used as last resort for mapping
-
-hs6standard <- hs6standard %>%
-  group_by(hs2012_code) %>%
-  dplyr::filter(n() == 1) %>%
-  ungroup() %>%
-  dplyr::mutate(hs6 = as.integer(hs2012_code)) %>%
-  select(hs6, hs2012_code, faostat_code)
-
-
-##' - `unsdpartnersblocks`: UNSD Tariffline reporter and partner dimensions use
-##' different list of geographic are codes. The partner dimension is more
-##' detailed than the reporter dimension. Since we can not split trade flows of
-##' the reporter dimension, trade flows of the corresponding partner dimensions
-##' have to be assigned the reporter dimension's geographic area code. For
-##' example, the code 842 is used for the United States includes Virgin Islands
-##' and Puerto Rico and thus the reported trade flows of those territories.
-##' Analogous steps are taken for France, Italy, Norway, Switzerland and US
-##' Minor Outlying Islands.
-
-#data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
-unsdpartnersblocks <- unsdpartnersblocks # already dowloaded
-
-##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
-##' meet FAO standards. According to FAO standard, all weights are reported in
-##' tonnes, animals in heads or 1000 heads and for certain commodities,
-##' only the value is provided.
-
-#data("fclunits", package = "faoswsTrade", envir = environment())
-fclunits <- tbl_df(fclunits) %>%
-  dplyr::rename(
-    fcl     = fcu_fcl,
-    fclunit = fcu_fclunit
-  ) %>%
-  dplyr::mutate(fcl = as.integer(fcl))
-
-##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
-##' quantity units) in Tariffline data into intelligible unit of measurement,
-##' which correspond to the standards of quantity recommended by the *World
-##' Customs Organization* (WCO) (e.g., `qunit`=8 corresponds to *kg*).
-##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
-
-#data("comtradeunits", package = "faoswsTrade", envir = environment())
-comtradeunits <- tbl_df(comtradeunits) %>%
-  dplyr::rename(
-    qunit = ctu_qunit,
-    wco   = ctu_wco,
-    desc  = ctu_desc
-  ) %>%
-  dplyr::mutate(qunit = as.integer(qunit))
-
-##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
-
-EURconversionUSD <- EURconversionUSD # already downloaded
 
 ##' # Generate HS to FCL map at HS6 level (if switched on)
 

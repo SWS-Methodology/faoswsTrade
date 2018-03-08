@@ -230,7 +230,7 @@ hs_chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
 
 flog.info("HS chapters to be selected:", hs_chapters,  capture = TRUE)
 
-##' # Download helper tables
+##' # Download auxiliary tables
 
 # If running the whole module (only_pre_process = FALSE) the various
 # helper files will be read before everything else and a check will
@@ -1138,15 +1138,19 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   # Maybe better to use case_when (results don't change anyway)
   tldata_converted <- tldata %>%
     dplyr::mutate(
-      qtyfcl = ifelse(fclunit == 'mt' & !is.na(weight),                weight / 1000, qtyfcl),
-      qtyfcl = ifelse(fclunit == 'heads' & !is.na(qty) & wco == 'u',             qty, qtyfcl),
-      qtyfcl = ifelse(fclunit == 'number' & !is.na(qty) & wco == 'u',            qty, qtyfcl),
-      # This requires a flag change
-      qtyfcl = ifelse(fclunit == '1000 heads' & !is.na(qty) & wco == 'u', qty / 1000, qtyfcl),
-      # -1 will be set to NA just below
-      qtyfcl = ifelse(fclunit == '$ value only',                                  -1, qtyfcl),
-      # Nothing can be done for these
-      qtyfcl = ifelse(is.na(weight) & is.na(qty),                                 -1, qtyfcl)
+      qtyfcl =
+        case_when(
+          .$fclunit == 'mt' & !is.na(.$weight)                     ~ .$weight / 1000,
+          .$fclunit == 'heads' & !is.na(.$qty) & .$wco == 'u'      ~ .$qty,
+          .$fclunit == 'number' & !is.na(.$qty) & .$wco == 'u'     ~ .$qty,
+          # This requires a flag change
+          .$fclunit == '1000 heads' & !is.na(.$qty) & .$wco == 'u' ~ .$qty / 1000,
+          # -1 will be set to NA just below
+          .$fclunit == '$ value only'                              ~ -1,
+          # Nothing can be done for these
+          is.na(.$weight) & is.na(.$qty)                           ~ -1,
+          TRUE                                                     ~ .$qtyfcl
+        )
     ) %>%
     filter(!is.na(qtyfcl)) %>%
     dplyr::mutate(qtyfcl = ifelse(qtyfcl == -1, NA, qtyfcl))

@@ -1,3 +1,21 @@
+##' ---
+##' title: "Appendix: `trade_validation_cpc` module"
+##' author:
+##'   - Christian A. Mongeau Ospina\
+##'
+##'     Food and Agriculture Organization of the United Nations
+##' date: "`r format(Sys.time(), '%e %B %Y')`"
+##' output:
+##'    pdf_document
+##' ---
+
+##' This document shows the operations that the `trade_validation_cpc`
+##' module carries out in order to build the dataset used in the
+##' validation of trade flows.
+
+##+ setup, include=FALSE
+knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
+
 # For parallel computation
 multicore <- TRUE
 # Maximum allowed discrepancy in the flow/mirror ratio
@@ -8,6 +26,8 @@ library(faosws)
 library(dplyr)
 #library(tidyr)
 # stringr, zoo, RcppRoll, robustbase
+
+##+ sws
 
 if (CheckDebug()) {
   library(faoswsModules)
@@ -30,9 +50,28 @@ if (CheckDebug()) {
 DB_rds_storage <- paste0(dir_to_save, 'tmp/DB_rds_storage/')
 name_to_save <- 'db.rds'
 
+##+ check_parameters
+
 stopifnot(!is.null(swsContext.computationParams$startyear))
 stopifnot(!is.null(swsContext.computationParams$endyear))
 stopifnot(!is.null(swsContext.computationParams$useprevious))
+
+##' # Parameters
+
+##' - `startyear` (SWS label: "Start year"): first year for processing.
+##' - `endyear` (SWS label: "End year"): last year for processing.
+##' - `useprevious` (SWS label: "Use previous data?"): if set to `TRUE`,
+##' previously downloaded data will be used, otherwise a new query will
+##' be performed. *This should always be `FALSE`, leaving `TRUE` as a
+##' viable option only for testing/debugging purposes.*
+##' - `multicore`: if set to `TRUE`, operations will be performed with
+##' parallel programming, i.e., sequential operations will be distributed
+##' to the different cores of the machine on which the module runs. This
+##' implies a reduction of computation time. *This is a hardcoded parameter.*
+##' - `threshold`: threshold used to define what an outlier is (see below).
+##' *This is a hardcoded parameter.*
+##' - `morder`: order of the moving average of unit values. *This is a
+##' hardcoded parameter.*
 
 print(swsContext.computationParams$startyear)
 print(swsContext.computationParams$endyear)
@@ -318,6 +357,10 @@ myfun_build_db_for_app <- function(rep = NA) {
   )
 }
 
+##' # Set up parallel processing requirements
+##'
+##' If `multicore` = `TRUE` some preparatory stepd need to be performed:
+##' Initialise the required packages and export objects to the cores.
 
 if (multicore) {
   # XXX is this actually required?
@@ -368,6 +411,33 @@ if (multicore) {
   }
 }
 
+##' # Download data
+##'
+##' A query to the SWS with all reporters, partners, items, elemtents
+##' is performed, by reporter. The result of each reporter-specific query
+##' gets completed for all years and for all existing partner/flow/item
+##' combinations. The expansion for all years is necessary as calculations
+##' that need a complete time series (even with NA values) is required.
+##'
+##' Once a reporter-specific dataset is downloaded and completed, moving
+##' averages of unit value and the ratios of the unit value with respect
+##' to these averages are calculated. A first version of "outlier" ($outn$)
+##' that uses information only at the reporter-level is calculated as:
+##'
+##' $$
+##' outn =
+##'   \begin{cases}
+##'     \text{TRUE},  & \text{if $ratio < 1 - threshold$ or $ratio > 1 + threshold$}\\
+##'     \text{FALSE}, & \text{otherwise}
+##'   \end{cases}
+##' $$
+##'
+##' where $threshold$ is the `threshold` parameter (as of 2018-03-09 it
+##' is set to 0.5), $ratio = uv / \overline{uv}$ ($\overline{uv}$ is the
+##' `morder` (3 as of 2018-03-09) moving average of $uv$).
+##'
+##' The reporter-specific datasets get stored in the "shared drive" of
+##' the server for latter use.
 
 start_time <- Sys.time()
 plyr::m_ply(
@@ -388,10 +458,26 @@ print(end_time - start_time)
 invisible(gc())
 
 
-
-
-
-
+##' Data assembly and further operations
+##'
+##' Once all reporter-specific datasets are available, they are assembled
+##' together in order to compute statistics that uses all reporters'
+##' information, specifically, the following outliers are identified:
+##'
+##' - `outmw100`: equal to `TRUE` if the unit value is less or greater
+##' than the median unit value of the item for all reporters;
+##' - `outM`: a boxplot approach is used to define this outlier. In
+##' particular, if the unit value falls outside the boxplot whiskers
+##' it is considered an outlier. To overcome some asymmetry in the
+##' the distribution of unit values, they are transformed into logarithmns.
+##' - `outp`: defined as $outn$, but the threshold is not fixed for all
+##' items, but is item-specific and the lower and upper thresholds correspond
+##' to the 5th and 95th percentile of the distribution of the unit value
+##' for the item for all reporters and flows.
+##'
+##' By default, the "outlier" variable is defined to be equal to $outn$,
+##' though in the validation tool it is possible to choose which method
+##' to use when defining what an outlier is.
 
 
 start_time <- Sys.time()
@@ -426,6 +512,7 @@ db_save <- plyr::mdply(
   ) %>%
   ungroup() %>%
   dplyr::mutate(
+    # outman = outn
     outman   = if_else(between(ratio_man, 1-threshold, 1+threshold), 0L, 1L, 0L),
     outmw100 = if_else(unit_value < 0.01*median_world | unit_value > 100*median_world, 1L, 0L, 0L),
     outM     = if_else(outM2 == 1, 1L, 0L, 0L),
@@ -441,6 +528,20 @@ print(end_time - start_time)
 if (multicore) {
   parallel::stopCluster(cl)
 }
+
+##' # Save data
+##'
+##' Data is ready to be saved. Before doing so, some informational variables
+##' are added:
+##'
+##' - `perc.value` and `perc.qty`: give the importance (percentage) of values
+##' and quantities of a specific item in the reporters' total trade.
+##' - reporter, partner, and commodity names: SWS does not return the names
+##' of the dimensions, so this information is retrieved and joined to the
+##' dataset.
+##'
+##' After the additional information is added, the dataset is saved to the
+##' "shared drive" from where the validation tool will read it.
 
 db_save <- db_save %>%
   select(

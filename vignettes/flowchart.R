@@ -16,6 +16,7 @@ digraph trade {
   add_cpc_codes [label = 'Add CPC codes']
   add_m49_codes [label = 'Add M49 codes']
   aggregate_partners [label = 'Aggregation over partners']
+  total_uv_calculation [label = 'Calculation of aggregated unit values']
   aggregation_fcl [label = 'Trade flow aggregation by FCL']
   complete_trade_flow_1 [label = 'Complete trade flow', shape = '@@1', fillcolor = '@@2']
   complete_trade_flow_2 [label = 'Complete trade flow', shape = '@@1', fillcolor = '@@2']
@@ -25,7 +26,7 @@ digraph trade {
   es_data [label = 'Eurostat data'] 
   es_data_assess [label = 'Data content assessment']
   es_mapping [label = 'Mapping:
-    country names (geonom),
+    geonom > FAL,
     CN8 > FCL,
     FCL units,
     EUR to USD']
@@ -43,7 +44,8 @@ digraph trade {
   tl_data [label = 'UNSD data'] 
   tl_data_assess [label = 'Data content assessment']
   tl_mapping [label = 'Mapping:
-    country names (M49),
+    M49 UNSD > M49 comtrade,
+    M49 comtrade > FAL
     HS > FCL,
     FCL units']
   #tl_notes [label = 'Application of notes']
@@ -95,7 +97,8 @@ digraph trade {
   complete_trade_flow_1
 
   complete_trade_flow_2 ->
-  aggregate_partners -> total_trade
+  aggregate_partners -> total_uv_calculation
+  total_uv_calculation -> total_trade
   total_trade -> module [arrowsize = 0, penwidth = 0]
 
   subgraph cluster0 {

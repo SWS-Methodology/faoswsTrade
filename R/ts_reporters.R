@@ -9,7 +9,10 @@
 #' @return NULL invisibly.
 #' @export
 #' @import dplyr
-#' @examples ts_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' @examples
+#' \dontrun{
+#' ts_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' }
 #'
 
 ts_reporters <- function(collection_path = NULL, prefix = NULL) {

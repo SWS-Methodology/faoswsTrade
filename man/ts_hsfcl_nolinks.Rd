@@ -17,6 +17,7 @@ underscore. By default NULL.}
 Extract all unmapped HS codes across years
 }
 \examples{
+\dontrun{
 library(ggplot2)
 library(dplyr)
 
@@ -32,5 +33,6 @@ uniq_hs \%>\%
                  nrow(uniq_hs),
                  " unmapped HS codes"),
           "New reporters absent in the map are not included")
+}
 
 }

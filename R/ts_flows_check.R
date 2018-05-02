@@ -9,7 +9,10 @@
 #' @return NULL invisibly.
 #' @export
 #' @import dplyr
-#' @examples ts_content_check("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' @examples
+#' \dontrun{
+#' ts_content_check("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' }
 #'
 
 ts_flows_check <- function(collection_path = NULL, prefix = NULL) {

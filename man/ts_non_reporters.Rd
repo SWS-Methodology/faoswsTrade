@@ -22,6 +22,8 @@ A table with countries/years where the cell is 9 if the country
 Function to produce the list of non-reporting countries.
 }
 \examples{
+\dontrun{
 ts_non_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+}
 
 }

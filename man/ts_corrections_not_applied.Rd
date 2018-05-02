@@ -20,6 +20,8 @@ A table with corrections that were not applied.
 Function to produce the list of corrections not applied.
 }
 \examples{
+\dontrun{
 ts_corrections_not_applied("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+}
 
 }

@@ -4,6 +4,7 @@
 #'@import dplyr
 #'
 #'@examples
+#' \dontrun{
 #' library(ggplot2)
 #' library(dplyr)
 #'
@@ -19,7 +20,9 @@
 #'                  nrow(uniq_hs),
 #'                  " unmapped HS codes"),
 #'           "New reporters absent in the map are not included")
+#' }
 #'
+
 ts_hsfcl_nolinks <- function(collection_path = NULL, prefix = NULL) {
 
   elems <- c("esdata_hsfcl_nolinks",

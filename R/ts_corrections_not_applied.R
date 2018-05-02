@@ -10,7 +10,10 @@
 #'
 #' @export
 #' @import dplyr
-#' @examples ts_corrections_not_applied("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' @examples
+#' \dontrun{
+#' ts_corrections_not_applied("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' }
 #'
 
 ts_corrections_not_applied <- function(collection_path = NULL, prefix = NULL) {

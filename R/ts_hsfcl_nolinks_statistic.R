@@ -3,6 +3,7 @@
 #' @import dplyr
 #' @return Data frame
 #' @examples
+#' \dontrun{
 #' library(ggplot2)
 #' library(dygraph)
 #' library(dplyr)
@@ -23,6 +24,7 @@
 #'   dygraph(
 #'     ylab = "Total number of unmapped HS (duplicates across years possible)",
 #'     main = "Unmapped HS codes (Tariff line and Eurostat)")
+#' }
 
 
 ts_hsfcl_nolinks_statistic <- function(collection_path = NULL, prefix = NULL) {

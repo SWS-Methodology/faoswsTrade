@@ -11,7 +11,10 @@
 #'   imports, 2 if it does not report exports.
 #' @export
 #' @import dplyr
-#' @examples ts_non_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' @examples
+#' \dontrun{
+#' ts_non_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+#' }
 #'
 
 ts_non_reporters <- function(collection_path = NULL, prefix = NULL) {

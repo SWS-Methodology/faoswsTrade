@@ -20,6 +20,7 @@ Data frame
 Extracts time series of not mapped HS codes number
 }
 \examples{
+\dontrun{
 library(ggplot2)
 library(dygraph)
 library(dplyr)
@@ -40,4 +41,5 @@ ts1 \%>\%
   dygraph(
     ylab = "Total number of unmapped HS (duplicates across years possible)",
     main = "Unmapped HS codes (Tariff line and Eurostat)")
+}
 }

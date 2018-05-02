@@ -20,6 +20,8 @@ NULL invisibly.
 Function to produce the list of reporters cointained in the file.
 }
 \examples{
+\dontrun{
 ts_reporters("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+}
 
 }

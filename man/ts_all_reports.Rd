@@ -27,6 +27,3 @@ NULL inivisibly.
 \description{
 General function to produce all time-series reports
 }
-\examples{
-ts_all_reports(Sys.getenv("HOME"), "complete_tf_cpc")
-}

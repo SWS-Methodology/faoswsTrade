@@ -20,6 +20,8 @@ NULL invisibly.
 Check if value and quantity and weight exist.
 }
 \examples{
+\dontrun{
 ts_content_check("/mnt/storage/sws_share/sas", "complete_tf_cpc")
+}
 
 }

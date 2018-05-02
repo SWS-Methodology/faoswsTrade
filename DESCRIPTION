@@ -4,7 +4,7 @@ Title: FAO Trade Module
 Version: 0.2.0
 Date: 2018-05-02
 Authors@R: c(person("Marco", "Garieri", role = c("aut"), email = "marco.garieri@fao.org"),
-             person("Christian", "Mongeau", role = c("aut", "cre"), email = "christian.mongeau AT fao.org"),
+             person("Christian", "Mongeau", role = c("aut", "cre"), email = "christian.mongeau@fao.org"),
              person("Bo", "Werth", role = c("aut"), email = "bo.werth@fao.org"))
 Description: Trade module
 License: FAO

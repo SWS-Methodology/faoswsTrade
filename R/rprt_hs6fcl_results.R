@@ -1,5 +1,8 @@
 #' Reports on results of HS6->FCL mapping process.
 #'
+#' @param data Data.
+#' @param tradedataname Trade data name.
+#'
 #' @import dplyr
 
 rprt_hs6fcl_results <- function(data = NULL, tradedataname = NULL) {

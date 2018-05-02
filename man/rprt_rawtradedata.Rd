@@ -6,6 +6,11 @@
 \usage{
 rprt_rawtradedata(tradedata = NULL, tradedataname = NULL)
 }
+\arguments{
+\item{tradedata}{Trade data.}
+
+\item{tradedataname}{Trade data name.}
+}
 \description{
 Report table on raw trade data
 }

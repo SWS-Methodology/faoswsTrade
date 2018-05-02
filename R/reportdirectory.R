@@ -1,6 +1,6 @@
 #' Create directory for writing a report and supplementary files
 #'
-#' @param user User name to include in the name.
+#' @param sws_user User name to include in the name.
 #' @param year Year to include in the name.
 #' @param build_id Identificator to include in the name.
 #' @param create Should the directory be created. TRUE by default.

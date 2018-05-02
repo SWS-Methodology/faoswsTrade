@@ -3,6 +3,8 @@
 #' It is required to include glimpse's output into
 #' logging messages of futile.logger.
 #'
+#' @param tbl Data.
+#'
 #' @export
 
 rprt_glimpse0 <- function(tbl) {

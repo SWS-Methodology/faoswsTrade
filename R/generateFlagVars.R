@@ -1,5 +1,9 @@
 #' Generate flag variables in trade data.
 #'
+#' @param data Trade data.
+#' @param status The status flag that will be set.
+#' @param method The method flag that will be set.
+#'
 #' @export
 
 generateFlagVars <- function(data = stop("'data' needs to be set."),

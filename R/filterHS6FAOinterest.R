@@ -1,7 +1,9 @@
 #' Function to filter trade data by HS6 codes of FAO interest
 #'
-#' Fiter out HS codes which don't participate in futher processing
+#' Filter out HS codes which don't participate in futher processing
 #' Such solution drops all HS codes shorter than 6 digits.
+#'
+#' @param tradedata Trade data.
 #'
 #' @import dplyr
 #' @import futile.logger

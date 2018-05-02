@@ -7,6 +7,15 @@
 faoAreaName(areacode, swsdomain = "faostat_one", swsdataset = "FS1_SUA_UPD",
   swsdimension = "geographicAreaFS")
 }
+\arguments{
+\item{areacode}{Area code.}
+
+\item{swsdomain}{SWS domain name (default = "faostat_one").}
+
+\item{swsdataset}{SWS dataset (default = "FS1_SUA_UPD").}
+
+\item{swsdimension}{(default = "geographicAreaFS").}
+}
 \description{
 Assign area names to M49 or geonom codes.
 }

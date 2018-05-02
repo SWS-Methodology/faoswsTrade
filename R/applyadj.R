@@ -1,5 +1,11 @@
 #' Apply adjustments to trade data
 #'
+#' @param rep Reporter.
+#' @param yr Year.
+#' @param adjustments Adjustments table.
+#' @param tradedata Trade data.
+#' @param dbg Debug option (TRUE or FALSE).
+#'
 #' @import dplyr
 #' @export
 

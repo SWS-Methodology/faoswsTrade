@@ -6,6 +6,13 @@
 \usage{
 getlistofadjs(rep, yr, adjustments)
 }
+\arguments{
+\item{rep}{Reporter.}
+
+\item{yr}{Year.}
+
+\item{adjustments}{Adjustments table.}
+}
 \description{
 Generate list of adjustments from a table extracted from MDB notes
 }

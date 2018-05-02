@@ -7,6 +7,14 @@
 swapFlags(variable = stop("'variable' is required."),
   swap = stop("'swap' is required."), condition = NULL)
 }
+\arguments{
+\item{variable}{Varaible name.}
+
+\item{swap}{How to swap flags (e.g., '\\2\\1\\3').}
+
+\item{condition}{Logical condition that indicates which
+flags will be swapped (when TRUE).}
+}
 \description{
 Change position of flags.
 }

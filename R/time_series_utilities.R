@@ -101,6 +101,7 @@ extract_rprt_elem <- function(collection_path = NULL,
 #' Writes table with time series report to specific directory as csv file.
 #'
 #' @param rprt Data frame to save.
+#' @param rprt_name Name of report.
 #' @param ts_reports_path Directory path to save csv file.
 #'
 ts_write_rprt <- function(rprt = NULL,

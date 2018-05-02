@@ -7,13 +7,15 @@
 #' only when there are at least 10 flows).
 #'
 #' @param tradedata Trade data.
-#' @param output A string specifying the name of the variable name that
+#' @param name A string specifying the name of the variable name that
 #'   will contain the median unit value ("uvm" by default).
 #' @param other Logical value indicating whether other median unit values
 #'   and the number of reporters are reported. By default it is TRUE.
+#'
 #' @return \code{tradedata} with median unit value. If \code{other} == TRUE
 #'   intermediate median unit values and the number of partners on which the
 #'   medians are computed are returned.
+#'
 #' @import dplyr
 #' @export
 

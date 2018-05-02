@@ -6,6 +6,14 @@
 \usage{
 convertHS2FCL(tradedata, hsfclmap, parallel)
 }
+\arguments{
+\item{tradedata}{Trade data.}
+
+\item{hsfclmap}{HS-FCL map table.}
+
+\item{parallel}{Logical flag indicating whether to use
+parallel processing.}
+}
 \description{
 It is based on notes from FAO ESS MDB files.
 }

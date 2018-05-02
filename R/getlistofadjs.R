@@ -1,5 +1,9 @@
 #' Generate list of adjustments from a table extracted from MDB notes
 #'
+#' @param rep Reporter.
+#' @param yr Year.
+#' @param adjustments Adjustments table.
+#'
 #' @import dplyr
 
 getlistofadjs <- function(rep, yr, adjustments) {

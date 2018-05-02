@@ -6,6 +6,11 @@
 \usage{
 rprt_hs6fcl_results(data = NULL, tradedataname = NULL)
 }
+\arguments{
+\item{data}{Data.}
+
+\item{tradedataname}{Trade data name.}
+}
 \description{
 Reports on results of HS6->FCL mapping process.
 }

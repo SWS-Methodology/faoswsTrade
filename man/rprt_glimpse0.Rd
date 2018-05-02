@@ -6,6 +6,9 @@
 \usage{
 rprt_glimpse0(tbl)
 }
+\arguments{
+\item{tbl}{Data.}
+}
 \description{
 It is required to include glimpse's output into
 logging messages of futile.logger.

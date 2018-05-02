@@ -1,5 +1,9 @@
 #' Add fcl codes to trade data from links datasets
 #'
+#' @param tradedata Data.
+#' @param hs6links HS6 links.
+#' @param links HS-FCL links.
+#'
 #' @import dplyr
 #' @export
 

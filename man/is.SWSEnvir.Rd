@@ -6,6 +6,9 @@
 \usage{
 is.SWSEnvir(varToCheck = "swsContext.datasets")
 }
+\arguments{
+\item{varToCheck}{Variable to check.}
+}
 \value{
 logical value. TRUE if there
 }

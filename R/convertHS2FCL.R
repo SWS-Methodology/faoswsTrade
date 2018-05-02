@@ -2,6 +2,11 @@
 #'
 #' It is based on notes from FAO ESS MDB files.
 #'
+#' @param tradedata Trade data.
+#' @param hsfclmap HS-FCL map table.
+#' @param parallel Logical flag indicating whether to use
+#'   parallel processing.
+#'
 #' @import dplyr
 #' @export
 

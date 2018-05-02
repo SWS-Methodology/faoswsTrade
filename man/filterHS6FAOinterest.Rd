@@ -6,7 +6,10 @@
 \usage{
 filterHS6FAOinterest(tradedata)
 }
+\arguments{
+\item{tradedata}{Trade data.}
+}
 \description{
-Fiter out HS codes which don't participate in futher processing
+Filter out HS codes which don't participate in futher processing
 Such solution drops all HS codes shorter than 6 digits.
 }

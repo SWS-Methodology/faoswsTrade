@@ -9,6 +9,8 @@
 #' only when there are at least 10 flows).
 #'
 #' @param tradedata Trade data.
+#' @param uv.median Name of the median unit value variable.
+#'
 #' @return \code{tradedata} with imputed values.
 #' @import dplyr
 #' @export

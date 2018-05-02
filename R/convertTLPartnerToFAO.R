@@ -1,5 +1,6 @@
 #' Convert tariffline partner code to FAO code
 #'
+#' @param partners Partners.
 #'
 #' @import dplyr
 #' @export

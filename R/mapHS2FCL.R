@@ -5,6 +5,7 @@
 #'
 #' @param tradedata Trade data frame. Columns reporter, flow and hs are expected.
 #' @param maptable Mapping table.
+#' @param hs6maptable HS6 mapping table.
 #' @param year Integer, year the trade module run on.
 #' @param parallel Logical, should multicore backend be used. False by default.
 #'

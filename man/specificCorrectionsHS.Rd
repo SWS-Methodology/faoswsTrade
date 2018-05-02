@@ -7,7 +7,7 @@
 specificCorrectionsHS(tradedata)
 }
 \arguments{
-\item{data}{data.}
+\item{tradedata}{Trade data.}
 }
 \value{
 Data with corrections applied.

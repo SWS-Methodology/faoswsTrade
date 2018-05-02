@@ -1,5 +1,10 @@
 #' Change position of flags.
 #'
+#' @param variable Varaible name.
+#' @param swap How to swap flags (e.g., '\\2\\1\\3').
+#' @param condition Logical condition that indicates which
+#'   flags will be swapped (when TRUE).
+#'
 #' @export
 
 swapFlags <- function(variable = stop("'variable' is required."),

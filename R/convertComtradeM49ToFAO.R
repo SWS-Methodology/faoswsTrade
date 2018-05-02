@@ -1,8 +1,8 @@
 #' Converts area codes, stored in UNSD Comtrade M49, into FAO area codes
 #'
-#' @param Numeric or character vector of UNSC M49 area codes
+#' @param reporters Numeric or character vector of UNSC M49 area codes.
 #'
-#' @return Interger vector of FAO area codes
+#' @return Integer vector of FAO area codes.
 #'
 #' @import dplyr
 #' @export

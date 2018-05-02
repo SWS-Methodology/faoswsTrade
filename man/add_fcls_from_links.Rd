@@ -6,6 +6,13 @@
 \usage{
 add_fcls_from_links(tradedata, hs6links, links)
 }
+\arguments{
+\item{tradedata}{Data.}
+
+\item{hs6links}{HS6 links.}
+
+\item{links}{HS-FCL links.}
+}
 \description{
 Add fcl codes to trade data from links datasets
 }

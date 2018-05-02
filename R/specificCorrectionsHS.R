@@ -4,7 +4,7 @@
 #'
 #' NOTE THAT IT IS CURRENTLY SPECIFIC FOR A GIVEN REPORTER AND YEAR.
 #'
-#' @param data data.
+#' @param tradedata Trade data.
 #'
 #' @return Data with corrections applied.
 #'

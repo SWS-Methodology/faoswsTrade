@@ -1,5 +1,8 @@
 #' Report table on raw trade data
 #'
+#' @param tradedata Trade data.
+#' @param tradedataname Trade data name.
+#'
 #'@import dplyr
 #'@import scales
 

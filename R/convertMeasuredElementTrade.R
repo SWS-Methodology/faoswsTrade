@@ -1,5 +1,9 @@
 #' Converts measuredElementTrade for the output
 #'
+#' @param element Element.
+#' @param unit Unit.
+#' @param flow Flow.
+#'
 #' @export
 
 convertMeasuredElementTrade <- function(element, unit, flow) {

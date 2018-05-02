@@ -8,6 +8,8 @@ doImputation(tradedata = NA, uv.median = "uvm")
 }
 \arguments{
 \item{tradedata}{Trade data.}
+
+\item{uv.median}{Name of the median unit value variable.}
 }
 \value{
 \code{tradedata} with imputed values.

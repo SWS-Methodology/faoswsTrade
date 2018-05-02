@@ -6,6 +6,13 @@
 \usage{
 convertMeasuredElementTrade(element, unit, flow)
 }
+\arguments{
+\item{element}{Element.}
+
+\item{unit}{Unit.}
+
+\item{flow}{Flow.}
+}
 \description{
 Converts measuredElementTrade for the output
 }

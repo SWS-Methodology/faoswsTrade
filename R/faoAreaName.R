@@ -1,5 +1,10 @@
 #' Assign area names to M49 or geonom codes.
 #'
+#' @param areacode Area code.
+#' @param swsdomain SWS domain name (default = "faostat_one").
+#' @param swsdataset SWS dataset (default = "FS1_SUA_UPD").
+#' @param swsdimension (default = "geographicAreaFS").
+#'
 #' @import dplyr
 #' @export
 

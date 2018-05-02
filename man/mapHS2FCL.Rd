@@ -11,6 +11,8 @@ mapHS2FCL(tradedata, maptable, hs6maptable, year = NULL, parallel = FALSE)
 
 \item{maptable}{Mapping table.}
 
+\item{hs6maptable}{HS6 mapping table.}
+
 \item{year}{Integer, year the trade module run on.}
 
 \item{parallel}{Logical, should multicore backend be used. False by default.}

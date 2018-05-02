@@ -6,6 +6,17 @@
 \usage{
 applyadj(rep, yr, adjustments, tradedata, dbg = FALSE)
 }
+\arguments{
+\item{rep}{Reporter.}
+
+\item{yr}{Year.}
+
+\item{adjustments}{Adjustments table.}
+
+\item{tradedata}{Trade data.}
+
+\item{dbg}{Debug option (TRUE or FALSE).}
+}
 \description{
 Apply adjustments to trade data
 }

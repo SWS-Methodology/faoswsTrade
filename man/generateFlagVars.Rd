@@ -7,6 +7,13 @@
 generateFlagVars(data = stop("'data' needs to be set."), status = c("T",
   "I", "X"), method = c("c", "i", "e", "s", "h"))
 }
+\arguments{
+\item{data}{Trade data.}
+
+\item{status}{The status flag that will be set.}
+
+\item{method}{The method flag that will be set.}
+}
 \description{
 Generate flag variables in trade data.
 }

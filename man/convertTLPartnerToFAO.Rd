@@ -6,6 +6,9 @@
 \usage{
 convertTLPartnerToFAO(partners)
 }
+\arguments{
+\item{partners}{Partners.}
+}
 \description{
 Convert tariffline partner code to FAO code
 }

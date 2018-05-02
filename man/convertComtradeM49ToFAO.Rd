@@ -7,10 +7,10 @@
 convertComtradeM49ToFAO(reporters)
 }
 \arguments{
-\item{Numeric}{or character vector of UNSC M49 area codes}
+\item{reporters}{Numeric or character vector of UNSC M49 area codes.}
 }
 \value{
-Interger vector of FAO area codes
+Integer vector of FAO area codes.
 }
 \description{
 Converts area codes, stored in UNSD Comtrade M49, into FAO area codes

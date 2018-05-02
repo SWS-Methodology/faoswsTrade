@@ -7,6 +7,8 @@
 reportdirectory(sws_user, year, build_id, create = TRUE, browsedir = TRUE)
 }
 \arguments{
+\item{sws_user}{User name to include in the name.}
+
 \item{year}{Year to include in the name.}
 
 \item{build_id}{Identificator to include in the name.}
@@ -15,8 +17,6 @@ reportdirectory(sws_user, year, build_id, create = TRUE, browsedir = TRUE)
 
 \item{browsedir}{Should the directory be opened in system-default file
 browser. TRUE by default.}
-
-\item{user}{User name to include in the name.}
 }
 \value{
 String with full name of report directory.

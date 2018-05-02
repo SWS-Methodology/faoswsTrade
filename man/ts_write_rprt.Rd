@@ -10,6 +10,8 @@ ts_write_rprt(rprt = NULL, ts_reports_path = NULL, rprt_name = NULL)
 \item{rprt}{Data frame to save.}
 
 \item{ts_reports_path}{Directory path to save csv file.}
+
+\item{rprt_name}{Name of report.}
 }
 \description{
 Writes table with time series report to specific directory as csv file.

@@ -9,11 +9,11 @@ computeMedianUnitValue(tradedata = NA, name = "uvm", other = TRUE)
 \arguments{
 \item{tradedata}{Trade data.}
 
+\item{name}{A string specifying the name of the variable name that
+will contain the median unit value ("uvm" by default).}
+
 \item{other}{Logical value indicating whether other median unit values
 and the number of reporters are reported. By default it is TRUE.}
-
-\item{output}{A string specifying the name of the variable name that
-will contain the median unit value ("uvm" by default).}
 }
 \value{
 \code{tradedata} with median unit value. If \code{other} == TRUE

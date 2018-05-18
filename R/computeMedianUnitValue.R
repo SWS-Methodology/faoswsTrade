@@ -2,7 +2,7 @@
 #'
 #' The median unit value is calculated in a specific-to-generic fashion:
 #' 1) by HS-reporter; 2) by HS8-reporter; by HS6-reporter; 3) by HS;
-#' 4) by FCL; 5) by flow.
+#' 4) by CPC; 5) by flow.
 #' The first available of these options will be used (for HS, HS8 and HS6
 #' only when there are at least 10 flows).
 #'
@@ -44,9 +44,9 @@ computeMedianUnitValue <- function(tradedata = NA, name = 'uvm', other = TRUE) {
     # median value HS
     group_by_(~year, ~flow, ~hs) %>%
     dplyr::mutate_(n_hs = ~n(), uvm_hs = ~median(uv, na.rm = TRUE)) %>%
-    # median value FCL
-    group_by_(~year, ~flow, ~fcl) %>%
-    dplyr::mutate_(uvm_fcl = ~median(uv, na.rm = TRUE)) %>%
+    # median value CPC
+    group_by_(~year, ~flow, ~cpc) %>%
+    dplyr::mutate_(uvm_cpc = ~median(uv, na.rm = TRUE)) %>%
     # median value flow
     group_by_(~year, ~flow) %>%
     dplyr::mutate_(uvm_flow = ~median(uv, na.rm = TRUE)) %>%
@@ -58,7 +58,7 @@ computeMedianUnitValue <- function(tradedata = NA, name = 'uvm', other = TRUE) {
       !is.na(.$uvm_rep_hs8) & .$n_rep_hs8 > 10 ~ .$uvm_rep_hs8,
       !is.na(.$uvm_rep_hs6) & .$n_rep_hs6 > 10 ~ .$uvm_rep_hs6,
       !is.na(.$uvm_hs)                         ~ .$uvm_hs,
-      !is.na(.$uvm_fcl)                        ~ .$uvm_fcl,
+      !is.na(.$uvm_cpc)                        ~ .$uvm_cpc,
       # XXX
       !is.na(.$uvm_flow)                       ~ .$uvm_flow
     )}

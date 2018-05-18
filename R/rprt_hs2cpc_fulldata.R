@@ -1,4 +1,4 @@
-#' Reporting on multiple matches during HS->FCL matching by hsInRange function.
+#' Reporting on multiple matches during HS->CPC matching by hsInRange function.
 #'
 #' The function generates the following statistics per reporter, hs6,
 #' reporter/hs6:
@@ -8,14 +8,14 @@
 #'   \item Total value (cost) of nonmatched records.
 #'   \item Proportion of total value of nonmatched records.}
 #'
-#' @param tradedata Trade data set with fcl column (after mapping process).
+#' @param tradedata Trade data set with cpc column (after mapping process).
 #' @param tradedataname Character of length 1. Most likely `esdata` or `tldata`.
 #'
 #' @return Data frame with summary statistics.
 #'
 #' @import dplyr
 
-rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
+rprt_hs2cpc_fulldata <- function(tradedata, tradedataname = NULL) {
 
   stopifnot(!(is.null(tradedataname)))
   stopifnot(length(tradedataname) == 1L)
@@ -23,7 +23,7 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
   tradedataname <- paste0(tradedataname, "_fulldata")
 
   if(!"nolink" %in% colnames(tradedata))
-    tradedata$nolink <- is.na(tradedata$fcl) else
+    tradedata$nolink <- is.na(tradedata$cpc) else
       stopifnot(is.logical(tradedata$nolink))
 
   if(!"hs6" %in% colnames(tradedata))
@@ -74,13 +74,13 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
 
 
   # All records with failed mapping
-  hsfcl_nolinks <- tradedata %>%
-    filter_(~is.na(fcl)) %>%
+  hscpc_nolinks <- tradedata %>%
+    filter_(~is.na(cpc)) %>%
     mutate_(year = year) %>%
     select_(~year, ~reporter, ~partner, ~flow, ~hs,
-            ~fcl, ~value, ~weight, ~qty)
+            ~cpc, ~value, ~weight, ~qty)
 
-  rprt_writetable(hsfcl_nolinks, prefix = tradedataname)
+  rprt_writetable(hscpc_nolinks, prefix = tradedataname)
 
   # Canada case (issue #78)
   if (33 %in% tradedata$reporter) {
@@ -89,10 +89,11 @@ rprt_hs2fcl_fulldata <- function(tradedata, tradedataname = NULL) {
       filter_(~reporter == 33) %>%
       mutate_(year = year) %>%
       select_(~year, ~reporter, ~flow, ~hs,
-              ~fcl) %>%
+              ~cpc) %>%
       distinct()
 
     rprt_writetable(canada_links, prefix = tradedataname)
 
   }
 }
+

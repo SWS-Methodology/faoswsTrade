@@ -1,4 +1,4 @@
-#' Function to produce report on HS->FCL mapping table
+#' Function to produce report on HS->CPC mapping table
 #'
 #' Function calculates:
 #'
@@ -8,7 +8,7 @@
 #'   \item Odd/even digit length of HS codes.
 #' }
 #'
-#' @param maptable Data frame with hsfclmap table.
+#' @param maptable Data frame with hscpcmap table.
 #' @param year Integer. Reporting year.
 #' @return TBD
 #' @import dplyr
@@ -16,11 +16,11 @@
 #' @seealso See \url{https://github.com/SWS-Methodology/faoswsTrade/issues/83}
 #'   for problem background.
 
-rprt_hsfclmap <- function(maptable, year) {
+rprt_hscpcmap <- function(maptable, year) {
 
   stopifnot(!missing(year))
 
-  hsfclmap_by_reporter_stats <- maptable %>%
+  hscpcmap_by_reporter_stats <- maptable %>%
     group_by_(~area) %>%
     mutate_(totalrecords = ~n(),
             hslength     = ~stringr::str_length(fromcode),
@@ -38,16 +38,17 @@ rprt_hsfclmap <- function(maptable, year) {
     select(1, 2, 5, 6, 3, 4) %>%
     ungroup()
 
-  hsfclmap_by_reporter_stats <- add_area_names(hsfclmap_by_reporter_stats,
+  hscpcmap_by_reporter_stats <- add_area_names(hscpcmap_by_reporter_stats,
                                                "fao", "area")
 
-  rprt_writetable(hsfclmap_by_reporter_stats, subdir = "details")
+  rprt_writetable(hscpcmap_by_reporter_stats, subdir = "details")
 
   # In the report we pretty percents instead of decimals
-  hsfclmap_by_reporter_stats <- hsfclmap_by_reporter_stats %>%
+  hscpcmap_by_reporter_stats <- hscpcmap_by_reporter_stats %>%
     mutate_(.dots = setNames(paste0("scales::percent(prop_", year, ")"),
                              paste0("prop_", year)))
 
-  rprt_fulltable(hsfclmap_by_reporter_stats)
+  rprt_fulltable(hscpcmap_by_reporter_stats)
 
 }
+

@@ -1,23 +1,23 @@
-#' Map HS to FCL based on HS codes of length 6
+#' Map HS to CPC based on HS codes of length 6
 #'
 #' @param tradedata Trade data frame.
-#' @param hs6maptable Map table produced by \code{extract_hs6fclmap} function.
+#' @param hs6maptable Map table produced by \code{extract_hs6cpcmap} function.
 #'
-#' @return Data frame with unique reporter/flow/hs->fcl links.
+#' @return Data frame with unique reporter/flow/hs->cpc links.
 #'
 #' @import dplyr
 #' @import stringr
 #' @export
 
-mapHS6toFCL <- function(tradedata, hs6maptable) {
+mapHS6toCPC <- function(tradedata, hs6maptable) {
 
   # Name for passing to reporting functions
   tradedataname <- lazyeval::expr_text(tradedata)
 
-  # HS6 mapping table subset with 1-to-1 hs->fcl links
+  # HS6 mapping table subset with 1-to-1 hs->cpc links
   hs6maptable <- hs6maptable %>%
-    filter_(~fcl_links == 1L) %>%
-    distinct_(~reporter, ~flow, ~hs6, ~fcl)
+    filter_(~cpc_links == 1L) %>%
+    distinct_(~reporter, ~flow, ~hs6, ~cpc, ~fcl)
 
   if(!"hs6" %in% colnames(tradedata)) {
     tradedata <- tradedata %>%
@@ -42,8 +42,9 @@ mapHS6toFCL <- function(tradedata, hs6maptable) {
     warning(paste0("Rows before join: ", rowsbeforejoin,
                    ", after join: ", nrow(tradedata)))
 
-  rprt(tradedata, "hs6fcl_results", tradedataname = tradedataname)
+  rprt(tradedata, "hs6cpc_results", tradedataname = tradedataname)
 
   tradedata %>%
-    filter_(~!is.na(fcl))
+    filter_(~!is.na(cpc))
 }
+

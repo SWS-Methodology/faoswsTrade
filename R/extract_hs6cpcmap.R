@@ -1,17 +1,15 @@
-#' Create HS6->FCL mapping table.
+#' Create HS6->CPC mapping table.
 #'
 #' @import dplyr
 #' @import stringr
 #' @import futile.logger
 #'
-#' @param maptable hsfclmap data frame.
-#' @param parallel Should parallel execution be used if available. FALSE by
-#'   default.
-#' @return Data frame with columns reporter, flow, hs6, fcl
+#' @param maptable hscpcmap data frame.
+#' @return Data frame with columns reporter, flow, hs6, cpc
 #' @export
 #'
 
-extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
+extract_hs6cpcmap <- function(maptable = NULL) {
 
   stopifnot(!is.null(maptable))
 
@@ -28,6 +26,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
                       ~flow,
                       ~fromcode,
                       ~tocode,
+                      ~cpc,
                       ~fcl)
 
   # Convert hs columns to integer hs6 and
@@ -47,28 +46,42 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     select_(~reporter,
             ~flow,
             hs6 = ~fromcode,
+            ~cpc,
             ~fcl)
 
   # Map table subset where real hs from-to range exists
   # and we need to fill numbers. I.e., the range is expanded
   # as a vector and each element of this vector is coupled
-  # with the FCL valid for the range where the HS comes from
+  # with the CPC valid for the range where the HS comes from
   flog.trace("HS6 map: convert HS ranges into explicit HS codes",
              name = "dev")
+
   maptable_range <- maptable %>%
     filter_(~hsrange > 0) %>%
     rowwise() %>%
     dplyr::mutate(hs6 = list(fromcode:tocode)) %>%
     tidyr::unnest() %>%
-    select(reporter, flow, hs6, fcl)
+    select(reporter, flow, hs6, cpc, fcl)
 
   # Bind both subsets and then calculate number of matching
-  # fcl codes per each hs6
-  flog.trace("HS6 map: counting FCL matches per HS6", name = "dev")
+  # cpc codes per each hs6
+  flog.trace("HS6 map: counting CPC matches per HS6", name = "dev")
 
+  ## For some reason n_distinct() is very slow on strings (cpc),
+  ## while it worked fine with numbers (fcl). The original
+  ## implementation below, while now an approach that does not
+  ## use n_distinct() is used (anyway, it takes ~ 30% more time
+  ## (but we are talking about something that takes less than 1 min)
+  #bind_rows(maptable_0range, maptable_range) %>%
+  #group_by(reporter, flow, hs6) %>%
+  #dplyr::mutate(cpc_links = n_distinct(cpc)) %>%
+  #ungroup() %>%
+  #distinct()
   bind_rows(maptable_0range, maptable_range) %>%
+  group_by(reporter, flow, hs6, cpc, fcl) %>%
+  distinct() %>%
   group_by(reporter, flow, hs6) %>%
-  dplyr::mutate(fcl_links = n_distinct(fcl)) %>%
-  ungroup() %>%
-  distinct()
+  mutate(cpc_links = n()) %>%
+  ungroup()
 }
+

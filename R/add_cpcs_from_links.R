@@ -1,13 +1,13 @@
-#' Add fcl codes to trade data from links datasets
+#' Add cpc codes to trade data from links datasets
 #'
 #' @param tradedata Data.
 #' @param hs6links HS6 links.
-#' @param links HS-FCL links.
+#' @param links HS-CPC links.
 #'
 #' @import dplyr
 #' @export
 
-add_fcls_from_links <- function(tradedata, hs6links, links) {
+add_cpcs_from_links <- function(tradedata, hs6links, links) {
 
   sel_notna <- function(a, b) {
     stopifnot(length(a) == length(b))
@@ -27,8 +27,12 @@ add_fcls_from_links <- function(tradedata, hs6links, links) {
     left_join(links, by = c("reporter", "flow", "hs"))
 
   tradedata$fcl_hs6 <- tradedatahs6$fcl
+
+  tradedata$cpc_hs6 <- tradedatahs6$cpc
+
   tradedata <- tradedata %>%
     mutate_(fcl = ~sel_notna(fcl, fcl_hs6)) %>%
-    select_(~-fcl_hs6)
-
+    mutate_(cpc = ~sel_notna(cpc, cpc_hs6)) %>%
+    select_(~-cpc_hs6, ~-fcl_hs6)
 }
+

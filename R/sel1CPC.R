@@ -1,17 +1,17 @@
-#' Select one record from multiple matches during HS->FCL mapping process.
+#' Select one record from multiple matches during HS->CPC mapping process.
 #'
-#' @param hsfclmatch Data frame with columns reporter, flow, hs, hsext, fcl,
+#' @param hscpcmatch Data frame with columns reporter, flow, hs, hsext, cpc,
 #' datumid, maplinkid
-#' @param maptable Data frame with HS->FCL mapping table.
+#' @param maptable Data frame with HS->CPC mapping table.
 #' @param cur_yr Integer, year the trade module run on.
 #'
-#' @return Data frame similar to hsfclmatch but with all duplicates removed.
+#' @return Data frame similar to hscpcmatch but with all duplicates removed.
 #'
 #' @export
 #' @import dplyr
 #'
 
-sel1FCL <- function(hsfclmatch, maptable, cur_yr = NULL) {
+sel1CPC <- function(hscpcmatch, maptable, cur_yr = NULL) {
 
   stopifnot(!is.null(cur_yr))
   stopifnot(is.integer(cur_yr))
@@ -21,7 +21,7 @@ sel1FCL <- function(hsfclmatch, maptable, cur_yr = NULL) {
   # 0 if the record is inside of interval
   # positive integer (number of years to the closest interval border)
 
-  hsfclmatch <- hsfclmatch %>%
+  hscpcmatch <- hscpcmatch %>%
     left_join(maptable %>%
                 select_(~startyear,
                         ~endyear,
@@ -42,7 +42,8 @@ sel1FCL <- function(hsfclmatch, maptable, cur_yr = NULL) {
     filter_(~recordnumb == max(recordnumb)) %>%
     ungroup()
 
-  hsfclmatch %>%
-    select_(~reporter, ~flow, ~datumid, ~hs, ~hsext, ~fcl, ~recordnumb)
+  hscpcmatch %>%
+    select_(~reporter, ~flow, ~datumid, ~hs, ~hsext, ~cpc, ~fcl, ~recordnumb)
 
 }
+

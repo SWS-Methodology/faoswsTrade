@@ -2,7 +2,7 @@
 % Please edit documentation in R/hsInRange.R
 \name{hsInRange}
 \alias{hsInRange}
-\title{Looks for corresponding FCL codes in country-specific
+\title{Looks for corresponding CPC codes in country-specific
 mapping tables from MDB files}
 \usage{
 hsInRange(uniqhs, maptable, parallel = FALSE)
@@ -10,19 +10,19 @@ hsInRange(uniqhs, maptable, parallel = FALSE)
 \arguments{
 \item{uniqhs}{Data frame with columns reporter, flow, hsext.}
 
-\item{maptable}{Data frame with HS->FCL mapping with columns area,
-flow, fromcode, tocode, fcl}
+\item{maptable}{Data frame with HS->CPC mapping with columns area,
+flow, fromcode, tocode, cpc, fcl}
 
 \item{parallel}{Logical. Should multicore backend be used.}
 }
 \value{
-Data frame with columns reporter, flow, datumid, hs, hsext, fcl.
+Data frame with columns reporter, flow, datumid, hs, hsext, cpc, fcl.
   datumid holds row numbers of original dataset. hs is input hs. hsext is
   input hs with additional zeros if requires. If there are multiple
-  HS->FCL matchings, all of them are returned with similar id. If
-  there were no matching FCL codes, NA in fcl column is returned.
+  HS->CPC matchings, all of them are returned with similar id. If
+  there were no matching CPC codes, NA in cpc column is returned.
 }
 \description{
-Looks for corresponding FCL codes in country-specific
+Looks for corresponding CPC codes in country-specific
 mapping tables from MDB files
 }

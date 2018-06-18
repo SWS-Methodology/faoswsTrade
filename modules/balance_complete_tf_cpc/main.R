@@ -189,10 +189,10 @@ cpc_units <- tradedata %>%
 livestock_weights <-
   cpc_units %>%
   group_by(measuredItemCPC) %>%
-  mutate(n = n()) %>%
+  dplyr::mutate(n = n()) %>%
   ungroup() %>%
-  filter(n == 2 & measuredElementTrade == 10) %>%
-  select(-n)
+  dplyr::filter(n == 2 & measuredElementTrade == 10) %>%
+  dplyr::select(-n)
 
 tradedata <-
   anti_join(
@@ -201,8 +201,8 @@ tradedata <-
       livestock_weights,
       data.frame(measuredElementTrade = '10', flow = c('56', '59'), stringsAsFactors = FALSE),
       by = 'measuredElementTrade') %>%
-      mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
-      select(-flow),
+      dplyr::mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
+      dplyr::select(-flow),
     by = c('measuredElementTrade', 'measuredItemCPC')
   )
 

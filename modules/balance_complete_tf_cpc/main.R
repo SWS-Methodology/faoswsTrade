@@ -191,7 +191,6 @@ livestock_weights <-
   group_by(measuredItemCPC) %>%
   mutate(n = n()) %>%
   ungroup() %>%
-  arrange(desc(n)) %>%
   filter(n == 2 & measuredElementTrade == 10) %>%
   select(-n)
 

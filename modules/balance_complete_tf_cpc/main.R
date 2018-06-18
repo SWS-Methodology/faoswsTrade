@@ -183,6 +183,30 @@ cpc_units <- tradedata %>%
   distinct() %>%
   dplyr::filter(measuredElementTrade != '22')
 
+# Remove livestock weights: some livestocks have also the weight
+# in kilograms, but the final unit is head or 1000 heads, so we
+# remove the weight (below)
+livestock_weights <-
+  cpc_units %>%
+  group_by(measuredItemCPC) %>%
+  mutate(n = n()) %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  filter(n == 2 & measuredElementTrade == 10) %>%
+  select(-n)
+
+tradedata <-
+  anti_join(
+    tradedata,
+    left_join(
+      livestock_weights,
+      data.frame(measuredElementTrade = '10', flow = c('56', '59'), stringsAsFactors = FALSE),
+      by = 'measuredElementTrade') %>%
+      mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
+      select(-flow),
+    by = c('measuredElementTrade', 'measuredItemCPC')
+  )
+
 rm(db_list)
 invisible(gc())
 

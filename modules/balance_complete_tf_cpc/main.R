@@ -239,16 +239,11 @@ if (smooth_trade) {
   Sys.time()
   a1 <- a %>%
     group_by(geographicAreaM49Reporter, geographicAreaM49Partner, measuredItemCPC,  flow) %>%
-    dplyr::mutate(ratio_mirr_movav = RcppRoll::roll_mean(ratio_mirror, n = 3, fill = NA, na.rm = TRUE))
-  Sys.time()
-
-  # after loading a1
-  Sys.time()
-  a2 <- a1 %>%
+    dplyr::mutate(ratio_mirr_movav = RcppRoll::roll_mean(ratio_mirror, n = 3, fill = NA, na.rm = TRUE)) %>%
+    ungroup() %>%
     dplyr::filter(orig == 1) %>%
     select(-orig) %>%
-    dplyr::rename(ratio_mirror_orig = ratio_mirror, ratio_mirror = ratio_mirr_movav) %>%
-    ungroup()
+    dplyr::rename(ratio_mirror_orig = ratio_mirror, ratio_mirror = ratio_mirr_movav)
   Sys.time()
 }
 

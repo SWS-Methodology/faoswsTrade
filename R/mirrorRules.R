@@ -1,8 +1,20 @@
 #' Use mirror rules for balancing trade.
 #'
-#' @param data data.
+#' @param data Trade data.
+#' @param variable Variable.
+#' @param suffix Suffix used for mirror variables.
+#' @param flag Flag.
+#' @param group_rank Group rank.
+#' @param flow Name of the flow variable.
+#' @param main_flow Flow to be considered to be better reported.
+#'   Leave 1 (imports) unless you are very sure that you really
+#'   want to change this.
+#' @param discrepancy Name of the discrepancy variable.
+#' @param official_flags Official flags.
 #'
-#' @return Reshaped data with mirror flows, if necessary.
+#' @return Vector with two possible values 'rep' if the
+#'   data that should remain is the one of the reporter
+#'   or 'prt' if it should be the partner's.
 #'
 #' @import dplyr
 #'
@@ -49,12 +61,6 @@ mirrorRules <- function(data          = NA,
     TRUE                                                        ~ official 
     )
 
-  var_res <- ifelse(res == 'rep', data[[variable]], data[[variable_mirr]])
-
-  var_flag <- ifelse(res == 'rep', data[[flag]], data[[flag_mirr]])
-
-  df <- data.frame(variable = var_res, flag = var_flag, stringsAsFactors = FALSE) 
-
-  return(df)
+  return(res)
 }
 

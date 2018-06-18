@@ -10,10 +10,30 @@ mirrorRules(data = NA, variable = "qty", suffix = "_m",
   "-", "-h"))
 }
 \arguments{
-\item{data}{data.}
+\item{data}{Trade data.}
+
+\item{variable}{Variable.}
+
+\item{suffix}{Suffix used for mirror variables.}
+
+\item{flag}{Flag.}
+
+\item{group_rank}{Group rank.}
+
+\item{flow}{Name of the flow variable.}
+
+\item{main_flow}{Flow to be considered to be better reported.
+Leave 1 (imports) unless you are very sure that you really
+want to change this.}
+
+\item{discrepancy}{Name of the discrepancy variable.}
+
+\item{official_flags}{Official flags.}
 }
 \value{
-Reshaped data with mirror flows, if necessary.
+Vector with two possible values 'rep' if the
+  data that should remain is the one of the reporter
+  or 'prt' if it should be the partner's.
 }
 \description{
 Use mirror rules for balancing trade.

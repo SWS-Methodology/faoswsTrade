@@ -100,7 +100,12 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
 
   # Giving the minimun score to coutries that never show as reporters, and a new group
   if (length(nonrep) > 0) {
-    accu <- bind_rows(accu, data_frame(country = nonrep, accu_score = 0, accu_rank = nrow(accu), accu_group = 11))
+    accu <- accu %>%
+      dplyr::mutate(
+        accu_score = ifelse(country %in% nonrep, 0, accu_score),
+        accu_rank  = ifelse(country %in% nonrep, nrow(accu), accu_rank),
+        accu_group = ifelse(country %in% nonrep, 11, accu_group)
+      )
   }
 
   return(accu)

@@ -25,8 +25,9 @@ threshold <- as.numeric(swsContext.computationParams$threshold)
 # Years
 years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
 
-# Whether to smooth trade or not
-smooth_trade <- TRUE
+# Whether to smooth trade or not.
+# XXX TRUE is being under development.
+smooth_trade <- FALSE
 
 library(faosws)
 library(dplyr)

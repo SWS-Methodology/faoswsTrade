@@ -1,6 +1,7 @@
 #' Get computed dataset on SWS.
 #'
 #' @param reporter Reporter.
+#' @param omit Logical indicating whether to omit or not NAs.
 #'
 #' @return A data.table with results.
 #'
@@ -8,7 +9,7 @@
 #'
 #' @export
 
-getComputedDataSWS <- function(reporter = NA) {
+getComputedDataSWS <- function(reporter = NA, omit = FALSE) {
   # TODO: use error handling
   key <- DatasetKey(domain  = 'trade',
                     dataset = 'completed_tf_cpc_m49',
@@ -19,6 +20,6 @@ getComputedDataSWS <- function(reporter = NA) {
                       Dimension(name = Vars[['elements']],  keys = Keys[['elements']]),
                       Dimension(name = Vars[['years']],     keys = Keys[['years']])))
 
-  GetData(key = key, omitna = FALSE)
+  GetData(key = key, omitna = omit)
 }
 

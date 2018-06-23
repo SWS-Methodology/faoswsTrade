@@ -161,7 +161,7 @@ db_list <- plyr::mlply(
                        #  as_data_frame() %>%
                        #  dplyr::rename(reporter = Var1, year = Var2),
                        data_frame(reporter = reporters),
-                       .fun = getComputedDataSWS,
+                       .fun = getComputedDataSWS(reporter, omit = TRUE),
                        .parallel = multicore,
                        .progress = 'text'
                        )

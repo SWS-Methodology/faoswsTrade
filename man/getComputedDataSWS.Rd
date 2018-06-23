@@ -4,10 +4,12 @@
 \alias{getComputedDataSWS}
 \title{Get computed dataset on SWS.}
 \usage{
-getComputedDataSWS(reporter = NA)
+getComputedDataSWS(reporter = NA, omit = FALSE)
 }
 \arguments{
 \item{reporter}{Reporter.}
+
+\item{omit}{Logical indicating whether to omit or not NAs.}
 }
 \value{
 A data.table with results.

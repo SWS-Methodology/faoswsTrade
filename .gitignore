@@ -15,5 +15,5 @@ vignettes/some_analysis.R
 vignettes/*_cpc.*
 *.log
 *.tex
-*.swp
+*.sw[a-z]
 ./modules/complete_tf_cpc/sws.yml

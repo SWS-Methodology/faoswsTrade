@@ -5,6 +5,9 @@ print(swsContext.computationParams$startyear)
 print(swsContext.computationParams$endyear)
 print(swsContext.computationParams$threshold)
 
+##################################################################
+# TODO: avoid doing substitutions for "small" values/quantities? #
+##################################################################
 
 #setwd('C:/Users/mongeau/tmp/faoswsTrade')
 
@@ -207,8 +210,8 @@ tradedata <-
     by = c('measuredElementTrade', 'measuredItemCPC')
   )
 
-rm(db_list)
-invisible(gc())
+#rm(db_list)
+#invisible(gc())
 
 tradedata <- tradedata %>%
   reshapeTrade() %>%
@@ -269,8 +272,72 @@ tradedata <- left_join(tradedata, accu_table, by = c('geographicAreaM49Reporter'
          orig_flag_value = flag_value
          )
 
-mirror_results <- tradedata %>%
-  mirrorRules(variable = 'qty')
+fclunits <- ReadDatatable('fclunits')
+
+value_only_items <-
+  fclunits[fcu_fclunit == '$ value only']$fcu_fcl %>%
+  faoswsUtil::fcl2cpc()
+
+# XXX Notice that we are re-calculating `discrep_mirr`
+# By using the ratio of values. This should be done before.
+tradedata_value_only <-
+  tradedata %>%
+  filter(measuredItemCPC %in% value_only_items) %>%
+  dplyr::mutate(discrep_mirr = !between(value/value_m, 1/threshold, threshold)) %>%
+  mutate(mirror_results = mirrorRules(., variable = 'value')) %>%
+  mutate(
+    value      = ifelse(grepl('prt', mirror_results), value_m, value),
+    flag_value = ifelse(grepl('prt', mirror_results), 'T-i', flag_value)
+  )
+
+
+tradedata_value_and_qty <-
+  tradedata %>%
+  filter(!(measuredItemCPC %in% value_only_items)) %>%
+  mutate(mirror_results = mirrorRules(., variable = 'qty')) %>%
+  mutate(
+    qty        = ifelse(grepl('prt', mirror_results), qty_m, qty),
+    flag_qty   = ifelse(grepl('prt', mirror_results), 'T-c', flag_qty),
+    # XXX here, there's no need to copy a value if it's in the +/- 12%,
+    # but for now let's copy it in any case.
+    value      = ifelse(grepl('prt', mirror_results), value_m, value),
+    flag_value = ifelse(grepl('prt', mirror_results), 'T-i', flag_value)
+  )
+
+# TODO: now, we can have transactions for which quantities are OK, but
+# values are not. whatdo?
+# Here's an attempt. Using again thresold. Also, re-calculating `discrep_mirr`,
+# but see a previous comment.
+
+cond_value_discrep <-
+  with(
+    tradedata_value_and_qty,
+    !discrep_mirr &
+    !is.na(value) &
+    !is.na(value_m) &
+    (value > threshold * value_m | value < 1/threshold * value_m)
+  )
+
+tradedata_value_and_qty_discrep <-
+  tradedata_value_and_qty %>%
+  filter(cond_value_discrep) %>%
+  dplyr::mutate(discrep_mirr = !between(value/value_m, 1/threshold, threshold)) %>%
+  mutate(mirror_results = mirrorRules(., variable = 'value')) %>%
+  # Don't touch quantities, as they are not discrepant.
+  mutate(
+    value      = ifelse(grepl('prt', mirror_results), value_m, value),
+    flag_value = ifelse(grepl('prt', mirror_results), 'T-i', flag_value)
+  )
+
+tradedata_value_and_qty <-
+  bind_rows(
+    filter(tradedata_value_and_qty, !cond_value_discrep),
+    tradedata_value_and_qty_discrep
+  )
+
+
+
+# Let's now put all together.
 
 tradedata_final <- tradedata %>%
   select(

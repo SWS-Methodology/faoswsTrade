@@ -335,6 +335,13 @@ tradedata_value_and_qty <-
     tradedata_value_and_qty_discrep
   )
 
+tradedata_XXX <-
+  bind_rows(
+    tradedata_value_and_qty,
+    tradedata_value_only
+  )
+
+
 
 
 # Let's now put all together.
@@ -362,20 +369,49 @@ tradedata_final <- tradedata %>%
                   )
 
 
+complete_trade_flow_cpc <-
+  left_join(tradedata_final %>% ungroup(), cpc_units) %>%
+  dplyr::mutate(
+    measuredElementTrade =
+      ifelse(
+        type == 'value',
+        '22',
+        measuredElementTrade
+      ),
+    flow = ifelse(flow == 1, '56', '59')
+  ) %>%
+  dplyr::mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
+  select(-flow, -type) %>%
+  dplyr::filter(!(measuredElementTrade %in% c('56NA', '59NA'))) %>%
+  filter(!is.na(Value), !is.na(flagObservationStatus), !is.na(flagMethod))
 
-final_db <- left_join(tradedata_final %>% ungroup(), cpc_units) %>%
-dplyr::mutate(
-       measuredElementTrade = ifelse(
-                                      type == 'value',
-                                      '22',
-                                      measuredElementTrade
-                                      ),
-       flow = ifelse(flow == 1, '56', '59')
-       ) %>%
-dplyr::mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
-select(-flow, -type) %>%
-dplyr::filter(!(measuredElementTrade %in% c('56NA', '59NA')))
+complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 
+data.table::setcolorder(complete_trade_flow_cpc,
+                        c("geographicAreaM49Reporter",
+                          "geographicAreaM49Partner",
+                          "measuredElementTrade",
+                          "measuredItemCPC",
+                          "timePointYears",
+                          "Value",
+                          "flagObservationStatus",
+                          "flagMethod"))
 
-saveRDS(final_db, file = paste0(dir_to_save, name_to_save))
+stats <- SaveData("trade",
+                  "analytical_completed_tf_cpc_m49",
+                  complete_trade_flow_cpc,
+                  waitTimeout = 10800)
+
+sprintf(
+  "Module completed in %1.2f minutes.
+  Values inserted: %s
+  appended: %s
+  ignored: %s
+  discarded: %s",
+  difftime(Sys.time(), startTime, units = "min"),
+  stats[["inserted"]],
+  stats[["appended"]],
+  stats[["ignored"]],
+  stats[["discarded"]]
+)
 

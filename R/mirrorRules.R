@@ -37,23 +37,23 @@ mirrorRules <- function(data          = NA,
 
  # We need to check that qty exists otherwise it's a
  # mirror flow that originally was the opposite flow
- best_flow <- ifelse(data[[flow]] == main_flow & !is.na(data[[variable]]), 'rep', 'prt')
+ best_flow <- ifelse(data[[flow]] == main_flow & !is.na(data[[variable]]), 'rep 5', 'prt 6')
  # Default on mirror, though it couldn't be official (reporter data is NA)
  # XXX Have to put here the "official" flag (in this case is "-", given that obs is
  # "<BLANK>" and method is "<BLANK>")
- official <- if_else(data[[flag]] %in% official_flags, 'rep', 'prt', 'prt')
+ official <- if_else(data[[flag]] %in% official_flags, 'rep 7', 'prt 8', 'prt 9')
 
 
   res <- case_when(
     # If only mirror exists use it
-    is.na(data[[variable]]) & !is.na(data[[variable_mirr]])     ~ 'prt',
+    is.na(data[[variable]]) & !is.na(data[[variable_mirr]])     ~ 'prt 1',
     # If there NO discrepancy, leave reporter data untouched
-    !(data[[discrepancy]] %in% TRUE) & !is.na(data[[variable]]) ~ 'rep',
+    !(data[[discrepancy]] %in% TRUE) & !is.na(data[[variable]]) ~ 'rep 2',
     # In the remaining cases there should be a discrepancy.
     # If accuracy group is lower then accuracy score is higher
-    data[[group_rank]] < data[[group_rank_mirr]]                ~ 'rep',
+    data[[group_rank]] < data[[group_rank_mirr]]                ~ 'rep 3',
     # XXX how come the following number is equal to the previous one?
-    data[[group_rank_mirr]] < data[[group_rank]]                ~ 'prt',
+    data[[group_rank_mirr]] < data[[group_rank]]                ~ 'prt 4',
     # If same flags, use "main_flow" if it exists
     ((data[[flag]] %in% official_flags) ==
      (data[[flag_mirr]] %in% official_flags)) %in% TRUE         ~ best_flow,

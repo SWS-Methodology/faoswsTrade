@@ -1,14 +1,3 @@
-stopifnot(!is.null(swsContext.computationParams$startyear))
-stopifnot(!is.null(swsContext.computationParams$endyear))
-stopifnot(!is.null(swsContext.computationParams$threshold))
-print(swsContext.computationParams$startyear)
-print(swsContext.computationParams$endyear)
-print(swsContext.computationParams$threshold)
-
-##################################################################
-# TODO: avoid doing substitutions for "small" values/quantities? #
-##################################################################
-
 #setwd('C:/Users/mongeau/tmp/faoswsTrade')
 
 ######################################################################

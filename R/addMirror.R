@@ -18,7 +18,7 @@ addMirror <- function(data = NA) {
             flow  = recode(flow, '2' = 1, '1' = 2),
             value = ifelse(flow == 1, value*1.12, value/1.12)
            ) %>%
-    select(
+    dplyr::select(
            timePointYears,
            geographicAreaM49Reporter,
            geographicAreaM49Partner,

@@ -19,16 +19,16 @@ reshapeTrade <- function(data = NA) {
       type      = ifelse(type == '22', 'value', ifelse(type == '10', 'tonne', 'head')),
       flagTrade = paste(flagObservationStatus, flagMethod, sep = '-')
     ) %>%
-    select(-flagObservationStatus, -flagMethod, -measuredElementTrade)
+    dplyr::select(-flagObservationStatus, -flagMethod, -measuredElementTrade)
 
   data_num <-
     data %>%
-    select(-flagTrade) %>%
+    dplyr::select(-flagTrade) %>%
     tidyr::spread(type, Value)
 
   data_flags <-
     data %>%
-    select(-Value) %>%
+    dplyr::select(-Value) %>%
     dplyr::mutate(type = paste0('flag_', type)) %>%
     tidyr::spread(type, flagTrade)
 
@@ -51,7 +51,7 @@ reshapeTrade <- function(data = NA) {
       flag_qty    = ifelse(livestock, flag_head, flag_tonne),
       flag_weight = ifelse(livestock, flag_tonne, NA)
     ) %>%
-    select(-head, -tonne, -flag_head, -flag_tonne, -livestock)
+    dplyr::select(-head, -tonne, -flag_head, -flag_tonne, -livestock)
 
   return(res)
 }

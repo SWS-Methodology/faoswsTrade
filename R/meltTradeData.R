@@ -19,6 +19,6 @@ meltTradeData <- function(data = NA) {
                       'flagMethod'),
                  value.name = 'Value') %>%
     tbl_df() %>%
-    select(-variable, -L1)
+    dplyr::select(-variable, -L1)
 }
 

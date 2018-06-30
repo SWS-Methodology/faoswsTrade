@@ -78,7 +78,7 @@ accuracyScores <- function(data = NA, type = 'local', method = 'correlation') {
       dplyr::summarise(score = sum(score, na.rm = TRUE)) %>%
       ungroup() %>%
       tidyr::spread(geographicAreaM49Partner, score) %>%
-      select(-geographicAreaM49Reporter) %>%
+      dplyr::select(-geographicAreaM49Reporter) %>%
       as.matrix()
 
     global_accu[is.na(global_accu)] <- 0

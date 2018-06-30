@@ -70,7 +70,7 @@ GetCodeList2 <- function(dimension = NA) {
 #           ratio_mirror = qty_movav/qty_m_movav
 #           ) %>%
 #    ungroup() %>%
-#    select(-qty_movav, -qty_m_movav)
+#    dplyr::select(-qty_movav, -qty_m_movav)
 #}
 
 
@@ -86,7 +86,7 @@ GetCodeList2 <- function(dimension = NA) {
 #                        'flagMethod'),
 #                   value.name = 'Value') %>%
 #  tbl_df() %>%
-#  select(-variable, -L1) %>%
+#  dplyr::select(-variable, -L1) %>%
 #  tidyr::complete(
 #           tidyr::nesting(
 #                   geographicAreaM49Reporter,
@@ -154,8 +154,8 @@ db_list <- plyr::mlply(
                        #) %>%
                        #  as_data_frame() %>%
                        #  dplyr::rename(reporter = Var1, year = Var2),
-                       data_frame(reporter = reporters),
-                       .fun = getComputedDataSWS(reporter, omit = TRUE),
+                       reporters,
+                       .fun = function(x) getComputedDataSWS(x, omit = TRUE),
                        .parallel = multicore,
                        .progress = 'text'
                        )
@@ -171,7 +171,7 @@ tradedata <- db_list %>%
   meltTradeData()
 
 cpc_units <- tradedata %>%
-  select(measuredElementTrade, measuredItemCPC) %>%
+  dplyr::select(measuredElementTrade, measuredItemCPC) %>%
   dplyr::mutate(
          measuredElementTrade = stringr::str_sub(measuredElementTrade, 3, 4)
          ) %>%
@@ -237,7 +237,7 @@ if (smooth_trade) {
     dplyr::mutate(ratio_mirr_movav = RcppRoll::roll_mean(ratio_mirror, n = 3, fill = NA, na.rm = TRUE)) %>%
     ungroup() %>%
     dplyr::filter(orig == 1) %>%
-    select(-orig) %>%
+    dplyr::select(-orig) %>%
     dplyr::rename(ratio_mirror_orig = ratio_mirror, ratio_mirror = ratio_mirr_movav)
   Sys.time()
 }
@@ -274,10 +274,10 @@ value_only_items <-
 # By using the ratio of values. This should be done before.
 tradedata_value_only <-
   tradedata %>%
-  filter(measuredItemCPC %in% value_only_items) %>%
+  dplyr::filter(measuredItemCPC %in% value_only_items) %>%
   dplyr::mutate(discrep_mirr = !between(value/value_m, 1/threshold, threshold)) %>%
-  mutate(mirror_results = mirrorRules(., variable = 'value')) %>%
-  mutate(
+  dplyr::mutate(mirror_results = mirrorRules(., variable = 'value')) %>%
+  dplyr::mutate(
     value      = ifelse(grepl('prt', mirror_results), value_m, value),
     flag_value = ifelse(grepl('prt', mirror_results), 'T-i', flag_value)
   )
@@ -285,9 +285,9 @@ tradedata_value_only <-
 
 tradedata_value_and_qty <-
   tradedata %>%
-  filter(!(measuredItemCPC %in% value_only_items)) %>%
-  mutate(mirror_results = mirrorRules(., variable = 'qty')) %>%
-  mutate(
+  dplyr::filter(!(measuredItemCPC %in% value_only_items)) %>%
+  dplyr::mutate(mirror_results = mirrorRules(., variable = 'qty')) %>%
+  dplyr::mutate(
     qty        = ifelse(grepl('prt', mirror_results), qty_m, qty),
     flag_qty   = ifelse(grepl('prt', mirror_results), 'T-c', flag_qty),
     # XXX here, there's no need to copy a value if it's in the +/- 12%,
@@ -312,18 +312,18 @@ cond_value_discrep <-
 
 tradedata_value_and_qty_discrep <-
   tradedata_value_and_qty %>%
-  filter(cond_value_discrep) %>%
+  dplyr::filter(cond_value_discrep) %>%
   dplyr::mutate(discrep_mirr = !between(value/value_m, 1/threshold, threshold)) %>%
-  mutate(mirror_results = mirrorRules(., variable = 'value')) %>%
+  dplyr::mutate(mirror_results = mirrorRules(., variable = 'value')) %>%
   # Don't touch quantities, as they are not discrepant.
-  mutate(
+  dplyr::mutate(
     value      = ifelse(grepl('prt', mirror_results), value_m, value),
     flag_value = ifelse(grepl('prt', mirror_results), 'T-i', flag_value)
   )
 
 tradedata_value_and_qty <-
   bind_rows(
-    filter(tradedata_value_and_qty, !cond_value_discrep),
+    dplyr::filter(tradedata_value_and_qty, !cond_value_discrep),
     tradedata_value_and_qty_discrep
   )
 
@@ -339,7 +339,7 @@ tradedata_XXX <-
 # Let's now put all together.
 
 tradedata_final <- tradedata %>%
-  select(
+  dplyr::select(
          geographicAreaM49Reporter,
          geographicAreaM49Partner,
          flow,
@@ -352,7 +352,7 @@ tradedata_final <- tradedata %>%
          ) %>%
   tidyr::gather(type, Value, qty, value) %>%
   dplyr::mutate(flag = ifelse(type == 'qty', flag_qty, flag_value)) %>%
-  select(-flag_qty, -flag_value) %>%
+  dplyr::select(-flag_qty, -flag_value) %>%
   tidyr::separate(
                   flag,
                   sep    = '-',
@@ -373,9 +373,9 @@ complete_trade_flow_cpc <-
     flow = ifelse(flow == 1, '56', '59')
   ) %>%
   dplyr::mutate(measuredElementTrade = paste0(flow, measuredElementTrade)) %>%
-  select(-flow, -type) %>%
+  dplyr::select(-flow, -type) %>%
   dplyr::filter(!(measuredElementTrade %in% c('56NA', '59NA'))) %>%
-  filter(!is.na(Value), !is.na(flagObservationStatus), !is.na(flagMethod))
+  dplyr::filter(!is.na(Value), !is.na(flagObservationStatus), !is.na(flagMethod))
 
 complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
 

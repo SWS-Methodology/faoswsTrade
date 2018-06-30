@@ -26,7 +26,9 @@ multicore <- TRUE
 threshold <- as.numeric(swsContext.computationParams$threshold)
 
 # Years
-years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
+# TODO: use range: disabled because the TODO in accuracyScores (see below)
+years <- swsContext.computationParams$year
+#years <- swsContext.computationParams$startyear:swsContext.computationParams$endyear
 
 # Whether to smooth trade or not.
 # XXX TRUE is being under development.
@@ -255,6 +257,7 @@ tradedata <- tradedata %>%
   dplyr::mutate(discrep_mirr = !between(ratio_mirror, 1/threshold, threshold))
 
 # Generate accuracy scores for each country
+# TODO: generate scores by year
 accu_table <- accuracyScores(data = tradedata)
 
 tradedata <- left_join(tradedata, accu_table, by = c('geographicAreaM49Reporter' = 'country')) %>%

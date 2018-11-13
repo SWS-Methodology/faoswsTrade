@@ -15,14 +15,18 @@ name_area <- function (areacode, code_class = NULL) {
   stopifnot(code_class %in% c("fao", "m49", "geonom"))
 
   load_fao <- function() {
-    data("faocountrycode", package = "faoswsTrade", envir = environment())
-
-    fao_country_code %>%
-      rename_(area = ~reporter, area_name = ~country_name)
+    #data("faocountrycode", package = "faoswsTrade", envir = environment())
+    fao_country_code <-
+      GetCodeList(
+        domain    = 'faostat_one',
+        dataset   = 'FS1_SUA_UPD',
+        dimension = 'geographicAreaFS'
+      )[, list(area = as.numeric(code), area_name = description)]
   }
 
   load_m49 <- function() {
-    data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
+    #data("unsdpartnersblocks", package = "faoswsTrade", envir = environment())
+    unsdpartnersblocks <- ReadDatatable("unsdpartnersblocks")
     data("m49", package = "faoswsTrade", envir = environment())
 
     bind_rows(
@@ -37,7 +41,8 @@ name_area <- function (areacode, code_class = NULL) {
   }
 
   load_geonom <- function() {
-    data("geonom2fao", package = "faoswsTrade", envir = environment())
+    #data("geonom2fao", package = "faoswsTrade", envir = environment())
+    geonom2fao <- ReadDatatable("geonom2fao")
 
     geonom2fao %>%
       select_(area = ~code, area_name = ~name) %>%

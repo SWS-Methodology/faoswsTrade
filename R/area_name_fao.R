@@ -9,7 +9,13 @@
 
 area_name_fao <- function (areacode) {
 
-  data("faocountrycode", package = "faoswsTrade", envir = environment())
+  #data("faocountrycode", package = "faoswsTrade", envir = environment())
+  fao_country_code <-
+    GetCodeList(
+      domain    = 'faostat_one',
+      dataset   = 'FS1_SUA_UPD',
+      dimension = 'geographicAreaFS'
+    )[, list(reporter = as.numeric(code), country_name = description)]
 
   areacode <- as.integer(areacode)
 

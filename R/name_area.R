@@ -36,6 +36,7 @@ name_area <- function (areacode, code_class = NULL) {
     unsdpartnersblocks %>%
       select(area = unsdpb_formula, area_name = unsdpb_crnamee_1) %>%
       distinct() %>%
+      mutate(area = as.numeric(area)) %>%
       dplyr::filter(!(area %in% m49$code))
     )
   }

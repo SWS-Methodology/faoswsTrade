@@ -50,6 +50,10 @@ if (CheckDebug()) {
 DB_rds_storage <- paste0(dir_to_save, 'tmp/DB_rds_storage/')
 name_to_save <- 'db.rds'
 
+print_log <- function(x) {
+  print(paste('TradeValidation', format(Sys.time(), "%Y%m%d%H%M"), x))
+}
+
 ##+ check_parameters
 
 stopifnot(!is.null(swsContext.computationParams$startyear))
@@ -73,6 +77,7 @@ stopifnot(!is.null(swsContext.computationParams$useprevious))
 ##' - `morder`: order of the moving average of unit values. *This is a
 ##' hardcoded parameter.*
 
+print_log('Parameters')
 print(swsContext.computationParams$startyear)
 print(swsContext.computationParams$endyear)
 print(swsContext.computationParams$useprevious)
@@ -392,7 +397,8 @@ if (multicore) {
                             'myfun_build_db_for_app',
                             'boxB1',
                             'myboxB',
-                            'use_previous')
+                            'use_previous',
+                            'print_log')
                           )
 
   parallel::clusterExport(cl, c(ls(pattern = 'swsContext')))
@@ -439,6 +445,7 @@ if (multicore) {
 ##' The reporter-specific datasets get stored in the "shared drive" of
 ##' the server for latter use.
 
+print_log('Start computeData loop')
 start_time <- Sys.time()
 plyr::m_ply(
   #expand.grid(
@@ -454,6 +461,7 @@ plyr::m_ply(
 )
 end_time <- Sys.time()
 print(end_time - start_time)
+print_log('End computeData loop')
 
 invisible(gc())
 
@@ -480,6 +488,7 @@ invisible(gc())
 ##' to use when defining what an outlier is.
 
 
+print_log('Start sub RDS loop')
 start_time <- Sys.time()
 
 db_save <- plyr::mdply(
@@ -524,6 +533,7 @@ db_save <- plyr::mdply(
 
 end_time <- Sys.time()
 print(end_time - start_time)
+print_log('End sub RDS loop')
 
 if (multicore) {
   parallel::stopCluster(cl)
@@ -617,7 +627,10 @@ db_save <- left_join(
   by = 'measuredItemCPC'
 )
 
-
+print_log(
+  paste('First year is', min(db_save$timePointYears),
+        ', last year is', max(db_save$timePointYears))
+)
 
 str(db_save)
 

@@ -316,7 +316,7 @@ if (!only_pre_process) {
     dplyr::filter(n() == 1) %>%
     ungroup() %>%
     dplyr::mutate(hs6 = as.integer(hs2012_code)) %>%
-    select(hs6, hs2012_code, faostat_code)
+    dplyr::select(hs6, hs2012_code, faostat_code)
 
 ##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
@@ -360,7 +360,7 @@ if (!only_pre_process) {
 
   flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
   if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
-    readRDS("/work/SWS_R_Share/trade/datatables/hsfclmap5.rds") %>%
+    hsfclmap3 <- readRDS("/work/SWS_R_Share/trade/datatables/hsfclmap5.rds")
   } else {
     hsfclmap3 <- ReadDatatable('hsfclmap5')
   }
@@ -429,10 +429,9 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
       formatC(width = 2, format = "d", flag = "0")
 
-  esdata <-
-    readRDS("/work/SWS_R_Share/trade/datatables/ce_combinednomenclature_unlogged_2017.rds") %>%
-    tbl_df() %>%
-    filter(chapter %in% chapters)
+  esdata <- readRDS("/work/SWS_R_Share/trade/datatables/ce_combinednomenclature_unlogged_2017.rds")
+
+  esdata <- tbl_df(esdata[chapter %in% chapters])
 } else {
   esdata <- ReadDatatable(
     paste0("ce_combinednomenclature_unlogged_", year),
@@ -641,7 +640,7 @@ tldata <- tldata %>%
 # XXX create all reporters
 
 tldata_rep_table <- tldata %>%
-  select(reporter, flow) %>%
+  dplyr::select(reporter, flow) %>%
   distinct() %>%
   dplyr::mutate(name = faoAreaName(reporter, "fao"))
 
@@ -649,8 +648,8 @@ rprt_writetable(tldata_rep_table, subdir = 'preproc')
 
 # XXX this is a duplication: a function should be created.
 to_mirror_raw <- bind_rows(
-    select(esdata, year, reporter, partner, flow),
-    select(tldata, year, reporter, partner, flow)
+    dplyr::select(esdata, year, reporter, partner, flow),
+    dplyr::select(tldata, year, reporter, partner, flow)
   ) %>%
   dplyr::mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
   flowsToMirror(names = TRUE)
@@ -670,7 +669,7 @@ hsfclmap3 <- tbl_df(hsfclmap3) %>%
     startyear = ifelse(!is.na(correction_startyear), correction_startyear, startyear),
     endyear   = ifelse(!is.na(correction_endyear), correction_endyear, endyear)
   ) %>%
-  select(-starts_with('correction'))
+  dplyr::select(-starts_with('correction'))
 
 ##' 1. Extend the `endyear` for those combinations of `area` / `flow` /
 ##' `fromcode` / `tocode` for which `endyear` < `year`.
@@ -726,7 +725,7 @@ if (nrow(tmp) > 0) {
     # Prefer cases where hs_extend is available
     dplyr::filter(hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n() == 1)) %>%
     ungroup() %>%
-    select(-hs_ext_perc)
+    dplyr::select(-hs_ext_perc)
 }
 
 # Raise warning if countries were NOT in mapping.
@@ -743,7 +742,7 @@ add_map <- add_map %>%
     tocode     = hs,
     recordnumb = NA_integer_
   ) %>%
-  select(
+  dplyr::select(
     area = reporter_fao,
     flow,
     fromcode,
@@ -761,7 +760,7 @@ max_record <- max(hsfclmap3$recordnumb)
 add_map$recordnumb <- (max_record+1):(max_record+nrow(add_map))
 
 add_map <- add_map %>%
-  select(-details, -tl_description) %>%
+  dplyr::select(-details, -tl_description) %>%
   dplyr::mutate(
     fcl      = as.numeric(fcl),
     fromcode = gsub(' ', '', fromcode),
@@ -794,7 +793,7 @@ hsfclmap <- hsfclmap3 %>%
 hsfclmap <- hsfclmap %>%
   dplyr::mutate_at(vars(ends_with("code")), funs(num = as.numeric)) %>%
   dplyr::mutate_(fromgtto = ~fromcode_num > tocode_num) %>%
-  select(-ends_with("code_num"))
+  dplyr::select(-ends_with("code_num"))
 
 from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
 
@@ -908,13 +907,13 @@ esdata <- add_fcls_from_links(esdata,
 
 esdata <- esdata %>%
   left_join(
-    hs6standard %>% select(-hs2012_code),
+    hs6standard %>% dplyr::select(-hs2012_code),
     by = 'hs6'
   ) %>%
   dplyr::mutate(
     fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)
   ) %>%
-  select(-faostat_code)
+  dplyr::select(-faostat_code)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
@@ -1049,13 +1048,13 @@ tldata <- add_fcls_from_links(tldata,
 
 tldata <- tldata %>%
   left_join(
-    hs6standard %>% select(-hs2012_code),
+    hs6standard %>% dplyr::select(-hs2012_code),
     by = 'hs6'
   ) %>%
   dplyr::mutate(
     fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)
   ) %>%
-  select(-faostat_code)
+  dplyr::select(-faostat_code)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
 
@@ -1135,7 +1134,7 @@ tldata <- tldata %>%
 
 # For converting weight to 'heads', '1000 heads', 'units'.
 fcl_spec_head_conv <- tldata %>%
-  select(fcl, fclunit) %>%
+  dplyr::select(fcl, fclunit) %>%
   distinct() %>%
   dplyr::filter(fclunit %in% c('heads', '1000 heads', 'units'))
 
@@ -1169,7 +1168,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
   # weight > heads
   fcl_spec_head_conv <- livestock_weights %>%
     tbl_df() %>%
-    select(reporter = reporter_fao, fcl, liveweight) %>%
+    dplyr::select(reporter = reporter_fao, fcl, liveweight) %>%
     left_join(fcl_spec_head_conv, by = 'fcl') %>%
     dplyr::filter(!is.na(fclunit)) %>%
     dplyr::filter(!is.na(liveweight), liveweight > 0) %>%
@@ -1324,12 +1323,12 @@ esdata <- esdata %>%
 flog.trace("[%s] Combine TL and ES data sets", PID, name = "dev")
 tradedata <- bind_rows(
   tldata %>%
-    select(year, reporter, partner, flow, fcl, fclunit, hs,
+    dplyr::select(year, reporter, partner, flow, fcl, fclunit, hs,
             value, weight, qty = qtyfcl,
             convspec_head, starts_with('flag_'), wco),
   esdata %>%
     dplyr::mutate(convspec_head = NA_real_, wco = NA_character_) %>%
-    select(year, reporter, partner, flow, fcl, fclunit, hs,
+    dplyr::select(year, reporter, partner, flow, fcl, fclunit, hs,
             value, weight, qty = qtyfcl,
             convspec_head, starts_with('flag_'), wco)
 )
@@ -1407,7 +1406,7 @@ for (var in flag_vars) {
   tradedata <- separate_(tradedata, var, 1:2,
                          into = c('x', paste0(var, '_', c('v', 'q'))),
                          convert = TRUE) %>%
-               select(-x)
+               dplyr::select(-x)
 }
 
 tradedata_flags <- tradedata %>%
@@ -1530,7 +1529,7 @@ tradedata <- tradedata %>%
   setFlag2(!is.na(mirrored), type = 'status', flag = 'T', var = 'all') %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'i', var = 'value') %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
-  select(-mirrored)
+  dplyr::select(-mirrored)
 
 ##' # Flag aggregation
 
@@ -1551,7 +1550,7 @@ for (var in flag_vars) {
   tradedata <- separate_(tradedata, var, 1:2,
                          into = c('x', paste0(var, '_', c('v', 'q'))),
                          convert = TRUE) %>%
-               select(-x)
+               dplyr::select(-x)
 }
 
 ##' # Output for SWS
@@ -1594,7 +1593,7 @@ for (i in c('status', 'method')) {
 
     dummies <-
       tradedata %>%
-      select(matches(paste0('flag_', i, '_._', j))) %>%
+      dplyr::select(matches(paste0('flag_', i, '_._', j))) %>%
       dplyr::mutate_all(funs(ifelse(equals(., 0), NA, .)))
 
     flags <- sub('.*_(.)_.$', '\\1', colnames(dummies))
@@ -1646,17 +1645,17 @@ complete_trade_flow_cpc_live <-
   complete_trade_flow_cpc %>%
   filter(unit %in% c('heads', '1000 heads')) %>%
   # XXX for now, no flags
-  select(-starts_with('flag')) %>%
+  dplyr::select(-starts_with('flag')) %>%
   dplyr::mutate(flagObservationStatus = '', flagMethod = '') %>%
   # we need here just weight
   dplyr::mutate(measuredElementTrade = ifelse(flow == 1, '5610', '5910')) %>%
-  select(-value, -qty, -uv, -unit, -flow) %>%
-  rename(Value = weight)
+  dplyr::select(-value, -qty, -uv, -unit, -flow) %>%
+  dplyr::rename(Value = weight)
 
 # remove weight as not needed anymore
 complete_trade_flow_cpc <-
   complete_trade_flow_cpc %>%
-  select(-weight)
+  dplyr::select(-weight)
 
 ##' 1. Use corrections set by analysts during the validation process.
 
@@ -1671,7 +1670,7 @@ if (corrections_exist) {
 
   corrections_table <- corrections_table %>%
     dplyr::filter(correction_level == 'CPC') %>%
-    select(-correction_year, -correction_level, -correction_hs) %>%
+    dplyr::select(-correction_year, -correction_level, -correction_hs) %>%
     # Some of these cases were found, but are probably mistakes: should inform
     dplyr::filter(!is.na(correction_input) | !near(correction_input, 0)) %>%
     # XXX actually, flow should be integer in complete_trade_flow_cpc
@@ -1682,11 +1681,11 @@ if (corrections_exist) {
     dplyr::slice(1) %>%
     ungroup()
 
-  corrections_metadata <- apply(select(corrections_table, name_analyst, data_original, correction_type:date_validation),
+  corrections_metadata <- apply(dplyr::select(corrections_table, name_analyst, data_original, correction_type:date_validation),
                                 1, function(x) paste(names(x), ifelse(x == '', NA, x), collapse = '; ', sep = ': '))
 
   corrections_table <- corrections_table %>%
-    select(-(correction_note:date_validation)) %>%
+    dplyr::select(-(correction_note:date_validation)) %>%
     dplyr::mutate(correction_metadata = gsub('  *', ' ', corrections_metadata))
 
   flog.trace("[%s] Apply corrections to reporter", PID, name = "dev")
@@ -1697,10 +1696,10 @@ if (corrections_exist) {
   complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
     dplyr::mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
     dplyr::filter(is_mirror) %>%
-    select(-is_mirror)
+    dplyr::select(-is_mirror)
 
   complete_with_corrections_mirror <- complete_corrected$corrected %>%
-    select(
+    dplyr::select(
       geographicAreaM49Reporter = geographicAreaM49Partner,
       geographicAreaM49Partner  = geographicAreaM49Reporter,
       flow,
@@ -1719,7 +1718,7 @@ if (corrections_exist) {
       )
     ) %>%
     dplyr::filter(to_correct) %>%
-    select(-to_correct)
+    dplyr::select(-to_correct)
 
   corrections_table_mirror <- corrections_table %>%
     dplyr::rename(reporter = partner, partner = reporter) %>%
@@ -1750,7 +1749,7 @@ if (corrections_exist) {
     warning('Some corrections were not applied. See reports.')
     corrections_unapplied <- complete_corrected$to_drop %>%
       dplyr::mutate(year = year) %>%
-      select(-correction_metadata) %>%
+      dplyr::select(-correction_metadata) %>%
       left_join(
         corrections_table_all,
         by = c('year', 'reporter', 'partner', 'item',
@@ -1758,7 +1757,7 @@ if (corrections_exist) {
                'data_type', 'correction_input',
                'correction_type')
       ) %>%
-      select(year, everything()) %>%
+      dplyr::select(year, everything()) %>%
       as.data.frame()
 
     rprt_writetable(corrections_unapplied, subdir = 'preproc')
@@ -1898,7 +1897,7 @@ if (corrections_exist) {
 
   metad <- complete_trade_flow_cpc %>%
     dplyr::filter(!is.na(correction_metadata)) %>%
-    select(
+    dplyr::select(
       geographicAreaM49Reporter,
       geographicAreaM49Partner,
       measuredElementTrade,
@@ -1946,12 +1945,12 @@ if (corrections_exist) {
     #dplyr::rename(Metadata_Value = value)
 
   # Required to be a data.table
-  metad <- select(metad, -correction_metadata) %>%
+  metad <- dplyr::select(metad, -correction_metadata) %>%
     as.data.table()
 }
 
 complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
-  select(-correction_metadata) %>%
+  dplyr::select(-correction_metadata) %>%
   dplyr::mutate(
     flagObservationStatus = ifelse(measuredElementTrade %in% quantityElements,
                                    flagObservationStatus_q,
@@ -1970,7 +1969,7 @@ complete_trade_flow_cpc <- complete_trade_flow_cpc %>%
                                    'i',
                                    flagMethod)
   ) %>%
-  select(
+  dplyr::select(
     -flagObservationStatus_v, -flagObservationStatus_q,
     -flagMethod_v, -flagMethod_q
   )

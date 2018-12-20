@@ -2119,10 +2119,10 @@ if (corrections_exist) {
                     waitTimeout = 10800)
 }
 
-if (!CheckDebug()) {
-  updateInfoTable(year = year, table = 'complete_tf_runs_info',
-                  mode = 'save', results = stats)
-}
+#if (!CheckDebug()) {
+#  updateInfoTable(year = year, table = 'complete_tf_runs_info',
+#                  mode = 'save', results = stats)
+#}
 
 ## remove value only
 

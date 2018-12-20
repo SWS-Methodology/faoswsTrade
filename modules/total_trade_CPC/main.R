@@ -460,14 +460,14 @@ stats <- SaveData("trade",
                   "total_trade_cpc_m49",
                   total_trade_cpc_w_uv)
 
-if (!CheckDebug()) {
-  updateInfoTable(
-    year    = year,
-    table   = 'total_tf_runs_info',
-    mode    = 'save',
-    results = stats
-  )
-}
+#if (!CheckDebug()) {
+#  updateInfoTable(
+#    year    = year,
+#    table   = 'total_tf_runs_info',
+#    mode    = 'save',
+#    results = stats
+#  )
+#}
 
 sprintf(
   "Module completed in %1.2f minutes.

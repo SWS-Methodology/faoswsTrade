@@ -359,7 +359,11 @@ if (!only_pre_process) {
 ##' should satisfy the condition: $startyear <= year <= endyear$.
 
   flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
-  hsfclmap3 <- ReadDatatable('hsfclmap5')
+  if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
+    readRDS("/work/SWS_R_Share/trade/datatables/hsfclmap5.rds") %>%
+  } else {
+    hsfclmap3 <- ReadDatatable('hsfclmap5')
+  }
   stopifnot(nrow(hsfclmap3) > 0)
 
 ##' - `force_mirroring`: Datatables for those reported that need to be
@@ -421,21 +425,31 @@ unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
 
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
-esdata <- ReadDatatable(
-  paste0("ce_combinednomenclature_unlogged_", year),
-  columns = c(
-    "period",
-    "declarant",
-    "partner",
-    "flow",
-    "product_nc",
-    "value_1k_euro",
-    "qty_ton",
-    "sup_quantity",
-    "stat_regime"
-  ),
-  where = paste0("chapter IN (", hs_chapters, ")")
-) %>% tbl_df()
+if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
+  chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
+      formatC(width = 2, format = "d", flag = "0")
+
+  esdata <-
+    readRDS("/work/SWS_R_Share/trade/datatables/ce_combinednomenclature_unlogged_2017.rds") %>%
+    tbl_df() %>%
+    filter(chapter %in% chapters)
+} else {
+  esdata <- ReadDatatable(
+    paste0("ce_combinednomenclature_unlogged_", year),
+    columns = c(
+      "period",
+      "declarant",
+      "partner",
+      "flow",
+      "product_nc",
+      "value_1k_euro",
+      "qty_ton",
+      "sup_quantity",
+      "stat_regime"
+    ),
+    where = paste0("chapter IN (", hs_chapters, ")")
+  ) %>% tbl_df()
+}
 
 stopifnot(nrow(esdata) > 0)
 
@@ -454,22 +468,32 @@ flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 
-tldata <- ReadDatatable(
-  paste0("ct_tariffline_unlogged_", year),
-  columns = c(
-    "tyear",
-    "rep",
-    "prt",
-    "flow",
-    "comm",
-    "tvalue",
-    "weight",
-    "qty",
-    "qunit",
-    "chapter"
-  ),
-  where = paste0("chapter IN (", hs_chapters, ")")
-) %>% tbl_df()
+if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) & !faosws::CheckDebug()) {
+  chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
+      formatC(width = 2, format = "d", flag = "0")
+
+  tldata <-
+    readRDS("/work/SWS_R_Share/trade/datatables/ct_tariffline_unlogged_2017.rds") %>%
+    tbl_df() %>%
+    filter(chapter %in% chapters)
+} else {
+  tldata <- ReadDatatable(
+    paste0("ct_tariffline_unlogged_", year),
+    columns = c(
+      "tyear",
+      "rep",
+      "prt",
+      "flow",
+      "comm",
+      "tvalue",
+      "weight",
+      "qty",
+      "qunit",
+      "chapter"
+    ),
+    where = paste0("chapter IN (", hs_chapters, ")")
+  ) %>% tbl_df()
+}
 
 stopifnot(nrow(tldata) > 0)
 

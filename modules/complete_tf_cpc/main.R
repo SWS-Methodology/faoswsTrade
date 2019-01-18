@@ -1090,14 +1090,14 @@ flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev"
 
 all_unique_data_mapped <-
   bind_rows(esdata, tldata) %>%
-  select(year, rep_fao = reporter, flow, hs, fcl) %>%
+  dplyr::select(year, rep_fao = reporter, flow, hs, fcl) %>%
   distinct() %>%
-  mutate(
+  dplyr::mutate(
     geographicAreaM49 = fs2m49(as.character(rep_fao)),
     measuredItemCPC   = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
   ) %>%
   nameData("trade", "total_trade_cpc_m49", .) %>%
-  select(
+  dplyr::select(
     year,
     reporter = geographicAreaM49_description,
     rep_m49  = geographicAreaM49,

@@ -482,6 +482,10 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
     paste0(Sys.getenv("R_SWS_SHARE_PATH"),
            "/trade/datatables/ct_tariffline_unlogged_", year, ".rds")
 
+  if (!file.exists(local_tldata_file)) {
+    stop("Local tldata file does not exist.")
+  }
+
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
       formatC(width = 2, format = "d", flag = "0")
 

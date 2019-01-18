@@ -360,7 +360,7 @@ if (!only_pre_process) {
 
   flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
   if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
-    hsfclmap3 <- readRDS("/work/SWS_R_Share/trade/datatables/hsfclmap5.rds")
+    hsfclmap3 <- readRDS(file.path(Sys.getenv("R_SWS_SHARE_PATH"), "trade/datatables/hsfclmap5.rds"))
   } else {
     hsfclmap3 <- ReadDatatable('hsfclmap5')
   }
@@ -426,10 +426,19 @@ unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
 flog.trace("[%s] Reading in Eurostat data", PID, name = "dev")
 
 if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
+
+  local_esdata_file <-
+    paste0(Sys.getenv("R_SWS_SHARE_PATH"),
+           "/trade/datatables/ce_combinednomenclature_unlogged_", year, ".rds")
+
+  if (!file.exists(local_esdata_file)) {
+    stop("Local esdata file does not exist.")
+  }
+
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
       formatC(width = 2, format = "d", flag = "0")
 
-  esdata <- readRDS("/work/SWS_R_Share/trade/datatables/ce_combinednomenclature_unlogged_2017.rds")
+  esdata <- readRDS(local_esdata_file)
 
   esdata <- tbl_df(esdata[chapter %in% chapters])
 } else {
@@ -468,11 +477,16 @@ flog.info("Raw Eurostat data preview:", rprt_glimpse0(esdata), capture = TRUE)
 flog.trace("[%s] Reading in Tariffline data", PID, name = "dev")
 
 if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) & !faosws::CheckDebug()) {
+
+  local_tldata_file <-
+    paste0(Sys.getenv("R_SWS_SHARE_PATH"),
+           "/trade/datatables/ct_tariffline_unlogged_", year, ".rds")
+
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
       formatC(width = 2, format = "d", flag = "0")
 
   tldata <-
-    readRDS("/work/SWS_R_Share/trade/datatables/ct_tariffline_unlogged_2017.rds") %>%
+    readRDS(local_tldata_file) %>%
     tbl_df() %>%
     filter(chapter %in% chapters)
 } else {

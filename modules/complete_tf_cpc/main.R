@@ -1086,6 +1086,27 @@ tldata <- filter_(tldata, ~!is.na(fcl))
 
 flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
+flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
+
+all_unique_data_mapped <-
+  bind_rows(esdata, tldata) %>%
+  select(year, rep_fao = reporter, flow, hs, fcl) %>%
+  distinct() %>%
+  mutate(
+    geographicAreaM49 = fs2m49(as.character(rep_fao)),
+    measuredItemCPC   = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
+  ) %>%
+  nameData("trade", "total_trade_cpc_m49", .) %>%
+  select(
+    year,
+    reporter = geographicAreaM49_description,
+    rep_m49  = geographicAreaM49,
+    everything()
+  )
+
+saveRDS(all_unique_data_mapped,
+        file.path(reportdir, "datadir/all_unique_data_mapped.rds"))
+
 if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 
 ############# Units of measurment in TL ####

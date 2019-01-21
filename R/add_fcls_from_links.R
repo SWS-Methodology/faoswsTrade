@@ -40,10 +40,11 @@ add_fcls_from_links <- function(tradedata, hs6links, links) {
   left_join(
     tradedata,
     dplyr::rename(hs6links, fcl6 = fcl),
-    by = c('reporter', 'flow', 'hs6')
+    by = c("reporter", "flow", "hs6")
   ) %>%
   left_join(
-    dplyr::rename(links, fclx = fcl)
+    dplyr::rename(links, fclx = fcl),
+    by = c("reporter", "flow", "hs")
   ) %>%
   dplyr::mutate(fcl = ifelse(is.na(fclx), fcl6, fclx)) %>%
   dplyr::select(-fclx, -fcl6)

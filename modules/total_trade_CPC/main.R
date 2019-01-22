@@ -271,8 +271,12 @@ total_trade_cpc_wo_uv <-
 
 addUV <- function(data) {
 
+  var_names <- c("Value", GetDatasetConfig("trade", "total_trade_cpc_m49")$dimensions, GetDatasetConfig("trade", "total_trade_cpc_m49")$flags)
+
   ## data <- total_trade_cpc
-  copyData <- data
+  copyData <- data %>%
+    select_(.dots = var_names)
+
 
   copyData$unit <- ifelse(copyData$measuredElementTrade %in% c("5622", "5922"), "monetary", "quantity")
   copyData$flow <- ifelse(substr(copyData$measuredElementTrade, 1, 2) == "56", "import", "export")
@@ -315,29 +319,23 @@ addUV <- function(data) {
     dplyr::mutate(
       Value = ifelse(Value.qty > 0, Value.mon * 1000 / Value.qty, NA)
     ) %>%
-    left_join(me_qty_uv) %>%
+    left_join(me_qty_uv, by = c("measuredElementTrade.qty", "flow")) %>%
     ## ## only keep columns already present in input data set
     dplyr::mutate(flagMethod = "i") %>%
-    subset(., select = names(data))
+    select_(.dots = var_names)
 
   return(copyData_uv)
 
 }
 
-total_trade_cpc_uv <-
-  addUV(total_trade_cpc_wo_uv) %>%
-  dplyr::filter(!is.na(Value))
-
-
-total_trade_cpc_w_uv <-
+total_trade_cpc_all_no_uv <-
   bind_rows(
-    total_trade_cpc_uv,
-    total_trade_cpc_wo_uv,
-    total_trade_cpc_weight_livestock
+    total_trade_cpc_wo_uv %>% mutate(livestock_w = FALSE),
+    total_trade_cpc_weight_livestock %>% mutate(livestock_w = TRUE)
   ) %>%
-  data.table::as.data.table()
+  setDT()
 
-table(total_trade_cpc_w_uv$flagObservationStatus, total_trade_cpc_w_uv$flagMethod)
+table(total_trade_cpc_all_no_uv$flagObservationStatus, total_trade_cpc_all_no_uv$flagMethod)
 
 ##' # Remove "non-existent" transactions
 ##'
@@ -370,9 +368,9 @@ if (remove_nonexistent_transactions) {
     Dimension(name = "geographicAreaM49", keys = .)
 
   allElementsDim_tot <-
-    c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922",
-      # UV elements:
-      "5638", "5639", "5630", "5938", "5939", "5930") %>%
+    c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922") %>% #,
+      ## UV elements:
+      #"5638", "5639", "5630", "5938", "5939", "5930") %>%
     Dimension(name = "measuredElementTrade", keys = .)
 
   allItemsDim_tot <-
@@ -398,36 +396,57 @@ if (remove_nonexistent_transactions) {
 
   #flog.trace("[%s] Keep protected data", PID, name = "dev")
 
-  # Some flags are "protected", i.e., data with these flags
-  # should not be overwritten/removed
-  protected_flags <-
-    flagValidTable[Protected == TRUE &
-                   !(flagObservationStatus == 'T' &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'h'),
-                   paste(flagObservationStatus, flagMethod)]
-
-  # Data that should be left untouched
   protected_data <-
-    existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags,]
+    flagValidTable[
+      existing_data,
+      on = c('flagObservationStatus', 'flagMethod')
+    ][
+      # Unprotect these
+      (flagObservationStatus == 'T' &  flagMethod == 'c') |
+      (flagObservationStatus == ''  &  flagMethod == 'c') |
+      (flagObservationStatus == ''  &  flagMethod == 'h'),
+      Protected := FALSE
+    ][
+      Protected %in% TRUE
+    ][,
+      `:=`(
+        flagObservationStatus_p = flagObservationStatus,
+        flagMethod_p = flagMethod,
+        Value_p = Value,
+        flagObservationStatus = NULL,
+        flagMethod = NULL,
+        Value = NULL
+      )
+    ]
 
-  # XXX If timePointYears will eventually be used they need to
-  # have the same class in existing_data and total_trade_cpc_w_uv
 
-  # Remove from saved data
-  existing_data <-
-    existing_data[!protected_data,
-                  on = c('geographicAreaM49',
-                         'measuredElementTrade',
-                         'measuredItemCPC')]
+  total_trade_cpc_all_no_uv <-
+    protected_data[
+      total_trade_cpc_all_no_uv,
+      on = c('timePointYears', 'geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
+    ][
+      !is.na(Value_p),
+      `:=`(Value = Value_p, flagObservationStatus = flagObservationStatus_p, flagMethod = flagMethod_p)
+    ][,
+    `:=`(Value_p = NULL, flagObservationStatus_p = NULL, flagMethod_p = NULL)
+    ]
 
-  # Remove from new data
+  total_trade_cpc_uv <-
+    # Only for what we need (livestock *weight* is optionally reported)
+    addUV(total_trade_cpc_all_no_uv[livestock_w == FALSE]) %>%
+    dplyr::filter(!is.na(Value))
+
   total_trade_cpc_w_uv <-
-    total_trade_cpc_w_uv[!protected_data,
-                            on = c('geographicAreaM49',
-                                   'measuredElementTrade',
-                                   'measuredItemCPC')]
+    rbind(total_trade_cpc_all_no_uv, total_trade_cpc_uv, fill = TRUE) %>%
+    setDT()
 
+  # Remove protected data
+  total_trade_cpc_w_uv <-
+    total_trade_cpc_w_uv[
+      !(Protected %in% TRUE)
+    ][,
+      `:=`(Protected = NULL, Valid = NULL, livestock_w = NULL)
+    ]
 
   # Difference between what was saved and what the module produced:
   # whatever is not produced in the run should be set to NA. See #164
@@ -437,6 +456,20 @@ if (remove_nonexistent_transactions) {
                   on = c('geographicAreaM49',
                          'measuredElementTrade',
                          'measuredItemCPC')]
+
+  data_diff <-
+    flagValidTable[
+      data_diff,
+      on = c('flagObservationStatus', 'flagMethod')
+    ][
+      # Unprotect these
+      (flagObservationStatus == 'T' &  flagMethod == 'c') |
+      (flagObservationStatus == ''  &  flagMethod == 'c') |
+      (flagObservationStatus == ''  &  flagMethod == 'h'),
+      Protected := FALSE
+    ][
+      Protected %in% FALSE
+    ]
 
   if (nrow(data_diff) > 0) {
     #flog.trace("[%s] RNET: Non-existent transactions set to NA", PID, name = "dev")
@@ -449,7 +482,28 @@ if (remove_nonexistent_transactions) {
   } #else {
     #flog.trace("[%s] RNET: There are no non-existent transactions", PID, name = "dev")
   #}
+} else {
+  ######################################################
+  #  FIXME: this case does NOT keep protected flows    #
+  #  (usually, remove_nonexistent_transactions = TRUE) #
+  ######################################################
+  total_trade_cpc_uv <-
+    addUV(total_trade_cpc_all_no_uv %>% filter(livestock_w == FALSE)) %>%
+    dplyr::filter(!is.na(Value))
+
+  total_trade_cpc_w_uv <-
+    bind_rows(
+      total_trade_cpc_uv,
+      total_trade_cpc_all_no_uv
+    ) %>%
+    setDT()
+
+  total_trade_cpc_w_uv[, livestock_w := NULL]
 }
+
+setcolorder(total_trade_cpc_w_uv,
+            c("geographicAreaM49", "measuredElementTrade", "measuredItemCPC",
+              "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
 
 ##' # Save data
 ##'
@@ -458,7 +512,7 @@ if (remove_nonexistent_transactions) {
 
 stats <- SaveData("trade",
                   "total_trade_cpc_m49",
-                  total_trade_cpc_w_uv)
+                  total_trade_cpc_w_uv_X)
 
 #if (!CheckDebug()) {
 #  updateInfoTable(

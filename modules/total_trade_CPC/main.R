@@ -512,7 +512,7 @@ setcolorder(total_trade_cpc_w_uv,
 
 stats <- SaveData("trade",
                   "total_trade_cpc_m49",
-                  total_trade_cpc_w_uv_X)
+                  total_trade_cpc_w_uv)
 
 #if (!CheckDebug()) {
 #  updateInfoTable(

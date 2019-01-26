@@ -988,6 +988,17 @@ tldata[qunit ==  9, c('qty', 'qunit') := list(qty*1000, 5)]
 tldata[qunit == 11, c('qty', 'qunit') := list(  qty*12, 5)]
 tldata <- tbl_df(tldata)
 
+##+ reexptoexp ####
+##' 1. Re-imports become imports and re-exports become exports.
+flog.trace("[%s] TL: recoding reimport/reexport", PID, name = "dev")
+
+# { "id": "1", "text": "Import" },
+# { "id": "2", "text": "Export" },
+# { "id": "4", "text": "re-Import" },
+# { "id": "3", "text": "re-Export" }
+
+tldata <- dplyr::mutate_(tldata, flow = ~recode(flow, '4' = 1L, '3' = 2L))
+
 # tl-aggregate-multiple-rows ####
 
 ##' 1. Identical combinations of `reporter` / `partner` / `commodity` /
@@ -1032,17 +1043,6 @@ rprt_writetable(tldata_not_area_in_fcl_mapping)
 
 flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
 tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
-
-##+ reexptoexp ####
-##' 1. Re-imports become imports and re-exports become exports.
-flog.trace("[%s] TL: recoding reimport/reexport", PID, name = "dev")
-
-# { "id": "1", "text": "Import" },
-# { "id": "2", "text": "Export" },
-# { "id": "4", "text": "re-Import" },
-# { "id": "3", "text": "re-Export" }
-
-tldata <- dplyr::mutate_(tldata, flow = ~recode(flow, '4' = 1L, '3' = 2L))
 
 ##' 1. Map HS codes to FCL.
 ##+ tl_hs2fcl ####

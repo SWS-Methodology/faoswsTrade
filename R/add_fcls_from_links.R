@@ -46,7 +46,10 @@ add_fcls_from_links <- function(tradedata, hs6links, links) {
     dplyr::rename(links, fclx = fcl),
     by = c("reporter", "flow", "hs")
   ) %>%
-  dplyr::mutate(fcl = ifelse(is.na(fclx), fcl6, fclx)) %>%
+  dplyr::mutate(
+    fcl     = ifelse(is.na(fclx), fcl6, fclx),
+    map_src = ifelse(is.na(fclx), 'auto HS6', 'hsfclmap')
+  ) %>%
   dplyr::select(-fclx, -fcl6)
 
 }

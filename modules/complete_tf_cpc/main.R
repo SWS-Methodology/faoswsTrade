@@ -917,6 +917,8 @@ esdatalinks <- mapHS2FCL(tradedata   = esdata,
 
 ##'     1. Use HS6-FCL or HS-FCL mapping table.
 
+esdata$map_src <- NA_character_
+
 esdata <- add_fcls_from_links(esdata,
                               hs6links = esdatahs6links,
                               links    = esdatalinks)
@@ -929,7 +931,8 @@ esdata <- esdata %>%
     by = 'hs6'
   ) %>%
   dplyr::mutate(
-    fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)
+    fcl     = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl),
+    map_src = ifelse(is.na(fcl) & !is.na(faostat_code), 'standard', map_src)
   ) %>%
   dplyr::select(-faostat_code)
 
@@ -1058,6 +1061,8 @@ tldatalinks <- mapHS2FCL(tradedata   = tldata,
 
 ##'     1. Use HS6-FCL or HS-FCL mapping table.
 
+tldata$map_src <- NA_character_
+
 tldata <- add_fcls_from_links(tldata,
                               hs6links = tldatahs6links,
                               links    = tldatalinks)
@@ -1070,7 +1075,8 @@ tldata <- tldata %>%
     by = 'hs6'
   ) %>%
   dplyr::mutate(
-    fcl = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl)
+    fcl     = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl),
+    map_src = ifelse(is.na(fcl) & !is.na(faostat_code), 'standard', map_src)
   ) %>%
   dplyr::select(-faostat_code)
 

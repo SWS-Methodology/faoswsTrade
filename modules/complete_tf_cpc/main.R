@@ -1094,6 +1094,17 @@ flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
 flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
 
+rawdata <-
+  bind_rows(esdata, tldata) %>%
+  mutate(cpc = fcl2cpc(sprintf("%04d", fcl), version = "2.1")) %>%
+  select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
+         value, weight, qty, map_src, recordnumb) %>%
+  group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
+  mutate(n = n()) %>%
+  ungroup()
+
+saveRDS(rawdata, file.path(Sys.getenv("R_SWS_SHARE_PATH"), "tmp/rawdata_2017.rds"))
+
 all_unique_data_mapped <-
   bind_rows(esdata, tldata) %>%
   dplyr::select(year, rep_fao = reporter, flow, hs, fcl) %>%

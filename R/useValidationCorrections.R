@@ -54,8 +54,15 @@ useValidationCorrections <- function(data, corrections) {
       )
     ) %>%
     dplyr::filter(!is.na(correction_input_qty) | !is.na(correction_input_value)) %>%
-    # XXX mirror?
     dplyr::mutate(
+      # This is to take into account the fact that flows were already mirrored,
+      # so the value was changed by definition.
+      data_original_value =
+        case_when(
+          .$flagObservationStatus_v == 'T' & .$flow == 1 ~ .$data_original_value * 1.12,
+          .$flagObservationStatus_v == 'T' & .$flow == 2 ~ .$data_original_value / 1.12,
+          TRUE                                           ~ .$data_original_value
+        ),
       x_qty   = !is.na(correction_input_qty),
       x_value = !is.na(correction_input_value),
       y_qty   = (qty   < 0.99 * data_original_qty   | qty   > 1.01 * data_original_qty),

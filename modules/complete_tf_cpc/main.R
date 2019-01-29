@@ -1784,10 +1784,17 @@ if (corrections_exist) {
     dplyr::filter(to_correct) %>%
     dplyr::select(-to_correct)
 
-  corrections_table_mirror <- corrections_table %>%
+  corrections_table_mirror_2 <- corrections_table %>%
     dplyr::rename(reporter = partner, partner = reporter) %>%
     dplyr::mutate(flow = recode(flow, '2' = 1, '1' = 2)) %>%
-    dplyr::mutate(correction_input = ifelse(data_type == 'value', ifelse(flow == 1, correction_input * 1.12, correction_input / 1.12), correction_input))
+    dplyr::mutate(
+      correction_input =
+        case_when(
+          .$data_type == 'value' & .$flow == 1 ~ .$correction_input * 1.12,
+          .$data_type == 'value' & .$flow == 2 ~ .$correction_input / 1.12,
+          TRUE                                 ~ .$correction_input
+        )
+    )
 
   flog.trace("[%s] Apply corrections to partner (if mirrored)", PID, name = "dev")
 

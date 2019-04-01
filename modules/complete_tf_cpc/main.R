@@ -1450,6 +1450,18 @@ tradedata <- computeMedianUnitValue(tradedata = tradedata)
 
 tradedata <- doImputation(tradedata = tradedata)
 
+# Team BC: do not assign imputed flag to imputed flows that
+# account for less than 10% of the total flow.
+tradedata <-
+  tradedata %>%
+  group_by(year, reporter, flow, fcl) %>%
+  dplyr::mutate(qty_perc = qty / sum(qty)) %>%
+  ungroup() %>%
+  dplyr::mutate(
+    flagTrade = ifelse(fclunit != '$ value only' qty_perc > 0.1, flagTrade, 0)
+  ) %>%
+  dplyr::select(-qty_perc)
+
 flog.trace("[%s] Flag stuff", PID, name = "dev")
 # XXX using flagTrade for the moment, but should go away
 # (Team BC: quantities below 1 tonne do not get imputed flag)

@@ -1784,7 +1784,7 @@ if (corrections_exist) {
     dplyr::filter(to_correct) %>%
     dplyr::select(-to_correct)
 
-  corrections_table_mirror_2 <- corrections_table %>%
+  corrections_table_mirror <- corrections_table %>%
     dplyr::rename(reporter = partner, partner = reporter) %>%
     dplyr::mutate(flow = recode(flow, '2' = 1, '1' = 2)) %>%
     dplyr::mutate(

@@ -440,6 +440,10 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
 
   esdata <- readRDS(local_esdata_file)
 
+  if (!("chapter" %in% names(esdata))) {
+    esdata[, chapter := substr(product_nc, 1, 2)]
+  }
+
   esdata <- tbl_df(esdata[chapter %in% chapters])
 } else {
   esdata <- ReadDatatable(

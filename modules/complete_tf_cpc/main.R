@@ -1462,7 +1462,7 @@ tradedata <-
   dplyr::mutate(qty_perc = qty / sum(qty)) %>%
   ungroup() %>%
   dplyr::mutate(
-    flagTrade = ifelse(fclunit != '$ value only' qty_perc > 0.1, flagTrade, 0)
+    flagTrade = ifelse(fclunit != '$ value only', qty_perc > 0.1, flagTrade, 0)
   ) %>%
   dplyr::select(-qty_perc)
 

@@ -245,6 +245,8 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = TRUE)
 # TODO: there are basic checks on the tables (mainly that they have
 # data), but more detailed checks should be needed (see #132)
 
+
+
 if (!only_pre_process) {
 ##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
 ##' quantity units) in Tariffline data into intelligible unit of measurement,
@@ -1462,7 +1464,7 @@ tradedata <-
   dplyr::mutate(qty_perc = qty / sum(qty)) %>%
   ungroup() %>%
   dplyr::mutate(
-    flagTrade = ifelse(fclunit != '$ value only', qty_perc > 0.1, flagTrade, 0)
+    flagTrade = ifelse(fclunit != '$ value only' & qty_perc > 0.1, flagTrade, 0)
   ) %>%
   dplyr::select(-qty_perc)
 

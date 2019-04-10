@@ -210,7 +210,7 @@ total_trade_cpc_wo_uv <-
   # In any case, 's' is the weakest flag, so that if aggregation
   # was performed, then 's' is the final Method flag.
   dplyr::mutate(flagMethod = ifelse(nobs > 1, 's', flagMethod)) %>%
-  select(-nobs)
+  dplyr::select(-nobs)
 
 # Data for which weight and numbers were computed
 # (n == 4 => (value, qty) * (import, export))
@@ -220,7 +220,7 @@ qty_and_weight <-
     dplyr::summarise(n = n_distinct(measuredElementTrade)) %>%
     dplyr::filter(n > 4) %>%
     dplyr::mutate(out = TRUE) %>%
-    select(-n)
+    dplyr::select(-n)
 
 qty_and_weight <-
   bind_rows(
@@ -236,7 +236,7 @@ total_trade_cpc_weight_livestock <-
     by = c("measuredItemCPC", "measuredElementTrade")
   ) %>%
   dplyr::filter(out) %>%
-  select(-out)
+  dplyr::select(-out)
 
 # Remove weights of livestok (keeping heads)
 total_trade_cpc_wo_uv <-
@@ -246,7 +246,7 @@ total_trade_cpc_wo_uv <-
     by = c("measuredItemCPC", "measuredElementTrade")
   ) %>%
   dplyr::filter(is.na(out)) %>%
-  select(-out)
+  dplyr::select(-out)
 
 
 ##' # Calculate Unit Values
@@ -284,7 +284,7 @@ addUV <- function(data) {
   copyData_quantity <-
     copyData %>%
     dplyr::filter(unit == "quantity") %>%
-    select(
+    dplyr::select(
       -unit,
       measuredElementTrade.qty = measuredElementTrade,
       -flagMethod
@@ -294,7 +294,7 @@ addUV <- function(data) {
   copyData_monetary <-
     copyData %>%
     dplyr::filter(unit == "monetary") %>%
-    select(
+    dplyr::select(
       -unit,
       -measuredElementTrade,
       -flagObservationStatus,
@@ -414,7 +414,7 @@ if (remove_nonexistent_transactions) {
   # (e.g., because it's new data from external sources)
   new_protected_data <-
     copy(protected_data) %>%
-    #select(-Valid, -Protected) %>%
+    #dplyr::select(-Valid, -Protected) %>%
     anti_join(
       total_trade_cpc_all_no_uv,
       by = c('geographicAreaM49', 'timePointYears', 'measuredItemCPC', 'measuredElementTrade')
@@ -504,7 +504,7 @@ if (remove_nonexistent_transactions) {
   #  (usually, remove_nonexistent_transactions = TRUE) #
   ######################################################
   total_trade_cpc_uv <-
-    addUV(total_trade_cpc_all_no_uv %>% filter(livestock_w == FALSE)) %>%
+    addUV(total_trade_cpc_all_no_uv %>% dplyr::filter(livestock_w == FALSE)) %>%
     dplyr::filter(!is.na(Value))
 
   total_trade_cpc_w_uv <-

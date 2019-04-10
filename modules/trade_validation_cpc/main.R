@@ -498,7 +498,7 @@ db_save <- plyr::mdply(
     .progress = 'text'
   ) %>%
   tbl_df() %>%
-  select(-X1) %>%
+  dplyr::select(-X1) %>%
   dplyr::mutate(ratio_man = unit_value / movav_unit_value) %>%
   group_by(flow, measuredItemCPC, timePointYears) %>%
   dplyr::mutate(
@@ -554,7 +554,7 @@ if (multicore) {
 ##' "shared drive" from where the validation tool will read it.
 
 db_save <- db_save %>%
-  select(
+  dplyr::select(
          flow,
          geographicAreaM49Reporter,
          geographicAreaM49Partner,
@@ -584,24 +584,24 @@ db_save <- db_save %>%
   group_by(flow, geographicAreaM49Reporter, measuredItemCPC, timePointYears) %>%
   dplyr::mutate(tot.qty = sum(qty, na.rm = TRUE), perc.qty = qty / tot.qty) %>%
   ungroup() %>%
-  select(-tot.value, -tot.qty)
+  dplyr::select(-tot.value, -tot.qty)
 
 geographicAreaM49Reporter_names <- db_save %>%
-  select(geographicAreaM49Reporter) %>%
+  dplyr::select(geographicAreaM49Reporter) %>%
   distinct() %>%
   data.table::as.data.table() %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
   dplyr::rename(reporter_name = geographicAreaM49Reporter_description)
 
 geographicAreaM49Partner_names <- db_save %>%
-  select(geographicAreaM49Partner) %>%
+  dplyr::select(geographicAreaM49Partner) %>%
   distinct() %>%
   data.table::as.data.table() %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%
   dplyr::rename(partner_name = geographicAreaM49Partner_description)
 
 measuredItemCPC_names <- db_save %>%
-  select(measuredItemCPC) %>%
+  dplyr::select(measuredItemCPC) %>%
   distinct() %>%
   data.table::as.data.table() %>%
   faoswsUtil::nameData('trade', 'completed_tf_cpc_m49', .) %>%

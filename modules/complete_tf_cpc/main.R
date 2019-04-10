@@ -2208,32 +2208,7 @@ if (corrections_exist) {
                     waitTimeout = 10800)
 }
 
-#if (!CheckDebug()) {
-#  updateInfoTable(year = year, table = 'complete_tf_runs_info',
-#                  mode = 'save', results = stats)
-#}
-
-## remove value only
-
-flog.trace("[%s] Session/database write completed!", PID, name = "dev")
-
-flog.info(
-  "Module completed in %1.2f minutes.
-  Values inserted: %s
-  appended: %s
-  ignored: %s
-  discarded: %s",
-    difftime(Sys.time(), startTime, units = "min"),
-    stats[["inserted"]],
-    stats[["appended"]],
-    stats[["ignored"]],
-    stats[["discarded"]], name = "dev"
-  )
-
-# Restore changed options
-options(old_options)
-
-sprintf(
+end_message <- sprintf(
   "Module completed in %1.2f minutes.
   Values inserted: %s
   appended: %s
@@ -2245,4 +2220,32 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
+
+if (!CheckDebug()) {
+  # XXX SWS error:
+  #
+  # 'ERROR: null value in column "discarded" violates not-null constraint
+  #   Detail: Failing row contains (2775, 2019-04-10 10:54:00.591, 2014, 0, 2608, 3428166, null, 2019-04-10 10:54, 2019-04-10 10:21, 0.55 hours).'
+  #
+  #updateInfoTable(year = year, table = 'complete_tf_runs_info',
+  #                mode = 'save', results = stats)
+
+  send_mail(
+    from    = "SWS-trade-module@fao.org",
+    to      = swsContext.userEmail,
+    subject = paste0("Bilateral trade plugin (year", year, ") ran successfully"),
+    body    = end_message
+  )
+}
+
+## remove value only
+
+flog.trace("[%s] Session/database write completed!", PID, name = "dev")
+
+flog.info(end_message)
+
+# Restore changed options
+options(old_options)
+
+end_message
 

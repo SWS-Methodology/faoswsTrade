@@ -530,16 +530,7 @@ stats <- SaveData("trade",
                   "total_trade_cpc_m49",
                   total_trade_cpc_w_uv)
 
-#if (!CheckDebug()) {
-#  updateInfoTable(
-#    year    = year,
-#    table   = 'total_tf_runs_info',
-#    mode    = 'save',
-#    results = stats
-#  )
-#}
-
-sprintf(
+end_message <- sprintf(
   "Module completed in %1.2f minutes.
   Values inserted: %s
   appended: %s
@@ -551,4 +542,22 @@ sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
+
+if (!CheckDebug()) {
+#  updateInfoTable(
+#    year    = year,
+#    table   = 'total_tf_runs_info',
+#    mode    = 'save',
+#    results = stats
+#  )
+
+  send_mail(
+    from    = "SWS-trade-module@fao.org",
+    to      = swsContext.userEmail,
+    subject = paste0("Total trade plugin (year ",  year, ") ran successfully"),
+    body    = end_message
+  )
+}
+
+end_message
 

@@ -632,12 +632,23 @@ print_log(
         ', last year is', max(db_save$timePointYears))
 )
 
-str(db_save)
-
-head(db_save)
+#str(db_save)
+#
+#head(db_save)
 
 saveRDS(db_save, paste0(dir_to_save, name_to_save))
 
-print(paste0('The dataset for validation should have been saved in ',
-            dir_to_save, name_to_save))
+end_message <- paste0('The dataset for validation should have been saved in ',
+            dir_to_save, name_to_save)
+
+if (!CheckDebug()) {
+  send_mail(
+    from    = "SWS-trade-module@fao.org",
+    to      = swsContext.userEmail,
+    subject = "Validation trade plugin ran successfully",
+    body    = end_message
+  )
+}
+
+end_message
 

@@ -1102,15 +1102,15 @@ flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev"
 
 rawdata <-
   bind_rows(esdata, tldata) %>%
-  mutate(
+  dplyr::mutate(
     reporter = fs2m49(as.character(reporter)),
     partner  = fs2m49(as.character(partner)),
     cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
   ) %>%
-  select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
+  dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
          value, weight, qty, map_src, recordnumb) %>%
   group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
-  mutate(n = n()) %>%
+  dplyr::mutate(n = n()) %>%
   ungroup()
 
 saveRDS(
@@ -1725,7 +1725,7 @@ complete_trade_flow_cpc <- tradedata %>%
 # Keep weight for livestock
 complete_trade_flow_cpc_live <-
   complete_trade_flow_cpc %>%
-  filter(unit %in% c('heads', '1000 heads')) %>%
+  dplyr::filter(unit %in% c('heads', '1000 heads')) %>%
   # XXX for now, no flags
   dplyr::select(-starts_with('flag')) %>%
   dplyr::mutate(flagObservationStatus = '', flagMethod = '') %>%

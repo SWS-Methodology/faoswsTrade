@@ -2233,7 +2233,7 @@ if (!CheckDebug()) {
   send_mail(
     from    = "SWS-trade-module@fao.org",
     to      = swsContext.userEmail,
-    subject = paste0("Bilateral trade plugin (year", year, ") ran successfully"),
+    subject = paste0("Bilateral trade plugin (year ", year, ") ran successfully"),
     body    = end_message
   )
 }

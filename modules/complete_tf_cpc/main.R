@@ -46,6 +46,11 @@ sapply(dir("R", full.names = TRUE), source)
 #stopifnot(!is.null(swsContext.computationParams$out_coef))
 stopifnot(!is.null(swsContext.computationParams$year))
 
+# E-mail addresses (without @fao.org) of people that will
+# get notified when the plugin runs successfully.
+EMAIL_RECIPIENTS <-
+  c("Dominique.Habimana", "Claudia.DeVita", "Christian.Mongeau")
+
 ##+ init
 
 ## **Flow chart:**
@@ -2232,7 +2237,7 @@ if (!CheckDebug()) {
 
   send_mail(
     from    = "SWS-trade-module@fao.org",
-    to      = swsContext.userEmail,
+    to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
     subject = paste0("Bilateral trade plugin (year ", year, ") ran successfully"),
     body    = end_message
   )
@@ -2247,5 +2252,5 @@ flog.info(end_message)
 # Restore changed options
 options(old_options)
 
-end_message
+print(end_message)
 

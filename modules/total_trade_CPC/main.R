@@ -58,6 +58,10 @@ local({
 
 })
 
+# E-mail addresses (without @fao.org) of people that will
+# get notified when the plugin runs successfully.
+EMAIL_RECIPIENTS <-
+  c("Dominique.Habimana", "Claudia.DeVita", "Christian.Mongeau")
 
 if (CheckDebug()) {
   library(faoswsModules)
@@ -553,11 +557,11 @@ if (!CheckDebug()) {
 
   send_mail(
     from    = "SWS-trade-module@fao.org",
-    to      = swsContext.userEmail,
+    to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
     subject = paste0("Total trade plugin (year ",  year, ") ran successfully"),
     body    = end_message
   )
 }
 
-end_message
+print(end_message)
 

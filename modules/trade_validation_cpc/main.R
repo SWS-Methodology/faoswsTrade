@@ -22,6 +22,11 @@ multicore <- TRUE
 # TODO: should be a parameter
 threshold <- 0.5
 
+# E-mail addresses (without @fao.org) of people that will
+# get notified when the plugin runs successfully.
+EMAIL_RECIPIENTS <-
+  c("Dominique.Habimana", "Claudia.DeVita", "Christian.Mongeau")
+
 library(faosws)
 library(dplyr)
 #library(tidyr)
@@ -644,11 +649,11 @@ end_message <- paste0('The dataset for validation should have been saved in ',
 if (!CheckDebug()) {
   send_mail(
     from    = "SWS-trade-module@fao.org",
-    to      = swsContext.userEmail,
+    to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
     subject = "Validation trade plugin ran successfully",
     body    = end_message
   )
 }
 
-end_message
+print(end_message)
 

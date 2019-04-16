@@ -35,7 +35,7 @@ rprt_hsfclmap <- function(maptable, year) {
         paste0("records_", year)))) %>%
     mutate_(.dots = setNames(paste0("records_", year, "/ totalrecords"),
                              paste0("prop_", year))) %>%
-    select(1, 2, 5, 6, 3, 4) %>%
+    dplyr::select(1, 2, 5, 6, 3, 4) %>%
     ungroup()
 
   hsfclmap_by_reporter_stats <- add_area_names(hsfclmap_by_reporter_stats,

@@ -11,7 +11,7 @@ ts_missing_records <- function(collection_path = NULL, prefix = NULL) {
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
-    select(reporter, name, year, flow, noqty, noqty_prop, nonmrc_hs_prop) %>%
+    dplyr::select(reporter, name, year, flow, noqty, noqty_prop, nonmrc_hs_prop) %>%
     filter_(~!nonmrc_hs_prop == 1) %>%
     select_(~-nonmrc_hs_prop) %>%
     dplyr::mutate(flow = recode(

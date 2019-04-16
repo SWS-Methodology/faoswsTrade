@@ -65,7 +65,7 @@ computeMedianUnitValue <- function(tradedata = NA, name = 'uvm', other = TRUE) {
 
   if (other == FALSE) {
     tradedata <- tradedata %>%
-      select(-starts_with('n_rep'), -starts_with('uvm_'), -n_hs)
+      dplyr::select(-starts_with('n_rep'), -starts_with('uvm_'), -n_hs)
   }
 
   return(tradedata)

@@ -45,7 +45,7 @@ flowsToMirror <- function(data = NA, names = FALSE) {
     dplyr::summarise(n = sum(n, na.rm = TRUE)) %>%
     ungroup() %>%
     dplyr::filter(n == 0) %>%
-    select(-n)
+    dplyr::select(-n)
 
   if (names) {
     return(res %>% dplyr::mutate(name = faoAreaName(area)))

@@ -32,13 +32,13 @@ useValidationCorrections <- function(data, corrections) {
   )
 
   if (!('data_original_value' %in% names(corrections))) {
-    for (i in corrections %>% select(ends_with('qty')) %>% names()) {
+    for (i in corrections %>% dplyr::select(ends_with('qty')) %>% names()) {
       corrections[[sub('_qty', '_value', i)]] = NA
     }
   }
 
   if (!('data_original_qty' %in% names(corrections))) {
-    for (i in corrections %>% select(ends_with('value')) %>% names()) {
+    for (i in corrections %>% dplyr::select(ends_with('value')) %>% names()) {
       corrections[[sub('_value', '_qty', i)]] = NA
     }
   }
@@ -111,7 +111,7 @@ useValidationCorrections <- function(data, corrections) {
   corrections_to_drop <- corrections_table[c(corrections_drop_qty, corrections_drop_value),]
 
   complete_with_corrections <- complete_with_corrections %>%
-    select(
+    dplyr::select(
       geographicAreaM49Reporter,
       geographicAreaM49Partner,
       flow,

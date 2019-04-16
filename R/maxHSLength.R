@@ -28,7 +28,7 @@ maxHSLength <- function(uniqhs, mapdataset) {
     rowwise() %>%
     dplyr::mutate(maxhslength = max(maxhslength_data, maxhslength_from, maxhslength_to)) %>%
     ungroup() %>%
-    select(reporter, flow, maxhslength)
+    dplyr::select(reporter, flow, maxhslength)
 
   apply(tab_join, 1, function(x) if (is.na(x['maxhslength']))
     message(paste0("For reporter ", x['reporter'], " flow ",

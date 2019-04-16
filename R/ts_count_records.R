@@ -16,7 +16,7 @@ ts_count_records <- function(collection_path = NULL, prefix = NULL) {
 
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
-    select(reporter, name, year, flow, hslength, records_count, nonmrc_hs_prop) %>%
+    dplyr::select(reporter, name, year, flow, hslength, records_count, nonmrc_hs_prop) %>%
     filter_(~!nonmrc_hs_prop == 1) %>%
     select_(~-nonmrc_hs_prop) %>%
     rename_(rep_code = ~ reporter,

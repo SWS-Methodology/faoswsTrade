@@ -23,11 +23,11 @@ ts_flows_check <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(year, reporter, name, flow, noqty_prop, novalue_prop, nonmrc_hs_prop) %>%
+    dplyr::select(year, reporter, name, flow, noqty_prop, novalue_prop, nonmrc_hs_prop) %>%
     filter_(~!nonmrc_hs_prop == 1) %>%
     select_(~-nonmrc_hs_prop) %>%
     dplyr::mutate(qty = 1*(noqty_prop == 1), value = 1*(novalue_prop == 1)) %>%
-    select(-noqty_prop, -novalue_prop) %>%
+    dplyr::select(-noqty_prop, -novalue_prop) %>%
     rename_(rep_code = ~ reporter,
             rep_name = ~ name)
 }

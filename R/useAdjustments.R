@@ -57,5 +57,5 @@ useAdjustments <- function(tradedata = stop('"tradedata" is missing.'),
            adj_qty    = !(near(coalesce(qty, -1),    coalesce(orig_qty, -1))),
            adjusted   = adj_value | adj_weight | adj_qty
            ) %>%
-    select(-orig_value, -orig_weight, -orig_qty)
+    dplyr::select(-orig_value, -orig_weight, -orig_qty)
 }

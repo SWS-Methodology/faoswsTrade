@@ -17,7 +17,7 @@ convertTLPartnerToFAO <- function(partners) {
 
   uniq_partners <- uniq_partners %>%
     left_join(FAOcountryProfile %>%
-                select(un = UN_CODE,
+                dplyr::select(un = UN_CODE,
                        fao = FAOST_CODE),
               by = c("partner" = "un"))
 

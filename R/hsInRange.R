@@ -35,6 +35,6 @@ hsInRange <- function(uniqhs, maptable, parallel = FALSE) {
 
   foverlaps(df, maptable) %>%
     tbl_df() %>%
-    select(reporter, flow, datumid, hs, hsext, fcl, recordnumb)
+    dplyr::select(reporter, flow, datumid, hs, hsext, fcl, recordnumb)
 
 }

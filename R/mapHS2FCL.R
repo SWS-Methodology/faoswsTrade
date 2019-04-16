@@ -77,7 +77,7 @@ mapHS2FCL <- function(tradedata,
       fromcode = ifelse(from_gt_to, tocode, fromcode),
       tocode   = ifelse(from_gt_to, fromcode, tocode)
     ) %>%
-    select(-from_gt_to) %>%
+    dplyr::select(-from_gt_to) %>%
     dplyr::mutate_(fromcodeextchar = ~stringr::str_pad(fromcode,
                                          width = maxhslength,
                                          side = "right",

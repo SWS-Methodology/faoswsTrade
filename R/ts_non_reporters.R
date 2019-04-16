@@ -24,7 +24,7 @@ ts_non_reporters <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(area, flow, name, year) %>%
+    dplyr::select(area, flow, name, year) %>%
     group_by(area, year) %>%
     dplyr::mutate(n = n()) %>%
     ungroup() %>%

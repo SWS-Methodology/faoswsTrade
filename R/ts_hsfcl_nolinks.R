@@ -31,16 +31,16 @@ ts_hsfcl_nolinks <- function(collection_path = NULL, prefix = NULL) {
   extract_rprt_elem(collection_path, prefix, elems) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(reporter_fao, reporter, flow, hs = hs_orig, hs_extend, year) %>%
+    dplyr::select(reporter_fao, reporter, flow, hs = hs_orig, hs_extend, year) %>%
     group_by(reporter, flow, hs) %>%
     dplyr::mutate(age = rank(year)) %>%
     ungroup() %>%
     dplyr::filter(age == 1) %>%
-    select(-age) %>%
+    dplyr::select(-age) %>%
     dplyr::mutate(hs_chap = stringr::str_sub(hs, end = 2L)) %>%
     dplyr::arrange(year, reporter, flow, hs_chap, hs) %>%
     dplyr::mutate(fcl = "", mapped_by = "", details = "", tl_description = "") %>%
-    select(mapped_by, year, reporter_fao, reporter_name = reporter,
+    dplyr::select(mapped_by, year, reporter_fao, reporter_name = reporter,
            flow, hs_chap, hs, hs_extend, fcl, details, tl_description)
 }
 

@@ -24,11 +24,10 @@ ts_reporters <- function(collection_path = NULL, prefix = NULL) {
     lapply(function(x) x %>% dplyr::mutate(reporter = as.character(reporter))) %>%
     bind_rows() %>%
     ungroup() %>%
-    select(year, reporter, name) %>%
+    dplyr::select(year, reporter, name) %>%
     distinct() %>%
     dplyr::mutate(exist = 1) %>%
     dplyr::arrange(year, name) %>%
-    rename_(rep_code = ~ reporter,
-            rep_name = ~ name) %>%
+    rename_(rep_code = ~ reporter, rep_name = ~ name) %>%
     tidyr::spread(year, exist, fill = '')
 }

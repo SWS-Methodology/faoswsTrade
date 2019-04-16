@@ -23,7 +23,7 @@ removeInvalidReporters <- function(tradedata) {
       startDate = as.numeric(stringr::str_sub(startDate, 1, 4)),
       endDate   = as.numeric(stringr::str_sub(endDate, 1, 4))
     ) %>%
-    select(-selectionOnly, -type) %>%
+    dplyr::select(-selectionOnly, -type) %>%
     dplyr::filter(startDate <= year, endDate >= year)
 
   reporters_to_drop <- setdiff(unique(tradedata$reporter), valid_reporters$code)

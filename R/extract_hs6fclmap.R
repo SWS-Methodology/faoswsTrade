@@ -60,7 +60,7 @@ extract_hs6fclmap <- function(maptable = NULL, parallel = FALSE) {
     rowwise() %>%
     dplyr::mutate(hs6 = list(fromcode:tocode)) %>%
     tidyr::unnest() %>%
-    select(reporter, flow, hs6, fcl)
+    dplyr::select(reporter, flow, hs6, fcl)
 
   # Bind both subsets and then calculate number of matching
   # fcl codes per each hs6

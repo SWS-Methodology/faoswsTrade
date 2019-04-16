@@ -274,7 +274,7 @@ livestockWeightsTable <- function() {
                    'OTHER_CAMELIDS'      = 1157
             )
     ) %>%
-    select(-ADM0_CODE)
+    dplyr::select(-ADM0_CODE)
 
   livestock_weights_cla <- frame_data(
     ~area_fao,~area_m49,~area_name,
@@ -350,8 +350,8 @@ livestockWeightsTable <- function() {
   dplyr::mutate(
     liveweight = ifelse(!is.na(liveweight_cla), liveweight_cla, liveweight_kat)
   ) %>%
-  filter(!is.na(liveweight)) %>%
-  select(-area_m49, -area_name, -liveweight_kat, -liveweight_cla, -livestock)
+  dplyr::filter(!is.na(liveweight)) %>%
+  dplyr::select(-area_m49, -area_name, -liveweight_kat, -liveweight_cla, -livestock)
 
   return(livestock_weights)
 }

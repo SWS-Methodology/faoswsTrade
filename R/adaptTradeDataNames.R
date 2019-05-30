@@ -8,7 +8,7 @@
 #'
 #' @param tradedata TL or ES trade data.
 #' @return TL or ES data with common names (TL will also have "qunit").
-#' @import dplyr
+#' @import data.table
 #' @export
 
 adaptTradeDataNames <- function(tradedata) {
@@ -36,7 +36,5 @@ adaptTradeDataNames <- function(tradedata) {
   stopifnot(length(old_common_names) ==
                       length(new_common_names))
 
-  tradedata %>%
-    rename_(.dots = setNames(old_common_names, new_common_names))
-
+  setnames(tradedata, old_common_names, new_common_names)
 }

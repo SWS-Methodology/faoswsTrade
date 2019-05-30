@@ -5,9 +5,8 @@
 #'
 #' @param tradedata Trade data.
 #'
-#' @import dplyr
+#' @import data.table
 #' @import futile.logger
-#' @import stringr
 #' @export
 
 filterHS6FAOinterest <- function(tradedata) {
@@ -21,11 +20,9 @@ filterHS6FAOinterest <- function(tradedata) {
   flog.info("Filtering by HS6 agri codes.")
   flog.info("Records before filtering: %s", orignrow)
 
-  tradedata <- tradedata %>%
-    filter_(~hs6 %in% hs6faointerest)
+  tradedata <- tradedata[hs6 %in% hs6faointerest]
 
-  flog.info("Records after filtering: %s",
-            nrow(tradedata))
+  flog.info("Records after filtering: %s", nrow(tradedata))
 
   flog.info("Share of records kept after filtering: %s",
             scales::percent(nrow(tradedata)/orignrow))

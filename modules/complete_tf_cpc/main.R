@@ -451,7 +451,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
     esdata[, chapter := substr(product_nc, 1, 2)]
   }
 
-  esdata <- tbl_df(esdata[chapter %in% chapters])
+  esdata <- esdata[chapter %in% chapters]
 } else {
   esdata <- ReadDatatable(
     paste0("ce_combinednomenclature_unlogged_", year),
@@ -467,7 +467,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
       "stat_regime"
     ),
     where = paste0("chapter IN (", hs_chapters, ")")
-  ) %>% tbl_df()
+  )
 }
 
 stopifnot(nrow(esdata) > 0)
@@ -500,10 +500,9 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
       formatC(width = 2, format = "d", flag = "0")
 
-  tldata <-
-    readRDS(local_tldata_file) %>%
-    tbl_df() %>%
-    filter(chapter %in% chapters)
+  tldata <- readRDS(local_tldata_file)
+
+  tldata <- tldata[chapter %in% chapters]
 } else {
   tldata <- ReadDatatable(
     paste0("ct_tariffline_unlogged_", year),
@@ -520,7 +519,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
       "chapter"
     ),
     where = paste0("chapter IN (", hs_chapters, ")")
-  ) %>% tbl_df()
+  )
 }
 
 stopifnot(nrow(tldata) > 0)
@@ -538,24 +537,26 @@ flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
 
 ##' 1. Remove European-aggregated data (i.e., totals) from ES.
 
-## Only regime 4 is relevant for Eurostat data
-esdata <- esdata %>%
-  filter_(~stat_regime == "4") %>%
-  ## Removing stat_regime as it is not needed anymore
-  select_(~-stat_regime) %>%
-  # Remove totals, 1010 = 'European Union', 1011 = 'Extra-European Union', see
-  # http://ec.europa.eu/eurostat/documents/3859598/5889816/KS-BM-05-002-EN.PDF
-  filter_(~!(declarant == 'EU' | partner %in% c('1010', '1011')))
+# * Only regime 4 is relevant for Eurostat data
+# * Remove totals, 1010 = 'European Union', 1011 = 'Extra-European Union', see
+#   http://ec.europa.eu/eurostat/documents/3859598/5889816/KS-BM-05-002-EN.PDF
+# * Removing stat_regime as it is not needed anymore
+esdata <-
+  esdata[
+    stat_regime == "4" & !(declarant == 'EU' | partner %in% c('1010', '1011'))
+  ][,
+    stat_regime := NULL
+  ]
 
 flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
 ##' 1. Use standard (common) variable names (e.g., `declarant` becomes `reporter`) in ES and TL.
 
-esdata <- adaptTradeDataNames(esdata)
-tldata <- adaptTradeDataNames(tldata)
+adaptTradeDataNames(esdata)
+adaptTradeDataNames(tldata)
 
-esdata <- mutate_(esdata, hs6 = ~as.integer(str_sub(hs, 1, 6)))
-tldata <- mutate_(tldata, hs6 = ~as.integer(str_sub(hs, 1, 6)))
+esdata[, hs6 := as.integer(str_sub(hs, 1, 6))]
+tldata[, hs6 := as.integer(str_sub(hs, 1, 6))]
 
 ##' 1. Filter HS codes of interest, i.e., codes that do not
 ##' participate in further processing. Such solution drops,
@@ -565,6 +566,9 @@ esdata <- filterHS6FAOinterest(esdata)
 tldata <- filterHS6FAOinterest(tldata)
 
 ##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
+
+esdata <- tbl_df(esdata)
+tldata <- tbl_df(tldata)
 
 esdata <- removeNonNumeric(esdata)
 tldata <- removeNonNumeric(tldata)

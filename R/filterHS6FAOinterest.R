@@ -28,5 +28,4 @@ filterHS6FAOinterest <- function(tradedata) {
             scales::percent(nrow(tradedata)/orignrow))
 
   tradedata
-
 }

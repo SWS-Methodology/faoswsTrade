@@ -578,6 +578,12 @@ tldata <- removeNonNumeric(tldata)
 esdata <- adaptTradeDataTypes(esdata)
 tldata <- adaptTradeDataTypes(tldata)
 
+flog.trace("[%s] TL: removing zero-value and zero-weight and zero/missing qty", PID, name = "dev")
+# Nothing can be done about these.
+tldata <-
+  tldata %>%
+  filter(!(near(value, 0) & near(weight, 0) & (near(qty, 0) | is.na(qty))))
+
 ##' 1. Apply specific HS corrections. Some HS codes in some countries
 ##' need specific HS corrections. As on 2018-03-08 only a subset of
 ##' HS codes for a given TL reporter are corrected (tonnes were reported
@@ -694,27 +700,28 @@ if (only_pre_process) stop("Stop after reports on raw data")
 ##' 1. Apply explicit corrections to the HS-FCL mapping.
 
 #data("hsfclmap3", package = "hsfclmap", envir = environment())
-# XXX Notice that it is pulling now v5
-hsfclmap3 <- tbl_df(hsfclmap3) %>%
-  # FCL, startyear, endyear codes can be overwritten by corrections
-  dplyr::mutate(
-    fcl       = ifelse(!is.na(correction_fcl), correction_fcl, fcl),
-    startyear = ifelse(!is.na(correction_startyear), correction_startyear, startyear),
-    endyear   = ifelse(!is.na(correction_endyear), correction_endyear, endyear)
-  ) %>%
-  dplyr::select(-starts_with('correction'))
+# NOTE: it is pulling now v5
+# FCL, startyear, endyear codes can be overwritten by corrections
+
+hsfclmap3[!is.na(correction_fcl), fcl := correction_fcl]
+
+hsfclmap3[!is.na(correction_startyear), startyear := correction_startyear]
+
+hsfclmap3[!is.na(correction_endyear), endyear := correction_endyear]
+
+hsfclmap3[, grep('correction', names(hsfclmap3)) := NULL]
 
 ##' 1. Extend the `endyear` for those combinations of `area` / `flow` /
 ##' `fromcode` / `tocode` for which `endyear` < `year`.
 
 # Extend endyear to 2050
-hsfclmap3 <-
-  hsfclmap3 %>%
-  group_by(area, flow, fromcode, tocode) %>%
-  dplyr::mutate(maxy = max(endyear), extend = ifelse(maxy < 2050, TRUE, FALSE)) %>%
-  ungroup() %>%
-  dplyr::mutate(endyear = ifelse(endyear == maxy & extend, 2050, endyear)) %>%
-  dplyr::select(-maxy, -extend)
+hsfclmap3[, maxy := max(endyear), .(area, flow, fromcode, tocode)]
+
+hsfclmap3[, extend := ifelse(maxy < 2050, TRUE, FALSE), .(area, flow, fromcode, tocode)]
+
+hsfclmap3[endyear == maxy & extend, endyear := 2050]
+
+hsfclmap3[, c("maxy", "extend") := NULL]
 # / Extend endyear to 2050
 
 
@@ -729,7 +736,7 @@ fcl_diff <- fcl_diff[!is.na(fcl_diff)]
 fcl_diff <- setdiff(fcl_diff, 0)
 
 if (length(fcl_diff) > 0) {
-    warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
+  warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
 }
 
 # Check that years are in a valid range
@@ -804,6 +811,7 @@ add_map <- add_map %>%
 ##' original mapping file.
 
 hsfclmap3 <- bind_rows(add_map, hsfclmap3) %>%
+  tbl_df() %>%
   dplyr::mutate(
     startyear = as.integer(startyear),
     endyear   = as.integer(endyear)
@@ -889,7 +897,6 @@ rprt(hs6fclmap, "hs6fclmap")
 ##' document.)
 
 esdata <- generateFlagVars(esdata)
-
 
 esdata <- esdata %>%
   setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
@@ -997,11 +1004,10 @@ esdata <- esdata %>%
 ##' them by 2, 1000, and 12, respectively.
 
 # Convert qunit 6, 9, and 11 to 5 (mathematical conversion)
-tldata <- as.data.table(tldata)
+setDT(tldata)
 tldata[qunit ==  6, c('qty', 'qunit') := list(   qty*2, 5)]
 tldata[qunit ==  9, c('qty', 'qunit') := list(qty*1000, 5)]
 tldata[qunit == 11, c('qty', 'qunit') := list(  qty*12, 5)]
-tldata <- tbl_df(tldata)
 
 ##+ reexptoexp ####
 ##' 1. Re-imports become imports and re-exports become exports.
@@ -1012,7 +1018,8 @@ flog.trace("[%s] TL: recoding reimport/reexport", PID, name = "dev")
 # { "id": "4", "text": "re-Import" },
 # { "id": "3", "text": "re-Export" }
 
-tldata <- dplyr::mutate_(tldata, flow = ~recode(flow, '4' = 1L, '3' = 2L))
+tldata[flow == 4L, flow := 1L]
+tldata[flow == 3L, flow := 2L]
 
 # tl-aggregate-multiple-rows ####
 
@@ -1023,6 +1030,8 @@ flog.trace("[%s] TL: aggreation of similar flows", PID, name = "dev")
 
 tldata <- preAggregateMultipleTLRows(tldata)
 
+tldata <- tbl_df(tldata)
+
 ##' 1. Add variables that will contain flags. (Note: flags are set in various
 ##' steps in the code. Please, refer to the "Flag Management in the Trade module"
 ##' document.)
@@ -1031,16 +1040,18 @@ flog.trace("[%s] TL: add flag variables")
 tldata <- generateFlagVars(tldata)
 
 tldata <- tldata %>%
-  setFlag3(nrows > 1, type = 'method', flag = 's', variable = 'all')
-
-
-tldata <- tldata %>%
-  setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
-  setFlag3(!is.na(weight), type = 'status', flag = 'X', variable = 'weight') %>%
-  setFlag3(!is.na(qty),    type = 'status', flag = 'X', variable = 'quantity') %>%
-  setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
-  setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
-  setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
+  setFlag3(!is.na(value),    type = 'status', flag = 'X', variable = 'value') %>%
+  setFlag3(!is.na(weight),   type = 'status', flag = 'X', variable = 'weight') %>%
+  setFlag3(!is.na(qty),      type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),    type = 'method', flag = 'h', variable = 'value') %>%
+  setFlag3(!is.na(weight),   type = 'method', flag = 'h', variable = 'weight') %>%
+  setFlag3(!is.na(qty),      type = 'method', flag = 'h', variable = 'quantity') %>%
+  setFlag3(nrows > 1,        type = 'method', flag = 's', variable = 'all') %>%
+  setFlag3(imputed_puv > 0,  type = 'status', flag = 'I', variable = 'weight') %>%
+  setFlag3(imputed_qbyw > 0, type = 'status', flag = 'I', variable = 'quantity') %>%
+  # NOTE: method is i as it is an identity, not a statistical method
+  setFlag3(imputed_puv > 0,  type = 'method', flag = 'i', variable = 'weight') %>%
+  setFlag3(imputed_qbyw > 0, type = 'method', flag = 'i', variable = 'quantity')
 
 
 ##+ drop_reps_not_in_mdb ####
@@ -1203,7 +1214,7 @@ tldata <- left_join(tldata, ctfclunitsconv, by = c("qunit", "wco", "fclunit"))
 
 # For converting qty to metric tons
 fcl_spec_mt_conv <- tldata %>%
-  filter_(~fclunit == "mt" & is.na(weight) & conv == 0) %>%
+  filter_(~fclunit == "mt" & (is.na(weight) | near(weight, 0)) & conv == 0) %>%
   select_(~fcl, ~wco) %>%
   distinct()
 
@@ -1350,7 +1361,7 @@ tldata <- tldata %>%
 ##' 1. Convert currency of monetary values from EUR to USD using the
 ##' `EURconversionUSD` table (required only for ES).
 
-eur_usd <- as.numeric(EURconversionUSD[eusd_year == year,]$eusd_exchangerate)
+eur_usd <- as.numeric(EURconversionUSD[eusd_year == year, eusd_exchangerate])
 
 esdata$value <- esdata$value * eur_usd
 

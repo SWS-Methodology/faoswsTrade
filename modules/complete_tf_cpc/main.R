@@ -2155,15 +2155,17 @@ if (remove_nonexistent_transactions) {
   # Some flags are "protected", i.e., data with these flags
   # should not be overwritten/removed
   protected_flags <-
-    flagValidTable[Protected == TRUE &
+    flagValidTable[(Protected == TRUE &
                    !(flagObservationStatus == 'T' &  flagMethod == 'c') &
                    !(flagObservationStatus == ''  &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'h'),
+                   !(flagObservationStatus == ''  &  flagMethod == 'h')) |
+                    # Protect T,q
+                   flagObservationStatus == 'T'   &  flagMethod == 'q',
                    paste(flagObservationStatus, flagMethod)]
 
   # Data that should be left untouched
   protected_data <-
-    existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags,]
+    existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags]
 
   # XXX If timePointYears will eventually be used they need to
   # have the same class in existing_data and complete_trade_flow_cpc

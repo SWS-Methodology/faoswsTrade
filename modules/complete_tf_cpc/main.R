@@ -1818,66 +1818,66 @@ prev_totals_median <-
 
 current_totals <-
   complete_trade_flow_cpc %>%
-  group_by(timePointYears, geographicAreaM49Reporter, measuredItemCPC, flow) %>%
-  summarise(value = sum(value), qty = sum(qty)) %>%
-  ungroup() %>%
-  mutate(uv = value / qty * 1000)
+  dplyr::group_by(timePointYears, geographicAreaM49Reporter, measuredItemCPC, flow) %>%
+  dplyr::summarise(value = sum(value), qty = sum(qty)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(uv = value / qty * 1000)
 
 # World UV by CPC in current year
 current_totals_median <-
   current_totals %>%
-  filter(!is.na(uv)) %>%
-  group_by(measuredItemCPC, flow) %>%
-  summarise(uv_total_median = median(uv), n = n()) %>%
-  ungroup()
+  dplyr::filter(!is.na(uv)) %>%
+  dplyr::group_by(measuredItemCPC, flow) %>%
+  dplyr::summarise(uv_total_median = median(uv), n = n()) %>%
+  dplyr::ungroup()
 
 all_totals_median <-
-  left_join(
+  dplyr::left_join(
     current_totals_median,
     prev_totals_median,
     by = c('measuredItemCPC', 'flow')
   ) %>%
-  mutate(variation = uv_total_median / uv_tot_median_prev - 1) %>%
-  filter(between(variation, -0.5, 0.5) | n > 50) %>%
-  select(-n)
+  dplyr::mutate(variation = uv_total_median / uv_tot_median_prev - 1) %>%
+  dplyr::filter(between(variation, -0.5, 0.5) | n > 50) %>%
+  dplyr::select(-n)
 
 uv_total_variation <-
-  left_join(
+  dplyr::left_join(
     current_totals,
     prev_totals_avg,
     by = c('geographicAreaM49Reporter', 'measuredItemCPC', 'flow')
   ) %>%
-  filter(!is.na(uv_prev)) %>%
-  mutate(x = uv / uv_prev) %>%
-  filter(!between(x, 0.5, 2))
+  dplyr::filter(!is.na(uv_prev)) %>%
+  dplyr::mutate(x = uv / uv_prev) %>%
+  dplyr::filter(!between(x, 0.5, 2))
 
 uv_total_imputed <-
-  left_join(
+  dplyr::left_join(
     uv_total_variation,
     all_totals_median,
     by = c("flow", "measuredItemCPC")
   ) %>%
-  mutate(
+  dplyr::mutate(
     estimated_upwards = ifelse(x > 1, TRUE, FALSE),
     uv_imputed = uv_prev / 1000 * (1 + variation)
   ) %>%
-  select(
+  dplyr::select(
     geographicAreaM49Reporter, flow, timePointYears,
     measuredItemCPC, uv_imputed, estimated_upwards
   )
 
 complete_trade_flow_cpc <-
   complete_trade_flow_cpc %>%
-  group_by(timePointYears, geographicAreaM49Reporter, flow, measuredItemCPC) %>%
-  mutate(
-    same_uv        = near(sd(uv), 0),
-    top_partner    = value == max(value, na.rm = TRUE)
+  dplyr::group_by(timePointYears, geographicAreaM49Reporter, flow, measuredItemCPC) %>%
+  dplyr::mutate(
+    same_uv     = near(sd(uv), 0),
+    top_partner = value == max(value, na.rm = TRUE)
     ) %>%
-  ungroup()
+  dplyr::ungroup()
 
 
 complete_trade_flow_cpc <-
-  left_join(
+  dplyr::left_join(
     complete_trade_flow_cpc,
     uv_total_imputed,
     by = c("geographicAreaM49Reporter", "flow", "timePointYears", "measuredItemCPC")

@@ -139,10 +139,11 @@ completetradekey <-
         )
   )
 
-completetrade <-
-  GetData(completetradekey) %>%
-  tbl_df() %>%
-  rename_(geographicAreaM49 = ~geographicAreaM49Reporter)
+completetrade <- GetData(completetradekey)
+
+stopifnot(nrow(completetrade) > 0)
+
+setnames(completetrade, "geographicAreaM49Reporter", "geographicAreaM49")
 
 ##' # Aggregate values across partner dimension
 ##'
@@ -188,70 +189,79 @@ flagWeightTable_method <- frame_data(
   's',                   0.20
 )
 
+completetrade[,
+  `:=`(nobs = .N, diff_flags = length(unique(flagObservationStatus)) > 1),
+  .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
+]
+
 total_trade_cpc_wo_uv <-
-  completetrade %>%
-  group_by_(
-    ~geographicAreaM49,
-    ~timePointYears,
-    ~measuredItemCPC,
-    ~measuredElementTrade
-  ) %>%
-  summarise_(
-    Value = ~sum(Value, na.rm = TRUE),
-    flagObservationStatus =
-      ~aggregateObservationFlag(
-        flagObservationStatus,
-        flagTable = flagWeightTable_status
+  rbind(
+    completetrade[nobs == 1, .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade, Value, flagObservationStatus, flagMethod)],
+    completetrade[
+      nobs > 1 & diff_flags == FALSE
+    ][,
+      .(Value = sum(Value, na.rm = TRUE), flagObservationStatus = unique(flagObservationStatus), flagMethod = "s"),
+      .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
+    ],
+    completetrade[
+      nobs > 1 & diff_flags == TRUE
+    ][,
+      .(
+        Value = sum(Value, na.rm = TRUE),
+        flagObservationStatus =
+          aggregateObservationFlag(
+            flagObservationStatus,
+            flagTable = flagWeightTable_status
+          ),
+        # In any case, 's' is the weakest flag, so that if aggregation
+        # was performed, then 's' is the final Method flag.
+        flagMethod = "s"
       ),
-    flagMethod =
-      ~aggregateObservationFlag(
-        flagMethod,
-        flagTable = flagWeightTable_method
-      ),
-    nobs = ~n()
-  ) %>%
-  ungroup() %>%
-  # In any case, 's' is the weakest flag, so that if aggregation
-  # was performed, then 's' is the final Method flag.
-  dplyr::mutate(flagMethod = ifelse(nobs > 1, 's', flagMethod)) %>%
-  dplyr::select(-nobs)
+      .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
+    ]
+  )
+
+completetrade[, `:=`(nobs = NULL, diff_flags = NULL)]
 
 # Data for which weight and numbers were computed
 # (n == 4 => (value, qty) * (import, export))
 qty_and_weight <-
-    completetrade %>%
-    group_by(measuredItemCPC) %>%
-    dplyr::summarise(n = n_distinct(measuredElementTrade)) %>%
-    dplyr::filter(n > 4) %>%
-    dplyr::mutate(out = TRUE) %>%
-    dplyr::select(-n)
+  completetrade[,
+    .(n = length(unique(measuredElementTrade))),
+    measuredItemCPC
+  ][
+    n > 4
+  ][,
+    `:=`(out = TRUE, n = NULL)
+  ]
 
 qty_and_weight <-
-  bind_rows(
-    dplyr::mutate(qty_and_weight, measuredElementTrade = '5610'),
-    dplyr::mutate(qty_and_weight, measuredElementTrade = '5910')
+  rbind(
+    data.table(qty_and_weight, measuredElementTrade = '5610'),
+    data.table(qty_and_weight, measuredElementTrade = '5910')
   )
 
 # Keep only weights of livestock
 total_trade_cpc_weight_livestock <-
-  left_join(
+  qty_and_weight[
     total_trade_cpc_wo_uv,
-    qty_and_weight,
-    by = c("measuredItemCPC", "measuredElementTrade")
-  ) %>%
-  dplyr::filter(out) %>%
-  dplyr::select(-out)
+    on = c("measuredItemCPC", "measuredElementTrade")
+  ][
+    out == TRUE
+  ][,
+    out := NULL
+  ]
 
 # Remove weights of livestok (keeping heads)
-total_trade_cpc_wo_uv <-
-  left_join(
+total_trade_cpc_weight_livestock <-
+  qty_and_weight[
     total_trade_cpc_wo_uv,
-    qty_and_weight,
-    by = c("measuredItemCPC", "measuredElementTrade")
-  ) %>%
-  dplyr::filter(is.na(out)) %>%
-  dplyr::select(-out)
-
+    on = c("measuredItemCPC", "measuredElementTrade")
+  ][
+    is.na(out)
+  ][,
+    out := NULL
+  ]
 
 ##' # Calculate Unit Values
 ##'
@@ -333,11 +343,10 @@ addUV <- function(data) {
 }
 
 total_trade_cpc_all_no_uv <-
-  bind_rows(
-    total_trade_cpc_wo_uv %>% mutate(livestock_w = FALSE),
-    total_trade_cpc_weight_livestock %>% mutate(livestock_w = TRUE)
-  ) %>%
-  setDT()
+  rbind(
+    data.table(total_trade_cpc_wo_uv, livestock_w = FALSE),
+    data.table(total_trade_cpc_weight_livestock, livestock_w = TRUE)
+  )
 
 table(total_trade_cpc_all_no_uv$flagObservationStatus, total_trade_cpc_all_no_uv$flagMethod)
 
@@ -402,20 +411,24 @@ if (remove_nonexistent_transactions) {
 
   # some flags are "protected", i.e., data with these flags
   # should not be overwritten/removed
-  protected_flags <-
-    flagValidTable[(Protected == TRUE &
-                   !(flagObservationStatus == 'T' &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'h')) |
-                    # Protect T,q
-                   flagObservationStatus == 'T'   &  flagMethod == 'q',
-                   paste(flagObservationStatus, flagMethod)]
-
-  # Data that should be left untouched
   protected_data <-
-    existing_data[paste(flagObservationStatus, flagMethod) %in% protected_flags]
+    flagValidTable[
+      existing_data,
+      on = c('flagObservationStatus', 'flagMethod')
+    ][
+      # Unprotect these
+      (flagObservationStatus == 'T' &  flagMethod == 'c') |
+      (flagObservationStatus == ''  &  flagMethod == 'c') |
+      (flagObservationStatus == ''  &  flagMethod == 'h'),
+      Protected := FALSE
+    ][
+      # Protect this
+      flagObservationStatus == 'T'   &  flagMethod == 'q',
+      Protected := TRUE
+    ][
+      Protected %in% TRUE
+    ]
 
-  
   # This data is not generated by the module, but need to be kept
   # (e.g., because it's new data from external sources)
   new_protected_data <-
@@ -488,9 +501,13 @@ if (remove_nonexistent_transactions) {
       (flagObservationStatus == ''  &  flagMethod == 'h'),
       Protected := FALSE
     ][
+      # Protect this
+      flagObservationStatus == 'T'   &  flagMethod == 'q',
+      Protected := TRUE
+    ][
       Protected %in% FALSE
     ][,
-      `:=`(Protected = NULL, Valid = NULL, livestock_w = NULL)
+      `:=`(Protected = NULL, Valid = NULL)
     ]
 
   if (nrow(data_diff) > 0) {

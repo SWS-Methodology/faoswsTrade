@@ -418,6 +418,7 @@ if (remove_nonexistent_transactions) {
     ][
       # Unprotect these
       (flagObservationStatus == 'T' &  flagMethod == 'c') |
+      (flagObservationStatus == 'I' &  flagMethod == 'c') |
       (flagObservationStatus == ''  &  flagMethod == 'c') |
       (flagObservationStatus == ''  &  flagMethod == 'h'),
       Protected := FALSE
@@ -497,6 +498,7 @@ if (remove_nonexistent_transactions) {
     ][
       # Unprotect these
       (flagObservationStatus == 'T' &  flagMethod == 'c') |
+      (flagObservationStatus == 'I' &  flagMethod == 'c') |
       (flagObservationStatus == ''  &  flagMethod == 'c') |
       (flagObservationStatus == ''  &  flagMethod == 'h'),
       Protected := FALSE

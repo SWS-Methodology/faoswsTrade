@@ -2344,6 +2344,7 @@ if (remove_nonexistent_transactions) {
   protected_flags <-
     flagValidTable[(Protected == TRUE &
                    !(flagObservationStatus == 'T' &  flagMethod == 'c') &
+                   !(flagObservationStatus == 'I' &  flagMethod == 'c') &
                    !(flagObservationStatus == ''  &  flagMethod == 'c') &
                    !(flagObservationStatus == ''  &  flagMethod == 'h')) |
                     # Protect T,q

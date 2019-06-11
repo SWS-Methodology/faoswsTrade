@@ -41,7 +41,8 @@ mapHS2FCL <- function(tradedata,
                       by = c("reporter", "flow", "hs6"))
 
   # Reports full table in the text report and as csv file
-  rprt_uniqhs(uniqhs, tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt_uniqhs(uniqhs, tradedataname = tradedataname)
 
   # Drop mapping records already used in hs6 mapping
   # maptable <- anti_join(maptable, hs6maptable,
@@ -52,7 +53,8 @@ mapHS2FCL <- function(tradedata,
   hslength <- maxHSLength(uniqhs, maptable)
 
   # Reports full table in the text report and as csv file
-  rprt_hslength(hslength, tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt_hslength(hslength, tradedataname = tradedataname)
 
   uniqhs <- uniqhs %>%
     left_join(hslength, by = c("reporter", "flow")) %>%
@@ -63,7 +65,8 @@ mapHS2FCL <- function(tradedata,
             hsext = ~as.numeric(hsextchar))
 
   # Reports full table in the text report and as csv file
-  rprt_hschanged(uniqhs, tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt_hschanged(uniqhs, tradedataname = tradedataname)
 
   maptable <- hslength %>%
     left_join(maptable, by = c("reporter" = "area", "flow")) %>%
@@ -89,19 +92,23 @@ mapHS2FCL <- function(tradedata,
     dplyr::mutate_(fromcodeext = ~as.numeric(fromcodeextchar),
             tocodeext   = ~as.numeric(tocodeextchar))
 
-  rprt_map_hschanged(maptable, tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt_map_hschanged(maptable, tradedataname = tradedataname)
 
   flog.trace("HS+ mapping: looking for links", name = "dev")
   uniqhs <- hsInRange(uniqhs, maptable, parallel = parallel)
 
   hs2fcl_mapped_links <- uniqhs
-  rprt_writetable(hs2fcl_mapped_links, prefix = tradedataname)
+  # XXX: bring back
+  #rprt_writetable(hs2fcl_mapped_links, prefix = tradedataname)
 
   # Report on nolinks
-  rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt_hs2fcl_nolinks(uniqhs, tradedataname = tradedataname)
 
   # Report on multilinks
-  rprt_hs2fcl_multilinks(uniqhs, tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt_hs2fcl_multilinks(uniqhs, tradedataname = tradedataname)
 
   flog.trace("HS+ mapping: selection from multiple matches", name = "dev")
 

@@ -42,7 +42,8 @@ mapHS6toFCL <- function(tradedata, hs6maptable) {
     warning(paste0("Rows before join: ", rowsbeforejoin,
                    ", after join: ", nrow(tradedata)))
 
-  rprt(tradedata, "hs6fcl_results", tradedataname = tradedataname)
+  # XXX: bring back
+  #rprt(tradedata, "hs6fcl_results", tradedataname = tradedataname)
 
   tradedata %>%
     filter_(~!is.na(fcl))

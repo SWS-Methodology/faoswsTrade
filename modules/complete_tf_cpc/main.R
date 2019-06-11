@@ -260,26 +260,22 @@ if (!only_pre_process) {
 ##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
   flog.trace("[%s] Reading in 'comtradeunits' datatable", PID, name = "dev")
+  #data("comtradeunits", package = "faoswsTrade", envir = environment())
   comtradeunits <- ReadDatatable('comtradeunits')
+
   stopifnot(nrow(comtradeunits) > 0)
 
-  #data("comtradeunits", package = "faoswsTrade", envir = environment())
-  comtradeunits <- tbl_df(comtradeunits) %>%
-    dplyr::rename(
-      qunit = ctu_qunit,
-      wco   = ctu_wco,
-      desc  = ctu_desc
-    ) %>%
-    dplyr::mutate(qunit = as.integer(qunit))
+  setnames(comtradeunits, c("ctu_qunit", "ctu_wco", "ctu_desc"), c("qunit", "wco", "desc"))
+
+  comtradeunits[, qunit := as.integer(qunit)]
 
 ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
   flog.trace("[%s] Reading in 'eur_conversion_usd' datatable", PID, name = "dev")
   EURconversionUSD <- ReadDatatable('eur_conversion_usd')
+
   stopifnot(nrow(EURconversionUSD) > 0)
   stopifnot(year %in% EURconversionUSD$eusd_year)
-
-  EURconversionUSD <- EURconversionUSD # already downloaded
 
 ##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
 ##' meet FAO standards. According to FAO standard, all weights are reported in
@@ -287,24 +283,21 @@ if (!only_pre_process) {
 ##' only the value is provided.
 
   flog.trace("[%s] Reading in 'fclunits' datatable", PID, name = "dev")
+  #data("fclunits", package = "faoswsTrade", envir = environment())
   fclunits <- ReadDatatable('fclunits')
+
   stopifnot(nrow(fclunits) > 0)
 
-  #data("fclunits", package = "faoswsTrade", envir = environment())
-  fclunits <- tbl_df(fclunits) %>%
-    dplyr::rename(
-      fcl     = fcu_fcl,
-      fclunit = fcu_fclunit
-    ) %>%
-    dplyr::mutate(fcl = as.integer(fcl))
+  setnames(fclunits, c("fcu_fcl", "fcu_fclunit"), c("fcl", "fclunit"))
+
+  fclunits[, fcl := as.integer(fcl)]
 
 ##' - `fclcodes`: List of valid FCL codes.
 
   flog.trace("[%s] Reading in 'fcl_codes' datatable", PID, name = "dev")
-  fcl_codes <- ReadDatatable('fcl_2_cpc')$fcl
-  stopifnot(length(fcl_codes) > 0)
+  fcl_codes <- as.numeric(ReadDatatable('fcl_2_cpc')$fcl)
 
-  fcl_codes <- as.numeric(fcl_codes)
+  stopifnot(length(fcl_codes) > 0)
 
 ##' - `livestockweights`: List of valid FCL codes.
 
@@ -316,37 +309,34 @@ if (!only_pre_process) {
 
   flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')
+
   stopifnot(nrow(hs6standard) > 0)
 
-  hs6standard <- hs6standard %>%
-    group_by(hs2012_code) %>%
-    dplyr::filter(n() == 1) %>%
-    ungroup() %>%
-    dplyr::mutate(hs6 = as.integer(hs2012_code)) %>%
-    dplyr::select(hs6, hs2012_code, faostat_code)
+  hs6standard <-
+    hs6standard[
+      !duplicated(hs2012_code)
+    ][,
+      .(hs6 = as.integer(hs2012_code), hs2012_code, faostat_code)
+    ]
 
 ##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
   flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
   add_map <- ReadDatatable('hsfclmap4')
+
   stopifnot(nrow(add_map) > 0)
 
-  add_map <- tbl_df(add_map) %>%
-    dplyr::filter(!is.na(year), !is.na(reporter_fao), !is.na(hs)) %>%
-    dplyr::mutate(
-      hs = ifelse(
-             hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0',
-             paste0('0', formatC(hs, format = 'fg')),
-             formatC(hs, format = 'fg')
-           ),
-      hs = stringr::str_replace_all(hs, ' ', '')
-    ) %>%
-    dplyr::arrange(reporter_fao, flow, hs, year)
+  add_map <- add_map[!is.na(year) & !is.na(reporter_fao) & !is.na(hs)]
+
+  add_map[, hs := stringr::str_replace_all(hs, ' ', '')]
+
+  add_map[hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0', hs := paste0("0", hs)]
 
   ## XXX change some FCL codes that are not valid
-  add_map <- add_map %>%
-    dplyr::mutate(fcl = ifelse(fcl == 389, 390, fcl)) %>%
-    dplyr::mutate(fcl = ifelse(fcl == 654, 653, fcl))
+  add_map[fcl == 389, fcl := 390]
+  add_map[fcl == 654, fcl := 653]
+
+  setkeyv(add_map, c("reporter_fao", "flow", "hs", "year"))
 
 ##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
@@ -371,6 +361,7 @@ if (!only_pre_process) {
   } else {
     hsfclmap3 <- ReadDatatable('hsfclmap5')
   }
+
   stopifnot(nrow(hsfclmap3) > 0)
 
 ##' - `force_mirroring`: Datatables for those reported that need to be
@@ -378,6 +369,7 @@ if (!only_pre_process) {
 
   flog.trace("[%s] Reading in 'force_mirroring' datatable", PID, name = "dev")
   force_mirroring <- ReadDatatable('force_mirroring')
+
   stopifnot(nrow(force_mirroring) > 0)
 
 ##' - `corrections_table`: Table with corrections applied during the
@@ -390,12 +382,11 @@ if (!only_pre_process) {
   # Corrections are stored into single-country files
   corrections_table_all <-
     lapply(
-      dir(corrections_dir, pattern = '^[0-9]+$'),
-      function(x) readRDS(
-        file.path(corrections_dir, x, 'corrections_table.rds')
-      )
+      file.path(dir(corrections_dir, pattern = '^[0-9]+$', full.names = TRUE),
+                'corrections_table.rds'),
+      readRDS
     ) %>%
-    do.call(rbind, .)
+    bind_rows()
 
   # Check whether the folder where the unapplied corrections
   # are going to be stored exists, if not then create it
@@ -419,10 +410,8 @@ if (!only_pre_process) {
 
 flog.trace("[%s] Reading in unsdpartnersblocks datatable", PID, name = "dev")
 unsdpartnersblocks <- ReadDatatable('unsdpartnersblocks')
+
 stopifnot(nrow(unsdpartnersblocks) > 0)
-
-unsdpartnersblocks <- tbl_df(unsdpartnersblocks)
-
 
 ##' # Download raw data and basic operations
 
@@ -565,24 +554,24 @@ tldata[, hs6 := as.integer(str_sub(hs, 1, 6))]
 esdata <- filterHS6FAOinterest(esdata)
 tldata <- filterHS6FAOinterest(tldata)
 
-##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
 
-esdata <- tbl_df(esdata)
-tldata <- tbl_df(tldata)
+##' 1. Use standard (common) variable types in ES and TL.
+
+adaptTradeDataTypes(esdata)
+adaptTradeDataTypes(tldata)
+
+##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
 
 esdata <- removeNonNumeric(esdata)
 tldata <- removeNonNumeric(tldata)
 
-##' 1. Use standard (common) variable types in ES and TL.
-
-esdata <- adaptTradeDataTypes(esdata)
-tldata <- adaptTradeDataTypes(tldata)
 
 flog.trace("[%s] TL: removing zero-value and zero-weight and zero/missing qty", PID, name = "dev")
 # Nothing can be done about these.
-tldata <-
-  tldata %>%
-  filter(!(near(value, 0) & near(weight, 0) & (near(qty, 0) | is.na(qty))))
+tldata <- tldata[!(near(value, 0) & near(weight, 0) & (near(qty, 0) | is.na(qty)))]
+
+esdata <- tbl_df(esdata)
+tldata <- tbl_df(tldata)
 
 ##' 1. Apply specific HS corrections. Some HS codes in some countries
 ##' need specific HS corrections. As on 2018-03-08 only a subset of
@@ -683,7 +672,8 @@ tldata_rep_table <- tldata %>%
   distinct() %>%
   dplyr::mutate(name = faoAreaName(reporter, "fao"))
 
-rprt_writetable(tldata_rep_table, subdir = 'preproc')
+# XXX: bring back
+#rprt_writetable(tldata_rep_table, subdir = 'preproc')
 
 # XXX this is a duplication: a function should be created.
 to_mirror_raw <- bind_rows(
@@ -693,7 +683,8 @@ to_mirror_raw <- bind_rows(
   dplyr::mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
   flowsToMirror(names = TRUE)
 
-rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
+# XXX: bring back
+#rprt_writetable(to_mirror_raw, 'flows', subdir = 'preproc')
 
 if (only_pre_process) stop("Stop after reports on raw data")
 
@@ -751,21 +742,15 @@ if (max(add_map$year) > as.numeric(format(Sys.Date(), '%Y'))) {
 
 # Check that there are no duplicate codes
 
-tmp <- add_map %>%
-  dplyr::count(reporter_fao, year, flow, hs) %>%
-  dplyr::filter(n > 1)
-
-if (nrow(tmp) > 0) {
+if (nrow(add_map[, .N, .(reporter_fao, year, flow, hs)][N > 1]) > 0) {
   warning('Removing duplicate HS codes by reporter/year/flow.')
   
-  # XXX
-  add_map <- add_map %>%
-    group_by(reporter_fao, year, flow, hs) %>%
-    dplyr::mutate(hs_ext_perc = sum(!is.na(hs_extend))/n()) %>%
-    # Prefer cases where hs_extend is available
-    dplyr::filter(hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n() == 1)) %>%
-    ungroup() %>%
-    dplyr::select(-hs_ext_perc)
+  add_map[, `:=`(n = .N, hs_ext_perc = sum(!is.na(hs_extend))/.N), .(reporter_fao, year, flow, hs)]
+
+  # Prefer cases where hs_extend is available
+  add_map <- add_map[hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1)]
+
+  add_map[, c("n", "hs_ext_perc") := NULL]
 }
 
 # Raise warning if countries were NOT in mapping.
@@ -774,67 +759,50 @@ if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
   warning('Some countries were not in the original mapping.')
 }
 
-add_map <- add_map %>%
-  dplyr::mutate(
-    startyear  = year,
-    endyear    = 2050L,
-    fromcode   = hs,
-    tocode     = hs,
-    recordnumb = NA_integer_
-  ) %>%
-  dplyr::select(
-    area = reporter_fao,
-    flow,
-    fromcode,
-    tocode,
-    fcl,
-    startyear,
-    endyear,
-    recordnumb,
-    details,
-    tl_description
-  )
+add_map <-
+  add_map[,
+    .(area = reporter_fao,
+      flow,
+      fromcode = gsub(' ', '', hs),
+      tocode = gsub(' ', '', hs),
+      fcl = as.numeric(fcl),
+      startyear = year,
+      endyear = 2050L,
+      recordnumb = NA_integer_,
+      area_name = reporter_name
+    )
+  ]
 
 max_record <- max(hsfclmap3$recordnumb)
 
-add_map$recordnumb <- (max_record+1):(max_record+nrow(add_map))
-
-add_map <- add_map %>%
-  dplyr::select(-details, -tl_description) %>%
-  dplyr::mutate(
-    fcl      = as.numeric(fcl),
-    fromcode = gsub(' ', '', fromcode),
-    tocode   = gsub(' ', '', tocode)
-  )
+add_map$recordnumb <- (max_record + 1):(max_record + nrow(add_map))
 
 ##' 1. Add additional codes that were not present in the HS-FCL
 ##' original mapping file.
 
-hsfclmap3 <- bind_rows(add_map, hsfclmap3) %>%
-  tbl_df() %>%
-  dplyr::mutate(
-    startyear = as.integer(startyear),
-    endyear   = as.integer(endyear)
-  )
+hsfclmap3 <- rbind(add_map, hsfclmap3)
+
+hsfclmap3[, `:=`(startyear = as.integer(startyear), endyear = as.integer(endyear))]
 
 # / ADD UNMAPPED CODES
 
-flog.info("HS->FCL mapping table preview:",
-          rprt_glimpse0(hsfclmap3), capture = TRUE)
+# XXX: bring back
+#flog.info("HS->FCL mapping table preview:",
+#          rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-rprt(hsfclmap3, "hsfclmap", year)
+# XXX: bring back
+#rprt(hsfclmap3, "hsfclmap", year)
 
 ##' 1. Keep HS-FCL links for which `startyear` <= `year` & `endyear` >= `year`
 
-hsfclmap <- hsfclmap3 %>%
-  filter_(~startyear <= year & endyear >= year) %>%
-  select_(~-startyear, ~-endyear)
+hsfclmap <- hsfclmap3[startyear <= year & endyear >= year]
+
+hsfclmap3 <- tbl_df(hsfclmap3)
+
+hsfclmap[, c("startyear", "endyear") := NULL]
 
 # Workaround issue #123
-hsfclmap <- hsfclmap %>%
-  dplyr::mutate_at(vars(ends_with("code")), funs(num = as.numeric)) %>%
-  dplyr::mutate_(fromgtto = ~fromcode_num > tocode_num) %>%
-  dplyr::select(-ends_with("code_num"))
+hsfclmap[, fromgtto := as.numeric(fromcode) > as.numeric(tocode)]
 
 from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
 
@@ -842,11 +810,11 @@ if (length(from_gt_to) > 0)
   flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
                  paste0(from_gt_to, collapse = ", ")))
 
-hsfclmap <- hsfclmap %>%
-  filter_(~!fromgtto) %>%
-  select_(~-fromgtto)
+hsfclmap <- hsfclmap[fromgtto == FALSE][, fromgtto := NULL]
 
 stopifnot(nrow(hsfclmap) > 0)
+
+hsfclmap <- tbl_df(hsfclmap)
 
 flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
 
@@ -888,7 +856,8 @@ if (generate_hs6mapping) {
 
 }
 
-rprt(hs6fclmap, "hs6fclmap")
+# XXX: bring back
+#rprt(hs6fclmap, "hs6fclmap")
 
 ##' # Specific operations on Eurostat data
 
@@ -914,7 +883,8 @@ esdata <- esdata %>%
 esdata_not_area_in_fcl_mapping <- esdata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-rprt_writetable(esdata_not_area_in_fcl_mapping)
+# XXX: bring back
+#rprt_writetable(esdata_not_area_in_fcl_mapping)
 
 esdata <- filter_(esdata, ~reporter %in% unique(hsfclmap$area))
 
@@ -960,7 +930,8 @@ esdata <- esdata %>%
 
 flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
-rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
+# XXX: bring back
+#rprt(esdata, "hs2fcl_fulldata", tradedataname = "esdata")
 
 flog.trace("[%s] ES: dropping unmapped records", PID, name = "dev")
 
@@ -1065,7 +1036,8 @@ tldata <- tldata %>%
 tldata_not_area_in_fcl_mapping <- tldata %>%
   filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-rprt_writetable(tldata_not_area_in_fcl_mapping)
+# XXX: bring back
+#rprt_writetable(tldata_not_area_in_fcl_mapping)
 
 flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
 tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
@@ -1108,7 +1080,8 @@ tldata <- tldata %>%
 
 flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
 
-rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
+# XXX: bring back
+#rprt(tldata, "hs2fcl_fulldata", tradedataname = "tldata")
 
 flog.trace("[%s] TL: dropping unmapped records", PID, name = "dev")
 
@@ -1271,6 +1244,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
     left_join(fcl_spec_head_conv, by = c("reporter", "fcl", "fclunit"))
 
   tldata$id <- 1:nrow(tldata)
+
   tldata$qtyfcl <- NA_real_
 
   tldata_converted <- tldata %>%
@@ -2056,7 +2030,8 @@ if (corrections_exist) {
       dplyr::select(year, everything()) %>%
       as.data.frame()
 
-    rprt_writetable(corrections_unapplied, subdir = 'preproc')
+    # XXX: bring back
+    #rprt_writetable(corrections_unapplied, subdir = 'preproc')
 
     # File to check to be loaded in the validation tool: it
     # will contain also the new figures generated by the module

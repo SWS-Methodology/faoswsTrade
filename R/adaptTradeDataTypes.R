@@ -6,27 +6,27 @@
 #'
 #' @param tradedata TL or ES trade data.
 #' @return TL or ES data with common data types.
-#' @import dplyr
 #' @export
 
 adaptTradeDataTypes <- function(tradedata) {
 
   if (missing(tradedata)) stop('"tradedata" should be set.')
 
-  tradedataname <- tolower(lazyeval::expr_text(tradedata))
+  tradedataname <- deparse(substitute(tradedata))
 
   stopifnot(all(c("year", "reporter", "partner", "flow", "value",
                     "weight", "qty", "hs") %in% colnames(tradedata)))
 
-  tradedata <- tradedata %>%
-    mutate_at(vars(reporter, partner, flow), as.integer) %>%
-    mutate_at(vars(value, weight, qty), as.numeric)
+  tradedata[, flow := as.integer(flow)]
+
+  tradedata[, c("value", "weight", "qty") := lapply(.SD, as.numeric),
+            .SDcols = c("value", "weight", "qty")]
 
   if (tradedataname == "tldata") {
-    tradedata %>%
-      mutate_at(vars(year, qunit), as.integer)
+    tradedata[, c("year", "qunit") := lapply(.SD, as.integer),
+              .SDcols = c("year", "qunit")]
   } else {
-    tradedata %>%
-      mutate_(year = ~as.integer(stringr::str_sub(year, 1, 4)))
+    tradedata[, year := as.integer(substr(year, 1, 4))]
   }
 }
+

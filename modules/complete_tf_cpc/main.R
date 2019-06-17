@@ -564,18 +564,18 @@ esdata <- filterHS6FAOinterest(esdata)
 tldata <- filterHS6FAOinterest(tldata)
 
 
-##' 1. Use standard (common) variable types in ES and TL.
-
-adaptTradeDataTypes(esdata)
-adaptTradeDataTypes(tldata)
-
 ##' 1. Remove non numeric reporters / partners / hs codes from ES and TL.
 
 esdata <- removeNonNumeric(esdata)
 tldata <- removeNonNumeric(tldata)
 
+##' 1. Use standard (common) variable types in ES and TL.
 
-flog.trace("[%s] TL: removing zero-value and zero-weight and zero/missing qty", PID, name = "dev")
+adaptTradeDataTypes(esdata)
+adaptTradeDataTypes(tldata)
+
+
+flog.trace("[%s] TL: removing zero-value and zero-weight and zero|missing qty", PID, name = "dev")
 # Nothing can be done about these.
 tldata <- tldata[!(near(value, 0) & near(weight, 0) & (near(qty, 0) | is.na(qty)))]
 
@@ -1100,45 +1100,45 @@ tldata <- filter_(tldata, ~!is.na(fcl))
 
 flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
-flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
-
-rawdata <-
-  bind_rows(esdata, tldata) %>%
-  dplyr::mutate(
-    reporter = fs2m49(as.character(reporter)),
-    partner  = fs2m49(as.character(partner)),
-    cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
-  ) %>%
-  dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
-         value, weight, qty, map_src, recordnumb) %>%
-  group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
-  dplyr::mutate(n = n()) %>%
-  ungroup()
-
-saveRDS(
-  rawdata,
-  file.path(Sys.getenv("R_SWS_SHARE_PATH"),
-            paste0("trade/validation_tool_files/tmp/rawdata_", year, ".rds"))
-)
-
-all_unique_data_mapped <-
-  bind_rows(esdata, tldata) %>%
-  dplyr::select(year, rep_fao = reporter, flow, hs, fcl) %>%
-  distinct() %>%
-  dplyr::mutate(
-    geographicAreaM49 = fs2m49(as.character(rep_fao)),
-    measuredItemCPC   = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
-  ) %>%
-  nameData("trade", "total_trade_cpc_m49", .) %>%
-  dplyr::select(
-    year,
-    reporter = geographicAreaM49_description,
-    rep_m49  = geographicAreaM49,
-    everything()
-  )
-
-saveRDS(all_unique_data_mapped,
-        file.path(reportdir, "datadir/all_unique_data_mapped.rds"))
+#flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
+#
+#rawdata <-
+#  bind_rows(esdata, tldata) %>%
+#  dplyr::mutate(
+#    reporter = fs2m49(as.character(reporter)),
+#    partner  = fs2m49(as.character(partner)),
+#    cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
+#  ) %>%
+#  dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
+#         value, weight, qty, map_src, recordnumb) %>%
+#  group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
+#  dplyr::mutate(n = n()) %>%
+#  ungroup()
+#
+#saveRDS(
+#  rawdata,
+#  file.path(Sys.getenv("R_SWS_SHARE_PATH"),
+#            paste0("trade/validation_tool_files/tmp/rawdata_", year, ".rds"))
+#)
+#
+#all_unique_data_mapped <-
+#  bind_rows(esdata, tldata) %>%
+#  dplyr::select(year, rep_fao = reporter, flow, hs, fcl) %>%
+#  distinct() %>%
+#  dplyr::mutate(
+#    geographicAreaM49 = fs2m49(as.character(rep_fao)),
+#    measuredItemCPC   = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
+#  ) %>%
+#  nameData("trade", "total_trade_cpc_m49", .) %>%
+#  dplyr::select(
+#    year,
+#    reporter = geographicAreaM49_description,
+#    rep_m49  = geographicAreaM49,
+#    everything()
+#  )
+#
+#saveRDS(all_unique_data_mapped,
+#        file.path(reportdir, "datadir/all_unique_data_mapped.rds"))
 
 if (stop_after_mapping) stop("Stop after HS->FCL mapping")
 
@@ -2037,6 +2037,9 @@ if (corrections_exist) {
                                        complete_all_corrected)
 
   if (nrow(complete_corrected$to_drop) > 0) {
+    unapplied_csv_filename <-
+      tempfile(pattern = "unapplied_corrections_", fileext = ".csv")
+
     flog.trace("[%s] Some corrections were not applied", PID, name = "dev")
 
     warning('Some corrections were not applied. See reports.')
@@ -2052,6 +2055,20 @@ if (corrections_exist) {
       ) %>%
       dplyr::select(year, everything()) %>%
       as.data.frame()
+
+    write.csv(
+      dplyr::mutate(corrections_unapplied, item = paste0("'", item)),
+      unapplied_csv_filename
+    )
+
+    if (!CheckDebug()) {
+      send_mail(
+        from    = "SWS-trade-module@fao.org",
+        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+        subject = paste0("Trade plugin: corrections unapplied, year ", year),
+        body    = c("Some corrections cannot be applied.", unapplied_csv_filename)
+      )
+    }
 
     # XXX: bring back
     #rprt_writetable(corrections_unapplied, subdir = 'preproc')
@@ -2276,7 +2293,7 @@ complete_trade_flow_cpc <-
   )
 
 
-complete_trade_flow_cpc <- data.table::as.data.table(complete_trade_flow_cpc)
+setDT(complete_trade_flow_cpc)
 
 data.table::setcolorder(complete_trade_flow_cpc,
                         c("geographicAreaM49Reporter",

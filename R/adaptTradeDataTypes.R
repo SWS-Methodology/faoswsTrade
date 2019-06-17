@@ -19,6 +19,9 @@ adaptTradeDataTypes <- function(tradedata) {
 
   tradedata[, flow := as.integer(flow)]
 
+  tradedata[, c("reporter", "partner", "flow") := lapply(.SD, as.integer),
+            .SDcols = c("reporter", "partner", "flow")]
+
   tradedata[, c("value", "weight", "qty") := lapply(.SD, as.numeric),
             .SDcols = c("value", "weight", "qty")]
 

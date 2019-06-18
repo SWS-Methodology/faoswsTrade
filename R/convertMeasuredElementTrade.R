@@ -1,12 +1,10 @@
 #' Converts measuredElementTrade for the output
 #'
-#' @param element Element.
-#' @param unit Unit.
-#' @param flow Flow.
+#' @param data Data.
 #'
 #' @export
 
-convertMeasuredElementTrade <- function(element, unit, flow) {
+convertMeasuredElementTrade <- function(data) {
 
   # All cases
   ## Elements:
@@ -21,45 +19,41 @@ convertMeasuredElementTrade <- function(element, unit, flow) {
   ##    - Imports (US$): 5621
   ##    - Exports (US$): 5921
 
-  element <- as.character(element)
-  unit <- as.character(unit)
-  flow <- as.numeric(flow)
+  # QTY
 
-  newElement <-
-           if((element == "qty") & (unit == "mt") & (flow == 1)) {
-      "5610"
-    } else if((element == "qty") & (unit == "mt") & (flow == 2)) {
-      "5910"
-    } else if((element == "qty") & (unit == "heads") & (flow == 1)) {
-      "5608"
-    } else if((element == "qty") & (unit == "heads") & (flow == 2)) {
-      "5908"
-    } else if((element == "qty") & (unit == "1000 heads") & (flow == 1)) {
-      "5609"
-    } else if((element == "qty") & (unit == "1000 heads") & (flow == 2)) {
-      "5909"
-      ## begin add unit values
-    } else if((element == "uv") & (unit == "mt") & (flow == 1)) {
-      "5630"
-    } else if((element == "uv") & (unit == "mt") & (flow == 2)) {
-      "5930"
-    } else if((element == "uv") & (unit == "heads") & (flow == 1)) {
-      "5638"
-    } else if((element == "uv") & (unit == "heads") & (flow == 2)) {
-      "5938"
-    } else if((element == "uv") & (unit == "1000 heads") & (flow == 1)) {
-      "5639"
-    } else if((element == "uv") & (unit == "1000 heads") & (flow == 2)) {
-      "5939"
-      ## end add unit values
-    } else if((element == "value") & (flow == 1)) {
-      "5622"
-    } else if((element == "value") & (flow == 2)) {
-      "5922"
-    } else {"999"}
+  data[measuredElementTrade == "qty" & unit == "mt"         & flow == 1, measuredElementTrade_code := "5610"]
+  data[measuredElementTrade == "qty" & unit == "mt"         & flow == 2, measuredElementTrade_code := "5910"]
+
+  data[measuredElementTrade == "qty" & unit == "heads"      & flow == 1, measuredElementTrade_code := "5608"]
+  data[measuredElementTrade == "qty" & unit == "heads"      & flow == 2, measuredElementTrade_code := "5908"]
+
+  data[measuredElementTrade == "qty" & unit == "1000 heads" & flow == 1, measuredElementTrade_code := "5609"]
+  data[measuredElementTrade == "qty" & unit == "1000 heads" & flow == 2, measuredElementTrade_code := "5909"]
+
+  ## UV
+
+  data[measuredElementTrade == "uv" & unit == "mt"         & flow == 1, measuredElementTrade_code := "5630"]
+  data[measuredElementTrade == "uv" & unit == "mt"         & flow == 2, measuredElementTrade_code := "5930"]
+
+  data[measuredElementTrade == "uv" & unit == "heads"      & flow == 1, measuredElementTrade_code := "5638"]
+  data[measuredElementTrade == "uv" & unit == "heads"      & flow == 2, measuredElementTrade_code := "5938"]
+
+  data[measuredElementTrade == "uv" & unit == "1000 heads" & flow == 1, measuredElementTrade_code := "5639"]
+  data[measuredElementTrade == "uv" & unit == "1000 heads" & flow == 2, measuredElementTrade_code := "5939"]
+
+  # Value
+
+  data[measuredElementTrade == "value" & flow == 1, measuredElementTrade_code := "5622"]
+  data[measuredElementTrade == "value" & flow == 2, measuredElementTrade_code := "5922"]
+
+
   ## Simple solution, whatever not in the case, just to NA
   ## In this way "$ value only" are NAs, and they will be filtered out
 
-  newElement
+  data[is.na(measuredElementTrade_code), measuredElementTrade_code := "999"]
+
+  data[, measuredElementTrade := measuredElementTrade_code]
+
+  data[, measuredElementTrade_code := NULL]
 
 }

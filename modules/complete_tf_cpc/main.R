@@ -2314,6 +2314,22 @@ if (year == 2017L) {
 
     excluded_using_tp_criteria <- complete_trade_flow_cpc[exclude == TRUE]
 
+    excluded_tp_csv_filename <-
+      tempfile(pattern = "excluded_tp_", fileext = ".csv")
+
+    flog.trace("[%s] Some excluded TP", PID, name = "dev")
+
+    write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
+
+    if (!CheckDebug()) {
+      send_mail(
+        from    = "SWS-trade-module@fao.org",
+        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+        subject = paste0("Trade plugin: Excluded Tp, year ", year),
+        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
+      )
+    }
+
     complete_trade_flow_cpc <-
       complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
   }

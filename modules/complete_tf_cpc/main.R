@@ -1849,6 +1849,7 @@ if (length(to_reimpute) > 0) {
 
   uv_total_variation[!is.na(uv_prev), x := uv / uv_prev]
 
+  # XXX: x should be abs(x)
   uv_total_variation <- uv_total_variation[!between(x, 0.5, 2)]
 
   uv_total_imputed <-

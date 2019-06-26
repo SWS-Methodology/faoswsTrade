@@ -1980,7 +1980,8 @@ if (length(to_reimpute) > 0) {
 
   mirrored_reimputed <-
     complete_trade_flow_cpc[
-      !is.na(uv_imputed) & (same_uv == TRUE | top_partner == TRUE)
+      (!is.na(uv_imputed) & flagObservationStatus_q == "I" & (same_uv == TRUE | top_partner == TRUE)) |
+        (!is.na(uv_imputed) & (geographicAreaM49Reporter == "840" | geographicAreaM49Reporter == "36")),
     ][,
       .(
         timePointYears,

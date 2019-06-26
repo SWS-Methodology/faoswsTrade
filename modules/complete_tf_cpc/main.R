@@ -1766,7 +1766,7 @@ if (length(to_reimpute) > 0) {
     GetCodeList("trade", "total_trade_cpc_m49", "measuredItemCPC")$code %>%
     Dimension(name = "measuredItemCPC", keys = .)
 
-  totaltradekey <-
+  total_trade_key_uv <-
     DatasetKey(
       domain = "trade",
       dataset = "total_trade_cpc_m49",
@@ -1779,7 +1779,7 @@ if (length(to_reimpute) > 0) {
           )
     )
 
-  prev_totals <- GetData(key = totaltradekey, omitna = TRUE, flags = FALSE)
+  prev_totals <- GetData(key = total_trade_key_uv, omitna = TRUE, flags = FALSE)
 
   prev_totals[, flow := ifelse(substr(measuredElementTrade, 2, 2) == '6', 1, 2)]
 
@@ -1849,8 +1849,7 @@ if (length(to_reimpute) > 0) {
 
   uv_total_variation[!is.na(uv_prev), x := uv / uv_prev]
 
-  # XXX: x should be abs(x)
-  uv_total_variation <- uv_total_variation[!between(x, 0.5, 2)]
+  uv_total_variation <- uv_total_variation[!between(x, 0.5, 1.5)]
 
   uv_total_imputed <-
     merge(
@@ -1889,9 +1888,88 @@ if (length(to_reimpute) > 0) {
       all.x = TRUE
     )
 
+  ##### THIS SHOULD BE A TEMPORARY FIX FOR SOME USA ITEMS
+  # (keep total fixed, from external source, and distribute flows)
+
+  if (year == 2017L) {
+
+    flog.trace("[%s] USA 2017 fix", PID, name = "dev")
+
+    allReportersDim_tot <-
+      Dimension(name = "geographicAreaM49", keys = "840")
+
+    allElementsDim_tot <-
+      Dimension(name = "measuredElementTrade", keys = c("5610", "5910"))
+
+    allItemsDim_tot <-
+      GetCodeList("trade", "total_trade_cpc_m49", "measuredItemCPC")$code %>%
+      Dimension(name = "measuredItemCPC", keys = .)
+
+    total_trade_key_usa <-
+      DatasetKey(
+        domain = "trade",
+        dataset = "total_trade_cpc_m49",
+          dimensions =
+            list(
+              allReportersDim_tot,
+              allElementsDim_tot,
+              allItemsDim_tot,
+              Dimension(name = "timePointYears", keys = as.character(year))
+            )
+      )
+
+    usa_total <- GetData(key = total_trade_key_usa, omitna = TRUE)
+
+    usa_total_protected <-
+      usa_total[
+        flagObservationStatus == "" & flagMethod == "p"
+      ][,
+        flow := ifelse(substr(measuredElementTrade, 1, 2) == "56", 1, 2)
+      ][,
+        list(
+          geographicAreaM49Reporter = geographicAreaM49,
+          flow,
+          measuredItemCPC,
+          timePointYears = as.integer(timePointYears),
+          total = Value
+        )
+      ]
+
+    complete_trade_flow_cpc <-
+      merge(
+        complete_trade_flow_cpc,
+        usa_total_protected,
+        by = c("geographicAreaM49Reporter", "flow", "measuredItemCPC", "timePointYears"),
+        all.x = TRUE
+      )
+
+    complete_trade_flow_cpc[
+      !is.na(total),
+      proportion := qty / sum(qty, na.rm = TRUE),
+      by = c('geographicAreaM49Reporter', 'flow', 'timePointYears', 'measuredItemCPC')
+    ]
+
+    complete_trade_flow_cpc[!is.na(total), qty_prop := total * proportion]
+
+    complete_trade_flow_cpc[!is.na(qty_prop), uv_imputed := value / qty_prop * 1000]
+
+    complete_trade_flow_cpc[, c("total", "proportion", "qty_prop") := NULL]
+
+    if (nrow(complete_trade_flow_cpc[!is.na(uv_imputed)]) > 0) {
+      flog.trace("[%s] USA 2017 fix applied", PID, name = "dev")
+    } else {
+      flog.trace("[%s] USA 2017 fix NOT applied", PID, name = "dev")
+    }
+
+  }
+
+  ##### / TEMPORARY FIX
+
   # TODO: save metadata of these
+  # FIXME: 840 and 36 are temporary (20190621)
   complete_trade_flow_cpc[
-    flagObservationStatus_q == "I" & !is.na(uv_imputed) & (same_uv == TRUE | top_partner == TRUE),
+    (!is.na(uv_imputed) & flagObservationStatus_q == "I" & (same_uv == TRUE | top_partner == TRUE)) |
+      (!is.na(uv_imputed) & (geographicAreaM49Reporter == "840" | geographicAreaM49Reporter == "36")),
     `:=`(
       uv                      = uv_imputed,
       qty                     = value / (uv_imputed / 1000),

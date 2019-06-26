@@ -2005,14 +2005,10 @@ if (length(to_reimpute) > 0) {
 
   complete_trade_flow_cpc[
     !is.na(qty_mirror_imputed) & flagObservationStatus_q == 'T',
-    `:=`(
-      qty                     = qty_mirror_imputed,
-      flagObservationStatus_q = "I",
-      flagMethod_q            = "e"
-    )
+    qty := qty_mirror_imputed,
   ][
     !is.na(qty_mirror_imputed) & flagObservationStatus_q == 'T',
-    uv := value / qty
+    uv := value / qty * 1000
   ]
 
 

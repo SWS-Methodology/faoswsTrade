@@ -2290,7 +2290,7 @@ if (year == 2017L) {
 
   mirrored_aggregated_total <-
     complete_trade_flow_cpc[
-      geographicAreaM49Reporter %in% to_mirror$area &
+      geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
       ###########################################################
       # FIXME:
       # for now, removing items that can have heads as unit #####

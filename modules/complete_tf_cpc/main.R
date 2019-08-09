@@ -1877,7 +1877,7 @@ if (length(to_reimpute) > 0) {
       same_uv     = near(sd(uv), 0),
       top_partner = value == max(value, na.rm = TRUE)
     ),
-	  .(timePointYears, geographicAreaM49Reporter, flow, measuredItemCPC)
+   by = .("timePointYears", "geographicAreaM49Reporter", "flow", "measuredItemCPC")
   ]
 
   complete_trade_flow_cpc <-
@@ -1888,82 +1888,82 @@ if (length(to_reimpute) > 0) {
       all.x = TRUE
     )
 
-  ##### THIS SHOULD BE A TEMPORARY FIX FOR SOME USA ITEMS
-  # (keep total fixed, from external source, and distribute flows)
+  ###### THIS SHOULD BE A TEMPORARY FIX FOR SOME USA ITEMS
+  ## (keep total fixed, from external source, and distribute flows)
 
-  if (year == 2017L) {
+  #if (year == 2017L) {
 
-    flog.trace("[%s] USA 2017 fix", PID, name = "dev")
+  #  flog.trace("[%s] USA 2017 fix", PID, name = "dev")
 
-    allReportersDim_tot <-
-      Dimension(name = "geographicAreaM49", keys = "840")
+  #  allReportersDim_tot <-
+  #    Dimension(name = "geographicAreaM49", keys = "840")
 
-    allElementsDim_tot <-
-      Dimension(name = "measuredElementTrade", keys = c("5610", "5910"))
+  #  allElementsDim_tot <-
+  #    Dimension(name = "measuredElementTrade", keys = c("5610", "5910"))
 
-    allItemsDim_tot <-
-      GetCodeList("trade", "total_trade_cpc_m49", "measuredItemCPC")$code %>%
-      Dimension(name = "measuredItemCPC", keys = .)
+  #  allItemsDim_tot <-
+  #    GetCodeList("trade", "total_trade_cpc_m49", "measuredItemCPC")$code %>%
+  #    Dimension(name = "measuredItemCPC", keys = .)
 
-    total_trade_key_usa <-
-      DatasetKey(
-        domain = "trade",
-        dataset = "total_trade_cpc_m49",
-          dimensions =
-            list(
-              allReportersDim_tot,
-              allElementsDim_tot,
-              allItemsDim_tot,
-              Dimension(name = "timePointYears", keys = as.character(year))
-            )
-      )
+  #  total_trade_key_usa <-
+  #    DatasetKey(
+  #      domain = "trade",
+  #      dataset = "total_trade_cpc_m49",
+  #        dimensions =
+  #          list(
+  #            allReportersDim_tot,
+  #            allElementsDim_tot,
+  #            allItemsDim_tot,
+  #            Dimension(name = "timePointYears", keys = as.character(year))
+  #          )
+  #    )
 
-    usa_total <- GetData(key = total_trade_key_usa, omitna = TRUE)
+  #  usa_total <- GetData(key = total_trade_key_usa, omitna = TRUE)
 
-    usa_total_protected <-
-      usa_total[
-        flagObservationStatus == "" & flagMethod == "p"
-      ][,
-        flow := ifelse(substr(measuredElementTrade, 1, 2) == "56", 1, 2)
-      ][,
-        list(
-          geographicAreaM49Reporter = geographicAreaM49,
-          flow,
-          measuredItemCPC,
-          timePointYears = as.integer(timePointYears),
-          total = Value
-        )
-      ]
+  #  usa_total_protected <-
+  #    usa_total[
+  #      flagObservationStatus == "" & flagMethod == "p"
+  #    ][,
+  #      flow := ifelse(substr(measuredElementTrade, 1, 2) == "56", 1, 2)
+  #    ][,
+  #      list(
+  #        geographicAreaM49Reporter = geographicAreaM49,
+  #        flow,
+  #        measuredItemCPC,
+  #        timePointYears = as.integer(timePointYears),
+  #        total = Value
+  #      )
+  #    ]
 
-    complete_trade_flow_cpc <-
-      merge(
-        complete_trade_flow_cpc,
-        usa_total_protected,
-        by = c("geographicAreaM49Reporter", "flow", "measuredItemCPC", "timePointYears"),
-        all.x = TRUE
-      )
+  #  complete_trade_flow_cpc <-
+  #    merge(
+  #      complete_trade_flow_cpc,
+  #      usa_total_protected,
+  #      by = c("geographicAreaM49Reporter", "flow", "measuredItemCPC", "timePointYears"),
+  #      all.x = TRUE
+  #    )
 
-    complete_trade_flow_cpc[
-      !is.na(total),
-      proportion := qty / sum(qty, na.rm = TRUE),
-      by = c('geographicAreaM49Reporter', 'flow', 'timePointYears', 'measuredItemCPC')
-    ]
+  #  complete_trade_flow_cpc[
+  #    !is.na(total),
+  #    proportion := qty / sum(qty, na.rm = TRUE),
+  #    by = c('geographicAreaM49Reporter', 'flow', 'timePointYears', 'measuredItemCPC')
+  #  ]
 
-    complete_trade_flow_cpc[!is.na(total), qty_prop := total * proportion]
+  #  complete_trade_flow_cpc[!is.na(total), qty_prop := total * proportion]
 
-    complete_trade_flow_cpc[!is.na(qty_prop), uv_imputed := value / qty_prop * 1000]
+  #  complete_trade_flow_cpc[!is.na(qty_prop), uv_imputed := value / qty_prop * 1000]
 
-    complete_trade_flow_cpc[, c("total", "proportion", "qty_prop") := NULL]
+  #  complete_trade_flow_cpc[, c("total", "proportion", "qty_prop") := NULL]
 
-    if (nrow(complete_trade_flow_cpc[!is.na(uv_imputed)]) > 0) {
-      flog.trace("[%s] USA 2017 fix applied", PID, name = "dev")
-    } else {
-      flog.trace("[%s] USA 2017 fix NOT applied", PID, name = "dev")
-    }
+  #  if (nrow(complete_trade_flow_cpc[!is.na(uv_imputed)]) > 0) {
+  #    flog.trace("[%s] USA 2017 fix applied", PID, name = "dev")
+  #  } else {
+  #    flog.trace("[%s] USA 2017 fix NOT applied", PID, name = "dev")
+  #  }
 
-  }
+  #}
 
-  ##### / TEMPORARY FIX
+  ###### / TEMPORARY FIX
 
   # TODO: save metadata of these
   # FIXME: 840 and 36 are temporary (20190621)

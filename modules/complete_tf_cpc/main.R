@@ -1835,7 +1835,7 @@ if (length(to_reimpute) > 0) {
 
   all_totals_median[, variation := uv_total_median / uv_tot_median_prev - 1]
 
-  all_totals_median <- all_totals_median[between(variation, -0.5, 0.5) | n > 50]
+  all_totals_median <- all_totals_median[variation %between% c(-0.5, 0.5) | n > 50]
 
   all_totals_median[, n := NULL]
 
@@ -1849,7 +1849,7 @@ if (length(to_reimpute) > 0) {
 
   uv_total_variation[!is.na(uv_prev), x := uv / uv_prev]
 
-  uv_total_variation <- uv_total_variation[!between(x, 0.5, 1.5)]
+  uv_total_variation <- uv_total_variation[!(x %between% c(0.5, 1.5))]
 
   uv_total_imputed <-
     merge(

@@ -1877,7 +1877,7 @@ if (length(to_reimpute) > 0) {
       same_uv     = near(sd(uv), 0),
       top_partner = value == max(value, na.rm = TRUE)
     ),
-   by = .("timePointYears", "geographicAreaM49Reporter", "flow", "measuredItemCPC")
+   by = c("timePointYears", "geographicAreaM49Reporter", "flow", "measuredItemCPC")
   ]
 
   complete_trade_flow_cpc <-

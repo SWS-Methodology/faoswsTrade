@@ -583,6 +583,12 @@ setcolorder(total_trade_cpc_w_uv,
             c("geographicAreaM49", "measuredElementTrade", "measuredItemCPC",
               "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
 
+# Remove unit values in t for items that have both t and h
+total_trade_cpc_w_uv <-
+  total_trade_cpc_w_uv[!(substr(measuredElementTrade, 3, 3) == "3" &
+                         measuredItemCPC %chin% qty_and_weight$measuredItemCPC)]
+
+
 ##' # Save data
 ##'
 ##' Saved data will be available in the "Total Trade (CPC)" dataset

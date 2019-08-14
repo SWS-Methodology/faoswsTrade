@@ -16,6 +16,8 @@
 ##' performed in the `complete_tf_cpc` module. For a narrative version of
 ##' the module's approach, please see its main document.
 
+PLUGIN_VERSION <- 162
+
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
@@ -147,6 +149,8 @@ if (faosws::CheckDebug()){
 stopifnot(!any(is.na(USER), USER == ""))
 
 # Read SWS module run parameters ####
+
+flog.info("Plugin version: %s", PLUGIN_VERSION)
 
 ##' # Parameters
 
@@ -2282,137 +2286,137 @@ complete_trade_flow_cpc[,
   c("flow", "unit", "correction_metadata_qty",
     "correction_metadata_value", "correction_metadata_uv") := NULL]
 
-# Exclude by Tp criteria
-
-flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
-
-if (year == 2017L) {
-
-  mirrored_aggregated_total <-
-    complete_trade_flow_cpc[
-      geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
-      ###########################################################
-      # FIXME:
-      # for now, removing items that can have heads as unit #####
-      ###########################################################
-      !(measuredItemCPC %in% fcl2cpc(stringr::str_pad((fclunits %>% dplyr::filter(fclunit != 'mt'))$fcl, 4, 'left', 0)))
-    ][
-      # Remove unit values
-      substr(measuredElementTrade, 3, 3) != 3,
-      .(Value = sum(Value)),
-      .(geographicAreaM49 = geographicAreaM49Reporter,
-        measuredElementTrade, measuredItemCPC, timePointYears)
-    ]
-
-  allReportersDim_tot <-
-    Dimension(
-      name = "geographicAreaM49",
-      keys = unique(mirrored_aggregated_total$geographicAreaM49)
-    )
-
-  allElementsDim_tot <-
-    Dimension(
-      name = "measuredElementTrade",
-      keys = unique(mirrored_aggregated_total$measuredElementTrade)
-    )
-
-  allItemsDim_tot <-
-    Dimension(
-      name = "measuredItemCPC",
-      keys = unique(mirrored_aggregated_total$measuredItemCPC)
-    )
-
-  totaltradekey <-
-    DatasetKey(
-      domain = "trade",
-      dataset = "total_trade_cpc_m49",
-        dimensions =
-          list(
-            allReportersDim_tot,
-            allElementsDim_tot,
-            allItemsDim_tot,
-            Dimension(name = "timePointYears",
-                      keys = as.character((year-3):(year-1)))
-          )
-    )
-
-  existing_total_data <- GetData(key = totaltradekey)
-
-  existing_data_mean <-
-    existing_total_data[,
-      .(Value_mean = mean(Value)),
-      .(geographicAreaM49, measuredElementTrade, measuredItemCPC)
-    ]
-
-  mirrored_to_compare <-
-    merge(
-      mirrored_aggregated_total,
-      existing_data_mean,
-      by = c('geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
-    )
-
-  # FIXME:
-  countries_to_apply_tp_criterion <-
-    c(84,
-      44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
-      446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
-      266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
-
-  exclude_from_mirroring <-
-    mirrored_to_compare[,
-      Value_ratio := Value / Value_mean
-    ][,
-      `:=`(
-        low = sum(Value_ratio < 0.5),
-        n = .N,
-        big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
-      ),
-      .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
-    ][,
-        exclude := (low == n & big_qty == TRUE)
-    ][
-      # FIXME:
-      timePointYears == 2017 &
-        geographicAreaM49 %in% countries_to_apply_tp_criterion
-    ][,
-      .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
-    ]
-
-  if (nrow(exclude_from_mirroring) > 0) {
-    complete_trade_flow_cpc <-
-      merge(
-        complete_trade_flow_cpc,
-        exclude_from_mirroring,
-        by = c("timePointYears", "geographicAreaM49Reporter", "measuredItemCPC", "measuredElementTrade"),
-        all.x = TRUE
-      )
-
-    complete_trade_flow_cpc[is.na(exclude), exclude := FALSE]
-
-    excluded_using_tp_criteria <- complete_trade_flow_cpc[exclude == TRUE]
-
-    excluded_tp_csv_filename <-
-      tempfile(pattern = "excluded_tp_", fileext = ".csv")
-
-    flog.trace("[%s] Some excluded TP", PID, name = "dev")
-
-    write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
-
-    if (!CheckDebug()) {
-      send_mail(
-        from    = "SWS-trade-module@fao.org",
-        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
-        subject = paste0("Trade plugin: Excluded Tp, year ", year),
-        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
-      )
-    }
-
-    complete_trade_flow_cpc <-
-      complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
-  }
-}
-
-# / Exclude by Tp criteria
+## Exclude by Tp criteria
+#
+#flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
+#
+#if (year == 2017L) {
+#
+#  mirrored_aggregated_total <-
+#    complete_trade_flow_cpc[
+#      geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
+#      ###########################################################
+#      # FIXME:
+#      # for now, removing items that can have heads as unit #####
+#      ###########################################################
+#      !(measuredItemCPC %in% fcl2cpc(stringr::str_pad((fclunits %>% dplyr::filter(fclunit != 'mt'))$fcl, 4, 'left', 0)))
+#    ][
+#      # Remove unit values
+#      substr(measuredElementTrade, 3, 3) != 3,
+#      .(Value = sum(Value)),
+#      .(geographicAreaM49 = geographicAreaM49Reporter,
+#        measuredElementTrade, measuredItemCPC, timePointYears)
+#    ]
+#
+#  allReportersDim_tot <-
+#    Dimension(
+#      name = "geographicAreaM49",
+#      keys = unique(mirrored_aggregated_total$geographicAreaM49)
+#    )
+#
+#  allElementsDim_tot <-
+#    Dimension(
+#      name = "measuredElementTrade",
+#      keys = unique(mirrored_aggregated_total$measuredElementTrade)
+#    )
+#
+#  allItemsDim_tot <-
+#    Dimension(
+#      name = "measuredItemCPC",
+#      keys = unique(mirrored_aggregated_total$measuredItemCPC)
+#    )
+#
+#  totaltradekey <-
+#    DatasetKey(
+#      domain = "trade",
+#      dataset = "total_trade_cpc_m49",
+#        dimensions =
+#          list(
+#            allReportersDim_tot,
+#            allElementsDim_tot,
+#            allItemsDim_tot,
+#            Dimension(name = "timePointYears",
+#                      keys = as.character((year-3):(year-1)))
+#          )
+#    )
+#
+#  existing_total_data <- GetData(key = totaltradekey)
+#
+#  existing_data_mean <-
+#    existing_total_data[,
+#      .(Value_mean = mean(Value)),
+#      .(geographicAreaM49, measuredElementTrade, measuredItemCPC)
+#    ]
+#
+#  mirrored_to_compare <-
+#    merge(
+#      mirrored_aggregated_total,
+#      existing_data_mean,
+#      by = c('geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
+#    )
+#
+#  # FIXME:
+#  countries_to_apply_tp_criterion <-
+#    c(84,
+#      44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
+#      446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
+#      266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
+#
+#  exclude_from_mirroring <-
+#    mirrored_to_compare[,
+#      Value_ratio := Value / Value_mean
+#    ][,
+#      `:=`(
+#        low = sum(Value_ratio < 0.5),
+#        n = .N,
+#        big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
+#      ),
+#      .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
+#    ][,
+#        exclude := (low == n & big_qty == TRUE)
+#    ][
+#      # FIXME:
+#      timePointYears == 2017 &
+#        geographicAreaM49 %in% countries_to_apply_tp_criterion
+#    ][,
+#      .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
+#    ]
+#
+#  if (nrow(exclude_from_mirroring) > 0) {
+#    complete_trade_flow_cpc <-
+#      merge(
+#        complete_trade_flow_cpc,
+#        exclude_from_mirroring,
+#        by = c("timePointYears", "geographicAreaM49Reporter", "measuredItemCPC", "measuredElementTrade"),
+#        all.x = TRUE
+#      )
+#
+#    complete_trade_flow_cpc[is.na(exclude), exclude := FALSE]
+#
+#    excluded_using_tp_criteria <- complete_trade_flow_cpc[exclude == TRUE]
+#
+#    excluded_tp_csv_filename <-
+#      tempfile(pattern = "excluded_tp_", fileext = ".csv")
+#
+#    flog.trace("[%s] Some excluded TP", PID, name = "dev")
+#
+#    write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
+#
+#    if (!CheckDebug()) {
+#      send_mail(
+#        from    = "SWS-trade-module@fao.org",
+#        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+#        subject = paste0("Trade plugin: Excluded Tp, year ", year),
+#        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
+#      )
+#    }
+#
+#    complete_trade_flow_cpc <-
+#      complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
+#  }
+#}
+#
+## / Exclude by Tp criteria
 
 
 

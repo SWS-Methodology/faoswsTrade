@@ -189,23 +189,44 @@ flagWeightTable_method <- frame_data(
   's',                   0.20
 )
 
+# This table is going to be used in cases where imputations account
+# for less than 10% of the total flow: X is a flag that never shows
+# up here (was used in complete trade as "official", replaced by
+# blank), and we replace it with "I" as all flags need to be present.
+# After the substitution, "I" will get the maximum value, so for
+# practical purposes, will never be set (as there are other flows
+# with a flag different from "I" with a lower value)
+flagWeightTable_status_no_imp <-
+  flagWeightTable_status %>%
+  filter(flagObservationStatus != "I") %>%
+  mutate(flagObservationStatus = ifelse(flagObservationStatus == "X", "I", flagObservationStatus))
+
 completetrade[,
-  `:=`(nobs = .N, diff_flags = length(unique(flagObservationStatus)) > 1),
+  `:=`(
+    nobs = .N,
+    diff_flags = length(unique(flagObservationStatus)) > 1,
+    perc_imputed = sum(Value[flagObservationStatus == "I"]) / sum(Value)
+  ),
   .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
 ]
 
+MIN_IMPUTED <- 0.1
+
 total_trade_cpc_wo_uv <-
   rbind(
-    completetrade[nobs == 1, .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade, Value, flagObservationStatus, flagMethod)],
+    # One obs
     completetrade[
-      nobs > 1 & diff_flags == FALSE
-    ][,
+      nobs == 1,
+      .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade, Value, flagObservationStatus, flagMethod)],
+    # Multiple obs, one flag
+    completetrade[
+      nobs > 1 & diff_flags == FALSE,
       .(Value = sum(Value, na.rm = TRUE), flagObservationStatus = unique(flagObservationStatus), flagMethod = "s"),
       .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
     ],
+    # Multiple obs, multiple flags, imputed > 10%
     completetrade[
-      nobs > 1 & diff_flags == TRUE
-    ][,
+      nobs > 1 & diff_flags == TRUE & perc_imputed > MIN_IMPUTED,
       .(
         Value = sum(Value, na.rm = TRUE),
         flagObservationStatus =
@@ -218,10 +239,26 @@ total_trade_cpc_wo_uv <-
         flagMethod = "s"
       ),
       .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
+    ],
+    # Multiple obs, multiple flags, imputed <= 10%
+    completetrade[
+      nobs > 1 & diff_flags == TRUE & perc_imputed <= MIN_IMPUTED,
+      .(
+        Value = sum(Value, na.rm = TRUE),
+        flagObservationStatus =
+          aggregateObservationFlag(
+            flagObservationStatus,
+            flagTable = flagWeightTable_status_no_imp
+          ),
+        # In any case, 's' is the weakest flag, so that if aggregation
+        # was performed, then 's' is the final Method flag.
+        flagMethod = "s"
+      ),
+      .(geographicAreaM49, timePointYears, measuredItemCPC, measuredElementTrade)
     ]
   )
 
-completetrade[, `:=`(nobs = NULL, diff_flags = NULL)]
+completetrade[, `:=`(nobs = NULL, diff_flags = NULL, perc_imputed = NULL)]
 
 # Data for which weight and numbers were computed
 # (n == 4 => (value, qty) * (import, export))

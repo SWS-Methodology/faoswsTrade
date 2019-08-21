@@ -585,7 +585,7 @@ setcolorder(total_trade_cpc_w_uv,
 
 # Remove unit values in t for items that have both t and h
 total_trade_cpc_w_uv <-
-  total_trade_cpc_w_uv[!(substr(measuredElementTrade, 3, 3) == "3" &
+  total_trade_cpc_w_uv[!(substr(measuredElementTrade, 3, 4) == "30" &
                          measuredItemCPC %chin% qty_and_weight$measuredItemCPC)]
 
 

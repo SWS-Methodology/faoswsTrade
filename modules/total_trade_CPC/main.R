@@ -418,9 +418,9 @@ if (remove_nonexistent_transactions) {
     Dimension(name = "geographicAreaM49", keys = .)
 
   allElementsDim_tot <-
-    c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922") %>% #,
+    c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922", #) %>% #,
       ## UV elements:
-      #"5638", "5639", "5630", "5938", "5939", "5930") %>%
+      "5638", "5639", "5630", "5938", "5939", "5930") %>%
     Dimension(name = "measuredElementTrade", keys = .)
 
   allItemsDim_tot <-

@@ -51,7 +51,7 @@ local({
 
 if (CheckDebug()) {
   library(faoswsModules)
-  SETTINGS = ReadSettings("modules/Creating Tables Total Trade//sws.yml")
+  SETTINGS = ReadSettings("modules/Creating_Tables_Total_Trade/sws.yml")
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
@@ -121,7 +121,7 @@ tradeData <- GetData(totaltradekey)
 
 #pull continent codes
 
-continentCodes <- read_excel("modules/Creating Tables Total Trade/continent_codes.xls")
+continentCodes <- read_excel("modules/Creating_Tables_Total_Trade/continent_codes.xls")
 
 continentCodes <- data.table(continentCodes)
 
@@ -165,7 +165,7 @@ codes_to_add[, `Country Group`:= ifelse(`M49 Code` %in% codes_missing[codes_miss
 continentCodes <- rbind(continentCodes, codes_to_add)
 
 
-write.xlsx(continentCodes, "modules/Creating Tables Total Trade/comple_continent_table.xlsx", row.names = FALSE)
+write.xlsx(continentCodes, "modules/Creating_Tables_Total_Trade/comple_continent_table.xlsx", row.names = FALSE)
 
 # [1] "1249" "136"  "192"  "212"  "214"  "28"   "308"  "312"  "332"  "388"  "44"   "474"  "500"  "52"   "530"  "531"  "533"  "534"  "659"  "660"  "662"  "670"
 # [23] "720"  "780"  "796"  "850"  "886"  "92"
@@ -910,7 +910,7 @@ numeric_columns  <- grep("^[[:digit:]]{4}$", names(x1), value = TRUE)
 x1[, (numeric_columns) := lapply(.SD, as.numeric), .SDcols = numeric_columns]
 
 
-write.xlsx(x1,paste0("modules/Creating Tables Total Trade/livestock/", "item_", item_name,".xlsx"),row.names = F, sheet = "World summary")
+write.xlsx(x1,paste0("T:/Team_working_folder/B_C/2. TRADE/commodity_tables/Livestock/", "item_", item_name,".xlsx"),row.names = F, sheet = "World summary")
 
 if (i != "02151"){
 z2 <- c("Import_Quantity [head]","Import Value [1000 $]", "Import UV [$/head]", "Export_Quantity [head]", "Export Value [1000 $]","Export UV [$/head]")
@@ -927,7 +927,7 @@ x2 <- x2[order(Country),]
 
 
 
-write.xlsx(x2,paste0("modules/Creating Tables Total Trade/livestock/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Country details")
+write.xlsx(x2,paste0("T:/Team_working_folder/B_C/2. TRADE/commodity_tables/Livestock/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Country details")
 
 
 
@@ -964,361 +964,9 @@ xxx[[j]] <- xx
 x3 <- rbindlist(xxx)
 
 
-write.xlsx(x3,paste0("modules/Creating Tables Total Trade/livestock/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Regions")
+write.xlsx(x3,paste0("T:/Team_working_folder/B_C/2. TRADE/commodity_tables/Livestock/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Regions")
 
 
 }
 
 
-
-
-#
-# z <- c("Import_Quantity","Export_Quantity","Import - Export","(Import/Export) - 1","Import_growth","Export_growth","Status"
-#        ,"Import Value [1000 $]","Export Value [1000 $]")
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# world <- world[order(match(`Trade Dimension`, z)),]
-#
-# world  <-  world[order(`Commodity CPC Code`)]
-#
-#
-#
-# timeseriesDataRegion <- timeseriesDataRegion[order(match(`Trade Dimension`, z)),]
-#
-# timeseriesDataRegion  <-  timeseriesDataRegion[order(`Country Group`,`Commodity CPC Code`)]
-#
-#
-# country <- country[order(match(`Trade Dimension`, z)),]
-#
-# country  <-  country[order(`Country`,`Commodity CPC Code`)]
-#
-#
-# list_global <- list()
-#
-#
-#
-# list_global$Wold<- subset(world, `Country Group` %in% c("World"))[, `Country Group` := NULL]
-#
-#
-#
-# list_global$Asia <- subset(timeseriesDataRegion, `Country Group` %in% c("Asia"))[, `Country Group` := NULL]
-# list_global$Asia_Country <- subset(country, `Country Group` %in% c("Asia"))[, `Country Group` := NULL]
-#
-#
-# list_global$Africa<- subset(timeseriesDataRegion, `Country Group` %in% c("Africa"))[, `Country Group` := NULL]
-# list_global$Africa_Country <- subset(country, `Country Group` %in% c("Africa"))[, `Country Group` := NULL]
-#
-#
-# list_global$Europe<- subset(timeseriesDataRegion, `Country Group` %in% c("Europe"))[, `Country Group` := NULL]
-# list_global$Europe_Country <- subset(country, `Country Group` %in% c("Europe"))[, `Country Group` := NULL]
-#
-#
-#
-# list_global$`European Union` <- subset(timeseriesDataRegion, `Country Group` %in% c("European Union"))[, `Country Group` := NULL]
-# list_global$Europe_Union_Country <- subset(country, `Country Group` %in% c("European Union"))[, `Country Group` := NULL]
-#
-#
-#
-#
-# list_global$`Northern and Central America` <- subset(timeseriesDataRegion, `Country Group` %in% c("Northern and Central America"))[, `Country Group` := NULL]
-# list_global$Northern_Central_America_Country <- subset(country, `Country Group` %in% c("Northern and Central America"))[, `Country Group` := NULL]
-#
-#
-#
-#
-# list_global$Oceania <- subset(timeseriesDataRegion, `Country Group` %in% c("Oceania"))[, `Country Group` := NULL]
-# list_global$Oceania_Country <- subset(country, `Country Group` %in% c("Oceania"))[, `Country Group` := NULL]
-#
-#
-# list_global$`South America` <- subset(timeseriesDataRegion, `Country Group` %in% c("South America"))[, `Country Group` := NULL]
-# list_global$South_America_Country <- subset(country, `Country Group` %in% c("South America"))[, `Country Group` := NULL]
-#
-#
-# ##########################################################################
-#
-#
-#
-#
-#
-# # wb <- createWorkbook()
-# # sheet <- createSheet(wb,"Trade Tables")
-# #
-# # currRow <- 1
-# #
-# #
-# # for(i in 1:length(list_global)){
-# #
-# #   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-# #
-# #   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-# #                sheet=sheet,
-# #                startRow=currRow,
-# #                row.names=FALSE,
-# #                colnamesStyle=cs)
-# #
-# #   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# # }
-# #
-# #
-# #
-# #
-# #
-# #
-# # saveWorkbook(wb,file = "modules/Creating Tables Total Trade/new.xlsx")
-#
-#
-# #####world
-#
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"World Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 1){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/world.xlsx")
-#
-# #ASia
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Asia Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 2:3){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/Asia.xlsx")
-#
-# ##Africa
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Africa Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 4:5){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/Africa.xlsx")
-#
-#
-#
-# #####Europe
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Europe Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 6:7){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/Europe.xlsx")
-#
-#
-#
-# #####Europe Union
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Europe Union Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 8:9){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/EuropeUnion.xlsx")
-#
-# ## North and Central America
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Northern and Central Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 10:11){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/North_Central_America.xlsx")
-#
-#
-#
-# #Oceana
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Oceania Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 12:13){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/Oceania.xlsx")
-#
-#
-#
-# #South America
-#
-# wb <- createWorkbook()
-# sheet <- createSheet(wb,"Sounth America Trade Tables")
-#
-# currRow <- 1
-#
-#
-# for(i in 14:15){
-#
-#   cs <- CellStyle(wb) + Font(wb, isBold=TRUE) + Border(position=c("BOTTOM", "LEFT", "TOP", "RIGHT"))
-#
-#   addDataFrame(rbind(data.table(names(list_global)[i]),list_global[[i]],fill= TRUE),
-#                sheet=sheet,
-#                startRow=currRow,
-#                row.names=FALSE,
-#                colnamesStyle=cs)
-#
-#   currRow <- currRow +  1 + nrow(list_global[[i]]) + 2
-# }
-#
-#
-#
-#
-#
-#
-# saveWorkbook(wb,file = "modules/Creating Tables Total Trade/South_America.xlsx")
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#

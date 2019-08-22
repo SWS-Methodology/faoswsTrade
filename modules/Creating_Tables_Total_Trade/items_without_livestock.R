@@ -51,7 +51,7 @@ local({
 
 if (CheckDebug()) {
   library(faoswsModules)
-  SETTINGS = ReadSettings("modules/Creating Tables Total Trade//sws.yml")
+  SETTINGS = ReadSettings("modules/Creating_Tables_Total_Trade/sws.yml")
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
@@ -80,7 +80,7 @@ allElementsDim <-
 #CPC without livestock
 
 
-cpc_codes <- data.table(read_excel("modules/Creating Tables Total Trade/commodities_Commodity tables.xlsx", sheet= "List of commodities"))
+cpc_codes <- data.table(read_excel("modules/Creating_Tables_Total_Trade/commodities_Commodity tables.xlsx", sheet= "List of commodities"))
 cpc_codes <- unique(cpc_codes$Commodity_Code)
 
 
@@ -121,7 +121,7 @@ tradeData <- GetData(totaltradekey)
 
 #pull continent codes
 
-continentCodes <- read_excel("modules/Creating Tables Total Trade/continent_codes.xls")
+continentCodes <- read_excel("modules/Creating_Tables_Total_Trade/continent_codes.xls")
 
 continentCodes <- data.table(continentCodes)
 
@@ -165,7 +165,7 @@ codes_to_add[, `Country Group`:= ifelse(`M49 Code` %in% codes_missing[codes_miss
 continentCodes <- rbind(continentCodes, codes_to_add)
 
 
-write.xlsx(continentCodes, "modules/Creating Tables Total Trade/comple_continent_table.xlsx", row.names = FALSE)
+write.xlsx(continentCodes, "modules/Creating_Tables_Total_Trade/comple_continent_table.xlsx", row.names = FALSE)
 
 # [1] "1249" "136"  "192"  "212"  "214"  "28"   "308"  "312"  "332"  "388"  "44"   "474"  "500"  "52"   "530"  "531"  "533"  "534"  "659"  "660"  "662"  "670"
 # [23] "720"  "780"  "796"  "850"  "886"  "92"
@@ -737,7 +737,7 @@ numeric_columns  <- grep("^[[:digit:]]{4}$", names(x1), value = TRUE)
 x1[, (numeric_columns) := lapply(.SD, as.numeric), .SDcols = numeric_columns]
 
 
-write.xlsx(x1,paste0("modules/Creating Tables Total Trade/Items/", "item_", item_name,".xlsx"),row.names = F, sheet = "World summary")
+write.xlsx(x1,paste0("T:/Team_working_folder/B_C/2. TRADE/commodity_tables/nonLivestock/", "item_", item_name,".xlsx"),row.names = F, sheet = "World summary")
 
 
 z2 <- c("Import_Quantity (t)","Import Value [1000 $]", "Import UV [$/t]", "Export_Quantity (t)", "Export Value [1000 $]","Export UV [$/t]")
@@ -750,7 +750,7 @@ x2 <- x2[order(Country),]
 
 
 
-write.xlsx(x2,paste0("modules/Creating Tables Total Trade/Items/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Country details")
+write.xlsx(x2,paste0("T:/Team_working_folder/B_C/2. TRADE/commodity_tables/nonLivestock/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Country details")
 
 
 
@@ -787,7 +787,7 @@ xxx[[j]] <- xx
 x3 <- rbindlist(xxx)
 
 
-write.xlsx(x3,paste0("modules/Creating Tables Total Trade/Items/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Regions")
+write.xlsx(x3,paste0("T:/Team_working_folder/B_C/2. TRADE/commodity_tables/nonLivestock/", "item_", item_name,".xlsx"),row.names = F,append = TRUE, sheet = "Regions")
 
 
 }

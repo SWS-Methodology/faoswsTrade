@@ -37,6 +37,25 @@ ct_2014 <- readRDS("C:/Users/Selek/Desktop/TRADE/Data tables/ct_tariffline_unlog
 # ct_2016 <- readRDS("C:/Users/Selek/Desktop/TRADE/Data tables/ct_tariffline_unlogged_2016.rds")
 # ct_2017 <- readRDS("C:/Users/Selek/Desktop/TRADE/Data tables/ct_tariffline_unlogged_2017.rds")
 
+# Remove HS chapters NOT in the hs_chapters
+hs_chapters <- c("01","02", "03", "04", "05", "06","07", "08", "09", "10", "11", "12","13", "14", "15", "16",
+                 "17", "18", "19", "20", "21", "22", "23", "24", "33", "35", "38", "40", "41", "43", "50", "51", "52", "53")
+
+ce_2014 <- ce_2014[, chapter:= substr(product_nc, start=1,2)]
+
+ce_2014 <- ce_2014[chapter %in% hs_chapters]
+
+ct_2014 <- ct_2014[chapter %in% hs_chapters]
+
+# Remove the HS codes of only two digits from Eurostat and comtrade raw data
+
+ce_2014 <- ce_2014[, remover:=ifelse(nchar(product_nc)==2, NA, product_nc)]
+ce_2014 <- na.omit(ce_2014, cols="remover")
+
+ct_2014 <- ct_2014[, remover:=ifelse(nchar(comm)==2, NA, comm)]
+ct_2014 <- na.omit(ct_2014, cols="remover")
+
+
 `%!in%` = Negate(`%in%`)
 options(warn=-1)
 
@@ -269,7 +288,7 @@ checkQtyValue <- function(report=report, EurostatData=ce_2014, ComTradeData=ct_2
   eurQty <- eurQty[,colnames(comQty),with=FALSE]
   res <- rbind(eurQty,comQty[!eurQty,on=c("description", "m49")])
 
-  res1 <- res[, .(mqty = max(qty), mvalue = max(value)), by = list(m49, flow)][mqty == 1 | mvalue == 1]
+  res1 <- res[, .(mqty = min(qty), mvalue = min(value)), by = list(m49, flow)]#[mqty == 1 | mvalue == 1]
 
   res2 <- merge(res1, report5, by='m49', all.x = TRUE)
   setnames(res2, 'mqty', 'qty')

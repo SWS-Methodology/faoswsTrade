@@ -61,6 +61,7 @@ convert_geonom_to_faoandm49 <- function(data, reporter = "declarant") {
 
   res <- merge(eu_countries, tab, by = "code", all = TRUE)
   res[, code:=NULL]
+
   setnames(res, "geonom", "code")
 
   return(res[, .(code, m49, fao)])
@@ -166,8 +167,8 @@ numberOfRecordsReporter <- function(report=report, EurostatData=ce_2014, ComTrad
                                 hs_n= length(unique(nchar(product_nc))), .N), by=.(declarant, flow)]
   setnames(eurNumRec, 'declarant', 'code')
   eurNumRec <- merge(eurNumRec, eu_codes, by='code', all.x = TRUE)
-  #eurNumRec <- eurNumRec[, rep_name:=NULL]
   eurNumRec <- merge(eurNumRec, report3, by=c("fao","code", 'm49'), all.x = TRUE)
+  eurNumRec <- eurNumRec[is.na(description)!= TRUE,]
 
   comNumRec <- ComTradeData[,.(hs_min= min(nchar(comm)),
                                 hs_max=max(nchar(comm)),
@@ -183,6 +184,8 @@ numberOfRecordsReporter <- function(report=report, EurostatData=ce_2014, ComTrad
   report3 <- rbind(eurNumRec,comNumRec[!eurNumRec,on=c("description", "m49")])
 
   report3 <- report3[,year:= rep(get('yearvalue'),nrow(report3))]
+
+  report3 <- report3[, fao:=NULL]
 
   return(report3)
 }
@@ -201,9 +204,10 @@ importExportContentCheck <- function(report=report, EurostatData=ce_2014, ComTra
   eurTrans <- EurostatData[,.N, by=.(declarant, flow)]
   setnames(eurTrans, 'declarant', 'code')
   eurTrans <- merge(eurTrans, eu_codes, by='code', all.x = TRUE)
-  #eurTrans <- eurTrans[, rep_name:=NULL]
   eurTrans <- eurTrans[, N:=NULL]
   eurTrans <- merge(eurTrans, report4, by=c("fao","m49","code"), all.x = TRUE)
+  eurTrans <- eurTrans[is.na(description)!= TRUE,]
+
 
   comTrans <- ComTradeData[,.N, by=.(rep, flow)]
   setnames(comTrans, 'rep', 'code')
@@ -229,6 +233,8 @@ importExportContentCheck <- function(report=report, EurostatData=ce_2014, ComTra
 
   report4 <- report4[,year:= rep(get('yearvalue'),nrow(report4))]
 
+  report4 <- report4[, fao:=NULL]
+
   return(report4)
 }
 
@@ -242,39 +248,36 @@ checkQtyValue <- function(report=report, EurostatData=ce_2014, ComTradeData=ct_2
   report5 <- copy(report)
   yearvalue <- ComTradeData$tyear[1]
 
-  eurQty <- EurostatData[,.(qty=qty_ton, value=value_1k_euro), by=.(declarant, flow)]
-  eurQty <- eurQty[, check_info:= ifelse(qty==0 & value==0, FALSE, TRUE)]
+  eurQty = EurostatData[, .(qty = ifelse((is.na(qty_ton) | qty_ton == 0) & (is.na(sup_quantity) | sup_quantity == 0),1,0),
+                            value = ifelse((is.na(value_1k_euro) | value_1k_euro == 0),1,0)), .(declarant, flow)]
+
+
   setnames(eurQty, 'declarant', 'code')
   eurQty <- merge(eurQty, eu_codes, by='code', all.x = TRUE)
   eurQty <- merge(eurQty, report5, by=c("fao", "m49", "code"), all.x = TRUE)
+  eurQty <- eurQty[is.na(description)!= TRUE,]
 
-  comQty <- ComTradeData[,.(qty, value=tvalue), by=.(rep, flow)]
-  comQty <- comQty[, check_info:= ifelse(qty==0 & value==0, FALSE, TRUE)]
+  comQty = ComTradeData[, .(qty = ifelse((is.na(weight) | weight == 0) & (is.na(qty) | qty == 0),1,0),
+                            value = ifelse((is.na(tvalue) | tvalue == 0),1,0)), .(rep, flow)]
   setnames(comQty, 'rep', 'code')
   comQty$code <- as.numeric(as.character(comQty[,code]))
   comQty <- merge(comQty, com_codes, by='code', all.y = TRUE)
   comQty$code <- as.character(comQty[,code])
   comQty <- merge(comQty, report5, by=c("fao", "m49", "code"), all.x = TRUE)
-
-
+  comQty <- comQty[is.na(description)!= TRUE,]
 
   eurQty <- eurQty[,colnames(comQty),with=FALSE]
-  res <- rbind(eurQty,comQty[!eurQty,on=c("fao", "m49", "description")])
-  res1 <- res[,.N , by= .(fao, m49, code, description, flow)]
-  res2 <- res[,.N , by= .(fao, m49, code, description, flow, check_info)]
+  res <- rbind(eurQty,comQty[!eurQty,on=c("description", "m49")])
 
-  res3 <- res1[, qty:= ifelse(res2$check_info==FALSE ,1,0)]
-  res4 <- res3[, value:= ifelse(res2$check_info==FALSE, 1,0)]
+  res1 <- res[, .(mqty = max(qty), mvalue = max(value)), by = list(m49, flow)][mqty == 1 | mvalue == 1]
 
+  res2 <- merge(res1, report5, by='m49', all.x = TRUE)
+  setnames(res2, 'mqty', 'qty')
+  setnames(res2, 'mvalue', 'value')
 
-  #
-  # res <- res[, .N, by=.(fao, m49, code, description, flow, qty, value)]
-  # res <- res[, N:=NULL]
-  # res5 <- res[, `:=`(qty2= ifelse(qty %in% 1, 1,0), value2= ifelse(value %in% 1, 1,0)), by= .(flow)]
+  res3 <- res2[,year:= rep(get('yearvalue'),nrow(res2))]
 
-  res5 <- res4[,year:= rep(get('yearvalue'),nrow(res4))]
-
-  return(res5)
+  return(res3)
 }
 
 report_5 <- checkQtyValue(report, ce_2014, ct_2014)
@@ -287,49 +290,30 @@ missingDataByReport <- function(report=report, EurostatData=ce_2014, ComTradeDat
   report6 <- copy(report)
   yearvalue <- ComTradeData$tyear[1]
 
-  eurMissing <- EurostatData[,.N, by=.(declarant, qty_ton, sup_quantity, flow)]
+  eurMissing = EurostatData[, .(noqty = sum((is.na(qty_ton) | qty_ton == 0) & (is.na(sup_quantity) | sup_quantity == 0)), tot = .N), .(declarant, flow)]
+  eurMissing[, noqty_prop := noqty / tot]
   setnames(eurMissing, 'declarant', 'code')
-  eurMissing <- merge(eurMissing, eu_codes, by='code', all.x = TRUE)
-  eurMissing <- eurMissing[, N:=NULL]
-  eurMissing <- merge(eurMissing, report6, by=c("fao","m49","code"), all.x = TRUE)
+  eurMissing <- merge(eurMissing, report6, by=c("code"), all.x = TRUE)
+  eurMissing <- eurMissing[is.na(description)!= TRUE,]
 
-  comMissing <- ComTradeData[,.N, by=.(rep, weight, qty, flow)]
+  comMissing = ComTradeData[, .(noqty = sum((is.na(weight) | weight == 0) & (is.na(qty) | qty == 0)), tot = .N), .(rep, flow)]
+  comMissing[, noqty_prop := noqty / tot]
   setnames(comMissing, 'rep', 'code')
-  comMissing$code <- as.numeric(as.character(comMissing[,code]))
-  comMissing <- merge(comMissing, com_codes, by='code', all.y = TRUE)
-  comMissing <- comMissing[, N:=NULL]
-  comMissing$code <- as.character(comMissing[,code])
-  comMissing <- merge(comMissing, report6, by=c("fao", "m49", "code"), all.x = TRUE)
-
-  setnames(eurMissing, 'qty_ton', 'weight')
-  setnames(eurMissing, 'sup_quantity', 'qty')
+  comMissing <- merge(comMissing, report6, by=c("code"), all.x = TRUE)
+  comMissing <- comMissing[is.na(description)!= TRUE,]
 
   eurMissing <- eurMissing[,colnames(comMissing),with=FALSE]
-  ans <- rbind(eurMissing,comMissing[!eurMissing,on=c("description", "m49", "fao")])
+  allMissing <- rbind(eurMissing,comMissing[!eurMissing,on=c("description", "m49")])
 
-  ans1 <- ans[flow==1 & weight==0 & qty==0, .N, by=.(m49)]
-  ans2 <- ans[flow==2 & weight==0 & qty==0, .N, by=.(m49)]
-  ans3 <- ans[flow==3 & weight==0 & qty==0, .N, by=.(m49)]
-  ans4 <- ans[flow==4 & weight==0 & qty==0, .N, by=.(m49)]
+  allMissing[flow==1, flow:='import']
+  allMissing[flow==2, flow:='export']
+  allMissing[flow==3, flow:='reexport']
+  allMissing[flow==4, flow:='reimport']
 
-  ans5 <- ans[flow==1, .N, by=.(m49)]
-  ans6 <- ans[flow==2, .N, by=.(m49)]
-  ans7 <- ans[flow==3, .N, by=.(m49)]
-  ans8 <- ans[flow==4, .N, by=.(m49)]
+  res <- dcast(allMissing, code+m49+description~flow, value.var = c("noqty", "noqty_prop"))
+  res <- res[,year:= rep(get('yearvalue'),nrow(res))]
 
-  report6 <- report6[, noqty_export:=ifelse(m49 %in% ans2$m49, ans2$N, NA)]
-  report6 <- report6[, noqty_import:=ifelse(m49 %in% ans1$m49, ans1$N, NA)]
-  report6 <- report6[, noqty_reexport:=ifelse(m49 %in% ans3$m49, ans3$N, NA)]
-  report6 <- report6[, noqty_reimport:=ifelse(m49 %in% ans4$m49, ans4$N, NA)]
-
-  report6 <- report6[m49 %in% ans2$m49, noqty_prop_export:= ans2$N/ans6$N]
-  report6 <- report6[m49 %in% ans1$m49, noqty_prop_import:= ans1$N/ans5$N]
-  report6 <- report6[m49 %in% ans3$m49, noqty_prop_reexport:=ans3$N/ans7$N]
-  report6 <- report6[m49 %in% ans4$m49, noqty_prop_reimport:=ans4$N/ans8$N]
-
-  report6 <- report6[,year:= rep(get('yearvalue'),nrow(report6))]
-
-  return(report6)
+  return(res)
 
 }
 

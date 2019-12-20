@@ -15,7 +15,7 @@ f <- "C:/Users/mongeau.FAODOMAIN/Dropbox/GitHub/SWS-Methodology/faoswsTrade/sand
 SetClientFiles("C:/Users/mongeau.FAODOMAIN/Documents/certificates/qa")
 
 # QA
-GetTestEnvironment(baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", token = "74fd7083-e5f8-468e-880e-ad4d8f04a819")
+GetTestEnvironment(baseUrl = "https://hqlqasws1.hq.un.fao.org:8181/sws", token = "8be2b352-b209-4a2e-8b2f-618e6aae4b46")
 
 
 
@@ -74,7 +74,7 @@ setcolorder(d_imports, c("geographicAreaM49", "measuredElementTrade", "measuredI
 
 
 d_exports <-
-  load_data(xlsfile = f, sheet = "Export values") %>%
+  load_data(xlsfile = f, sheet = "Rervised Export values") %>%
   mutate(measuredElementTrade = "5922") %>%
   setDT()
 
@@ -90,8 +90,8 @@ k <- 0
 for (country in unique(d_upload$geographicAreaM49)) {
   print(k <- k + 1) ; flush.console()
   out[[k]] <- SaveData("trade", "total_trade_cpc_m49", d_upload[geographicAreaM49 == country])
-  if (nrow(stats$warnings) > 0) {
-    stop("XXX")
-  }
+  #if (nrow(out$warnings) > 0) {
+  #  stop("XXX")
+  #}
 }
 

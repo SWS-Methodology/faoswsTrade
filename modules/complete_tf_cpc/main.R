@@ -16,7 +16,8 @@
 ##' performed in the `complete_tf_cpc` module. For a narrative version of
 ##' the module's approach, please see its main document.
 
-PLUGIN_VERSION <- 162
+# format(Sys.time(), "%F-%H-%M")
+PLUGIN_VERSION <- "2019-12-20-14-12"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -123,6 +124,7 @@ options(max.print = 99999L, scipen = 999)
 # Development (SWS-outside) mode addons ####
 if (faosws::CheckDebug()){
   set_sws_dev_settings(dev_sws_set_file)
+  HS_DESCR <- "https://comtrade.un.org/Data/cache/classificationHS.json"
 } else {
   # In order to have all columns aligned. Issue #119
   options(width = 1000L)
@@ -132,6 +134,9 @@ if (faosws::CheckDebug()){
     swsContext.username,
     regexpr("(?<=/).+$", swsContext.username, perl = TRUE)
   )
+
+  # XXX: this could/should be an SWS datatable
+  HS_DESCR <- "/srv/shiny-server/outliers/files/classificationHS.json"
 
   options(error = function(){
     dump.frames()
@@ -254,9 +259,50 @@ flog.info("HS chapters to be selected:", hs_chapters,  capture = TRUE)
 # TODO: there are basic checks on the tables (mainly that they have
 # data), but more detailed checks should be needed (see #132)
 
+trademap_year <- ReadDatatable(paste0("ess_trademap_", year))
 
+# If not available, will have zero rows.
+# General mapping will be done only the first time to integrate year-1.
+trademap_year_available <- nrow(trademap_year) > 0
+
+if (trademap_year_available == FALSE) {
+  # Now, check whether a table for previous year actually exists...
+  if (paste0("ess_trademap_", year - 1) %in% FetchDatatableNames()) {
+
+    trademap_year <- ReadDatatable(paste0("ess_trademap_", year - 1))
+
+    # ... if it does, copy previous one, and save
+    if (nrow(trademap_year) > 0) {
+      trademap_year[, year := year + 1]
+    }
+  }
+}
+
+# The general mapping procedure uses FAO area codes, so converting M49
+# to FAL. At some point, this will need to be changed (use always M49)
+trademap_year <-
+  merge(
+    trademap_year,
+    as.data.table(m49faomap)[,
+      .(m49 = as.character(m49), fao)
+    ],
+    by.x = "area",
+    by.y = "m49",
+    all.x = TRUE
+  )
+
+# FIX M49/FAO areas conversions
+trademap_year[area == "1248", fao := 41]
+trademap_year[area == "250",  fao := 68]
+trademap_year[area == "380",  fao := 106]
+trademap_year[area == "578",  fao := 162]
+trademap_year[area == "756",  fao := 211]
+trademap_year[area == "840",  fao := 231]
+
+setnames(trademap_year, c("area", "fao"), c("m49", "area"))
 
 if (!only_pre_process) {
+
 ##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
 ##' quantity units) in Tariffline data into intelligible unit of measurement,
 ##' which correspond to the standards of quantity recommended by the *World
@@ -323,24 +369,26 @@ if (!only_pre_process) {
       .(hs6 = as.integer(hs2012_code), hs2012_code, faostat_code)
     ]
 
+  if (trademap_year_available == FALSE) {
+
 ##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
-  flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
-  add_map <- ReadDatatable('hsfclmap4')
+    flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
+    add_map <- ReadDatatable('hsfclmap4')
 
-  stopifnot(nrow(add_map) > 0)
+    stopifnot(nrow(add_map) > 0)
 
-  add_map <- add_map[!is.na(year) & !is.na(reporter_fao) & !is.na(hs)]
+    add_map <- add_map[!is.na(year) & !is.na(reporter_fao) & !is.na(hs)]
 
-  add_map[, hs := stringr::str_replace_all(hs, ' ', '')]
+    add_map[, hs := stringr::str_replace_all(hs, ' ', '')]
 
-  add_map[hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0', hs := paste0("0", hs)]
+    add_map[hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0', hs := paste0("0", hs)]
 
-  ## XXX change some FCL codes that are not valid
-  add_map[fcl == 389, fcl := 390]
-  add_map[fcl == 654, fcl := 653]
+    ## XXX change some FCL codes that are not valid
+    add_map[fcl == 389, fcl := 390]
+    add_map[fcl == 654, fcl := 653]
 
-  setkeyv(add_map, c("reporter_fao", "flow", "hs", "year"))
+    setkeyv(add_map, c("reporter_fao", "flow", "hs", "year"))
 
 ##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
 ##' used to archive information existing in the previous trade system
@@ -359,14 +407,15 @@ if (!only_pre_process) {
 ##' condition that the`startyear` and `endyear` of the HS to FCL links
 ##' should satisfy the condition: $startyear <= year <= endyear$.
 
-  flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
-  if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
-    hsfclmap3 <- readRDS(file.path(Sys.getenv("R_SWS_SHARE_PATH"), "trade/datatables/hsfclmap5.rds"))
-  } else {
-    hsfclmap3 <- ReadDatatable('hsfclmap5')
-  }
+    flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
+    if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
+      hsfclmap3 <- readRDS(file.path(Sys.getenv("R_SWS_SHARE_PATH"), "trade/datatables/hsfclmap5.rds"))
+    } else {
+      hsfclmap3 <- ReadDatatable('hsfclmap5')
+    }
 
-  stopifnot(nrow(hsfclmap3) > 0)
+    stopifnot(nrow(hsfclmap3) > 0)
+  }
 
 ##' - `force_mirroring`: Datatables for those reported that need to be
 ##' treated as non-reporters as mirroring is required.
@@ -701,176 +750,179 @@ to_mirror_raw <- bind_rows(
 
 if (only_pre_process) stop("Stop after reports on raw data")
 
+if (trademap_year_available == FALSE) {
+
 ##' 1. Apply explicit corrections to the HS-FCL mapping.
 
-#data("hsfclmap3", package = "hsfclmap", envir = environment())
-# NOTE: it is pulling now v5
-# FCL, startyear, endyear codes can be overwritten by corrections
+  #data("hsfclmap3", package = "hsfclmap", envir = environment())
+  # NOTE: it is pulling now v5
+  # FCL, startyear, endyear codes can be overwritten by corrections
 
-hsfclmap3[!is.na(correction_fcl), fcl := correction_fcl]
+  hsfclmap3[!is.na(correction_fcl), fcl := correction_fcl]
 
-hsfclmap3[!is.na(correction_startyear), startyear := correction_startyear]
+  hsfclmap3[!is.na(correction_startyear), startyear := correction_startyear]
 
-hsfclmap3[!is.na(correction_endyear), endyear := correction_endyear]
+  hsfclmap3[!is.na(correction_endyear), endyear := correction_endyear]
 
-hsfclmap3[, grep('correction', names(hsfclmap3)) := NULL]
+  hsfclmap3[, grep('correction', names(hsfclmap3)) := NULL]
 
 ##' 1. Extend the `endyear` for those combinations of `area` / `flow` /
 ##' `fromcode` / `tocode` for which `endyear` < `year`.
 
-# Extend endyear to 2050
-hsfclmap3[, maxy := max(endyear), .(area, flow, fromcode, tocode)]
+  # Extend endyear to 2050
+  hsfclmap3[, maxy := max(endyear), .(area, flow, fromcode, tocode)]
 
-hsfclmap3[, extend := ifelse(maxy < 2050, TRUE, FALSE), .(area, flow, fromcode, tocode)]
+  hsfclmap3[, extend := ifelse(maxy < 2050, TRUE, FALSE), .(area, flow, fromcode, tocode)]
 
-hsfclmap3[endyear == maxy & extend, endyear := 2050]
+  hsfclmap3[endyear == maxy & extend, endyear := 2050]
 
-hsfclmap3[, c("maxy", "extend") := NULL]
-# / Extend endyear to 2050
+  hsfclmap3[, c("maxy", "extend") := NULL]
+  # / Extend endyear to 2050
 
 
-# ADD UNMAPPED CODES
+  # ADD UNMAPPED CODES
 
-# Check that all FCL codes are valid
+  # Check that all FCL codes are valid
 
-fcl_diff <- setdiff(unique(add_map$fcl), fcl_codes)
+  fcl_diff <- setdiff(unique(add_map$fcl), fcl_codes)
 
-fcl_diff <- fcl_diff[!is.na(fcl_diff)]
+  fcl_diff <- fcl_diff[!is.na(fcl_diff)]
 
-fcl_diff <- setdiff(fcl_diff, 0)
+  fcl_diff <- setdiff(fcl_diff, 0)
 
-if (length(fcl_diff) > 0) {
-  warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
-}
+  if (length(fcl_diff) > 0) {
+    warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
+  }
 
-# Check that years are in a valid range
+  # Check that years are in a valid range
 
-if (min(add_map$year) < 2000) {
-  warning('The minimum year should not be lower than 2000.')
-}
+  if (min(add_map$year) < 2000) {
+    warning('The minimum year should not be lower than 2000.')
+  }
 
-if (max(add_map$year) > as.numeric(format(Sys.Date(), '%Y'))) {
-  warning('The maximum year should not be greater than the current year.')
-}
+  if (max(add_map$year) > as.numeric(format(Sys.Date(), '%Y'))) {
+    warning('The maximum year should not be greater than the current year.')
+  }
 
-# Check that there are no duplicate codes
+  # Check that there are no duplicate codes
 
-if (nrow(add_map[, .N, .(reporter_fao, year, flow, hs)][N > 1]) > 0) {
-  warning('Removing duplicate HS codes by reporter/year/flow.')
-  
-  add_map[, `:=`(n = .N, hs_ext_perc = sum(!is.na(hs_extend))/.N), .(reporter_fao, year, flow, hs)]
+  if (nrow(add_map[, .N, .(reporter_fao, year, flow, hs)][N > 1]) > 0) {
+    warning('Removing duplicate HS codes by reporter/year/flow.')
+    
+    add_map[, `:=`(n = .N, hs_ext_perc = sum(!is.na(hs_extend))/.N), .(reporter_fao, year, flow, hs)]
 
-  # Prefer cases where hs_extend is available
-  add_map <- add_map[hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1)]
+    # Prefer cases where hs_extend is available
+    add_map <- add_map[hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1)]
 
-  add_map[, c("n", "hs_ext_perc") := NULL]
-}
+    add_map[, c("n", "hs_ext_perc") := NULL]
+  }
 
-# Raise warning if countries were NOT in mapping.
+  # Raise warning if countries were NOT in mapping.
 
-if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
-  warning('Some countries were not in the original mapping.')
-}
+  if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
+    warning('Some countries were not in the original mapping.')
+  }
 
-add_map <-
-  add_map[,
-    .(area = reporter_fao,
-      flow,
-      fromcode = gsub(' ', '', hs),
-      tocode = gsub(' ', '', hs),
-      fcl = as.numeric(fcl),
-      startyear = year,
-      endyear = 2050L,
-      recordnumb = NA_integer_,
-      area_name = reporter_name
-    )
-  ]
+  add_map <-
+    add_map[,
+      .(area = reporter_fao,
+        flow,
+        fromcode = gsub(' ', '', hs),
+        tocode = gsub(' ', '', hs),
+        fcl = as.numeric(fcl),
+        startyear = year,
+        endyear = 2050L,
+        recordnumb = NA_integer_,
+        area_name = reporter_name
+      )
+    ]
 
-max_record <- max(hsfclmap3$recordnumb)
+  max_record <- max(hsfclmap3$recordnumb)
 
-add_map$recordnumb <- (max_record + 1):(max_record + nrow(add_map))
+  add_map$recordnumb <- (max_record + 1):(max_record + nrow(add_map))
 
 ##' 1. Add additional codes that were not present in the HS-FCL
 ##' original mapping file.
 
-hsfclmap3 <- rbind(add_map, hsfclmap3)
+  hsfclmap3 <- rbind(add_map, hsfclmap3)
 
-hsfclmap3[, `:=`(startyear = as.integer(startyear), endyear = as.integer(endyear))]
+  hsfclmap3[, `:=`(startyear = as.integer(startyear), endyear = as.integer(endyear))]
 
-# / ADD UNMAPPED CODES
+  # / ADD UNMAPPED CODES
 
-# XXX: bring back
-#flog.info("HS->FCL mapping table preview:",
-#          rprt_glimpse0(hsfclmap3), capture = TRUE)
+  # XXX: bring back
+  #flog.info("HS->FCL mapping table preview:",
+  #          rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-# XXX: bring back
-#rprt(hsfclmap3, "hsfclmap", year)
+  # XXX: bring back
+  #rprt(hsfclmap3, "hsfclmap", year)
 
 ##' 1. Keep HS-FCL links for which `startyear` <= `year` & `endyear` >= `year`
 
-hsfclmap <- hsfclmap3[startyear <= year & endyear >= year]
+  hsfclmap <- hsfclmap3[startyear <= year & endyear >= year]
 
-hsfclmap3 <- tbl_df(hsfclmap3)
+  hsfclmap3 <- tbl_df(hsfclmap3)
 
-hsfclmap[, c("startyear", "endyear") := NULL]
+  hsfclmap[, c("startyear", "endyear") := NULL]
 
-# Workaround issue #123
-hsfclmap[, fromgtto := as.numeric(fromcode) > as.numeric(tocode)]
+  # Workaround issue #123
+  hsfclmap[, fromgtto := as.numeric(fromcode) > as.numeric(tocode)]
 
-from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
+  from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
 
-if (length(from_gt_to) > 0)
-  flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
-                 paste0(from_gt_to, collapse = ", ")))
+  if (length(from_gt_to) > 0)
+    flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
+                   paste0(from_gt_to, collapse = ", ")))
 
-hsfclmap <- hsfclmap[fromgtto == FALSE][, fromgtto := NULL]
+  hsfclmap <- hsfclmap[fromgtto == FALSE][, fromgtto := NULL]
 
-stopifnot(nrow(hsfclmap) > 0)
+  stopifnot(nrow(hsfclmap) > 0)
 
-hsfclmap <- tbl_df(hsfclmap)
+  hsfclmap <- tbl_df(hsfclmap)
 
-flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
+  flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
 
 ##' 1. Generate HS to FCL map at HS6 level (if switched on)
 
-if (generate_hs6mapping) {
+  if (generate_hs6mapping) {
 
 # hs6fclmap ####
 
-  flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
+    flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
 
 ##'     1. Universal (all years) HS6 mapping table.
 
-  flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
+    flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
 
-  hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+    hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
 
 ##'     1. Current year specific HS6 mapping table.
 
-  flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
+    flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
 
-  hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+    hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 
-  hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
-    filter_(~fcl_links == 1L) %>%
-    distinct()
+    hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
+      filter_(~fcl_links == 1L) %>%
+      distinct()
 
-} else {
+  } else {
 
-  # A dummy zero-row dataframe needs to be created
-  hs6fclmap <-
-    data_frame(
-      reporter  = integer(),
-      flow      = integer(),
-      hs6       = integer(),
-      fcl       = double(),
-      fcl_links = integer()
-    )
+    # A dummy zero-row dataframe needs to be created
+    hs6fclmap <-
+      data_frame(
+        reporter  = integer(),
+        flow      = integer(),
+        hs6       = integer(),
+        fcl       = double(),
+        fcl_links = integer()
+      )
+  }
+
+  # XXX: bring back
+  #rprt(hs6fclmap, "hs6fclmap")
 
 }
-
-# XXX: bring back
-#rprt(hs6fclmap, "hs6fclmap")
 
 ##' # Specific operations on Eurostat data
 
@@ -892,54 +944,96 @@ esdata <- esdata %>%
 ##' 1. Remove in ES those reporters with area codes that are not included in
 ##' MDB commodity mapping area list.
 
-##+ es-treat-unmapped
-esdata_not_area_in_fcl_mapping <- esdata %>%
-  filter_(~!(reporter %in% unique(hsfclmap$area)))
+if (trademap_year_available == FALSE) {
+  ##+ es-treat-unmapped
+  esdata_not_area_in_fcl_mapping <- esdata %>%
+    filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-# XXX: bring back
-#rprt_writetable(esdata_not_area_in_fcl_mapping)
+  # XXX: bring back
+  #rprt_writetable(esdata_not_area_in_fcl_mapping)
 
-esdata <- filter_(esdata, ~reporter %in% unique(hsfclmap$area))
+  esdata <- filter_(esdata, ~reporter %in% unique(hsfclmap$area))
+} else {
+  esdata <- filter_(esdata, ~reporter %in% unique(trademap_year$area))
+}
 
-flog.info("Records after removing areas not in HS->FCL map: %s", nrow(esdata))
+flog.info("ES records after removing areas not in HS->FCL map: %s", nrow(esdata))
 
-# ES trade data mapping to FCL ####
-message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
+setDT(esdata)
+
+esdata[, map_src := NA_character_]
+
+if (nrow(trademap_year) > 0) {
+  esdata <-
+    merge(
+      esdata,
+      trademap_year[, .(area, hs, flow, recordnumb = -1, fcl)],
+      by.x = c("reporter", "hs", "flow"),
+      by.y = c("area", "hs", "flow"),
+      all.x = TRUE
+    )
+
+  esdata[recordnumb == -1, map_src := "previous"]
+}
+
+if (trademap_year_available == FALSE) {
+
+  # In case already mapped
+  esdata_mapped <- esdata[!is.na(fcl)]
+
+  # ES trade data mapping to FCL ####
+  message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
 ##' 1. Map HS codes to FCL.
 
 ##'     1. Extract HS6-FCL mapping table.
 
-esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
+  message(sprintf("[%s] Convert Eurostat HS to FCL, HS6 LINKS", PID))
+
+  esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
 ##'     1. Extract specific HS-FCL mapping table.
 
-esdatalinks <- mapHS2FCL(tradedata   = esdata,
-                         maptable    = hsfclmap3,
-                         hs6maptable = hs6fclmap,
-                         year        = year,
-                         parallel    = multicore)
+  message(sprintf("[%s] Convert Eurostat HS to FCL, HS LINKS", PID))
+
+  esdatalinks <- mapHS2FCL(tradedata   = esdata,
+                           maptable    = hsfclmap3,
+                           hs6maptable = hs6fclmap,
+                           year        = year,
+                           parallel    = multicore)
 
 ##'     1. Use HS6-FCL or HS-FCL mapping table.
 
-esdata$map_src <- NA_character_
+  esdata <- esdata[is.na(fcl)]
 
-esdata <- add_fcls_from_links(esdata,
-                              hs6links = esdatahs6links,
-                              links    = esdatalinks)
+  esdata[, c("recordnumb", "fcl") := NULL]
+
+  esdata <- add_fcls_from_links(esdata,
+                                hs6links = esdatahs6links,
+                                links    = esdatalinks)
 
 ##'     1. Use HS6 standard for unmapped codes.
 
-esdata <- esdata %>%
-  left_join(
-    hs6standard %>% dplyr::select(-hs2012_code),
-    by = 'hs6'
-  ) %>%
-  dplyr::mutate(
-    fcl     = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl),
-    map_src = ifelse(is.na(fcl) & !is.na(faostat_code), 'standard', map_src)
-  ) %>%
-  dplyr::select(-faostat_code)
+  esdata <- esdata %>%
+    left_join(
+      hs6standard %>% dplyr::select(-hs2012_code),
+      by = 'hs6'
+    ) %>%
+    dplyr::mutate(
+      fcl_pre = fcl,
+      fcl     = ifelse(is.na(fcl_pre) & !is.na(faostat_code), faostat_code, fcl_pre),
+      map_src = ifelse(is.na(fcl_pre) & !is.na(faostat_code), 'standard', map_src)
+    ) %>%
+    dplyr::select(-faostat_code, -fcl_pre)
+
+  setDT(esdata)
+
+  esdata <- rbind(esdata_mapped, esdata, fill = TRUE)
+
+  esdata <- tbl_df(esdata)
+}
+
+esdata$fcl <- as.numeric(esdata$fcl)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 
@@ -949,6 +1043,8 @@ flog.info("Records after HS-FCL mapping: %s", nrow(esdata))
 flog.trace("[%s] ES: dropping unmapped records", PID, name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL link).
+
+esdata_unmapped <- filter_(esdata, ~is.na(fcl))
 
 esdata <- filter_(esdata, ~!(is.na(fcl)))
 
@@ -1046,50 +1142,96 @@ tldata <- tldata %>%
 # We drop reporters that are absent in MDB hsfcl map
 # because in any case we can proceed their data
 
-tldata_not_area_in_fcl_mapping <- tldata %>%
-  filter_(~!(reporter %in% unique(hsfclmap$area)))
+if (trademap_year_available == FALSE) {
+  # 252 is fine, it's "Unspecified"
+  tldata_not_area_in_fcl_mapping <- tldata %>%
+    filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-# XXX: bring back
-#rprt_writetable(tldata_not_area_in_fcl_mapping)
+  # XXX: bring back
+  #rprt_writetable(tldata_not_area_in_fcl_mapping)
 
-flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
-tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
+  flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
+  tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
+} else {
+  tldata <- filter_(tldata, ~reporter %in% unique(trademap_year$area))
+}
+
+flog.info("TL records after removing areas not in HS->FCL map: %s", nrow(tldata))
+
+setDT(tldata)
+
+tldata[, map_src := NA_character_]
+
+if (nrow(trademap_year) > 0) {
+  tldata <-
+    merge(
+      tldata,
+      trademap_year[, .(area, hs, flow, recordnumb = -1, fcl)],
+      by.x = c("reporter", "hs", "flow"),
+      by.y = c("area", "hs", "flow"),
+      all.x = TRUE
+    )
+
+  tldata[recordnumb == -1, map_src := "previous"]
+}
+
+if (trademap_year_available == FALSE) {
+
+  # In case already mapped
+  tldata_mapped <- tldata[!is.na(fcl)]
 
 ##' 1. Map HS codes to FCL.
 ##+ tl_hs2fcl ####
 
+
 ##'     1. Extract HS6-FCL mapping table.
 
-tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
+  message(sprintf("[%s] Convert UNSD HS to FCL, HS6 LINKS", PID))
+
+  tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
 
 ##'     1. Extract specific HS-FCL mapping table.
 
-tldatalinks <- mapHS2FCL(tradedata   = tldata,
-                         maptable    = hsfclmap3,
-                         hs6maptable = hs6fclmap,
-                         year        = year,
-                         parallel    = multicore)
+  message(sprintf("[%s] Convert UNSD HS to FCL, HS LINKS", PID))
+
+  tldatalinks <- mapHS2FCL(tradedata   = tldata,
+                           maptable    = hsfclmap3,
+                           hs6maptable = hs6fclmap,
+                           year        = year,
+                           parallel    = multicore)
 
 ##'     1. Use HS6-FCL or HS-FCL mapping table.
 
-tldata$map_src <- NA_character_
+  tldata <- tldata[is.na(fcl)]
 
-tldata <- add_fcls_from_links(tldata,
-                              hs6links = tldatahs6links,
-                              links    = tldatalinks)
+  tldata[, c("recordnumb", "fcl") := NULL]
+
+  tldata <- add_fcls_from_links(tldata,
+                                hs6links = tldatahs6links,
+                                links    = tldatalinks)
 
 ##'     1. Use HS6 starndard for unmapped codes.
 
-tldata <- tldata %>%
-  left_join(
-    hs6standard %>% dplyr::select(-hs2012_code),
-    by = 'hs6'
-  ) %>%
-  dplyr::mutate(
-    fcl     = ifelse(is.na(fcl) & !is.na(faostat_code), faostat_code, fcl),
-    map_src = ifelse(is.na(fcl) & !is.na(faostat_code), 'standard', map_src)
-  ) %>%
-  dplyr::select(-faostat_code)
+  tldata <- tldata %>%
+    left_join(
+      hs6standard %>% dplyr::select(-hs2012_code),
+      by = 'hs6'
+    ) %>%
+    dplyr::mutate(
+      fcl_pre = fcl,
+      fcl     = ifelse(is.na(fcl_pre) & !is.na(faostat_code), faostat_code, fcl_pre),
+      map_src = ifelse(is.na(fcl_pre) & !is.na(faostat_code), 'standard', map_src)
+    ) %>%
+    dplyr::select(-faostat_code, -fcl_pre)
+
+  setDT(tldata)
+
+  tldata <- rbind(tldata_mapped, tldata, fill = TRUE)
+
+  tldata <- tbl_df(tldata)
+}
+
+tldata$fcl <- as.numeric(tldata$fcl)
 
 flog.info("Records after HS-FCL mapping: %s", nrow(tldata))
 
@@ -1100,31 +1242,112 @@ flog.trace("[%s] TL: dropping unmapped records", PID, name = "dev")
 
 ##' 1. Remove unmapped FCL codes (i.e., transactions with no HS to FCL link).
 
+tldata_unmapped <- filter_(tldata, ~is.na(fcl))
+
 tldata <- filter_(tldata, ~!is.na(fcl))
 
 flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
-#flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
-#
-#rawdata <-
-#  bind_rows(esdata, tldata) %>%
-#  dplyr::mutate(
-#    reporter = fs2m49(as.character(reporter)),
-#    partner  = fs2m49(as.character(partner)),
-#    cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
-#  ) %>%
-#  dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
-#         value, weight, qty, map_src, recordnumb) %>%
-#  group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
-#  dplyr::mutate(n = n()) %>%
-#  ungroup()
-#
-#saveRDS(
-#  rawdata,
-#  file.path(Sys.getenv("R_SWS_SHARE_PATH"),
-#            paste0("trade/validation_tool_files/tmp/rawdata_", year, ".rds"))
-#)
-#
+flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
+
+rawdata <-
+  bind_rows(esdata, tldata) %>%
+  dplyr::mutate(
+    reporter = fs2m49(as.character(reporter)),
+    partner  = fs2m49(as.character(partner)),
+    cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
+  ) %>%
+  dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
+         value, weight, qty, map_src, recordnumb) %>%
+  group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
+  dplyr::mutate(n = n()) %>%
+  ungroup() %>%
+  setDT()
+
+raw_dir <-
+  file.path(
+    Sys.getenv("R_SWS_SHARE_PATH"),
+    paste0("trade/validation_tool_files/rawtrade/", year)
+  )
+
+if (!file.exists(raw_dir)) {
+  dir.create(raw_dir)
+}
+
+for (i in unique(rawdata$reporter)) {
+  saveRDS(rawdata[reporter == i], file.path(raw_dir, paste0(i, ".rds")))
+}
+
+if (trademap_year_available == FALSE) {
+  # The result will be the final trademap
+
+  # HS descriptions
+  tmp <- RJSONIO::fromJSON(HS_DESCR)
+
+  stopifnot(length(tmp) > 0)
+
+  hs6_descr <-
+    data.table(
+      hs = sapply(tmp$results, function(x) x[['id']]),
+      description = lapply(tmp$results, function(x) x[['text']])
+    )[
+      nchar(hs) == 6,
+      .(hs6 = hs, description = str_replace(description, '^.* - *', ''))
+    ]
+
+  rm(tmp)
+  # / HS descriptions
+
+  # `reporter` is not accepted as colname in SWS datatables...
+  trademap_year_new <-
+    unique(
+      rawdata[,
+        .(year, area = reporter, flow, hs, cpc, fcl, map_src,
+          hs_description = NA_character_,
+          cpc_description = NA_character_,
+          notes = NA_character_)
+      ]
+    )
+
+  orig_names <- copy(names(trademap_year_new))
+
+  trademap_year_new[, fcl := as.character(fcl)]
+
+  trademap_year_new[, `:=`(measuredItemCPC = cpc, hs6 = substr(hs, 1, 6))]
+
+  trademap_year_new <- merge(trademap_year_new, hs6_descr, by = "hs6", all.x = TRUE)
+
+  trademap_year_new[, hs_description := description]
+
+  trademap_year_new <- faoswsUtil::nameData("trade", "completed_tf_cpc_m49", trademap_year_new)
+
+  trademap_year_new[, cpc_description := measuredItemCPC_description]
+
+  trademap_year_new <- trademap_year_new[, orig_names, with = FALSE]
+
+  changeset <- Changeset(paste0("ess_trademap_", year))
+
+  AddInsertions(changeset, trademap_year_new)
+
+  Finalise(changeset)
+
+  # NOTE: now the codes saved are the ones actually mapped. An option can be
+  # to APPEND new mapped codes to previous map, but see below:
+
+  ## XXX: This will APPEND new mapped codes with respect to previous
+  ## year map, thus it will potentially explode at some point (in the
+  ## sense that there are going to be a lot of unnecessary links)
+  #trademap_year <-
+  #  rbind(
+  #    trademap_year,
+  #    trademap_year_new[
+  #      !trademap_year_prev[,
+  #        .(area, flow, hs, cpc, fcl)],
+  #      on = c("area", "flow", "hs", "cpc", "fcl")
+  #    ]
+  #  )
+}
+
 #all_unique_data_mapped <-
 #  bind_rows(esdata, tldata) %>%
 #  dplyr::select(year, rep_fao = reporter, flow, hs, fcl) %>%

@@ -1,6 +1,4 @@
-
 ##'
-##' **Author: Carlo Del Bello**
 ##'
 ##' **Description:**
 ##'
@@ -28,17 +26,17 @@ library(dplyr)
 library(faoswsUtil)
 library(faoswsStandardization)
 library(faoswsFlag)
-
+library(openxlsx)
 
 # ## set up for the test environment and parameters
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
 
 if(CheckDebug()){
   message("Not on server, so setting up environment...")
-
+  
   library(faoswsModules)
   SETT <- ReadSettings("modules/trade_outlier_detection/sws.yml")
-
+  
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters
   SetClientFiles(dir = SETT[["certdir"]])
@@ -73,11 +71,8 @@ geoKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49",
 
 
 ##Select the countries based on the user input parameter
-selectedGEOCode =
-  switch(geoM49,
-         "session" = sessionCountries,
-         "all" = selectedCountries)
 
+selectedGEOCode =sessionCountries
 
 
 itemKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredItemCPC")
@@ -132,70 +127,105 @@ data=normalise(data, areaVar = "geographicAreaM49",
 
 
 trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49",data)
-# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrade,Year) %>% mutate(sumvalue=sum(Value,na.rm=T))
-# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrade) %>% mutate(Meansumvalue=mean(sumvalue[Year<2014],na.rm=T))
-# trade<- trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade) %>% mutate(Meanold=mean(Value[Year<2014],na.rm=T))
-# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrademeasuredItemCPC,Year) %>% mutate(relevance=Meanold)
+# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrade,Year)%>% dplyr::mutate(sumvalue=sum(Value,na.rm=T))
+# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrade)%>% dplyr::mutate(Meansumvalue=mean(sumvalue[Year<2014],na.rm=T))
+# trade<- trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade)%>% dplyr::mutate(Meanold=mean(Value[Year<2014],na.rm=T))
+# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrademeasuredItemCPC,Year)%>% dplyr::mutate(relevance=Meanold)
 # trade <- trade %>% setDT %>% dcast(geographicAreaM49 + Item + Year ~  Element, value.var = c("Value","Method"))
-# trade<- trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade) %>% mutate(Meanold=mean(Value[Year<2014],na.rm=T))
+# trade<- trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade)%>% dplyr::mutate(Meanold=mean(Value[Year<2014],na.rm=T))
 
 trade$Value[trade$Value==0]<-NA # needed to remove NA from the mean, will be restored later
 
 interval<-(startYear-1):(startYear-window)
 
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade) %>% mutate(Meanold=mean(Value[timePointYears%in% interval],na.rm=T))
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC) %>% mutate(MeanoldUV=mean(Value[timePointYears%in% interval & grepl("Unit Value",measuredElementTrade_description)==T],na.rm=T))
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade)%>% dplyr::mutate(Meanold=mean(Value[timePointYears%in% interval],na.rm=T))
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanoldUV=mean(Value[timePointYears%in% interval & grepl("Unit Value",measuredElementTrade_description)==T],na.rm=T))
+
+
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC, timePointYears)%>% dplyr::mutate(Quant2014_16Imp=sum(Value[measuredElementTrade==5610]))
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC, timePointYears)%>% dplyr::mutate(Quant2014_16Exp=sum(Value[measuredElementTrade==5910]))
+
+trade=data.table(trade)
+trade[, Quantity :=  ifelse(measuredElementTrade %in% c("5608","5610","5630","5622")
+                            ,Quant2014_16Imp,Quant2014_16Exp
+)]
+
+trade[,"Quant2014_16Imp"]<-NULL
+trade[,"Quant2014_16Exp"]<-NULL
+
+#############################
+
+#######Added by Valdivia
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanUV2014_17Imp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5630],na.rm=T))
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanUV2014_17Exp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5930],na.rm=T))
+
+trade=data.table(trade)
+trade[, MeanUV :=  ifelse(measuredElementTrade %in% c("5608","5610","5630","5622")
+                                 ,MeanUV2014_17Imp,MeanUV2014_17Exp
+)]
+
+trade[,"MeanUV2014_17Imp"]<-NULL
+trade[,"MeanUV2014_17Exp"]<-NULL
+
+
+
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanQuant2014_17Imp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5610],na.rm=T))
+trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanQuant2014_17Exp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5910],na.rm=T))
+
+trade=data.table(trade)
+trade[, MeanQuant :=  ifelse(measuredElementTrade %in% c("5608","5610","5630","5622")
+                                    ,MeanQuant2014_17Imp,MeanQuant2014_17Exp
+)]
+
+trade[,"MeanQuant2014_17Imp"]<-NULL
+trade[,"MeanQuant2014_17Exp"]<-NULL
+
 
 
 trade$Value[is.na(trade$Value)]<-0
 
 # RELEVANCE
-#trade <-trade %>% group_by(geographicAreaM49) %>% mutate(sumflow=sum([Year<2014 & Year>2010],na.rm=T))
+#trade <-trade %>% group_by(geographicAreaM49)%>% dplyr::mutate(sumflow=sum([Year<2014 & Year>2010],na.rm=T))
 
 # imp<-trade[grep("Import",trade$Element),]
 # exp<-trade[grep("Export",trade$Element),]
 
 ### qty outlier
 
-trade <- trade %>%  mutate(ratio=(Value/Meanold))
-# trade <- trade %>%  group_by(geographicAreaM49,measuredItemCPC,timePointYears) %>% mutate(ratioUV=ratio[grepl("Unit Value",measuredElementTrade_description)==T])
-#
-# trade <- trade %>%   mutate(bigchangeQTY= (ratio>4 | ratio<0.1) & abs(Value-Meanold)>1000 & grepl("Quantity",Element)==T & Year>2013)
+trade <- trade %>% dplyr::mutate(ratio=(Value/Meanold))
 
-trade <- trade %>%   mutate(bigchangeUV= (ratio>4 | ratio<0.1)  & grepl("Unit Value",measuredElementTrade_description)==T & timePointYears>startYear) # these thresholds roughly match the 1th and 99th percentiles of thempirical distributions
+# trade <- trade %>%  group_by(geographicAreaM49,measuredItemCPC,timePointYears)%>% dplyr::mutate(ratioUV=ratio[grepl("Unit Value",measuredElementTrade_description)==T])
+#
+# trade <- trade %>% dplyr::mutate(bigchangeQTY= (ratio>4 | ratio<0.1) & abs(Value-Meanold)>1000 & grepl("Quantity",Element)==T & Year>2013)
+
+#Lower threshold changed from 0.1 to 0.25
+
+trade <- trade %>% dplyr::mutate(bigchangeUV= (ratio>4 | ratio<0.25)  & grepl("Unit Value",measuredElementTrade_description)==T & timePointYears>=startYear & timePointYears<=endYear ) # these thresholds roughly match the 1th and 99th percentiles of thempirical distributions
+
+#######Added by Valdivia
+trade[,"MeanoldUV"]<-NULL
+trade[,"Meanold"]<-NULL
+trade[,"timePointYears_description"]<-NULL
+
+
+data2<-data[,c("geographicAreaM49", "geographicAreaM49_description", "measuredItemCPC", "measuredItemCPC_description", "measuredElementTrade", "measuredElementTrade_description", "timePointYears", "Value", "flagObservationStatus", "flagMethod", "Quantity", "MeanQuant", "MeanUV", "ratio", "bigchangeUV")]
+trade<-setcolorder(trade, data2)
+####END ADDED VALDIVIA
 
 outList <- trade %>% filter(bigchangeUV==T)
 
 setDT(outList)
+outList$measuredItemCPC=as.character(outList$measuredItemCPC)
 
-outList[,timePointYears_description := NULL]
+outList$measuredItemCPC=paste0("B", outList$measuredItemCPC)
+
+
+#outList[,timePointYears_description := NULL]
 
 bodyOutliers= paste("The Email contains a list of trade outliers based on Unit Value",
                     sep='\n')
 
 sendMailAttachment(outList,"outlierList",bodyOutliers)
-#
-# imp<-trade[grep("Import",trade$Element),]
-# exp<-trade[grep("Export",trade$Element),]
-# imp<-imp %>% filter(measuredElementTrade !=5622)
-# exp<-exp %>% filter(measuredElementTrade !=5922)
-#
-#
-# imp <- imp %>% group_by(geographicAreaM49,measuredItemCPC,Year) %>% mutate(bigchange_both= any(bigchangeQTY==T) & any(bigchangeUV==T))
-# imp <-imp %>% group_by(geographicAreaM49,measuredItemCPC,Year) %>% mutate(Unit_Value=mean(Value[grepl("Unit Value",Element)==T]))
-# imp[,16]<-NULL
-#
-# exp <- exp %>% group_by(geographicAreaM49,measuredItemCPC,Year) %>% mutate(bigchange_both= any(bigchangeQTY==T) & any(bigchangeUV==T))
-# exp <-exp %>% group_by(geographicAreaM49,measuredItemCPC,Year) %>% mutate(Unit_Value=mean(Value[grepl("Unit Value",Element)==T]))
-# exp[,16]<-NULL
-#
-#
-#
-# imp %>%  filter(grepl("Unit Value",Element)==F & bigchange_both==T) %>% write.csv(file="exp_outl.csv")
-# exp %>%  filter(grepl("Unit Value",Element)==F & bigchange_both==T) %>% write.csv(file="imp_outl.csv")
-#
 
 
 
-#prova<- albania %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade,Year) %>%
-#  complete(nesting(geographicAreaM49,measuredItemCPC,measuredElementTrade,Year))

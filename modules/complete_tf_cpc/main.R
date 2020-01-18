@@ -2029,6 +2029,8 @@ for (i in c('status', 'method')) {
 flog.trace("[%s] Complete trade flow CPC", PID, name = "dev")
 complete_trade_flow_cpc <- tradedata %>%
   filter_(~fcl != 1181) %>% ## Subsetting out bees
+  # 5000 is, e.g., world (here reporter is in FAL)
+  filter_(~reporter < 1000) %>%
   select_(~-fcl) %>%
   filter_(~!(is.na(cpc))) %>%
   transmute_(geographicAreaM49Reporter = ~reporterM49,
@@ -2608,11 +2610,17 @@ complete_trade_flow_cpc[,
   c("flow", "unit", "correction_metadata_qty",
     "correction_metadata_value", "correction_metadata_uv") := NULL]
 
-## Exclude by Tp criteria
-#
-#flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
-#
-#if (year == 2017L) {
+apply_tp_criterion <-
+  ReadDatatable("ess_trade_apply_tp_criterion",
+                where = paste0("year IN ('", year, "')"))
+
+apply_tp_criterion <- apply_tp_criterion[toupper(apply) == "TRUE"]
+
+# Exclude by Tp criteria
+
+flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
+
+#if (nrow(apply_tp_criterion) > 0) {
 #
 #  mirrored_aggregated_total <-
 #    complete_trade_flow_cpc[
@@ -2633,7 +2641,7 @@ complete_trade_flow_cpc[,
 #  allReportersDim_tot <-
 #    Dimension(
 #      name = "geographicAreaM49",
-#      keys = unique(mirrored_aggregated_total$geographicAreaM49)
+#      keys = c(na.omit(unique(mirrored_aggregated_total$geographicAreaM49)))
 #    )
 #
 #  allElementsDim_tot <-
@@ -2677,12 +2685,12 @@ complete_trade_flow_cpc[,
 #      by = c('geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
 #    )
 #
-#  # FIXME:
-#  countries_to_apply_tp_criterion <-
-#    c(84,
-#      44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
-#      446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
-#      266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
+#  ## FIXME:
+#  #countries_to_apply_tp_criterion <-
+#  #  c(84,
+#  #    44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
+#  #    446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
+#  #    266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
 #
 #  exclude_from_mirroring <-
 #    mirrored_to_compare[,
@@ -2695,11 +2703,13 @@ complete_trade_flow_cpc[,
 #      ),
 #      .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
 #    ][,
+#        # low == n means that both elements of a flow are low (e.g.,
+#        # import quantity and monetary values are both low). If only
+#        # one of the elements is low, that is an outlier, not bad TP.
 #        exclude := (low == n & big_qty == TRUE)
 #    ][
-#      # FIXME:
-#      timePointYears == 2017 &
-#        geographicAreaM49 %in% countries_to_apply_tp_criterion
+#      timePointYears == year &
+#        geographicAreaM49 %in% apply_tp_criterion$area
 #    ][,
 #      .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
 #    ]
@@ -2737,15 +2747,8 @@ complete_trade_flow_cpc[,
 #      complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
 #  }
 #}
-#
-## / Exclude by Tp criteria
 
-
-
-
-
-
-
+# / Exclude by Tp criteria
 
 
 if (corrections_exist) {

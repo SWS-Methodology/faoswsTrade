@@ -494,6 +494,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
   }
 
   esdata <- esdata[chapter %in% chapters]
+
 } else {
   esdata <- ReadDatatable(
     paste0("ce_combinednomenclature_unlogged_", year),
@@ -1248,6 +1249,104 @@ tldata <- filter_(tldata, ~!is.na(fcl))
 
 flog.info("TL records after removing non-mapped HS codes: %s", nrow(tldata))
 
+
+if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
+  # Generate unmapped trademap
+  unmapped_trademap <-
+    dplyr::bind_rows(
+      dplyr::select(esdata_unmapped, year, reporter, flow, hs),
+      dplyr::select(tldata_unmapped, year, reporter, flow, hs)
+    ) %>%
+    dplyr::distinct() %>%
+    setDT()
+
+  unmapped_trademap <-
+    unmapped_trademap[,
+      .(year, area = as.character(reporter), flow, hs,
+        cpc = NA_character_, fcl = NA_character_, map_src = NA_character_,
+        hs_description = NA_character_, cpc_description = NA_character_,
+        notes = NA_character_, hs6 = substr(hs, 1, 6)
+      )
+    ]
+
+  unmapped_trademap <-
+    nameData('faostat_one', 'total_trade_faostat', unmapped_trademap)
+
+  setnames(unmapped_trademap, 'geographicAreaFS_description', 'country_name')
+
+  # HS descriptions (XXX: this is repeated somewhere below)
+  tmp <- RJSONIO::fromJSON(HS_DESCR)
+
+  stopifnot(length(tmp) > 0)
+
+  hs6_descr <-
+    data.table(
+      hs = sapply(tmp$results, function(x) x[['id']]),
+      hs6_description = lapply(tmp$results, function(x) x[['text']])
+    )[
+      nchar(hs) == 6,
+      .(hs6 = hs, hs6_description = str_replace(hs6_description, '^.* - *', ''))
+    ]
+
+  rm(tmp)
+  # / HS descriptions
+
+  # Extract the most common FCL for HS6. Only on tldata, as this is the one
+  # likely unmapped, though something different could be done for esdata.
+  common_fcl_hs6 <-
+    tldata %>%
+    dplyr::count(hs6 = substr(hs, 1, 6), suggested_fcl = fcl) %>%
+    dplyr::arrange(-n) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-n) %>%
+    dplyr::left_join(hs6_descr, by = 'hs6') %>%
+    setDT()
+
+  unmapped_trademap <-
+    merge(
+      unmapped_trademap,
+      common_fcl_hs6,
+      by = 'hs6',
+      all.x = TRUE
+    )
+
+  unmapped_trademap[!is.na(hs6_description), hs_description := hs6_description]
+
+  unmapped_trademap[, c('geographicAreaFS', 'hs6', 'hs6_description') := NULL]
+
+  unmapped_trademap[,
+    measuredItemCPC := fcl2cpc(sprintf("%04d", suggested_fcl), version = "2.1")
+  ]
+
+  unmapped_trademap <-
+    nameData('trade', 'completed_tf_cpc_m49', unmapped_trademap)
+
+  setnames(
+    unmapped_trademap,
+    c('measuredItemCPC', 'measuredItemCPC_description'),
+    c('suggested_cpc', 'suggested_cpc_description')
+  )
+
+  # So that the leading 0 doesn't disappear in Excel.
+  # TODO: An actual Excel file can be sent, with HS as char.
+  unmapped_trademap[, hs := paste0("'", hs)]
+  unmapped_trademap[, suggested_cpc := paste0("'", suggested_cpc)]
+
+  unmapped_csv_filename <-
+    tempfile(pattern = "unmapped_codes_", fileext = ".csv")
+
+  if (!CheckDebug()) {
+    send_mail(
+      from    = "SWS-trade-module@fao.org",
+      to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+      subject = paste0("Trade plugin: unmapped codes, year ", year),
+      body    = c(paste("Once all CPC/FCL codes are added, append the file to the ESS trademap", year, "datatable on SWS. Before doing so (and AFTER the mappping of unmapped codes is done), open the CSV file with a text editor and remove all the ' characters in front of hs and cpc (those were added so that leading zeros do not disappear). Also, remove all columns after 'notes'. Avoid inserting accented characters in the free text fields in this file: not doing so may make SWS angry."), unmapped_csv_filename)
+    )
+  }
+
+}
+
 flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
 
 rawdata <-
@@ -1499,7 +1598,7 @@ if (NROW(fcl_spec_mt_conv) > 0) {
           TRUE                                                     ~ .$qtyfcl
         )
     ) %>%
-    filter(!is.na(qtyfcl)) %>%
+    dplyr::filter(!is.na(qtyfcl)) %>%
     dplyr::mutate(qtyfcl = ifelse(qtyfcl == -1, NA, qtyfcl))
 
   tldata_not_converted <-
@@ -1593,7 +1692,7 @@ if (dollars) {
 
 ##+ tl_aggregate
 
-tldata_mid = tldata
+tldata_mid <- tldata
 
   ###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
   #
@@ -1773,7 +1872,7 @@ tradedata <- tradedata %>%
   dplyr::mutate_(cpc = ~fcl2cpc(sprintf("%04d", fcl), version = "2.1"))
 
 # Not resolve mapping fcl2cpc
-no_mapping_fcl2cpc = tradedata %>%
+no_mapping_fcl2cpc <- tradedata %>%
   select_(~fcl, ~cpc) %>%
   filter_(~is.na(cpc)) %>%
   distinct_(~fcl) %>%

@@ -1340,6 +1340,8 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
   unmapped_csv_filename <-
     tempfile(pattern = "unmapped_codes_", fileext = ".csv")
 
+  write.csv(unmapped_trademap, unapplied_csv_filename, row.names = FALSE)
+
   if (!CheckDebug()) {
     send_mail(
       from    = "SWS-trade-module@fao.org",

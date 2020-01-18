@@ -1107,7 +1107,7 @@ tldata[flow == 3L, flow := 2L]
 ##' 1. Identical combinations of `reporter` / `partner` / `commodity` /
 ##' `flow` / `year` / `qunit` are pre-aggregated.
 
-flog.trace("[%s] TL: aggreation of similar flows", PID, name = "dev")
+flog.trace("[%s] TL: aggregation of similar flows", PID, name = "dev")
 
 tldata <- preAggregateMultipleTLRows(tldata)
 

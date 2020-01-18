@@ -43,12 +43,6 @@ sapply(dir("R", full.names = TRUE), source)
 
 ##+ check_parameters
 
-# Stop if required parameters were not set
-# The out_coef was removed as a parameter given that the
-# outlier detection/imputation was disabled.
-#stopifnot(!is.null(swsContext.computationParams$out_coef))
-stopifnot(!is.null(swsContext.computationParams$year))
-
 # E-mail addresses (without @fao.org) of people that will
 # get notified when the plugin runs successfully.
 EMAIL_RECIPIENTS <-
@@ -150,6 +144,12 @@ if (faosws::CheckDebug()){
     save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
+
+# Stop if required parameters were not set
+# The out_coef was removed as a parameter given that the
+# outlier detection/imputation was disabled.
+#stopifnot(!is.null(swsContext.computationParams$out_coef))
+stopifnot(!is.null(swsContext.computationParams$year))
 
 stopifnot(!any(is.na(USER), USER == ""))
 

@@ -1269,6 +1269,8 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
       )
     ]
 
+  unmapped_trademap[, geographicAreaFS := area]
+
   unmapped_trademap <-
     nameData('faostat_one', 'total_trade_faostat', unmapped_trademap)
 

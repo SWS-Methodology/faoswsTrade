@@ -1317,8 +1317,10 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 
   unmapped_trademap[, c('geographicAreaFS', 'hs6', 'hs6_description') := NULL]
 
-  unmapped_trademap[,
-    measuredItemCPC := fcl2cpc(sprintf("%04d", suggested_fcl), version = "2.1")
+  unmapped_trademap[
+    !is.na(suggested_fcl),
+    measuredItemCPC :=
+      fcl2cpc(stringr::str_pad(suggested_fcl, 4, 'left', 0), version = "2.1")
   ]
 
   unmapped_trademap <-

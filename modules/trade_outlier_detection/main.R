@@ -1,4 +1,6 @@
+
 ##'
+##' **Author: Carlo Del Bello**
 ##'
 ##' **Description:**
 ##'
@@ -22,21 +24,17 @@ library(faosws)
 library(data.table)
 library(faoswsUtil)
 library(sendmailR)
-library(dplyr)
-library(faoswsUtil)
-library(faoswsStandardization)
-library(faoswsFlag)
-library(openxlsx)
+
 
 # ## set up for the test environment and parameters
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
 
 if(CheckDebug()){
   message("Not on server, so setting up environment...")
-  
+
   library(faoswsModules)
   SETT <- ReadSettings("modules/trade_outlier_detection/sws.yml")
-  
+
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters
   SetClientFiles(dir = SETT[["certdir"]])
@@ -53,6 +51,14 @@ endYear = as.numeric(swsContext.computationParams$endYear)
 window = as.numeric(swsContext.computationParams$window)
 
 #endYear = as.numeric(2017)
+
+DEFAULT_THRESHOLD <- 1000L
+DEFAULT_RATIO_LOW <- 0.25 # one fourth lower
+DEFAULT_RATIO_HIGH <- 4 # four times higher
+DEFAULT_GROWTH_LOW <- -0.5 # -50%
+DEFAULT_GROWTH_HIGH <- 1 # +100%
+
+interval <- (startYear-1):(startYear-window)
 
 geoM49 = swsContext.computationParams$country_selection
 stopifnot(startYear <= endYear)
@@ -71,8 +77,12 @@ geoKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49",
 
 
 ##Select the countries based on the user input parameter
+selectedGEOCode =
+  sessionCountries
+#  switch(geoM49,
+#         "session" = sessionCountries,
+#         "all" = geoKeys)
 
-selectedGEOCode =sessionCountries
 
 
 itemKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredItemCPC")
@@ -85,7 +95,7 @@ itemKeys = itemKeys[, code]
 ##### Pull from trade data #####
 #########################################
 
-message("Pulling trade Data")
+message("TradeOUT: Pulling trade Data")
 
 #take geo keys
 geoDim = Dimension(name = "geographicAreaM49", keys = selectedGEOCode)
@@ -93,7 +103,7 @@ geoDim = Dimension(name = "geographicAreaM49", keys = selectedGEOCode)
 #Define element dimension. These elements are needed to calculate net supply (production + net trade)
 
 eleKeys <- GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredElementTrade")
-eleKeys = eleKeys[, code]
+eleKeys <- eleKeys[, code]
 
 eleDim <- Dimension(name = "measuredElementTrade", keys = eleKeys)
 
@@ -116,116 +126,71 @@ key = DatasetKey(domain = "trade", dataset = "total_trade_cpc_m49", dimensions =
 ))
 
 
+## To be able to label the outliers based on some threshold over the quantity (if the trade size of a commodity is really low, it is not
+## an interesting outlier for us), we will use the trade_outlier_country_thresholds data tables. It contains the threshold identified for each country.
+outlier_thresholds <- ReadDatatable("trade_outlier_country_thresholds")
 
 
-data = GetData(key,omitna = F, normalized=F)
-data=normalise(data, areaVar = "geographicAreaM49",
+data = GetData(key,omitna = FALSE, normalized = FALSE)
+data = normalise(data, areaVar = "geographicAreaM49",
                itemVar = "measuredItemCPC", elementVar = "measuredElementTrade",
                yearVar = "timePointYears", flagObsVar = "flagObservationStatus",
                flagMethodVar = "flagMethod", valueVar = "Value",
                removeNonExistingRecords = F)
 
 
-trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49",data)
-# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrade,Year)%>% dplyr::mutate(sumvalue=sum(Value,na.rm=T))
-# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrade)%>% dplyr::mutate(Meansumvalue=mean(sumvalue[Year<2014],na.rm=T))
-# trade<- trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade)%>% dplyr::mutate(Meanold=mean(Value[Year<2014],na.rm=T))
-# trade<- trade %>% group_by(geographicAreaM49,measuredElementTrademeasuredItemCPC,Year)%>% dplyr::mutate(relevance=Meanold)
-# trade <- trade %>% setDT %>% dcast(geographicAreaM49 + Item + Year ~  Element, value.var = c("Value","Method"))
-# trade<- trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade)%>% dplyr::mutate(Meanold=mean(Value[Year<2014],na.rm=T))
+trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, except = "timePointYears")
 
-trade$Value[trade$Value==0]<-NA # needed to remove NA from the mean, will be restored later
+#trade$Value[trade$Value==0]<-NA # needed to remove NA from the mean, will be restored later
 
-interval<-(startYear-1):(startYear-window)
+trade <- trade[order(geographicAreaM49, measuredItemCPC, measuredElementTrade, timePointYears)]
 
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC,measuredElementTrade)%>% dplyr::mutate(Meanold=mean(Value[timePointYears%in% interval],na.rm=T))
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanoldUV=mean(Value[timePointYears%in% interval & grepl("Unit Value",measuredElementTrade_description)==T],na.rm=T))
+trade[,
+  `:=`(
+    meanOld     = mean(Value[timePointYears %in% interval], na.rm = TRUE),
+    growth_rate = Value / shift(Value) - 1
+  ),
+  by = c("geographicAreaM49", "measuredItemCPC", "measuredElementTrade")
+]
 
+trade[, flow := substr(measuredElementTrade, 1, 2)]
 
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC, timePointYears)%>% dplyr::mutate(Quant2014_16Imp=sum(Value[measuredElementTrade==5610]))
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC, timePointYears)%>% dplyr::mutate(Quant2014_16Exp=sum(Value[measuredElementTrade==5910]))
+trade <- merge(trade, outlier_thresholds, by.x = "geographicAreaM49", by.y = "area", all.x = TRUE)
 
-trade=data.table(trade)
-trade[, Quantity :=  ifelse(measuredElementTrade %in% c("5608","5610","5630","5622")
-                            ,Quant2014_16Imp,Quant2014_16Exp
-)]
+trade[is.na(threshold), threshold := DEFAULT_THRESHOLD]
 
-trade[,"Quant2014_16Imp"]<-NULL
-trade[,"Quant2014_16Exp"]<-NULL
-
-#############################
-
-#######Added by Valdivia
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanUV2014_17Imp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5630],na.rm=T))
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanUV2014_17Exp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5930],na.rm=T))
-
-trade=data.table(trade)
-trade[, MeanUV :=  ifelse(measuredElementTrade %in% c("5608","5610","5630","5622")
-                                 ,MeanUV2014_17Imp,MeanUV2014_17Exp
-)]
-
-trade[,"MeanUV2014_17Imp"]<-NULL
-trade[,"MeanUV2014_17Exp"]<-NULL
+# XXX
+trade[,
+  big_qty := meanOld[grepl("Quantity \\[t\\]", measuredElementTrade_description)] > threshold,
+  by = c("geographicAreaM49", "measuredItemCPC", "flow", "timePointYears")
+]
 
 
+trade[, ratio := Value / meanOld]
 
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanQuant2014_17Imp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5610],na.rm=T))
-trade <-trade %>% group_by(geographicAreaM49,measuredItemCPC)%>% dplyr::mutate(MeanQuant2014_17Exp=mean(Value[timePointYears>=startYear & timePointYears<=endYear & measuredElementTrade==5910],na.rm=T))
+trade[,
+  outlier :=
+    grepl("Unit Value", measuredElementTrade_description) &
+      (!data.table::between(ratio, DEFAULT_RATIO_LOW, DEFAULT_RATIO_HIGH) |
+      !data.table::between(growth_rate, DEFAULT_GROWTH_LOW, DEFAULT_GROWTH_HIGH)) &
+      big_qty == TRUE &
+      timePointYears >= startYear
+]
 
-trade=data.table(trade)
-trade[, MeanQuant :=  ifelse(measuredElementTrade %in% c("5608","5610","5630","5622")
-                                    ,MeanQuant2014_17Imp,MeanQuant2014_17Exp
-)]
+#trade <- trade %>% mutate(bigchangeUV= (ratio > 4 | ratio < 0.1)  & grepl("Unit Value", measuredElementTrade_description)==T & timePointYears>startYear) # these thresholds roughly match the 1th and 99th percentiles of thempirical distributions
 
-trade[,"MeanQuant2014_17Imp"]<-NULL
-trade[,"MeanQuant2014_17Exp"]<-NULL
+outList <-
+  trade[
+    outlier == TRUE &
+    !grepl("\\bn\\.e\\.\\b|\\bnes\\b|alcohol", measuredItemCPC_description)
+  ]
 
+outList[, c("flow", "big_qty", "ratio", "outlier", "threshold") := NULL]
 
-
-trade$Value[is.na(trade$Value)]<-0
-
-# RELEVANCE
-#trade <-trade %>% group_by(geographicAreaM49)%>% dplyr::mutate(sumflow=sum([Year<2014 & Year>2010],na.rm=T))
-
-# imp<-trade[grep("Import",trade$Element),]
-# exp<-trade[grep("Export",trade$Element),]
-
-### qty outlier
-
-trade <- trade %>% dplyr::mutate(ratio=(Value/Meanold))
-
-# trade <- trade %>%  group_by(geographicAreaM49,measuredItemCPC,timePointYears)%>% dplyr::mutate(ratioUV=ratio[grepl("Unit Value",measuredElementTrade_description)==T])
-#
-# trade <- trade %>% dplyr::mutate(bigchangeQTY= (ratio>4 | ratio<0.1) & abs(Value-Meanold)>1000 & grepl("Quantity",Element)==T & Year>2013)
-
-#Lower threshold changed from 0.1 to 0.25
-
-trade <- trade %>% dplyr::mutate(bigchangeUV= (ratio>4 | ratio<0.25)  & grepl("Unit Value",measuredElementTrade_description)==T & timePointYears>=startYear & timePointYears<=endYear ) # these thresholds roughly match the 1th and 99th percentiles of thempirical distributions
-
-#######Added by Valdivia
-trade[,"MeanoldUV"]<-NULL
-trade[,"Meanold"]<-NULL
-trade[,"timePointYears_description"]<-NULL
-
-
-data2<-data[,c("geographicAreaM49", "geographicAreaM49_description", "measuredItemCPC", "measuredItemCPC_description", "measuredElementTrade", "measuredElementTrade_description", "timePointYears", "Value", "flagObservationStatus", "flagMethod", "Quantity", "MeanQuant", "MeanUV", "ratio", "bigchangeUV")]
-trade<-setcolorder(trade, data2)
-####END ADDED VALDIVIA
-
-outList <- trade %>% filter(bigchangeUV==T)
-
-setDT(outList)
-outList$measuredItemCPC=as.character(outList$measuredItemCPC)
-
-outList$measuredItemCPC=paste0("B", outList$measuredItemCPC)
-
-
-#outList[,timePointYears_description := NULL]
+outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
 
 bodyOutliers= paste("The Email contains a list of trade outliers based on Unit Value",
                     sep='\n')
 
 sendMailAttachment(outList,"outlierList",bodyOutliers)
-
-
 

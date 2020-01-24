@@ -568,6 +568,95 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
 
 stopifnot(nrow(tldata) > 0)
 
+# Bridge between the "legacy" and new UNSD data format: there are new units
+# that should be take into account, but this still needs to be done. For
+# now, convert "easy" units (1,000 kilos and grams), and set the remaining
+# ones to NA, so that they are estimated with the UV.
+# NOTE: this is done only for a subset of countries. These countries are
+# those for which the new measurement units would have a huge impact as
+# weight is missing (e.g. USA).
+use_new_data_format <-
+  ReadDatatable('ess_trade_use_new_unsd_format', where = paste("year =", year))
+
+if (nrow(use_new_data_format) > 0) {
+
+  flog.trace("[%s] Patching Tariffline data", PID, name = "dev")
+
+  if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) & !faosws::CheckDebug()) {
+
+    local_tldata_file_patch <-
+      paste0(Sys.getenv("R_SWS_SHARE_PATH"),
+             "/trade/datatables/ct_tariffline_unlogged_", year, "_PATCH.rds")
+
+    if (!file.exists(local_tldata_file_patch)) {
+      stop("Local tldata file does not exist.")
+    }
+
+    tldata_patch <- readRDS(local_tldata_file_patch)
+
+  } else {
+
+    tldata_patch <-
+      ReadDatatable(
+        table = paste0("ct_tariffline_v2_unlogged_", year),
+        columns =
+          c(
+            "refperiodid",
+            "reportercode",
+            "partnercode",
+            "flowcode",
+            "cmdcode",
+            "primaryvalue",
+            "netwgt",
+            "qty",
+            "qtyunitcode",
+            "chapter"
+          ),
+        where = paste0("chapter IN (", hs_chapters, ") AND reportercode IN (",
+                paste(shQuote(use_new_data_format$area, type = 'sh'),
+                collapse = ', '), ")")
+      )
+
+    tldata_patch <-
+      tldata_patch[,
+        .(tyear = substr(refperiodid, 1, 4), rep = as.character(reportercode),
+          flow = ifelse(grepl('M', flowcode), '1', '2'), comm = cmdcode,
+          prt = as.character(partnercode), tvalue = primaryvalue,
+          weight = netwgt, qty, qunit = as.character(qtyunitcode), chapter
+        )
+      ]
+
+    tldata_patch[qunit == -1, qunit := '1']
+
+    # The new measurement units that are easy to convert are:
+    # 15, "Weight in grams"
+    # 21, "Weight in thousand of kilograms"
+    tldata_patch[qunit == 15 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty / 1000]
+    tldata_patch[qunit == 15, `:=`(qty = weight * 1000, qunit = '8')]
+
+    tldata_patch[qunit == 21 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty * 1000]
+    tldata_patch[qunit == 21, `:=`(qty = weight / 1000, qunit = '8')]
+
+    # For the remaining units, we set them to NA
+    tldata_patch[
+      as.numeric(qunit) > 13 & (is.na(weight) | dplyr::near(weight, 0)),
+      `:=`(qty = NA_real_, weight = NA_real_, qunit = '1')
+    ]
+
+    tldata_patch[qunit > 13 & !(is.na(weight) | dplyr::near(weight, 0)), `:=`(qty = weight, qunit = '8')]
+  }
+
+  message("TRADE: original data ", nrow(tldata))
+
+  tldata <- tldata[!(rep %in% use_new_data_format$area)]
+
+  message("TRADE: unpatched data ", nrow(tldata))
+
+  tldata <- rbind(tldata, tldata_patch, fill = TRUE)
+
+  message("TRADE: patched data ", nrow(tldata))
+}
+
 #### Fix zero weights:
 # These cannot be anything but NAs
 tldata[near(weight, 0) & is.na(qty) & qunit == 1, weight := NA_real_]

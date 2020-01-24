@@ -130,6 +130,7 @@ key = DatasetKey(domain = "trade", dataset = "total_trade_cpc_m49", dimensions =
 ## an interesting outlier for us), we will use the trade_outlier_country_thresholds data tables. It contains the threshold identified for each country.
 outlier_thresholds <- ReadDatatable("trade_outlier_country_thresholds")
 
+do_not_check <- ReadDatatable("ess_trade_exclude_outlier_check")
 
 data = GetData(key,omitna = FALSE, normalized = FALSE)
 data = normalise(data, areaVar = "geographicAreaM49",
@@ -170,11 +171,12 @@ trade[, ratio := Value / meanOld]
 
 trade[,
   outlier :=
-    grepl("Unit Value", measuredElementTrade_description) &
-      (!data.table::between(ratio, DEFAULT_RATIO_LOW, DEFAULT_RATIO_HIGH) |
-      !data.table::between(growth_rate, DEFAULT_GROWTH_LOW, DEFAULT_GROWTH_HIGH)) &
-      big_qty == TRUE &
-      timePointYears >= startYear
+    grepl("Unit Value", measuredElementTrade_description) & # Only UVs
+	  !(measuredItemCPC %in% do_not_check$cpc) & # Do not check these
+      (!data.table::between(ratio, DEFAULT_RATIO_LOW, DEFAULT_RATIO_HIGH) | # Carlos'
+      !data.table::between(growth_rate, DEFAULT_GROWTH_LOW, DEFAULT_GROWTH_HIGH)) & # Growth rates
+      big_qty == TRUE & # All need to be big quantities in validated years
+      timePointYears >= startYear # Only new years
 ]
 
 #trade <- trade %>% mutate(bigchangeUV= (ratio > 4 | ratio < 0.1)  & grepl("Unit Value", measuredElementTrade_description)==T & timePointYears>startYear) # these thresholds roughly match the 1th and 99th percentiles of thempirical distributions

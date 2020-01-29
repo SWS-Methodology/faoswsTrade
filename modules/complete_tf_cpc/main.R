@@ -1252,7 +1252,6 @@ tldata <- tldata %>%
 # because in any case we can proceed their data
 
 if (trademap_year_available == FALSE) {
-  # 252 is fine, it's "Unspecified"
   tldata_not_area_in_fcl_mapping <- tldata %>%
     filter_(~!(reporter %in% unique(hsfclmap$area)))
 
@@ -1264,6 +1263,9 @@ if (trademap_year_available == FALSE) {
 } else {
   tldata <- filter_(tldata, ~reporter %in% unique(trademap_year$area))
 }
+
+# 252 is fine, it's "Unspecified"
+tldata <- filter_(tldata, ~!reporter %in% 252)
 
 flog.info("TL records after removing areas not in HS->FCL map: %s", nrow(tldata))
 

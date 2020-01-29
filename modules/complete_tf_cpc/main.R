@@ -1379,12 +1379,12 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
       )
     ]
 
-  unmapped_trademap[, geographicAreaFS := area]
+  unmapped_trademap[, geographicAreaM49 := faoswsUtil::fs2m49(area)]
 
   unmapped_trademap <-
-    nameData('faostat_one', 'total_trade_faostat', unmapped_trademap)
+    nameData('trade', 'total_trade_cpc_m49', unmapped_trademap)
 
-  setnames(unmapped_trademap, 'geographicAreaFS_description', 'country_name')
+  setnames(unmapped_trademap, 'geographicAreaM49_description', 'country_name')
 
   # HS descriptions (XXX: this is repeated somewhere below)
   tmp <- RJSONIO::fromJSON(HS_DESCR)
@@ -1425,7 +1425,7 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 
   unmapped_trademap[!is.na(hs6_description), hs_description := hs6_description]
 
-  unmapped_trademap[, c('geographicAreaFS', 'hs6', 'hs6_description') := NULL]
+  unmapped_trademap[, c('geographicAreaM49', 'hs6', 'hs6_description') := NULL]
 
   unmapped_trademap[
     !is.na(suggested_fcl),

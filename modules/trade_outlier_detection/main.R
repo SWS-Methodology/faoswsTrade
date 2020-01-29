@@ -181,18 +181,13 @@ trade[,
 
 #trade <- trade %>% mutate(bigchangeUV= (ratio > 4 | ratio < 0.1)  & grepl("Unit Value", measuredElementTrade_description)==T & timePointYears>startYear) # these thresholds roughly match the 1th and 99th percentiles of thempirical distributions
 
-outList <-
-  trade[
-    outlier == TRUE &
-    !grepl("\\bn\\.e\\.\\b|\\bnes\\b|alcohol", measuredItemCPC_description)
-  ]
+outList <- trade[outlier == TRUE]
 
-outList[, c("flow", "big_qty", "ratio", "outlier", "threshold") := NULL]
+outList[, c("flow", "big_qty", "outlier", "threshold") := NULL]
 
 outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
 
-bodyOutliers= paste("The Email contains a list of trade outliers based on Unit Value",
-                    sep='\n')
+bodyOutliers <- "The Email contains a list of trade outliers based on Unit Value"
 
-sendMailAttachment(outList,"outlierList",bodyOutliers)
+sendMailAttachment(outList, "outlierList", bodyOutliers)
 

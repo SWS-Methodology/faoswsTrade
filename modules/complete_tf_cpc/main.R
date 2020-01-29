@@ -594,6 +594,25 @@ if (nrow(use_new_data_format) > 0) {
 
     tldata_patch <- readRDS(local_tldata_file_patch)
 
+    # Special treatment for a couple of countries that were not complete on 202001
+    if (year == 2018L) {
+      flog.trace("[%s] Patching Tariffline data, AUS & MAR", PID, name = "dev")
+
+      local_tldata_file_patch_aus_mar <-
+        paste0(Sys.getenv("R_SWS_SHARE_PATH"),
+               "/trade/datatables/ct_tariffline_unlogged_", year, "_PATCH_AUS_MAR.rds")
+
+      tldata_patch_aus_mar <- readRDS(local_tldata_file_patch_aus_mar)
+
+      use_new_data_format <-
+        rbind(
+          use_new_data_format,
+          data.table(area = c('36', '504'), name = c('Australia', 'Morocco'), year = 2018L)
+        )
+
+      tldata_patch <- rbind(tldata_patch, tldata_patch_aus_mar)
+    }
+
   } else {
 
     tldata_patch <-

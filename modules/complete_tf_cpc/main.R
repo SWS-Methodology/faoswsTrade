@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2019-12-20-14-12"
+PLUGIN_VERSION <- "2020-01-29-18-18"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -151,12 +151,6 @@ if (faosws::CheckDebug()){
 #stopifnot(!is.null(swsContext.computationParams$out_coef))
 stopifnot(!is.null(swsContext.computationParams$year))
 
-stopifnot(!any(is.na(USER), USER == ""))
-
-# Read SWS module run parameters ####
-
-flog.info("Plugin version: %s", PLUGIN_VERSION)
-
 ##' # Parameters
 
 # Below the calls to `exists()` is useful if it the parameters
@@ -166,23 +160,9 @@ flog.info("Plugin version: %s", PLUGIN_VERSION)
 if (!exists('year', inherits = FALSE)) {
   year <- as.integer(swsContext.computationParams$year)
 }
-flog.info("Year: %s", year)
+flog.info("Year: %s", year, name = "dev")
 
-# ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
-# ##' the *Outlier Detection and Imputation* section.
-# # See coef argument in ?boxplot.stats
-# if (!exists('out_coef', inherits = FALSE)) {
-#   out_coef <- as.numeric(swsContext.computationParams$out_coef)
-# }
-# Note: the outlier detection/imputation is harcoded to be disabled.
-# In any case, the coefficient if left here if eventually required.
-out_coef <- 1000
-# flog.info("Coefficient for outlier detection: %s", out_coef)
-
-if (!CheckDebug()) {
-  updateInfoTable(year = year, table = 'complete_tf_runs_info',
-                  mode = 'restart')
-}
+stopifnot(!any(is.na(USER), USER == ""))
 
 reportdir <- reportdirectory(USER, year, build_id, browsedir = CheckDebug())
 report_txt <- file.path(reportdir, "report.txt")
@@ -199,6 +179,27 @@ if (general_log2console) {
 
 # Send technical log messages to a file and console
 flog.appender(appender.tee(dev_log), name = "dev")
+
+# Read SWS module run parameters ####
+
+flog.info("Plugin version: %s", PLUGIN_VERSION, name = "dev")
+
+
+# ##' - `out_coef`: coefficient for outlier detection, i.e., the `k` parameter in
+# ##' the *Outlier Detection and Imputation* section.
+# # See coef argument in ?boxplot.stats
+# if (!exists('out_coef', inherits = FALSE)) {
+#   out_coef <- as.numeric(swsContext.computationParams$out_coef)
+# }
+# Note: the outlier detection/imputation is harcoded to be disabled.
+# In any case, the coefficient if left here if eventually required.
+out_coef <- 1000
+# flog.info("Coefficient for outlier detection: %s", out_coef)
+
+if (!CheckDebug()) {
+  updateInfoTable(year = year, table = 'complete_tf_runs_info',
+                  mode = 'restart')
+}
 
 flog.info("SWS-session is run by user %s", USER, name = "dev")
 
@@ -2562,7 +2563,7 @@ if (corrections_exist) {
 
     flog.trace("[%s] Some corrections were not applied", PID, name = "dev")
 
-    warning('Some corrections were not applied. See reports.')
+    warning('Some corrections were not applied. See reports. ', unapplied_csv_filename)
     corrections_unapplied <- complete_corrected$to_drop %>%
       dplyr::mutate(year = year) %>%
       dplyr::select(-correction_metadata) %>%

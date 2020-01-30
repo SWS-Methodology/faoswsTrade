@@ -2976,6 +2976,7 @@ data.table::setcolorder(complete_trade_flow_cpc,
 # that NAs cannot have flags the system refuses to save them.
 # These NAs are unit values computed on a zero quantity. Setting
 # Value to zero.
+# FIXME: the comment above does not really hold. Check.
 complete_trade_flow_cpc[is.na(Value), Value := 0]
 
 # "official" status flag should be <BLANK> instead of X (this was a choice

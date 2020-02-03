@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-01-30-14-00"
+PLUGIN_VERSION <- "2020-02-03-12-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -370,7 +370,7 @@ if (!only_pre_process) {
       .(hs6 = as.integer(hs2012_code), hs2012_code, faostat_code)
     ]
 
-  if (trademap_year_available == FALSE) {
+  ##@ if (trademap_year_available == FALSE) {
 
 ##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
@@ -416,7 +416,7 @@ if (!only_pre_process) {
     }
 
     stopifnot(nrow(hsfclmap3) > 0)
-  }
+  ##@ }
 
 ##' - `force_mirroring`: Datatables for those reported that need to be
 ##' treated as non-reporters as mirroring is required.
@@ -860,7 +860,7 @@ to_mirror_raw <- bind_rows(
 
 if (only_pre_process) stop("Stop after reports on raw data")
 
-if (trademap_year_available == FALSE) {
+##@ if (trademap_year_available == FALSE) {
 
 ##' 1. Apply explicit corrections to the HS-FCL mapping.
 
@@ -1032,7 +1032,7 @@ if (trademap_year_available == FALSE) {
   # XXX: bring back
   #rprt(hs6fclmap, "hs6fclmap")
 
-}
+##@ }
 
 ##' # Specific operations on Eurostat data
 
@@ -1086,7 +1086,7 @@ if (nrow(trademap_year) > 0) {
   esdata[recordnumb == -1, map_src := "previous"]
 }
 
-if (trademap_year_available == FALSE) {
+if (nrow(esdata[is.na(fcl)]) > 0) {
 
   # In case already mapped
   esdata_mapped <- esdata[!is.na(fcl)]
@@ -1287,7 +1287,7 @@ if (nrow(trademap_year) > 0) {
   tldata[recordnumb == -1, map_src := "previous"]
 }
 
-if (trademap_year_available == FALSE) {
+if (nrow(tldata[is.na(fcl)]) > 0) {
 
   # In case already mapped
   tldata_mapped <- tldata[!is.na(fcl)]

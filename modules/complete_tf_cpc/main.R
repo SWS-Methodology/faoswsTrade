@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-01-29-18-18"
+PLUGIN_VERSION <- "2020-01-30-14-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -1382,11 +1382,6 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 
   unmapped_trademap[, geographicAreaM49 := faoswsUtil::fs2m49(area)]
 
-  unmapped_trademap <-
-    nameData('trade', 'total_trade_cpc_m49', unmapped_trademap)
-
-  setnames(unmapped_trademap, 'geographicAreaM49_description', 'country_name')
-
   # HS descriptions (XXX: this is repeated somewhere below)
   tmp <- RJSONIO::fromJSON(HS_DESCR)
 
@@ -1426,7 +1421,7 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 
   unmapped_trademap[!is.na(hs6_description), hs_description := hs6_description]
 
-  unmapped_trademap[, c('geographicAreaM49', 'hs6', 'hs6_description') := NULL]
+  unmapped_trademap[, c('area', 'hs6', 'hs6_description') := NULL]
 
   unmapped_trademap[
     !is.na(suggested_fcl),
@@ -1435,12 +1430,14 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
   ]
 
   unmapped_trademap <-
-    nameData('trade', 'completed_tf_cpc_m49', unmapped_trademap)
+    nameData('trade', 'total_trade_cpc_m49', unmapped_trademap)
 
   setnames(
     unmapped_trademap,
-    c('measuredItemCPC', 'measuredItemCPC_description'),
-    c('suggested_cpc', 'suggested_cpc_description')
+    c('measuredItemCPC', 'measuredItemCPC_description',
+	  'geographicAreaM49', 'geographicAreaM49_description'),
+    c('suggested_cpc', 'suggested_cpc_description',
+	  'area', 'country_name')
   )
 
   # So that the leading 0 doesn't disappear in Excel.
@@ -3081,6 +3078,31 @@ if (remove_nonexistent_transactions) {
   }
 }
 
+flog.trace("[%s] Remove unchanged flows", PID, name = "dev")
+
+complete_trade_flow_cpc[, timePointYears := as.character(timePointYears)]
+
+setnames(
+  existing_data,
+  c("Value", "flagObservationStatus", "flagMethod"),
+  c("Value_ex", "flagObservationStatus_ex", "flagMethod_ex")
+)
+
+complete_trade_flow_cpc_changed <-
+  existing_data[
+    complete_trade_flow_cpc,
+    on = c("geographicAreaM49Reporter", "geographicAreaM49Partner",
+           "measuredElementTrade", "measuredItemCPC", "timePointYears")
+  ][
+    !dplyr::near(Value, Value_ex, tol = 0.000001) |
+      flagObservationStatus != flagObservationStatus_ex |
+      flagMethod != flagMethod_ex |
+      is.na(flagObservationStatus) |
+      is.na(flagMethod)
+  ]
+
+complete_trade_flow_cpc_changed[, c("Value_ex", "flagObservationStatus_ex", "flagMethod_ex") := NULL]
+
 ##' # Save data
 
 ##' Finally, data is saved in the `completed_tf_cpc_m49` dataset of
@@ -3091,13 +3113,13 @@ flog.trace("[%s] Writing data to session/database", PID, name = "dev")
 if (corrections_exist) {
   stats <- SaveData("trade",
                     "completed_tf_cpc_m49",
-                    complete_trade_flow_cpc,
+                    complete_trade_flow_cpc_changed,
                     metadata    = metad,
                     waitTimeout = 10800)
 } else {
   stats <- SaveData("trade",
                     "completed_tf_cpc_m49",
-                    complete_trade_flow_cpc,
+                    complete_trade_flow_cpc_changed,
                     waitTimeout = 10800)
 }
 

@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-02-03-19-00"
+PLUGIN_VERSION <- "2020-02-04-15-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -1016,6 +1016,68 @@ if (only_pre_process) stop("Stop after reports on raw data")
       filter_(~fcl_links == 1L) %>%
       distinct()
 
+    reporters_not_in_mapping <-
+      setdiff(
+        (tldata %>% count(reporter))$reporter,
+        unique(hs6fclmap$reporter)
+    )
+
+    reporters_not_in_mapping <- setdiff(reporters_not_in_mapping, '252')
+
+    if (length(reporters_not_in_mapping) > 0) {
+      # Fallback HS and HS6 maps for countries not in the mapping file,
+      # or recently added. The fallback consists of the most common
+      # HS6-FCL combination for all countries, and for HS dummy entries
+      # (required, HS6 will be used)
+      hs6fclmap_fallback <- as.data.table(hs6fclmap)[, .N, .(hs6, fcl)]
+      hs6fclmap_fallback <- hs6fclmap_fallback[order(hs6, -N, fcl)]
+      hs6fclmap_fallback <- hs6fclmap_fallback[, .SD[1], hs6][, N := NULL]
+
+      hs6fclmap_fallback <-
+        rbind(
+          data.table(flow = 1, hs6fclmap_fallback, fcl_links = 1),
+          data.table(flow = 2, hs6fclmap_fallback, fcl_links = 1)
+        )
+
+      hs6fclmap_fallback <- hs6fclmap_fallback[nchar(hs6) == 6]
+
+      hs6fclmap_fallback <-
+        data.table(
+          reporter = rep(reporters_not_in_mapping, each = nrow(hs6fclmap_fallback)),
+          hs6fclmap_fallback
+      )
+
+      hs6fclmap <- tbl_df(rbind(hs6fclmap, hs6fclmap_fallback))
+
+      hsfclmap3_fallback <-
+        hsfclmap3[1:2, ] %>%
+        mutate(
+          fromcode = '000001', tocode = '000001',
+          fcl = 0,
+          startyear = year, endyear = 2050,
+          area_name = "",
+          flow = 1:2
+        )
+
+      hsfclmap3_fallback <-
+        rbindlist(
+          lapply(
+            reporters_not_in_mapping,
+            function(x) mutate(hsfclmap3_fallback, area = x)
+          )
+        )
+
+      hsfclmap3_fallback <- tbl_df(hsfclmap3_fallback)
+
+      hsfclmap3_fallback <-
+        mutate(
+          hsfclmap3_fallback,
+          recordnumb = max(hsfclmap3$recordnumb) + 1:nrow(hsfclmap3_fallback)
+        )
+
+      hsfclmap3 <- bind_rows(hsfclmap3, hsfclmap3_fallback)
+    }
+
   } else {
 
     # A dummy zero-row dataframe needs to be created
@@ -1261,15 +1323,19 @@ tldata <- tldata %>%
 flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
 
 if (trademap_year_available == FALSE) {
-  tldata_not_area_in_fcl_mapping <- tldata %>%
-    filter_(~!(reporter %in% unique(hsfclmap$area)))
+  avail_rep_list <- unique(c(hsfclmap$area, hs6fclmap$reporter))
 
-  tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
+  tldata_not_area_in_fcl_mapping <- tldata %>%
+    filter_(~!(reporter %in% avail_rep_list))
+
+  tldata <- filter_(tldata, ~reporter %in% avail_rep_list)
 } else {
-  tldata_not_area_in_fcl_mapping <- tldata %>%
-    filter_(~!(reporter %in% unique(trademap_year$area)))
+  avail_rep_list <- unique(c(trademap_year$area, hs6fclmap$reporter))
 
-  tldata <- filter_(tldata, ~reporter %in% unique(trademap_year$area))
+  tldata_not_area_in_fcl_mapping <- tldata %>%
+    filter_(~!(reporter %in% avail_rep_list))
+
+  tldata <- filter_(tldata, ~reporter %in% avail_rep_list)
 }
 
 # 252 is fine, it's "Unspecified"
@@ -1445,9 +1511,9 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
   setnames(
     unmapped_trademap,
     c('measuredItemCPC', 'measuredItemCPC_description',
-	  'geographicAreaM49', 'geographicAreaM49_description'),
+      'geographicAreaM49', 'geographicAreaM49_description'),
     c('suggested_cpc', 'suggested_cpc_description',
-	  'area', 'country_name')
+      'area', 'country_name')
   )
 
   # So that the leading 0 doesn't disappear in Excel.

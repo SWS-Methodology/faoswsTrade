@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-02-03-12-00"
+PLUGIN_VERSION <- "2020-02-03-19-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -1054,18 +1054,24 @@ esdata <- esdata %>%
 ##' 1. Remove in ES those reporters with area codes that are not included in
 ##' MDB commodity mapping area list.
 
+flog.trace("[%s] ES: dropping reporters not found in the mapping table", PID, name = "dev")
+
 if (trademap_year_available == FALSE) {
   ##+ es-treat-unmapped
   esdata_not_area_in_fcl_mapping <- esdata %>%
     filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-  # XXX: bring back
-  #rprt_writetable(esdata_not_area_in_fcl_mapping)
-
   esdata <- filter_(esdata, ~reporter %in% unique(hsfclmap$area))
 } else {
+  esdata_not_area_in_fcl_mapping <- esdata %>%
+    filter_(~!(reporter %in% unique(trademap_year$area)))
+
   esdata <- filter_(esdata, ~reporter %in% unique(trademap_year$area))
 }
+
+# XXX: bring back
+#rprt_writetable(esdata_not_area_in_fcl_mapping)
+
 
 flog.info("ES records after removing areas not in HS->FCL map: %s", nrow(esdata))
 
@@ -1252,18 +1258,23 @@ tldata <- tldata %>%
 # We drop reporters that are absent in MDB hsfcl map
 # because in any case we can proceed their data
 
+flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
+
 if (trademap_year_available == FALSE) {
   tldata_not_area_in_fcl_mapping <- tldata %>%
     filter_(~!(reporter %in% unique(hsfclmap$area)))
 
-  # XXX: bring back
-  #rprt_writetable(tldata_not_area_in_fcl_mapping)
-
-  flog.trace("[%s] TL: dropping reporters not found in the mapping table", PID, name = "dev")
   tldata <- filter_(tldata, ~reporter %in% unique(hsfclmap$area))
 } else {
+  tldata_not_area_in_fcl_mapping <- tldata %>%
+    filter_(~!(reporter %in% unique(trademap_year$area)))
+
   tldata <- filter_(tldata, ~reporter %in% unique(trademap_year$area))
 }
+
+# XXX: bring back
+#rprt_writetable(tldata_not_area_in_fcl_mapping)
+
 
 # 252 is fine, it's "Unspecified"
 tldata <- filter_(tldata, ~!reporter %in% 252)
@@ -2734,133 +2745,133 @@ apply_tp_criterion <- apply_tp_criterion[toupper(apply) == "TRUE"]
 
 flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
 
-#if (nrow(apply_tp_criterion) > 0) {
-#
-#  mirrored_aggregated_total <-
-#    complete_trade_flow_cpc[
-#      geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
-#      ###########################################################
-#      # FIXME:
-#      # for now, removing items that can have heads as unit #####
-#      ###########################################################
-#      !(measuredItemCPC %in% fcl2cpc(stringr::str_pad((fclunits %>% dplyr::filter(fclunit != 'mt'))$fcl, 4, 'left', 0)))
-#    ][
-#      # Remove unit values
-#      substr(measuredElementTrade, 3, 3) != 3,
-#      .(Value = sum(Value)),
-#      .(geographicAreaM49 = geographicAreaM49Reporter,
-#        measuredElementTrade, measuredItemCPC, timePointYears)
-#    ]
-#
-#  allReportersDim_tot <-
-#    Dimension(
-#      name = "geographicAreaM49",
-#      keys = c(na.omit(unique(mirrored_aggregated_total$geographicAreaM49)))
-#    )
-#
-#  allElementsDim_tot <-
-#    Dimension(
-#      name = "measuredElementTrade",
-#      keys = unique(mirrored_aggregated_total$measuredElementTrade)
-#    )
-#
-#  allItemsDim_tot <-
-#    Dimension(
-#      name = "measuredItemCPC",
-#      keys = unique(mirrored_aggregated_total$measuredItemCPC)
-#    )
-#
-#  totaltradekey <-
-#    DatasetKey(
-#      domain = "trade",
-#      dataset = "total_trade_cpc_m49",
-#        dimensions =
-#          list(
-#            allReportersDim_tot,
-#            allElementsDim_tot,
-#            allItemsDim_tot,
-#            Dimension(name = "timePointYears",
-#                      keys = as.character((year-3):(year-1)))
-#          )
-#    )
-#
-#  existing_total_data <- GetData(key = totaltradekey)
-#
-#  existing_data_mean <-
-#    existing_total_data[,
-#      .(Value_mean = mean(Value)),
-#      .(geographicAreaM49, measuredElementTrade, measuredItemCPC)
-#    ]
-#
-#  mirrored_to_compare <-
-#    merge(
-#      mirrored_aggregated_total,
-#      existing_data_mean,
-#      by = c('geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
-#    )
-#
-#  ## FIXME:
-#  #countries_to_apply_tp_criterion <-
-#  #  c(84,
-#  #    44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
-#  #    446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
-#  #    266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
-#
-#  exclude_from_mirroring <-
-#    mirrored_to_compare[,
-#      Value_ratio := Value / Value_mean
-#    ][,
-#      `:=`(
-#        low = sum(Value_ratio < 0.5),
-#        n = .N,
-#        big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
-#      ),
-#      .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
-#    ][,
-#        # low == n means that both elements of a flow are low (e.g.,
-#        # import quantity and monetary values are both low). If only
-#        # one of the elements is low, that is an outlier, not bad TP.
-#        exclude := (low == n & big_qty == TRUE)
-#    ][
-#      timePointYears == year &
-#        geographicAreaM49 %in% apply_tp_criterion$area
-#    ][,
-#      .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
-#    ]
-#
-#  if (nrow(exclude_from_mirroring) > 0) {
-#    complete_trade_flow_cpc <-
-#      merge(
-#        complete_trade_flow_cpc,
-#        exclude_from_mirroring,
-#        by = c("timePointYears", "geographicAreaM49Reporter", "measuredItemCPC", "measuredElementTrade"),
-#        all.x = TRUE
-#      )
-#
-#    complete_trade_flow_cpc[is.na(exclude), exclude := FALSE]
-#
-#    excluded_using_tp_criteria <- complete_trade_flow_cpc[exclude == TRUE]
-#
-#    excluded_tp_csv_filename <-
-#      tempfile(pattern = "excluded_tp_", fileext = ".csv")
-#
-#    flog.trace("[%s] Some excluded TP", PID, name = "dev")
-#
-#    write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
-#
-#    if (!CheckDebug()) {
-#      send_mail(
-#        from    = "SWS-trade-module@fao.org",
-#        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
-#        subject = paste0("Trade plugin: Excluded Tp, year ", year),
-#        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
-#      )
-#    }
-#
-#    complete_trade_flow_cpc <-
-#      complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
-#  }
-#}
+if (nrow(apply_tp_criterion) > 0) {
+
+  mirrored_aggregated_total <-
+    complete_trade_flow_cpc[
+      geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
+      ###########################################################
+      # FIXME:
+      # for now, removing items that can have heads as unit #####
+      ###########################################################
+      !(measuredItemCPC %in% fcl2cpc(stringr::str_pad((fclunits %>% dplyr::filter(fclunit != 'mt'))$fcl, 4, 'left', 0)))
+    ][
+      # Remove unit values
+      substr(measuredElementTrade, 3, 3) != 3,
+      .(Value = sum(Value)),
+      .(geographicAreaM49 = geographicAreaM49Reporter,
+        measuredElementTrade, measuredItemCPC, timePointYears)
+    ]
+
+  allReportersDim_tot <-
+    Dimension(
+      name = "geographicAreaM49",
+      keys = c(na.omit(unique(mirrored_aggregated_total$geographicAreaM49)))
+    )
+
+  allElementsDim_tot <-
+    Dimension(
+      name = "measuredElementTrade",
+      keys = unique(mirrored_aggregated_total$measuredElementTrade)
+    )
+
+  allItemsDim_tot <-
+    Dimension(
+      name = "measuredItemCPC",
+      keys = unique(mirrored_aggregated_total$measuredItemCPC)
+    )
+
+  totaltradekey <-
+    DatasetKey(
+      domain = "trade",
+      dataset = "total_trade_cpc_m49",
+        dimensions =
+          list(
+            allReportersDim_tot,
+            allElementsDim_tot,
+            allItemsDim_tot,
+            Dimension(name = "timePointYears",
+                      keys = as.character((year-3):(year-1)))
+          )
+    )
+
+  existing_total_data <- GetData(key = totaltradekey)
+
+  existing_data_mean <-
+    existing_total_data[,
+      .(Value_mean = mean(Value)),
+      .(geographicAreaM49, measuredElementTrade, measuredItemCPC)
+    ]
+
+  mirrored_to_compare <-
+    merge(
+      mirrored_aggregated_total,
+      existing_data_mean,
+      by = c('geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
+    )
+
+  ## FIXME:
+  #countries_to_apply_tp_criterion <-
+  #  c(84,
+  #    44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
+  #    446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
+  #    266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
+
+  exclude_from_mirroring <-
+    mirrored_to_compare[,
+      Value_ratio := Value / Value_mean
+    ][,
+      `:=`(
+        low = sum(Value_ratio < 0.5),
+        n = .N,
+        big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
+      ),
+      .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
+    ][,
+        # low == n means that both elements of a flow are low (e.g.,
+        # import quantity and monetary values are both low). If only
+        # one of the elements is low, that is an outlier, not bad TP.
+        exclude := (low == n & big_qty == TRUE)
+    ][
+      timePointYears == year &
+        geographicAreaM49 %in% apply_tp_criterion$area
+    ][,
+      .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
+    ]
+
+  if (nrow(exclude_from_mirroring) > 0) {
+    complete_trade_flow_cpc <-
+      merge(
+        complete_trade_flow_cpc,
+        exclude_from_mirroring,
+        by = c("timePointYears", "geographicAreaM49Reporter", "measuredItemCPC", "measuredElementTrade"),
+        all.x = TRUE
+      )
+
+    complete_trade_flow_cpc[is.na(exclude), exclude := FALSE]
+
+    excluded_using_tp_criteria <- complete_trade_flow_cpc[exclude == TRUE]
+
+    excluded_tp_csv_filename <-
+      tempfile(pattern = "excluded_tp_", fileext = ".csv")
+
+    flog.trace("[%s] Some excluded TP", PID, name = "dev")
+
+    write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
+
+    if (!CheckDebug()) {
+      send_mail(
+        from    = "SWS-trade-module@fao.org",
+        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+        subject = paste0("Trade plugin: Excluded Tp, year ", year),
+        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
+      )
+    }
+
+    complete_trade_flow_cpc <-
+      complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
+  }
+}
 
 # / Exclude by Tp criteria
 

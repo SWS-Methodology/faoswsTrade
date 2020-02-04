@@ -82,13 +82,13 @@ year <- as.integer(swsContext.computationParams$year)
 
 startTime = Sys.time()
 
-if (!CheckDebug()) {
-  updateInfoTable(
-    year  = year,
-    table = 'total_tf_runs_info',
-    mode  = 'restart'
-  )
-}
+#if (!CheckDebug()) {
+#  updateInfoTable(
+#    year  = year,
+#    table = 'total_tf_runs_info',
+#    mode  = 'restart'
+#  )
+#}
 
 ##+ import
 

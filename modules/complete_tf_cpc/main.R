@@ -196,10 +196,10 @@ flog.info("Plugin version: %s", PLUGIN_VERSION, name = "dev")
 out_coef <- 1000
 # flog.info("Coefficient for outlier detection: %s", out_coef)
 
-if (!CheckDebug()) {
-  updateInfoTable(year = year, table = 'complete_tf_runs_info',
-                  mode = 'restart')
-}
+#if (!CheckDebug()) {
+#  updateInfoTable(year = year, table = 'complete_tf_runs_info',
+#                  mode = 'restart')
+#}
 
 flog.info("SWS-session is run by user %s", USER, name = "dev")
 

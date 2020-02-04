@@ -1272,12 +1272,11 @@ if (trademap_year_available == FALSE) {
   tldata <- filter_(tldata, ~reporter %in% unique(trademap_year$area))
 }
 
-# XXX: bring back
-#rprt_writetable(tldata_not_area_in_fcl_mapping)
-
-
 # 252 is fine, it's "Unspecified"
 tldata <- filter_(tldata, ~!reporter %in% 252)
+
+# XXX: bring back
+#rprt_writetable(tldata_not_area_in_fcl_mapping)
 
 flog.info("TL records after removing areas not in HS->FCL map: %s", nrow(tldata))
 

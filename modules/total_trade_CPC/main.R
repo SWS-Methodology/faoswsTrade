@@ -640,11 +640,9 @@ total_trade_cpc_w_uv_changed <-
     on = c("geographicAreaM49", "measuredElementTrade",
 		   "measuredItemCPC", "timePointYears")
   ][
-    !dplyr::near(Value, Value_ex, tol = 0.000001) |
-      flagObservationStatus != flagObservationStatus_ex |
-      flagMethod != flagMethod_ex |
-      is.na(flagObservationStatus) |
-      is.na(flagMethod)
+    !((dplyr::near(Value, Value_ex, tol = 0.000001) &
+       flagObservationStatus == flagObservationStatus_ex &
+       flagMethod == flagMethod_ex) %in% TRUE)
   ]
 
 total_trade_cpc_w_uv_changed[, c("Value_ex", "flagObservationStatus_ex", "flagMethod_ex") := NULL]

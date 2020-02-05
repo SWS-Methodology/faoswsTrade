@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-02-04-15-00"
+PLUGIN_VERSION <- "2020-02-05-09-30"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -3164,17 +3164,21 @@ setnames(
   c("Value_ex", "flagObservationStatus_ex", "flagMethod_ex")
 )
 
+x <- existing_data[
+    complete_trade_flow_cpc,
+    on = c("geographicAreaM49Reporter", "geographicAreaM49Partner",
+           "measuredElementTrade", "measuredItemCPC", "timePointYears")
+  ]
+
 complete_trade_flow_cpc_changed <-
   existing_data[
     complete_trade_flow_cpc,
     on = c("geographicAreaM49Reporter", "geographicAreaM49Partner",
            "measuredElementTrade", "measuredItemCPC", "timePointYears")
   ][
-    !dplyr::near(Value, Value_ex, tol = 0.000001) |
-      flagObservationStatus != flagObservationStatus_ex |
-      flagMethod != flagMethod_ex |
-      is.na(flagObservationStatus) |
-      is.na(flagMethod)
+    !((dplyr::near(Value, Value_ex, tol = 0.000001) &
+       flagObservationStatus == flagObservationStatus_ex &
+       flagMethod == flagMethod_ex) %in% TRUE)
   ]
 
 complete_trade_flow_cpc_changed[, c("Value_ex", "flagObservationStatus_ex", "flagMethod_ex") := NULL]

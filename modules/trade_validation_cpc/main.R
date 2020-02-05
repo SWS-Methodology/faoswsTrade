@@ -17,7 +17,7 @@
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
 
 # For parallel computation
-multicore <- TRUE
+multicore <- FALSE
 # Maximum allowed discrepancy in the flow/mirror ratio
 # TODO: should be a parameter
 threshold <- 0.5

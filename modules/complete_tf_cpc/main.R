@@ -2812,6 +2812,16 @@ flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
 
 if (nrow(apply_tp_criterion) > 0) {
 
+  tp_criterion_dir <-
+    file.path(
+      Sys.getenv("R_SWS_SHARE_PATH"),
+      paste0("trade/validation_tool_files/tp_criterion")
+    )
+
+  if (!file.exists(tp_criterion_dir)) {
+    dir.create(tp_criterion_dir)
+  }
+
   mirrored_aggregated_total <-
     complete_trade_flow_cpc[
       geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
@@ -2923,6 +2933,8 @@ if (nrow(apply_tp_criterion) > 0) {
     flog.trace("[%s] Some excluded TP", PID, name = "dev")
 
     write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
+
+	saveRDS(excluded_using_tp_criteria, file.path(tp_criterion_dir, paste0(year, ".rds")))
 
     if (!CheckDebug()) {
       send_mail(

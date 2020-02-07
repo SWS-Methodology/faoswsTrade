@@ -1540,16 +1540,16 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 flog.trace("[%s] Saving binary file with unique mapped codes", PID, name = "dev")
 
 rawdata <-
-  bind_rows(esdata, tldata) %>%
+  bind_rows(mutate(esdata, nrows = 1), tldata) %>%
   dplyr::mutate(
     reporter = fs2m49(as.character(reporter)),
     partner  = fs2m49(as.character(partner)),
     cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
   ) %>%
   dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
-         value, weight, qty, map_src, recordnumb) %>%
+         value, weight, qty, map_src, recordnumb, nrows) %>%
   group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
-  dplyr::mutate(n = n()) %>%
+  dplyr::mutate(n = sum(nrows)) %>%
   ungroup() %>%
   setDT()
 

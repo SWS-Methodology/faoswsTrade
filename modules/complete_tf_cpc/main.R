@@ -2856,7 +2856,7 @@ if (nrow(apply_tp_criterion) > 0) {
             allElementsDim_tot,
             allItemsDim_tot,
             Dimension(name = "timePointYears",
-                      keys = as.character((year-3):(year-1)))
+                      keys = as.character((year-5):(year-1)))
           )
     )
 

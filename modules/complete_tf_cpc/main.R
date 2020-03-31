@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-02-05-09-30"
+PLUGIN_VERSION <- "2020-02-07-17-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -2800,17 +2800,17 @@ complete_trade_flow_cpc[,
   c("flow", "unit", "correction_metadata_qty",
     "correction_metadata_value", "correction_metadata_uv") := NULL]
 
-apply_tp_criterion <-
-  ReadDatatable("ess_trade_apply_tp_criterion",
-                where = paste0("year IN ('", year, "')"))
-
-apply_tp_criterion <- apply_tp_criterion[toupper(apply) == "TRUE"]
+#apply_tp_criterion <-
+#  ReadDatatable("ess_trade_apply_tp_criterion",
+#                where = paste0("year IN ('", year, "')"))
+#
+#apply_tp_criterion <- apply_tp_criterion[toupper(apply) == "TRUE"]
 
 # Exclude by Tp criteria
 
 flog.trace("[%s] Exclude by Tp criteria", PID, name = "dev")
 
-if (nrow(apply_tp_criterion) > 0) {
+if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
 
   tp_criterion_dir <-
     file.path(
@@ -2885,19 +2885,18 @@ if (nrow(apply_tp_criterion) > 0) {
       by = c('geographicAreaM49', 'measuredElementTrade', 'measuredItemCPC')
     )
 
-  ## FIXME:
-  #countries_to_apply_tp_criterion <-
-  #  c(84,
-  #    44, 232, 308, 48, 192, 591, 776, 64, 520, 626, 795, 262, 418, 634, 780,
-  #    446, 784, 548, 8, 258, 31, 184, 430, 598, 706, 798, 204, 136, 174, 226,
-  #    266, 434, 624, 296, 584, 583, 212, 214, 426, 500, 540, 728)
+  tmp <- (to_mirror_raw %>% count(area) %>% filter(area < 300 & n > 1))$area
+
+  countries_to_apply_tp_criterion <- faoswsUtil::fs2m49(as.character(tmp))
+
+  rm(tmp)
 
   exclude_from_mirroring <-
     mirrored_to_compare[,
       Value_ratio := Value / Value_mean
     ][,
       `:=`(
-        low = sum(Value_ratio < 0.5),
+        low = sum(Value_ratio < 0.6),
         n = .N,
         big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
       ),
@@ -2909,7 +2908,7 @@ if (nrow(apply_tp_criterion) > 0) {
         exclude := (low == n & big_qty == TRUE)
     ][
       timePointYears == year &
-        geographicAreaM49 %in% apply_tp_criterion$area
+        geographicAreaM49 %in% countries_to_apply_tp_criterion
     ][,
       .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
     ]
@@ -2934,7 +2933,7 @@ if (nrow(apply_tp_criterion) > 0) {
 
     write.csv(excluded_using_tp_criteria, excluded_tp_csv_filename)
 
-	saveRDS(excluded_using_tp_criteria, file.path(tp_criterion_dir, paste0(year, ".rds")))
+    saveRDS(excluded_using_tp_criteria, file.path(tp_criterion_dir, paste0(year, ".rds")))
 
     if (!CheckDebug()) {
       send_mail(

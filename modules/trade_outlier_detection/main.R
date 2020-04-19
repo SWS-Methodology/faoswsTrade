@@ -48,7 +48,8 @@ startYear = as.numeric(swsContext.computationParams$startYear)
 #startYear = as.numeric(2013)
 
 endYear = as.numeric(swsContext.computationParams$endYear)
-window = as.numeric(swsContext.computationParams$window)
+# window = as.numeric(swsContext.computationParams$window)
+window = 5
 
 #endYear = as.numeric(2017)
 

@@ -1,6 +1,0 @@
-current: "qa"
-qa:
-  certdir: "C:/Users/aydan/Dropbox/certificates/qa"
-  server: "https://hqlqasws1.hq.un.fao.org:8181/sws"
-  token: "37adad9b-3bb7-4168-819d-a176f1e9dc2a"
-  

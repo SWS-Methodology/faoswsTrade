@@ -1,5 +1,4 @@
 ##' ---
-d f
 ##' title: "Appendix: `total_trade_CPC` module"
 ##' author:
 ##'   - Marco Garieri

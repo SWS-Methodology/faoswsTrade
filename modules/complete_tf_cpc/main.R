@@ -43,10 +43,13 @@ sapply(dir("R", full.names = TRUE), source)
 
 ##+ check_parameters
 
-# E-mail addresses (without @fao.org) of people that will
-# get notified when the plugin runs successfully.
-EMAIL_RECIPIENTS <-
-  c("Dominique.Habimana", "Claudia.DeVita", "Christian.Mongeau")
+# E-mail addresses of people that will get notified.
+EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
+EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
+
+# Remove S.T.:
+EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
+
 
 ##+ init
 
@@ -1546,7 +1549,7 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
   if (!CheckDebug()) {
     send_mail(
       from    = "SWS-trade-module@fao.org",
-      to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+      to      = EMAIL_RECIPIENTS,
       subject = paste0("Trade plugin: unmapped codes, year ", year),
       body    = c(paste("Once all CPC/FCL codes are added, append the file to the ESS trademap", year, "datatable on SWS. Before doing so (and AFTER the mappping of unmapped codes is done), open the CSV file with a text editor and remove all the ' characters in front of hs and cpc (those were added so that leading zeros do not disappear). Also, remove all columns after 'notes'. Avoid inserting accented characters in the free text fields in this file: not doing so may make SWS angry."), unmapped_csv_filename)
     )
@@ -2680,7 +2683,7 @@ if (corrections_exist) {
     if (!CheckDebug()) {
       send_mail(
         from    = "SWS-trade-module@fao.org",
-        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+        to      = EMAIL_RECIPIENTS,
         subject = paste0("Trade plugin: corrections unapplied, year ", year),
         body    = c("Some corrections cannot be applied.", unapplied_csv_filename)
       )

@@ -1,4 +1,3 @@
-
 ##'
 ##' **Author: Carlo Del Bello**
 ##'
@@ -10,8 +9,6 @@
 ##' **Inputs:**
 ##'
 ##' * total trade data
-
-
 ##'
 ##' **Flag assignment:**
 ##'
@@ -44,11 +41,62 @@ if(CheckDebug()){
   )
 }
 
+
+
+sendMailAttachment=function(fileToSend,name,textBody){
+  if(dim(fileToSend)[1]>0){
+    if(!CheckDebug()){
+      # Create the body of the message
+
+      FILETYPE = ".csv"
+      CONFIG <- faosws::GetDatasetConfig(swsContext.datasets[[1]]@domain, swsContext.datasets[[1]]@dataset)
+      sessionid <- ifelse(length(swsContext.datasets[[1]]@sessionId),
+                          swsContext.datasets[[1]]@sessionId,
+                          "core")
+
+      basename <- sprintf("%s_%s",
+                          name,
+                          sessionid)
+      basedir <- tempfile()
+      dir.create(basedir, recursive = TRUE)
+      destfile <- file.path(basedir, paste0(basename, FILETYPE))
+
+      # create the csv in a temporary foldes
+      write.csv(fileToSend, destfile, row.names = FALSE)
+      # define on exit strategy
+      on.exit(file.remove(destfile))
+      #zipfile <- paste0(destfile, ".zip")
+      #withCallingHandlers(zip(zipfile, destfile, flags = "-j9X"),
+      # warning = function(w){
+      # if(grepl("system call failed", w$message)){
+      #  stop("The system ran out of memory trying to zip up your data. Consider splitting your request into chunks")
+      # }
+      # })
+
+      #on.exit(file.remove(zipfile), add = TRUE)
+      body = textBody
+
+      sendmailR::sendmail(from = "sws@fao.org",
+                          to = swsContext.userEmail,
+                          subject = name,
+                          msg = list(strsplit(body,"\n")[[1]],
+                                     sendmailR::mime_part(destfile,
+                                                          name = paste0(basename, FILETYPE)
+                                     )
+                          )
+      )
+    }
+  }
+}
+
+
+
 startYear = as.numeric(swsContext.computationParams$startYear)
 #startYear = as.numeric(2013)
 
 endYear = as.numeric(swsContext.computationParams$endYear)
-window = as.numeric(swsContext.computationParams$window)
+# window = as.numeric(swsContext.computationParams$window)
+window = 5
 
 #endYear = as.numeric(2017)
 
@@ -74,8 +122,6 @@ geoKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49",
                       dimension = "geographicAreaM49")[type == "country", code]
 
 
-
-
 ##Select the countries based on the user input parameter
 selectedGEOCode =
   sessionCountries
@@ -84,12 +130,8 @@ selectedGEOCode =
 #         "all" = geoKeys)
 
 
-
 itemKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredItemCPC")
 itemKeys = itemKeys[, code]
-
-
-
 
 #########################################
 ##### Pull from trade data #####
@@ -183,11 +225,26 @@ trade[,
 
 outList <- trade[outlier == TRUE]
 
-outList[, c("flow", "big_qty", "outlier", "threshold") := NULL]
+threshold_used <- unique(outList$threshold)
 
-outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
+# outList[, c("flow", "big_qty", "outlier", "threshold") := NULL]
+#
+# outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
+#
+# bodyOutliers <- "The Email contains a list of trade outliers based on Unit Value"
+#
+# sendMailAttachment(outList, "outlierList", bodyOutliers)
+if (nrow(outList) > 0) {
+  outList[, c("flow", "big_qty", "outlier", "threshold") := NULL]
 
-bodyOutliers <- "The Email contains a list of trade outliers based on Unit Value"
+  outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
 
-sendMailAttachment(outList, "outlierList", bodyOutliers)
+  bodyOutliers <- paste0("The Email contains a list of trade outliers based on Unit Value. The quantity threshold used for this country is: ", threshold_used)
 
+  sendMailAttachment(outList, "outlierList", bodyOutliers)
+
+  print("Outliers found, please check email.")
+} else {
+
+  print("No outliers found.")
+}

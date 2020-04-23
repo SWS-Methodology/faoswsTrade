@@ -1,4 +1,5 @@
 ##' ---
+d f
 ##' title: "Appendix: `total_trade_CPC` module"
 ##' author:
 ##'   - Marco Garieri
@@ -483,8 +484,9 @@ if (remove_nonexistent_transactions == TRUE) {
       (flagObservationStatus == ''  &  flagMethod == 'h'),
       Protected := FALSE
     ][
-      # Protect this
-      flagObservationStatus == 'T'   &  flagMethod == 'q',
+      # Protect these
+      (flagObservationStatus == 'T'   &  flagMethod == 'q') |
+      (flagObservationStatus == 'X'   &  flagMethod == 'p'),
       Protected := TRUE
     ][
       Protected %in% TRUE
@@ -573,8 +575,9 @@ if (remove_nonexistent_transactions == TRUE) {
       (flagObservationStatus == ''  &  flagMethod == 'h'),
       Protected := FALSE
     ][
-      # Protect this
-      flagObservationStatus == 'T'   &  flagMethod == 'q',
+      # Protect these
+      (flagObservationStatus == 'T'   &  flagMethod == 'q') |
+      (flagObservationStatus == 'X'   &  flagMethod == 'p'),
       Protected := TRUE
     ][
       Protected %in% FALSE

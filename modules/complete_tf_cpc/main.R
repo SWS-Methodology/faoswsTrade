@@ -2198,9 +2198,14 @@ flagWeightTable_status <- frame_data(
 flagWeightTable_method <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
   'h',                   1.00,
+  '',                    0.99,
+  'q',                   0.95,
+  'p',                   0.90,
   'i',                   0.80,
   'e',                   0.60,
+  'f',                   0.50,
   'c',                   0.40,
+  '-',                   0.30,
   's',                   0.20
 )
 
@@ -3080,9 +3085,18 @@ data.table::setcolorder(complete_trade_flow_cpc,
 # FIXME: the comment above does not really hold. Check.
 complete_trade_flow_cpc[is.na(Value), Value := 0]
 
+## "official" status flag should be <BLANK> instead of X (this was a choice
+## made after X was chosen as official flag). Thus, change X to <BLANK>.
+###### SEE next instruction
+#complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
+###### this:
 # "official" status flag should be <BLANK> instead of X (this was a choice
-# made after X was chosen as official flag). Thus, change X to <BLANK>.
-complete_trade_flow_cpc[flagObservationStatus == 'X', flagObservationStatus := '']
+# made after X was chosen as official flag). Thus, change X to <BLANK>. THEN
+# Xp was introduced, so these need to stay
+complete_trade_flow_cpc[
+  (flagObservationStatus == 'X' & flagMethod != 'p'),
+  flagObservationStatus := ''
+]
 
 
 ##' 1. Removed "protected" data from the module's output.
@@ -3131,8 +3145,10 @@ if (remove_nonexistent_transactions) {
                    !(flagObservationStatus == 'I' &  flagMethod == 'c') &
                    !(flagObservationStatus == ''  &  flagMethod == 'c') &
                    !(flagObservationStatus == ''  &  flagMethod == 'h')) |
-                    # Protect T,q
-                   flagObservationStatus == 'T'   &  flagMethod == 'q',
+                   # Protect T,q
+                   (flagObservationStatus == 'T'   &  flagMethod == 'q') |
+                   # Protect X,p
+                   (flagObservationStatus == 'X'   &  flagMethod == 'p'),
                    paste(flagObservationStatus, flagMethod)]
 
   # Data that should be left untouched

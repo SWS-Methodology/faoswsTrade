@@ -677,6 +677,23 @@ if (nrow(use_new_data_format) > 0) {
   message("TRADE: patched data ", nrow(tldata))
 }
 
+###### National data, in UNSD tariffline legacy format
+#
+# VENEZUELA
+national_data_tariffline <-
+  ReadDatatable("national_tariffline_ven", where = paste0("tyear IN ('", year, "')"))
+
+if (nrow(national_data_tariffline) > 0) {
+  national_data_tariffline <- national_data_tariffline[, names(tldata), with = FALSE]
+
+  # This should't really happen, but let's check.
+  if (any(unique(national_data_tariffline$rep) %in% tldata$rep)) {
+    stop("Duplicated country")
+  }
+
+  tldata <- rbind(tldata, national_data_tariffline)
+}
+
 #### Fix zero weights:
 # These cannot be anything but NAs
 tldata[near(weight, 0) & is.na(qty) & qunit == 1, weight := NA_real_]

@@ -2963,7 +2963,7 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
     if (!CheckDebug()) {
       send_mail(
         from    = "SWS-trade-module@fao.org",
-        to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+        to      = EMAIL_RECIPIENTS,
         subject = paste0("Trade plugin: Excluded Tp, year ", year),
         body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
       )
@@ -3274,7 +3274,7 @@ if (!CheckDebug()) {
 
   send_mail(
     from    = "SWS-trade-module@fao.org",
-    to      = paste0(EMAIL_RECIPIENTS, "@fao.org"),
+    to      = EMAIL_RECIPIENTS,
     subject = paste0("Bilateral trade plugin (year ", year, ") ran successfully"),
     body    = end_message
   )

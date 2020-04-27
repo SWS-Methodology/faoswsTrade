@@ -43,14 +43,6 @@ sapply(dir("R", full.names = TRUE), source)
 
 ##+ check_parameters
 
-# E-mail addresses of people that will get notified.
-EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
-EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
-
-# Remove S.T.:
-EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
-
-
 ##+ init
 
 ## **Flow chart:**
@@ -147,6 +139,13 @@ if (faosws::CheckDebug()){
     save(last.dump, file = file.path(filename, "last.dump.RData"))
   })
 }
+
+# E-mail addresses of people that will get notified.
+EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
+EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
+
+# Remove S.T.:
+EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
 
 # Stop if required parameters were not set
 # The out_coef was removed as a parameter given that the

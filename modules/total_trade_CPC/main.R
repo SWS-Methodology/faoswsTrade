@@ -60,13 +60,6 @@ local({
 
 })
 
-# E-mail addresses of people that will get notified.
-EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
-EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
-
-# Remove S.T.:
-EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
-
 
 if (CheckDebug()) {
   library(faoswsModules)
@@ -77,6 +70,13 @@ if (CheckDebug()) {
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])
 }
+
+# E-mail addresses of people that will get notified.
+EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
+EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
+
+# Remove S.T.:
+EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
 
 ##' # Parameters
 

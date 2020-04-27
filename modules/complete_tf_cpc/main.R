@@ -1124,9 +1124,9 @@ if (only_pre_process) stop("Stop after reports on raw data")
 esdata <- generateFlagVars(esdata)
 
 esdata <- esdata %>%
-  setFlag3(!is.na(value),  type = 'status', flag = 'X', variable = 'value') %>%
-  setFlag3(!is.na(weight), type = 'status', flag = 'X', variable = 'weight') %>%
-  setFlag3(!is.na(qty),    type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),  type = 'status', flag = 'Y', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'status', flag = 'Y', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'status', flag = 'Y', variable = 'quantity') %>%
   setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
   setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
@@ -1317,9 +1317,9 @@ flog.trace("[%s] TL: add flag variables")
 tldata <- generateFlagVars(tldata)
 
 tldata <- tldata %>%
-  setFlag3(!is.na(value),    type = 'status', flag = 'X', variable = 'value') %>%
-  setFlag3(!is.na(weight),   type = 'status', flag = 'X', variable = 'weight') %>%
-  setFlag3(!is.na(qty),      type = 'status', flag = 'X', variable = 'quantity') %>%
+  setFlag3(!is.na(value),    type = 'status', flag = 'Y', variable = 'value') %>%
+  setFlag3(!is.na(weight),   type = 'status', flag = 'Y', variable = 'weight') %>%
+  setFlag3(!is.na(qty),      type = 'status', flag = 'Y', variable = 'quantity') %>%
   setFlag3(!is.na(value),    type = 'method', flag = 'h', variable = 'value') %>%
   setFlag3(!is.na(weight),   type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),      type = 'method', flag = 'h', variable = 'quantity') %>%
@@ -2188,8 +2188,9 @@ for (var in flag_vars) {
 # Modified in order to have X in the table
 flagWeightTable_status <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
-  'X',                   1.00,
+  'Y',                   1.00, # This acts as blank
   '',                    0.99,
+  'X',                   0.90,
   'T',                   0.80,
   'E',                   0.75,
   'I',                   0.50,
@@ -3095,10 +3096,7 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 # "official" status flag should be <BLANK> instead of X (this was a choice
 # made after X was chosen as official flag). Thus, change X to <BLANK>. THEN
 # Xp was introduced, so these need to stay
-complete_trade_flow_cpc[
-  (flagObservationStatus == 'X' & flagMethod != 'p'),
-  flagObservationStatus := ''
-]
+complete_trade_flow_cpc[flagObservationStatus == 'Y', flagObservationStatus := '']
 
 
 ##' 1. Removed "protected" data from the module's output.
@@ -3148,9 +3146,9 @@ if (remove_nonexistent_transactions) {
                    !(flagObservationStatus == ''  &  flagMethod == 'c') &
                    !(flagObservationStatus == ''  &  flagMethod == 'h')) |
                    # Protect T,q
-                   (flagObservationStatus == 'T'   &  flagMethod == 'q') |
+                   (flagObservationStatus == 'T' &  flagMethod == 'q') |
                    # Protect X,p
-                   (flagObservationStatus == 'X'   &  flagMethod == 'p'),
+                   (flagObservationStatus == 'X' &  flagMethod == 'p'),
                    paste(flagObservationStatus, flagMethod)]
 
   # Data that should be left untouched

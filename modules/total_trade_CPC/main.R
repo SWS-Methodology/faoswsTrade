@@ -436,7 +436,9 @@ if (remove_nonexistent_transactions == TRUE) {
   #flog.trace("[%s] Remove non-existent transactions (RNET)", PID, name = "dev")
 
   allReportersDim_tot <-
-    GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")[type == "country", code] %>%
+    GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
+    # Using the bilateral one when "type" was removed
+    #GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")[type == "country", code] %>%
     Dimension(name = "geographicAreaM49", keys = .)
 
   allElementsDim_tot <-

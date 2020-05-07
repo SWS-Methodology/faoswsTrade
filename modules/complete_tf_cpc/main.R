@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-02-07-17-00"
+PLUGIN_VERSION <- "2020-05-07-15-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -678,6 +678,63 @@ if (nrow(use_new_data_format) > 0) {
 
   message("TRADE: patched data ", nrow(tldata))
 }
+
+# Australia 2018
+if (year == 2018L) {
+  message("TRADE: Australia 2018 patch")
+
+  tldata <- tldata[rep != 36]
+
+  tldata_patch_AUS <-
+    ReadDatatable(
+      table = "unsd_tariffline_v3_2018_05_may_2020_36",
+      columns =
+        c(
+          "refperiodid",
+          "reportercode",
+          "partnercode",
+          "flowcode",
+          "cmdcode",
+          "primaryvalue",
+          "netwgt",
+          "qty",
+          "qtyunitcode",
+          "chapter"
+        ),
+      where = paste0("chapter IN (", hs_chapters, ")")
+    )
+
+  tldata_patch_AUS <-
+    tldata_patch_AUS[,
+      .(tyear = substr(refperiodid, 1, 4), rep = as.character(reportercode),
+        flow = ifelse(grepl('M', flowcode), '1', '2'), comm = cmdcode,
+        prt = as.character(partnercode), tvalue = primaryvalue,
+        weight = netwgt, qty, qunit = as.character(qtyunitcode), chapter
+      )
+    ]
+
+  tldata_patch_AUS[qunit == -1, qunit := '1']
+
+  # The new measurement units that are easy to convert are:
+  # 15, "Weight in grams"
+  # 21, "Weight in thousand of kilograms"
+  tldata_patch_AUS[qunit == 15 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty / 1000]
+  tldata_patch_AUS[qunit == 15, `:=`(qty = weight * 1000, qunit = '8')]
+
+  tldata_patch_AUS[qunit == 21 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty * 1000]
+  tldata_patch_AUS[qunit == 21, `:=`(qty = weight / 1000, qunit = '8')]
+
+  # For the remaining units, we set them to NA
+  tldata_patch_AUS[
+    as.numeric(qunit) > 13 & (is.na(weight) | dplyr::near(weight, 0)),
+    `:=`(qty = NA_real_, weight = NA_real_, qunit = '1')
+  ]
+
+  tldata_patch_AUS[qunit > 13 & !(is.na(weight) | dplyr::near(weight, 0)), `:=`(qty = weight, qunit = '8')]
+
+  tldata <- rbind(tldata, tldata_patch_AUS, fill = TRUE)
+}
+
 
 ###### National data, in UNSD tariffline legacy format
 #

@@ -24,6 +24,7 @@ library(sendmailR)
 library(openxlsx)
 
 options(warn=-1)
+`%!in%` = Negate(`%in%`)
 
 
 send_mail <- function(from = NA, to = NA, subject = NA,
@@ -98,9 +99,9 @@ send_mail <- function(from = NA, to = NA, subject = NA,
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
 
 # if (CheckDebug()) {
-#   SetClientFiles(dir = "C:/Users/aydan selek/Desktop/qa")
+#   SetClientFiles(dir = "C:/Users/aydan/Desktop/qa")
 #
-#   GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws', token = '54dbab29-64ca-44cc-a9dc-f48dc9e8ecf2')
+#   GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws', token = '343d015a-1476-43fa-a729-3e3ca47f945a')
 # }
 
 
@@ -204,7 +205,18 @@ data = normalise(data, areaVar = "geographicAreaM49",
 trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, except = "timePointYears")
 
 
-trade1 <- trade[grepl("Quantity", measuredElementTrade_description),]
+trade_qty <- trade[grepl("Quantity", measuredElementTrade_description),]
+
+# In the final output, we would like to receive only qty in head, and qty in 1000 head for livestock items, NOT TO RECEIVE their respective quantity in tons
+big_animals <- unique(trade_qty[measuredElementTrade %in% c(5608,5908), measuredItemCPC_description]) # select the animals in heads
+small_animals <- unique(trade_qty[measuredElementTrade %in% c(5609,5909), measuredItemCPC_description]) # select the animel in 1000 heads
+trade_in_heads <- trade_qty[measuredItemCPC_description %in% big_animals & measuredElementTrade %in% c(5608,5908),]
+trade_in_1000heads <- trade_qty[measuredItemCPC_description %in% small_animals & measuredElementTrade %in% c(5609,5909),]
+trade_qty_2 <- trade_qty[measuredItemCPC_description %!in% big_animals & measuredItemCPC_description %!in% small_animals,]
+
+trade1 <- do.call('rbind', list(trade_qty_2, trade_in_heads, trade_in_1000heads))
+
+
 average <- trade1[timePointYears %in% interval, .(`5_year_average` = mean(Value, na.rm = TRUE)),
                   by=.(geographicAreaM49, measuredElementTrade, measuredItemCPC)]
 

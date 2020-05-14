@@ -2232,8 +2232,6 @@ for (var in flag_vars) {
 
 ##' # Output for SWS
 
-##' 1. Filter observations with FCL code `1181` (bees).
-
 ##' 1. Filter observations with missing CPC codes.
 
 ##' 1. Rename dimensions to comply with SWS standard,
@@ -2300,7 +2298,6 @@ for (i in c('status', 'method')) {
 
 flog.trace("[%s] Complete trade flow CPC", PID, name = "dev")
 complete_trade_flow_cpc <- tradedata %>%
-  filter_(~fcl != 1181) %>% ## Subsetting out bees
   # 5000 is, e.g., world (here reporter is in FAL)
   filter_(~reporter < 1000) %>%
   select_(~-fcl) %>%

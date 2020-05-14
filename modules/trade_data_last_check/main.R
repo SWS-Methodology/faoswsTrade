@@ -23,6 +23,9 @@ library(faoswsUtil)
 library(sendmailR)
 library(openxlsx)
 
+options(warn=-1)
+`%!in%` = Negate(`%in%`)
+
 
 send_mail <- function(from = NA, to = NA, subject = NA,
                       body = NA, remove = FALSE) {
@@ -95,6 +98,13 @@ send_mail <- function(from = NA, to = NA, subject = NA,
 # ## set up for the test environment and parameters
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
 
+# if (CheckDebug()) {
+#   SetClientFiles(dir = "C:/Users/aydan/Desktop/qa")
+#
+#   GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws', token = '343d015a-1476-43fa-a729-3e3ca47f945a')
+# }
+
+
 if(CheckDebug()){
   message("Not on server, so setting up environment...")
 
@@ -113,7 +123,7 @@ if(CheckDebug()){
 year = as.numeric(swsContext.computationParams$year)
 # year <- as.numeric(2018)
 
-numberOfItem = as.numeric(swsContext.computationParams$number_of_item_to_validate)
+# numberOfItem = as.numeric(swsContext.computationParams$number_of_item_to_validate)
 # numberOfItem = 10
 
 # the average will be calculated with the previous 5 years
@@ -195,7 +205,18 @@ data = normalise(data, areaVar = "geographicAreaM49",
 trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, except = "timePointYears")
 
 
-trade1 <- trade[grepl("Quantity", measuredElementTrade_description),]
+trade_qty <- trade[grepl("Quantity", measuredElementTrade_description),]
+
+# In the final output, we would like to receive only qty in head, and qty in 1000 head for livestock items, NOT TO RECEIVE their respective quantity in tons
+big_animals <- unique(trade_qty[measuredElementTrade %in% c(5608,5908), measuredItemCPC_description]) # select the animals in heads
+small_animals <- unique(trade_qty[measuredElementTrade %in% c(5609,5909), measuredItemCPC_description]) # select the animel in 1000 heads
+trade_in_heads <- trade_qty[measuredItemCPC_description %in% big_animals & measuredElementTrade %in% c(5608,5908),]
+trade_in_1000heads <- trade_qty[measuredItemCPC_description %in% small_animals & measuredElementTrade %in% c(5609,5909),]
+trade_qty_2 <- trade_qty[measuredItemCPC_description %!in% big_animals & measuredItemCPC_description %!in% small_animals,]
+
+trade1 <- do.call('rbind', list(trade_qty_2, trade_in_heads, trade_in_1000heads))
+
+
 average <- trade1[timePointYears %in% interval, .(`5_year_average` = mean(Value, na.rm = TRUE)),
                   by=.(geographicAreaM49, measuredElementTrade, measuredItemCPC)]
 
@@ -213,11 +234,13 @@ trade3 <- merge(trade2, average, by = c('geographicAreaM49', 'measuredElementTra
 
 trade_import <- trade3[grepl("Import", measuredElementTrade_description),][order(-`5_year_average`)]
 
-outList_1 <- trade_import[, head(.SD, numberOfItem), geographicAreaM49]
+# outList_1 <- trade_import[, head(.SD, numberOfItem), geographicAreaM49]
+outList_1 <- trade_import[`5_year_average` > 100,]
 
 trade_export <- trade3[grepl("Export", measuredElementTrade_description),][order(-`5_year_average`)]
 
-outList_2 <- trade_export[, head(.SD, numberOfItem), geographicAreaM49]
+# outList_2 <- trade_export[, head(.SD, numberOfItem), geographicAreaM49]
+outList_2 <- trade_export[`5_year_average` > 100,]
 
 outList_final <- rbind(outList_1, outList_2)
 
@@ -237,7 +260,6 @@ official_data3[,id:=NULL]
 
 outList_final <- outList_final[, measuredItemCPC := paste0("'", measuredItemCPC)]
 
-
 #### DESIGN THE EXCEL FILE #####
 
 wb <- createWorkbook("Creator of workbook")
@@ -245,26 +267,31 @@ addWorksheet(wb, sheetName = "trade_data_last_check")
 writeData(wb, "trade_data_last_check", outList_final)
 
 official <- createStyle(fontColour = "black", textDecoration = "bold")
-second_fill <- createStyle(fgFill = "orange")
+# second_fill <- createStyle(fgFill = "orange")
 first_fill <- createStyle(fgFill = "red")
-very_small <- createStyle(borderColour = "blue", borderStyle = "double", border = "TopBottomLeftRight")
+very_small <- createStyle(fgFill = "yellow")
+# very_small <- createStyle(borderColour = "blue", borderStyle = "double", border = "TopBottomLeftRight")
 style_comma <- createStyle(numFmt = "COMMA")
 
 
-for (i in nrow(outList_final)) {
-  addStyle(wb, "trade_data_last_check", cols = 12, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[12]])]), style = first_fill, gridExpand = TRUE)
-}
+# for (i in nrow(outList_final)) {
+#   addStyle(wb, "trade_data_last_check", cols = 12, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[12]])]), style = first_fill, gridExpand = TRUE)
+# }
 
-for (i in c(7,8,9,10,11)) {
-  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` < 0.5])), style = very_small, gridExpand = TRUE)
-}
-
-for (i in c(7,8,9,10,11)) {
-  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = second_fill, gridExpand = TRUE)
+for (i in c(7,8,9,10,11,12)) {
+  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = first_fill, gridExpand = TRUE, stack = TRUE)
 }
 
 for (i in c(7,8,9,10,11,12)) {
-  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[official_data3[[i]]])), style = official, gridExpand = TRUE)
+  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` < 0.5])), style = very_small, gridExpand = TRUE, stack = TRUE)
+}
+
+# for (i in c(7,8,9,10,11)) {
+#   addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = second_fill, gridExpand = TRUE)
+# }
+
+for (i in c(7,8,9,10,11,12)) {
+  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[official_data3[[i]]])), style = official, gridExpand = TRUE, stack = TRUE)
 }
 
 for (i in c(7,8,9,10,11,12,13)) {
@@ -273,14 +300,13 @@ for (i in c(7,8,9,10,11,12,13)) {
 
 saveWorkbook(wb, tmp_file_tpselection, overwrite = TRUE)
 
-bodyLastCheck = paste("Plugin completed. The attached excel file contains a list of main commodities.
+bodyLastCheck = paste("Plugin completed. The attached excel file contains all import and export quantities, sorted by 5 years average.
                         ######### Figures description #########
-                        Red figures: Deleted values in the year of validation
-                        Orange figures: Missing values in the previous years
-                        Blue bordered figures: Values minimum 50% less than the 5 year average
-                        Bold figures: Official data
+                        Red figures: Missing values;
+                        Yellow figures: Values minimum 50% less than the 5 year average;
+                        Bold figures: Official data.
                         ",
-                        sep='\n')
+                      sep='\n')
 
 send_mail(from = "no-reply@fao.org", subject = "trade_data_last_check", body = c(bodyLastCheck, tmp_file_tpselection), remove = TRUE)
 

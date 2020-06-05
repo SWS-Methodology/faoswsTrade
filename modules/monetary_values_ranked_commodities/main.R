@@ -101,7 +101,7 @@ send_mail <- function(from = NA, to = NA, subject = NA,
 # if (CheckDebug()) {
 #   SetClientFiles(dir = "C:/Users/aydan/Desktop/qa")
 #
-#   GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws', token = '1c56d364-be64-4293-a246-92505efe75e8')
+#   GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws', token = 'eee3ba1a-dabf-4771-815d-f4e47215561a')
 # }
 
 
@@ -203,6 +203,26 @@ trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, excep
 trade_mnt <- trade[measuredElementTrade %in% c(5622,5922),]
 # trade_qty <- trade[grepl("Quantity", measuredElementTrade_description),]
 
+
+###### Calculate the Share ######
+
+share <- trade_mnt[measuredItemCPC %in% c('F1881', 'F1882'),]
+share_dcast <- dcast.data.table(share, geographicAreaM49 + measuredElementTrade + timePointYears ~ measuredItemCPC, value.var = c('Value'))
+
+share_dcast <- share_dcast[, share:= (F1882/F1881)*100]
+
+share_melted <- melt.data.table(share_dcast, id.vars=c("geographicAreaM49","timePointYears","measuredElementTrade"), variable.name = "measuredItemCPC", value.name = "Value")
+
+share_melted <- share_melted[measuredItemCPC=='share']
+
+setnames(share_melted, 'measuredItemCPC', 'measuredItemCPC_description')
+
+share_last <- dcast.data.table(share_melted, geographicAreaM49+ measuredItemCPC_description+ measuredElementTrade~ timePointYears, value.var = c('Value'))
+
+share_last[measuredItemCPC_description=='share', measuredItemCPC_description:='SHARE of Agriculture to Merchandise (%)']
+
+###########
+
 average <- trade_mnt[timePointYears %in% interval, .(`5_year_average` = mean(Value, na.rm = TRUE)),
                   by=.(geographicAreaM49, measuredElementTrade, measuredItemCPC)]
 
@@ -221,14 +241,19 @@ trade3 <- merge(trade2, average, by = c('geographicAreaM49', 'measuredElementTra
 trade_import <- trade3[grepl("Import", measuredElementTrade_description),][order(-`5_year_average`)]
 
 # outList_1 <- trade_import[, head(.SD, numberOfItem), geographicAreaM49]
-# outList_1 <- trade_import[`5_year_average` > 100,]
+outList_1 <- trade_import[`5_year_average` > 100,]
+
+outList_1 <- rbind(outList_1[1:2,],share_last[measuredElementTrade=='5622',],outList_1[-(1:2),], fill=TRUE)
+
 
 trade_export <- trade3[grepl("Export", measuredElementTrade_description),][order(-`5_year_average`)]
 
 # outList_2 <- trade_export[, head(.SD, numberOfItem), geographicAreaM49]
-# outList_2 <- trade_export[`5_year_average` > 100,]
+outList_2 <- trade_export[`5_year_average` > 100,]
+outList_2 <- rbind(outList_2[1:2,],share_last[measuredElementTrade=='5922',],outList_2[-(1:2),], fill=TRUE)
 
-outList_final <- rbind(trade_import, trade_export)
+
+outList_final <- rbind(outList_1, outList_2)
 
 
 outList_to_official <- outList_final[,.(geographicAreaM49, geographicAreaM49_description, measuredItemCPC,
@@ -247,35 +272,46 @@ official_data3[,id:=NULL]
 outList_final <- outList_final[, measuredItemCPC := paste0("'", measuredItemCPC)]
 outList_final <- outList_final[is.na(`5_year_average`), `5_year_average`:=0]
 
+setcolorder(outList_final, c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC', 'measuredItemCPC_description' , 'measuredElementTrade', 'measuredElementTrade_description',
+                             "2013", "2014", "2015", "2016", "2017", "2018", "5_year_average") )
+
 #### DESIGN THE EXCEL FILE #####
 
 wb <- createWorkbook("Creator of workbook")
 addWorksheet(wb, sheetName = "Monetary_values")
 writeData(wb, "Monetary_values", outList_final)
 
+setColWidths(wb, sheet = 1, cols = c(1,2,3,5:13), widths = "auto")
+
 official <- createStyle(fontColour = "black", textDecoration = "bold")
-# second_fill <- createStyle(fgFill = "orange")
-first_fill <- createStyle(fgFill = "red")
-very_small <- createStyle(fgFill = "yellow")
-# very_small <- createStyle(borderColour = "blue", borderStyle = "double", border = "TopBottomLeftRight")
+three_rows <- createStyle(fgFill = "#D6ECF2") # blue for 3 rows
+very_small <- createStyle(fgFill = "#F6F16C") # small numbers
+high_percentage <- createStyle(fgFill = "#F34B43") # high percentage
+missing <- createStyle(fgFill = "#F39393") #missing
 style_comma <- createStyle(numFmt = "COMMA")
 
 
-# for (i in nrow(outList_final)) {
-#   addStyle(wb, "trade_data_last_check", cols = 12, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[12]])]), style = first_fill, gridExpand = TRUE)
-# }
+
+for (i in 1:13) {
+  addStyle(wb, "Monetary_values", cols = i, rows = 1 + c((1:nrow(outList_final))[outList_final$measuredItemCPC_description %in% c('Total Merchandise Trade', 'Agricult.Products,Total', 'SHARE of Agriculture to Merchandise (%)')]),
+           style = three_rows, gridExpand = TRUE, stack = TRUE)
+}
+
 
 for (i in c(7,8,9,10,11,12)) {
-  addStyle(wb, "Monetary_values", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = first_fill, gridExpand = TRUE, stack = TRUE)
+  addStyle(wb, "Monetary_values", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[7]] > 50 & outList_final$measuredItemCPC_description == 'SHARE of Agriculture to Merchandise (%)']))
+           , style = high_percentage, gridExpand = TRUE, stack=TRUE)
+}
+
+
+for (i in c(7,8,9,10,11,12)) {
+  addStyle(wb, "Monetary_values", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = missing, gridExpand = TRUE, stack = TRUE)
 }
 
 for (i in c(7,8,9,10,11,12)) {
   addStyle(wb, "Monetary_values", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` < 0.5])), style = very_small, gridExpand = TRUE, stack = TRUE)
 }
 
-# for (i in c(7,8,9,10,11)) {
-#   addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = second_fill, gridExpand = TRUE)
-# }
 
 for (i in c(7,8,9,10,11,12)) {
   addStyle(wb, "Monetary_values", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[official_data3[[i]]])), style = official, gridExpand = TRUE, stack = TRUE)
@@ -286,12 +322,13 @@ for (i in c(7,8,9,10,11,12,13)) {
 }
 
 saveWorkbook(wb, tmp_file_tpselection, overwrite = TRUE)
-# saveWorkbook(wb, file = "C:/Users/aydan/Desktop/dene.xlsx", overwrite = TRUE)
+# saveWorkbook(wb, file = "C:/Users/aydan/Desktop/dene9.xlsx", overwrite = TRUE)
 
 bodyLastCheck = paste("Plugin completed. The attached excel file contains all import and export monetary values, sorted by 5 years average.
                         ######### Figures description #########
-                        Red figures: Missing values;
+                        Red figures: SHARE of Agriculture to Merchandise is over 50%;
                         Yellow figures: Values minimum 50% less than the 5 year average;
+                        Pink figures: Missing value;
                         Bold figures: Official data.
                         ",
                       sep='\n')

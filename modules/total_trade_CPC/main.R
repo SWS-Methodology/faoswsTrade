@@ -103,9 +103,11 @@ startTime = Sys.time()
 ##' The query is done for all reporters, all partners, all elements
 ##' (indicated below), all items, and the year set in `year`.
 ##'
+##' 1. `5607`: Import Quantity (number)
 ##' 1. `5608`: Import Quantity (heads)
 ##' 1. `5609`: Import Quantity (1000 heads)
 ##' 1. `5610`: Import Quantity (tonnes)
+##' 1. `5907`: Export Quantity (number)
 ##' 1. `5908`: Export Quantity (heads)
 ##' 1. `5909`: Export Quantity (1000 heads)
 ##' 1. `5910`: Export Quantity (tonnes)
@@ -121,7 +123,7 @@ allPartnersDim <-
   Dimension(name = "geographicAreaM49Partner", keys = .)
 
 allElementsDim <-
-  c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922") %>%
+  c("5607", "5608", "5609", "5610", "5907", "5908", "5909", "5910", "5622", "5922") %>%
   Dimension(name = "measuredElementTrade", keys = .)
 
 allItemsDim <-
@@ -373,9 +375,9 @@ addUV <- function(data) {
 
   me_qty_uv <-
     data.frame(
-      flow = c(rep("import", 3), rep("export", 3)),
-      measuredElementTrade.qty = c("5608", "5609", "5610", "5908", "5909", "5910"),
-      measuredElementTrade = c("5638", "5639", "5630", "5938", "5939", "5930"),
+      flow = c(rep("import", 4), rep("export", 4)),
+      measuredElementTrade.qty = c("5607", "5608", "5609", "5610", "5907", "5908", "5909", "5910"),
+      measuredElementTrade = c("5637", "5638", "5639", "5630", "5937", "5938", "5939", "5930"),
       stringsAsFactors = FALSE
     )
 
@@ -442,9 +444,9 @@ if (remove_nonexistent_transactions == TRUE) {
     Dimension(name = "geographicAreaM49", keys = .)
 
   allElementsDim_tot <-
-    c("5608", "5609", "5610", "5908", "5909", "5910", "5622", "5922", #) %>% #,
+    c("5607", "5608", "5609", "5610", "5907", "5908", "5909", "5910", "5622", "5922", #) %>% #,
       ## UV elements:
-      "5638", "5639", "5630", "5938", "5939", "5930") %>%
+      "5637", "5638", "5639", "5630", "5937", "5938", "5939", "5930") %>%
     Dimension(name = "measuredElementTrade", keys = .)
 
   allItemsDim_tot <-
@@ -678,6 +680,69 @@ end_message <- sprintf(
   stats[["ignored"]],
   stats[["discarded"]]
 )
+
+# Compute and save "Agricult.Products, Total" (CPC: F1882)
+
+aggregate_groups_tp <- ReadDatatable("aggregate_groups", where = "domain_code = 'TP' AND var_type = 'item'")
+
+stopifnot(nrow(aggregate_groups_tp) > 0)
+
+aggregate_groups_tp_items <- unique(aggregate_groups_tp[!is.na(var_code_sws)]$var_code_sws)
+
+aggregate_groups_tp_items <- setdiff(aggregate_groups_tp_items, c("F1159", "F1267"))
+
+allReportersDim_tot <-
+  GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
+  # Using the bilateral one when "type" was removed
+  #GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")[type == "country", code] %>%
+  Dimension(name = "geographicAreaM49", keys = .)
+
+allElementsDim_tot <- Dimension(name = "measuredElementTrade", keys = c("5622", "5922"))
+
+allItemsDim_tot <-
+  aggregate_groups_tp_items %>%
+  Dimension(name = "measuredItemCPC", keys = .)
+
+agrickey <-
+  DatasetKey(
+    domain = "trade",
+    dataset = "total_trade_cpc_m49",
+      dimensions =
+        list(
+          allReportersDim_tot,
+          allElementsDim_tot,
+          allItemsDim_tot,
+          allYearsDim
+        )
+  )
+
+#flog.trace("[%s] RNET: Download existent SWS dataset", PID, name = "dev")
+
+message("TOT: agric_data")
+
+agric_data <- GetData(key = agrickey, omitna = TRUE)
+
+agric_data <- agric_data[flagObservationStatus != "M"]
+
+agric_data_tot <-
+  agric_data[,
+    .(
+      measuredItemCPC = "F1882",
+      Value = sum(Value),
+      flagObservationStatus = "T", # For now?
+      #  aggregateObservationFlag(
+      #    flagObservationStatus,
+      #    flagTable = flagWeightTable_status
+      #  ),
+      flagMethod = "s"
+    ),
+    by = c("geographicAreaM49", "measuredElementTrade", "timePointYears")
+  ]
+
+setcolorder(agric_data_tot, names(agric_data))
+
+stats_agric <- SaveData("trade", "total_trade_cpc_m49", agric_data_tot)
+
 
 if (!CheckDebug()) {
 #  updateInfoTable(

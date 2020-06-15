@@ -1796,11 +1796,11 @@ fcl_spec_mt_conv <- tldata %>%
 tldata <- tldata %>%
   dplyr::mutate(conv = ifelse(conv == 0, NA, conv))
 
-# For converting weight to 'heads', '1000 heads', 'units'.
+# For converting weight to 'heads', '1000 heads', 'number'.
 fcl_spec_head_conv <- tldata %>%
   dplyr::select(fcl, fclunit) %>%
   distinct() %>%
-  dplyr::filter(fclunit %in% c('heads', '1000 heads', 'units'))
+  dplyr::filter(fclunit %in% c('heads', '1000 heads', 'number'))
 
 # XXX probably this check should be removed.
 if (NROW(fcl_spec_mt_conv) > 0) {
@@ -2825,8 +2825,8 @@ if (corrections_exist) {
 
 ##+ convert_element
 
-quantityElements <- c("5608", "5609", "5610", "5908", "5909", "5910")
-uvElements       <- c("5638", "5639", "5630", "5938", "5939", "5930")
+quantityElements <- c("5607", "5608", "5609", "5610", "5907", "5908", "5909", "5910")
+uvElements       <- c("5637", "5638", "5639", "5630", "5937", "5938", "5939", "5930")
 
 # XXX: check some NAs in reporters/partners
 

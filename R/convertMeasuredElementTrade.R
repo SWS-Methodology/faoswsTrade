@@ -8,9 +8,11 @@ convertMeasuredElementTrade <- function(data) {
 
   # All cases
   ## Elements:
+  ##    - Imports (number): 5607
   ##    - Imports (heads): 5608
   ##    - Imports (1000 heads): 5609
   ##    - Imports (t): 5610
+  ##    - Exports (number): 5907
   ##    - Exports (heads): 5908
   ##    - Exports (1000 heads): 5909
   ##    - Exports (t): 5910
@@ -24,6 +26,9 @@ convertMeasuredElementTrade <- function(data) {
   data[measuredElementTrade == "qty" & unit == "mt"         & flow == 1, measuredElementTrade_code := "5610"]
   data[measuredElementTrade == "qty" & unit == "mt"         & flow == 2, measuredElementTrade_code := "5910"]
 
+  data[measuredElementTrade == "qty" & unit == "number"     & flow == 1, measuredElementTrade_code := "5607"]
+  data[measuredElementTrade == "qty" & unit == "number"     & flow == 2, measuredElementTrade_code := "5907"]
+
   data[measuredElementTrade == "qty" & unit == "heads"      & flow == 1, measuredElementTrade_code := "5608"]
   data[measuredElementTrade == "qty" & unit == "heads"      & flow == 2, measuredElementTrade_code := "5908"]
 
@@ -34,6 +39,9 @@ convertMeasuredElementTrade <- function(data) {
 
   data[measuredElementTrade == "uv" & unit == "mt"         & flow == 1, measuredElementTrade_code := "5630"]
   data[measuredElementTrade == "uv" & unit == "mt"         & flow == 2, measuredElementTrade_code := "5930"]
+
+  data[measuredElementTrade == "uv" & unit == "number"     & flow == 1, measuredElementTrade_code := "5637"]
+  data[measuredElementTrade == "uv" & unit == "number"     & flow == 2, measuredElementTrade_code := "5937"]
 
   data[measuredElementTrade == "uv" & unit == "heads"      & flow == 1, measuredElementTrade_code := "5638"]
   data[measuredElementTrade == "uv" & unit == "heads"      & flow == 2, measuredElementTrade_code := "5938"]

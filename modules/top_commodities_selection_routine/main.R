@@ -3,7 +3,7 @@
 ##'
 ##' **Description:**
 ##'
-##' This module is designed to send the top 20 commodities of non-reporting countries which needs to be re-filled by the country analyst.
+##' This module is designed to send the commodities ranked by quantity for non-reporting countries which needs to be re-filled by the country analyst.
 ##'
 ##'
 ##' **Inputs:**
@@ -121,9 +121,9 @@ if (CheckDebug()) {
 
   SETTINGS <- faoswsModules::ReadSettings(file.path(mydir, "sws.yml"))
 
-  SetClientFiles(dir='/Users/aydanselek/Desktop/certificates/qa')
+  SetClientFiles(dir='C:/Users/aydan/Desktop/qa')
 
-  GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws',token = '37adad9b-3bb7-4168-819d-a176f1e9dc2a')
+  GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws',token = '552f1302-37fe-477c-a8cd-a6a4b1df191f')
 }
 
 `%!in%` = Negate(`%in%`)
@@ -224,8 +224,11 @@ actual_value_4 <- actual_value_4[(measuredElementTrade == 5610 | measuredElement
 
 actual_value_total <- do.call("rbind", list(actual_value_current, actual_value_1, actual_value_2, actual_value_3, actual_value_4))
 # actual_value_total$timePointYears <- paste0(actual_value_total$timePointYears, '_actual')
-actual_value_total <- dcast.data.table(actual_value_total, geographicAreaM49Reporter + measuredItemCPC + measuredElementTrade
-                                        ~ timePointYears, value.var = list('Value'))
+if (nrow(actual_value_total)>0){
+  actual_value_total <- dcast.data.table(actual_value_total, geographicAreaM49Reporter + measuredItemCPC + measuredElementTrade
+                                         ~ timePointYears, value.var = list('Value'))
+}
+
 
 setnames(actual_value_total, 'geographicAreaM49Reporter', 'geographicAreaM49')
 
@@ -265,11 +268,13 @@ trade3 <- merge(trade2, average, by = c('geographicAreaM49', 'measuredItemCPC', 
 
 trade_import <- trade3[grepl("Import", measuredElementTrade_description),][order(-`5_year_average`)]
 
-outList_1 <- trade_import[, head(.SD, 20), geographicAreaM49]
+# outList_1 <- trade_import[, head(.SD, 20), geographicAreaM49]
+outList_1 <- trade_import[`5_year_average` > 100,]
 
 trade_export <- trade3[grepl("Export", measuredElementTrade_description),][order(-`5_year_average`)]
 
-outList_2 <- trade_export[, head(.SD, 20), geographicAreaM49]
+# outList_2 <- trade_export[, head(.SD, 20), geographicAreaM49]
+outList_2 <- trade_export[`5_year_average` > 100,]
 
 outList_final <- rbind(outList_1, outList_2)
 
@@ -292,6 +297,10 @@ outList_to_actuals <- outList_final[,.(geographicAreaM49, geographicAreaM49_desc
                                         measuredItemCPC_description, measuredElementTrade,
                                         measuredElementTrade_description)]
 outList_to_actuals$id <- 1:nrow(outList_to_actuals)
+
+actual_value_total$geographicAreaM49 <- as.character(actual_value_total$geographicAreaM49)
+actual_value_total$measuredElementTrade <- as.character(actual_value_total$measuredElementTrade)
+
 
 actual_value_total2 <- merge(outList_to_actuals, actual_value_total, by=c('geographicAreaM49', 'measuredItemCPC',
                                                                           'measuredElementTrade'), all.x=T, all.y=F)
@@ -349,25 +358,25 @@ first_fill <- createStyle(fgFill = "red")
 # styleT <- createStyle(numFmt = "#,##0") # create thousands format
 style_comma <- createStyle(numFmt = "COMMA")
 # very_small <- createStyle(borderColour = "blue", borderStyle = "double", border = "TopBottomLeftRight")
-
+very_small <- createStyle(fgFill = "yellow")
 # for (i in nrow(outList_final5)) {
 #    addStyle(wb, "main_commodities", cols = 13, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[12]])]), style = first_fill, gridExpand = TRUE)
 # }
 
-# for (i in c(7,8,9,10,11)) {
-#       addStyle(wb, "main_commodities", cols = i + 1, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` < 0.5])), style = very_small, gridExpand = TRUE)
-# }
+for (i in c(7,8,9,10,11,12)) {
+      addStyle(wb, "main_commodities", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` < 0.5])), style = very_small, gridExpand = TRUE, stack = TRUE)
+}
 #
 # for (i in c(7,8,9,10,11)) {
 #   addStyle(wb, "main_commodities", cols = i + 1, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = second_fill, gridExpand = TRUE)
 # }
 
 for (i in c(7,8,9,10,11,12)) {
-  addStyle(wb, "main_commodities", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = first_fill, gridExpand = TRUE)
+  addStyle(wb, "main_commodities", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = first_fill, gridExpand = TRUE, stack = TRUE)
 }
 
 for (i in c(7,8,9,10,11,12)) {
-  addStyle(wb, "main_commodities", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[official_data3[[i]]])), style = official, gridExpand = TRUE)
+  addStyle(wb, "main_commodities", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[official_data3[[i]]])), style = official, gridExpand = TRUE, stack = TRUE)
 }
 
 for (i in c(7,8,9,10,11,12,13)) {
@@ -378,11 +387,12 @@ for (i in c(7,8,9,10,11,12,13)) {
 
 
 saveWorkbook(wb, tmp_file_tpselection, overwrite = TRUE)
-# saveWorkbook(wb, file = 'C:/Users/Selek/Desktop/dene5.xlsx', overwrite = TRUE)
+# saveWorkbook(wb, file = 'C:/Users/aydan/Desktop/dene5.xlsx', overwrite = TRUE)
 bodyTPSelection = paste("Plugin completed. The attached excel file contains a list of main commodities.
                         ######### Figures description #########
-                        Red figures: Deleted values
-                        Bold figures: Official data
+                        Red figures: Missing or deleted bad Tp values;
+                        Yellow figures: Values minimum 50% less than the 5 year average;
+                        Bold figures: Official data.
                         ",
                     sep='\n')
 

@@ -125,7 +125,7 @@ if (faosws::CheckDebug()){
   )
 
   # XXX: this could/should be an SWS datatable
-  HS_DESCR <- "/srv/shiny-server/outliers/files/classificationHS.json"
+  HS_DESCR <- "/srv/shiny-server/TRADEvalidation/files/classificationHS.json"
 
   options(error = function(){
     dump.frames()

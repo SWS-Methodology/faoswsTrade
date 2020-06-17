@@ -1,7 +1,6 @@
 ---
 title: "FAO ESS trade processing system"
 author:
-- Marco Garieri
 - Christian A. Mongeau Ospina\
   
   Food and Agriculture Organization of the United Nations
@@ -74,9 +73,21 @@ detect outliers or other type of data that deserves verification, and allows
 analysts to correct flows in an informed way by means of an interactive
 validation tool.
 
-In this document, an overall narrative of what the various components do is
-presented.  A detailed (and more technical) step-by-step illustration of the
-modules/tools is given in separate documents.
+The trade module was developed by (in alphabetical order): Marco Garieri,
+Alexander Matrunich, Christian Mongeau, and Bo Werth.  Plugins for data
+validation have been developed by (in alphabetical order): Carlo Del Bello,
+Alberto Munisso, Aydan Selek, Sumeda Siriwardena, Cristina Valdivia.  The
+interactive tool for data validation has been developed by Christian
+Mongeau.  Useful feedback has been given by (in alhpabetical order):
+Katherine Baldwin, Claudia De Vita, Carola Fabi, Dominique Habimana, Salar
+Tayyib.
+
+Any remaining error/inaccuracy in this document (as of June 2020) can be
+attributed exclusively to the author. A correction and pull request can
+be made in the module git repo at:
+
+<https://github.com/SWS-Methodology/faoswsTrade/>
+
 
 # Raw data processing
 
@@ -320,7 +331,7 @@ In the Figure above, for instance, Myanmar is among reporter countries in
 
 ### "Non-reporting countries"
 
-A country can be non reporter because it did not report any flow, or because
+A country can be non-reporter because it did not report any flow, or because
 it did not report imports or exports. Scope of this table is showing this
 information. Countries that did not report imports and exports are marked
 with a "9", while those that did not report imports or exports are marked
@@ -1020,7 +1031,7 @@ where $value_{mean}$ and $quantity_{mean}$ are the 5-year average of the
 lagged value of $value$ and $quantity$, respectively, which are the
 aggregated monetary value and quantity of a reporter's given item/flow.
 
-The following table contains an example of a country that is non reporter in
+The following table contains an example of a country that is non-reporter in
 2014 and 2018.  The upper side of the table contains bilateral flows with
 its threee partners, as the partners declared; the lower part contains the
 aggregation of the bilateral flows declared by the country, indicated as
@@ -1035,7 +1046,7 @@ flows.[^missingtp]
 
 [^missingtp]: The example shows the reason why the aggregated mirrored
 transaction did not meet the threshold: in this case, an important partner
-(partner c) was missing (probably because it was also a non reporter).
+(partner c) was missing (probably because it was also a non-reporter).
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/tp_criteria.png")
@@ -1187,11 +1198,6 @@ result is substantially the same.
 
 
 
-
-
-
-
-
 ## "Total Trade CPC" plugin (totals by reporter)
 
 The "Total Trade CPC" plugin (SWS id: 5662) uses as input the output of the
@@ -1220,7 +1226,7 @@ to spot cases that need to be checked, and through an interactive
 tool for data validation. These plugins and the tool will be
 described in this section.
 
-The plugins usually reuire that the user opens a session in the
+The plugins usually require that the user opens a session in the
 "Total Trade (CPC)" dataset, where the country that he/she is
 validating is selected. In order to open a session the user needs
 to click on "New query", then select the "Trade" domain, and the
@@ -1241,9 +1247,17 @@ on "Run plugin" in the upper right corner of the SWS session.
 knitr::include_graphics("assets/total_session_run_plugin.png")
 ```
 
-## `Tradeoutliers_most_recent_version` plugin
+Running the plugins will allow the analyst understand which flows at the
+total level require attention. As the analyst collects a list of
+"suspicious" data at the total level, he/she can proceed the investigation
+and eventually correction at the bilateral level with the interactive
+validation tool (Shiny tool).
 
-This script calculates the 5-year average value of validated years for each
+## List of validation plugins
+
+### `Tradeoutliers_most_recent_version` plugin
+
+This plugin calculates the 5-year average value of validated years for each
 item/flow/quantity (`meanOld`) and calculates the ratio of the current year
 to the average:
 
@@ -1285,13 +1299,7 @@ knitr::include_graphics("assets/validation_outliers_excel.png")
 The email body indicates which quantity threshold has been used to check for
 outliers.
 
-## `trade_data_last_check` plugin
-
-For using this plugin, a session in the total tr
-
-```{r, echo = FALSE}
-knitr::include_graphics("assets/validation_last_popup.png")
-```
+### `trade_data_last_check` plugin
 
 This plugin calculate the ratio of the current year quantity and diveds it
 by the 5-year moving average (`movav`) of the same flow/item:
@@ -1300,10 +1308,13 @@ $$quantity / movav$$
 
 It sends an Excel file that indicates:
 
-* yellow cells: $quantity / movav < 0.5$, i.e., values less than the 5 year average of at least 50%
+* yellow cells: $quantity / movav < 0.5$, i.e., values less than the 5-year average of at least 50%
 * red cells: missing values
 * boldface: official data
 
+```{r, echo = FALSE}
+knitr::include_graphics("assets/validation_last_popup.png")
+```
 
 When the plugin completes, it sends an email with subject
 "trade_data_last_check" with an Excel file like the following:
@@ -1312,26 +1323,82 @@ When the plugin completes, it sends an email with subject
 knitr::include_graphics("assets/validation_last_excel.png")
 ```
 
-## `top_commodities_selection_routine` plugin
+### `top_commodities_selection_routine` plugin
 
-**TODO: DESCRIBE THIS PLUGIN**
+This plugin sorts in decreasing order commodities by quantity for
+non-reporting countries, showing which items have been deleted by
+the "TP criterion" (see the "Discarding incompatible mirror data
+("TP criterion")" Section), or are relatively low when compared to
+their 5-year average.
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/validation_top_popup.png")
 ```
 
-## `monetary_values_ranked_commodities` plugin
+When the plugin completes, it sends an email with subject
+"main_commodities" with an Excel that indicates:
 
-**TODO: DESCRIBE THIS PLUGIN**
+* yellow cells: values less than 50% of their 5-year average
+* red cells: missing or deleted values considered to be incompatible with their time series ("bad TP")
+* boldface: official data
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/validation_top_excel.png")
+```
+
+### `monetary_values_ranked_commodities` plugin
+
+This plugin is used for the validation of total
+agricultural/merchandise trade data. It calculates and ranks
+5-year averages of the monetary values of all items and facilitate
+the comparison of "Total Merchandise Trade" (CPC F1881) and
+"Agricult.Products,Total" (CPC F1882) by adding the "SHARE of
+Agriculture to Merchandise" ($F1881 / F1882 \times 100$).
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/validation_monetary_popup.png")
 ```
 
-## `Creating_Tables_Total_Trade` plugin
+When the plugin completes successfully, it sends an email with
+subject "Monetary values ranked commodities" with an Excel that
+indicates:
 
-**TODO: DESCRIBE THIS SCRIPT (THIS IS NOT AN SWS PLUGIN YET)**.
+* yellow cells: values less than 50% of their 5-year average
+* red cells: *SHARE of Agriculture to Merchandise* is greater than 50%
+* pink cells: missing value
+* boldface: official data
 
+```{r, echo = FALSE}
+knitr::include_graphics("assets/validation_monetary_excel.png")
+```
+
+### `trade_commodity_tables` plugin
+
+This plugin is designed to validate imports and
+exports nat the global level. It runs only for selected items,
+available in the `commodity_list_for_total_trade_tables` datatable.
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/validation_commodity_popup.png")
+```
+
+The plugin sends two emails as output. The first one is sent to
+the analyst and has subject "World" and contains an Excel file
+with global trade for all the items: red cells indicate that there
+is no balance between imports and exports (+/- 5%).
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/validation_commodity_excel_1.png")
+```
+
+The second email is sent to the officer and contains the single
+commodity tables for each item. These Excel files have three sheets,
+which are "World_summary", "Country_details", and "Regions", with
+details of global, country and region, respectively.
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/validation_commodity_excel_2.png")
+```
 
 ## Interactive tool for data validation (Shiny tool)
 
@@ -1834,8 +1901,9 @@ knitr::include_graphics("assets/trade_2.png")
 
 ## Plugin flow
 
-The steps required to complete one full round of the trade process is the
-following:
+The steps required to complete one full round of the trade process so to
+save data in the appropriate trade datasets are the following (validation
+will be covered in the "Data validation" section):
 
 1. Open a query in the "Bilateral Trade Flow (CPC)" dataset of the "Trade"
    domain (dimensions should not be set, as this is a *core* plugin), and
@@ -1884,14 +1952,156 @@ following:
 
 5. Steps 1-4 must to be repeated for all years that need to be processed.
 
-6. Validation by country analysts start, as described in Section "Data
-   validation".
+6. Validation by country analysts starts, as described in the next subsection.
 
 As of this writing (June 2020), the "Complete Trade Flow (CPC)"
 plugin and the "Total Trade (CPC)" plugin take around 25 and 7 minutes on
 average, respectively (the amount of time depends on the SWS server
 performance, the amount of data, and other techincal factors).
 
+## Validation flow
+
+Once the data has been saved for all years, as described in the previous
+subsection, analysts will start the data validation process. It differs on
+whether the validation needs to be done for reporting countries, or
+non-reporting countries. Also, validation of commodity tables need to be
+taken into account. Validation occurs in the following order:
+
+1. reporting countries
+1. non-reporting countries
+1. total merchandise trade
+1. commodity tables
+
+At the beginning of the data validation excercise, a "monitoring table" will
+be compiled by the trade officer. It contains the distribution of countries
+for the first 3 validation phases (reporting countries, non-reporting countries, and 
+total merchandise trade), and the distribution of commodities (for commodity
+tables). Given that the process is sequential, not necessarily the
+distribution for all steps will be available at the very beginning of the
+cycle.
+
+In some of the steps involved in validation, the analyst will need to check
+for external sources of data. Some examples of where to find additional data
+are:
+
+* TRADEMAP: <https://www.trademap.org/>
+* FAO-AMIS: <https://app.amis-outlook.org/#/market-database/supply-and-demand-overview>
+* USDA: <https://apps.fas.usda.gov/psdonline/app/index.html#/app/advQuery>
+* National Statistics Offices
+* Publications available on the web or in FAO library (e.g., "Oil World")
+
+Documents with more details on the process will be circulated by the trade
+officer at the beginning of the cycle.
+
+### Reporting countries
+
+This step will show the analyst outliers at the total level, by running the
+plugin:
+
+`Tradeoutlier_most_recent_version`
+
+when it completes, and email will be sent with a list of outliers. The
+analysts is required to have a look at the historical time series of all
+items contained in the email to check whether the identified outlier is a
+true positive (i.e., an actual outlier) and, thus, it deserves attention.
+For doing this, there are two options:
+
+* open a session in the "Bilateral Trade Flow (CPC)" dataset with the
+  required reporter/item/flow/years combination, making sure to include all
+  partners (as for years, it would be useful to have data for at least five
+  years previous of the identified outlier).
+* open that Shiny tool, as explained in the "Interactive tool for data
+  validation (Shiny tool)" Section.
+
+Given that in any case the actual validation of bilateral data happens
+through the Shiny tool, the second option is preferred.
+
+The analyst is required to use the tools available in the Shiny tool to make
+corrections to bilateral data, and keep comments on the actions made. These
+can be saved in the Excel file sent by the
+`Tradeoutlier_most_recent_version` plugin. Taking notes will help
+post-validation checks by officers.
+
+If, for some valid reason, bilateral flows cannot be reconciled with the sum
+of bilateral flows even after these are validated, the analyst have the
+option to override the aggregated total obtained from bilateral data, and
+input some exteranl figure, considered to be more in line with the country
+historical trend. In this case, the analyst need to write the appropriate
+number in the corresponding cell on the SWS session on the total dataset,
+and change flags in an appropriate way (e.g., if the data comes from a
+national statistical office, the flag combination needs to be changed to
+X,p), and click on "Apply":
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/sws_change_data_flags.png")
+```
+
+Once this operation is done, a red triangle will appear, indicating it is
+"session data". The analyst will need to click on th "Save to database"
+button (visible in the previous screenshot in the upper-right part, third
+row).
+
+### Non-reporting countries
+
+As the validation of reporting countries is completed, the analysts will be
+required to validate non-reporting (thus, *mirrored*) countries. The
+following plugin:
+
+`top_commodities_selection_routine`
+
+will read data for the required non-reporting and will send an email with a
+list of deleted flows (because they were considered not to match historical
+time series for that partner, see the "Discarding incompatible mirror data ("TP
+criterion") Section"), or flows that are relatively small, compared to
+previous data.
+
+Analysts will need to find external data sources for **all deleted flows**
+(highlited with red cells in the email sent by the plugin) or, though in
+rare occasions, estimate themselves what the flow should be.
+
+It may happen that external sources confirm the removed figure (e.g., a
+drought affected seriously the country and the exports are much lower
+compared to its standards). If this is the case, the analysts will need to
+"restore" a figure, i.e., selecting the deleted figure and selecting
+"History" in the lower part of the SWS UI, then the appropriate history
+entry, then click the restore symbol, as shown in the following Figure:
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/sws_restore.png")
+```
+
+After data has been restored, a red triangle will appear, indicating it is
+"session data". The analyst will need to click on th "Save to database"
+button (visible in the previous screenshot in the upper-right part, third
+row).
+
+Please note that non-reporting countries cannot be validated in the Shiny
+tool. This is because the tool is meant to be used in the validation of
+reporters.
+
+Some outliers may have been missed by analysts that worked on reporting
+countries or, more likely, what is not an outlier (or important one) for a
+reporter, may be so for a non-reporting country. Thus, a check for the
+presence of outliers will be required by using the following plugin:
+
+`Tradeoutlier_most_recent_version`
+
+Once outliers are identified, the analyst will need to check if the
+bilateral flow that creates the outlier at the total level is an
+outlier also for the country that originally reported that flow, or if it is
+an outlier only for the non-reporting country that is being analysed. In the
+former case, the analyst need to contact the colleague that had that country
+under his/her responsibility and ask for this to be re-validated. In the
+latter case, the analyst will need to contact the trade officer and agreen
+on a solution.
+
+### Total merchandise trade
+
+`monetary_values_ranked_commodities`
+
+### Commodity tables
+
+`trade_commodity_tables`
 
 # Future work
 
@@ -2313,7 +2523,15 @@ out aggregation, not by trade-related plugins.
 
 <p>&nbsp;</p>
 
-**TODO: describe what this table contains**
+This datatable contains the items used by the
+`trade_commodity_tables` plugin for doing the "Commodity tables".
+
+Note that that this mapping also includes:
+
+* the "European Union" aggregate, which includes 28 countries EU countries
+* the "Europe" aggregate, which excludes 28 countries that are member of European Union
+* the "Asia" aggregate, which excludes one country (Cyprus - 196) that is also a member of "Europe"
+
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/sws_datatable_commodity_list_total_trade.png")
@@ -2337,7 +2555,7 @@ knitr::include_graphics("assets/sws_datatable_comtradeunits.png")
 
 <p>&nbsp;</p>
 
-**TODO: describe what this table contains**
+This datatable contains a list of country-continent correspondences.
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/sws_datatable_continent_country_mapping.png")
@@ -2589,8 +2807,6 @@ to tsaid datatables.
 
 ## R server
 
-**TODO: expand**
-
 The following output shows the results of `sessionInfo()` obtained from a plugin
 that does not explicitly load any package, in the current (as of June 2020)
 R server in QA:
@@ -2625,8 +2841,6 @@ The main difference between standard and core plugins is that the former
 write data to a user's session, who will then need to save manually the
 modifications to the dataset, while core plugins write directly to the
 dataset, with no manual intervention required from the user.
-
-**TODO: expand**
 
 ### Plugin scheduling
 
@@ -2732,10 +2946,6 @@ drive, change both accordingly):
     
     saveRDS(trade_data, "SHARE/trade/datatables/ct_tariffline_unlogged_2019.rds")
 
-
-# Appendix: Trade plugins log mechanism {.unnumbered}
-
-**TODO: say something about log**
 
 # Disclaimer {#disclaimer .unnumbered}
 

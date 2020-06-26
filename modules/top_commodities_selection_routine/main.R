@@ -73,11 +73,13 @@ send_mail <- function(from = NA, to = NA, subject = NA,
               stop(paste(tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
                          'is not a supported file type.'))
             } else {
-              return(sendmailR:::.file_attachment(x, basename(x), type = file_type))
-            }
+              res <- sendmailR:::.file_attachment(x, basename(x), type = file_type)
 
-            if (remove) {
-              unlink(x)
+              if (remove == TRUE) {
+                unlink(x)
+              }
+
+              return(res)
             }
           } else {
             return(x)

@@ -76,11 +76,13 @@ send_mail <- function(from = NA, to = NA, subject = NA,
               stop(paste(tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
                          'is not a supported file type.'))
             } else {
-              return(sendmailR:::.file_attachment(x, basename(x), type = file_type))
-            }
+              res <- sendmailR:::.file_attachment(x, basename(x), type = file_type)
 
-            if (remove) {
-              unlink(x)
+              if (remove == TRUE) {
+                unlink(x)
+              }
+
+              return(res)
             }
           } else {
             return(x)
@@ -93,7 +95,6 @@ send_mail <- function(from = NA, to = NA, subject = NA,
 
   sendmailR::sendmail(from, to, subject, as.list(body))
 }
-
 
 # ## set up for the test environment and parameters
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")

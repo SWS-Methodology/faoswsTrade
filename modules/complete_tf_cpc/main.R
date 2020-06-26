@@ -1607,7 +1607,8 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
       from    = "SWS-trade-module@fao.org",
       to      = EMAIL_RECIPIENTS,
       subject = paste0("Trade plugin: unmapped codes, year ", year),
-      body    = c(paste("Once all CPC/FCL codes are added, append the file to the ESS trademap", year, "datatable on SWS. Before doing so (and AFTER the mappping of unmapped codes is done), open the CSV file with a text editor and remove all the ' characters in front of hs and cpc (those were added so that leading zeros do not disappear). Also, remove all columns after 'notes'. Avoid inserting accented characters in the free text fields in this file: not doing so may make SWS angry."), unmapped_csv_filename)
+      body    = c(paste("Once all CPC/FCL codes are added, append the file to the ESS trademap", year, "datatable on SWS. Before doing so (and AFTER the mappping of unmapped codes is done), open the CSV file with a text editor and remove all the ' characters in front of hs and cpc (those were added so that leading zeros do not disappear). Also, remove all columns after 'notes'. Avoid inserting accented characters in the free text fields in this file: not doing so may make SWS angry."), unmapped_csv_filename),
+      remove  = TRUE
     )
   }
 
@@ -2739,7 +2740,8 @@ if (corrections_exist) {
         from    = "SWS-trade-module@fao.org",
         to      = EMAIL_RECIPIENTS,
         subject = paste0("Trade plugin: corrections unapplied, year ", year),
-        body    = c("Some corrections cannot be applied.", unapplied_csv_filename)
+        body    = c("Some corrections cannot be applied.", unapplied_csv_filename),
+        remove  = TRUE
       )
     }
 
@@ -3019,7 +3021,8 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
         from    = "SWS-trade-module@fao.org",
         to      = EMAIL_RECIPIENTS,
         subject = paste0("Trade plugin: Excluded Tp, year ", year),
-        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename)
+        body    = c("Excluded by applying Tp criteria.", excluded_tp_csv_filename),
+        remove  = TRUE
       )
     }
 

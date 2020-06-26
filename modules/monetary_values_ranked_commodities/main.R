@@ -76,11 +76,13 @@ send_mail <- function(from = NA, to = NA, subject = NA,
               stop(paste(tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
                          'is not a supported file type.'))
             } else {
-              return(sendmailR:::.file_attachment(x, basename(x), type = file_type))
-            }
+              res <- sendmailR:::.file_attachment(x, basename(x), type = file_type)
 
-            if (remove) {
-              unlink(x)
+              if (remove == TRUE) {
+                unlink(x)
+              }
+
+              return(res)
             }
           } else {
             return(x)
@@ -93,7 +95,6 @@ send_mail <- function(from = NA, to = NA, subject = NA,
 
   sendmailR::sendmail(from, to, subject, as.list(body))
 }
-
 
 # ## set up for the test environment and parameters
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
@@ -299,7 +300,7 @@ for (i in 1:13) {
 
 
 for (i in c(7,8,9,10,11,12)) {
-  addStyle(wb, "Monetary_values", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[7]] > 50 & outList_final$measuredItemCPC_description == 'SHARE of Agriculture to Merchandise (%)']))
+  addStyle(wb, "Monetary_values", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]] > 50 & outList_final$measuredItemCPC_description == 'SHARE of Agriculture to Merchandise (%)']))
            , style = high_percentage, gridExpand = TRUE, stack=TRUE)
 }
 

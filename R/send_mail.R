@@ -20,7 +20,6 @@
 #'   subject = 'Results', body = c('See file', '/location/of/file.xls'))
 #' }
 
-
 send_mail <- function(from = NA, to = NA, subject = NA,
                       body = NA, remove = FALSE) {
 
@@ -49,32 +48,34 @@ send_mail <- function(from = NA, to = NA, subject = NA,
             # https://en.wikipedia.org/wiki/Media_type 
             file_type <-
               switch(
-                  tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
-                  txt  = 'text/plain',
-                  csv  = 'text/csv',
-                  png  = 'image/png',
-                  jpeg = 'image/jpeg',
-                  jpg  = 'image/jpeg',
-                  gif  = 'image/gif',
-                  xls  = 'application/vnd.ms-excel',
-                  xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                  doc  = 'application/msword',
-                  docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  pdf  = 'application/pdf',
-                  zip  = 'application/zip',
-                  # https://stackoverflow.com/questions/24725593/mime-type-for-serialized-r-objects
-                  rds  = 'application/octet-stream'
-               )
+                tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
+                txt  = 'text/plain',
+                csv  = 'text/csv',
+                png  = 'image/png',
+                jpeg = 'image/jpeg',
+                jpg  = 'image/jpeg',
+                gif  = 'image/gif',
+                xls  = 'application/vnd.ms-excel',
+                xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                doc  = 'application/msword',
+                docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                pdf  = 'application/pdf',
+                zip  = 'application/zip',
+                # https://stackoverflow.com/questions/24725593/mime-type-for-serialized-r-objects
+                rds  = 'application/octet-stream'
+              )
 
             if (is.null(file_type)) {
               stop(paste(tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
                          'is not a supported file type.'))
             } else {
-              return(sendmailR:::.file_attachment(x, basename(x), type = file_type))
-            }
+              res <- sendmailR:::.file_attachment(x, basename(x), type = file_type)
 
-            if (remove) {
-              unlink(x)
+              if (remove == TRUE) {
+                unlink(x)
+              }
+
+              return(res)
             }
           } else {
             return(x)

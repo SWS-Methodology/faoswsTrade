@@ -99,9 +99,89 @@ explained in this section.
 
 ## Data harvesting
 
-**TODO: HERE A DESCRIPTION OF THE WORKFLOW FOLLOWED BY FRANO WILL BE
-PRESENT, WITH A DESCRIPTION OF THE SHINY TOOL FRANO SAID IS AVAILABLE FOR
-DOING THE HARVESTING.**
+Data harvesting is done by the Methodological team. The
+explanation of the process below is temporary as the team finish
+documentation of their harvesters. Instructions below can be
+outdated as of this writing (June 2020).
+
+### UNSD
+
+UNSD data can be obtained through UNSD's API (Application
+programming interface).  There are two methods: "simple" and bulk
+download. The first method is more suitable when there are few
+cases to be downloaded. It consists in querying an UNSD webservice
+with specific parameters.[^unsdweb] The result will be an SDMX
+(Statistical Data and Metadata eXchange)[^sdmx] file that will
+need to be converted[^rsdmx] into a tabular format so that it can
+then be uploaded to SWS. A list of access points and parameters
+can be found at:
+<https://unstats.un.org/unsd/tradekb/Print50044.aspx>. For
+instance, to download all tariff line data for COlombia's (M49
+170) imports and exports of chapter 10 (Cereals) on 2017, the
+address is:
+
+<https://comtrade.un.org/ws/getsdmxtarifflinev1.aspx?px=*&p=*&comp=false&r=170&y=2017&cc=01*>
+
+When bigger data needs to be downloaded (e.g., in a new cycle all
+available data for all countries will be downloaded), the
+preferred method is bulk download. It consists in querying the
+API, with its `bulk` method, as described here:
+
+<https://comtrade.un.org/data/doc/api/bulk/#DataRequestsDwn>
+
+As per the link above, "responses are in the form of a ZIP
+archive. Each zip archive contains exactly one CSV file. The CSV
+file adheres to the format specified in the UN Comtrade API CSV
+response format documentation. If new fields have recently been
+added to the response format there may be a delay before they
+become available in the bulk files."
+
+
+
+[^unsdweb]: See <https://comtrade.un.org/data/dev/portal/>.
+
+[^sdmx]: For details on SDMX, see <https://sdmx.org/?page_id=3425>.
+
+[^rsdmx]: An R package that can be used to handle SDMX files is
+  rsdmx: <https://CRAN.R-project.org/package=rsdmx>.
+
+
+### Eurostat
+
+Eurostat data can be obtained through their bulk download
+facility:
+
+<https://ec.europa.eu/eurostat/data/bulkdownload>
+
+Specifically, trade data is avialable at **comext** > **COMEXT_DATA** > **PRODUCTS**:
+
+<https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?sort=1&dir=comext%2FCOMEXT_DATA%2FPRODUCTS>
+
+Relevant files are files named fullYEAR52.7z, where YEAR is a
+given year (e.g., full201852.7z), and 52 stands for the last week
+of the year. The files are 7-zip compressed files, wich are
+compressed files.[^7zip]
+
+[^7zip] These files can be opened with the free 7-Zip software: <https://www.7-zip.org/>.
+
+Note that Eurostat's bulk download facility changed on 2nd
+February 2018,[^eurostatbulk] and new data need to be slightly pre-processed
+before uploading to SWS. The operations that need to be done are:
+
+* Aggregate by `period`, `declarant`, `partner`, `flow`, `product_nc`, and:
+  * `value_1k_euro` = sum(as.numeric(`value_in_euros`) / 1000)
+  * `qty_ton` = sum(as.numeric(`quantity_in_kg`) / 1000)
+  * `sup_quantity` = sum(as.numeric(`sup_quantity`))
+* `supp_unit` = NULL
+* `stat_regime` = "4"
+
+[^eurostatbulk]: <https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?sort=1&file=comext%2F%23%23%23IMPORTANT_NOTE.pdf>
+
+**NOTE: please double check this, by downloading a previous year,
+applying the operations and compare them with data already saved
+in SWS Eurostat datatables.**
+
+### Specifications
 
 Data of relevance for ESS trade falls under the following "Harmonized
 System" (HS)[^hs] chapters[^chapters]:

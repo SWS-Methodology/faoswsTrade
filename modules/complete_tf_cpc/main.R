@@ -17,7 +17,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-05-07-15-00"
+PLUGIN_VERSION <- "2020-10-27-15-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -125,7 +125,8 @@ if (faosws::CheckDebug()){
   )
 
   # XXX: this could/should be an SWS datatable
-  HS_DESCR <- "/srv/shiny-server/TRADEvalidation/files/classificationHS.json"
+  # HS_DESCR <- "/srv/shiny-server/TRADEvalidation/files/classificationHS.json"
+  HS_DESCR <- file.path(Sys.getenv("R_SWS_SHARE_PATH"), "trade/datatables/classificationHS.json")
 
   options(error = function(){
     dump.frames()
@@ -547,7 +548,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
       formatC(width = 2, format = "d", flag = "0")
 
   tldata <- readRDS(local_tldata_file)
-
+  tldata <- setDT(tldata)
   tldata <- tldata[chapter %in% chapters]
 
 } else {
@@ -994,7 +995,7 @@ if (only_pre_process) stop("Stop after reports on raw data")
 
   if (nrow(add_map[, .N, .(reporter_fao, year, flow, hs)][N > 1]) > 0) {
     warning('Removing duplicate HS codes by reporter/year/flow.')
-    
+
     add_map[, `:=`(n = .N, hs_ext_perc = sum(!is.na(hs_extend))/.N), .(reporter_fao, year, flow, hs)]
 
     # Prefer cases where hs_extend is available
@@ -2463,7 +2464,7 @@ if (length(to_reimpute) > 0) {
       uv_imputed = uv_prev * (1 + variation)
     )
   ]
-  
+
   uv_total_imputed <-
     uv_total_imputed[,
       .(geographicAreaM49Reporter, flow, timePointYears,

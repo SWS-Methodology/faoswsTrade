@@ -110,7 +110,7 @@ if(CheckDebug()){
   message("Not on server, so setting up environment...")
 
   library(faoswsModules)
-  SETT <- ReadSettings("C:/Users/Selek/Dropbox/1-FAO-DROPBOX/faosws_Trade/modules/trade_data_last_check/sws.yml")
+  SETT <- ReadSettings("modules/monetary_values_ranked_commodities/sws.yml")
 
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters
@@ -273,8 +273,11 @@ official_data3[,id:=NULL]
 outList_final <- outList_final[, measuredItemCPC := paste0("'", measuredItemCPC)]
 outList_final <- outList_final[is.na(`5_year_average`), `5_year_average`:=0]
 
-setcolorder(outList_final, c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC', 'measuredItemCPC_description' , 'measuredElementTrade', 'measuredElementTrade_description',
-                             "2013", "2014", "2015", "2016", "2017", "2018", "5_year_average") )
+
+
+setcolorder(outList_final, c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC', 'measuredItemCPC_description' ,
+                             'measuredElementTrade', 'measuredElementTrade_description',
+                             c(as.character(sort(yearVals))), "5_year_average") )
 
 #### DESIGN THE EXCEL FILE #####
 

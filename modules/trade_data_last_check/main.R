@@ -110,7 +110,7 @@ if(CheckDebug()){
   message("Not on server, so setting up environment...")
 
   library(faoswsModules)
-  SETT <- ReadSettings("C:/Users/Selek/Dropbox/1-FAO-DROPBOX/faosws_Trade/modules/trade_data_last_check/sws.yml")
+  SETT <- ReadSettings("C:/Users/aydan/Dropbox/HOME2/faoswsTrade/modules/trade_data_last_check/sws.yml")
 
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters
@@ -271,6 +271,7 @@ official <- createStyle(fontColour = "black", textDecoration = "bold")
 # second_fill <- createStyle(fgFill = "orange")
 first_fill <- createStyle(fgFill = "red")
 very_small <- createStyle(fgFill = "yellow")
+very_big <- createStyle(fgFill = "deepskyblue")
 # very_small <- createStyle(borderColour = "blue", borderStyle = "double", border = "TopBottomLeftRight")
 style_comma <- createStyle(numFmt = "COMMA")
 
@@ -287,6 +288,10 @@ for (i in c(7,8,9,10,11,12)) {
   addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` < 0.5])), style = very_small, gridExpand = TRUE, stack = TRUE)
 }
 
+for (i in c(7,8,9,10,11,12)) {
+  addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c(na.omit((1:nrow(outList_final))[outList_final[[i]]/ outList_final$`5_year_average` > 2])), style = very_big, gridExpand = TRUE, stack = TRUE)
+}
+
 # for (i in c(7,8,9,10,11)) {
 #   addStyle(wb, "trade_data_last_check", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = second_fill, gridExpand = TRUE)
 # }
@@ -301,10 +306,12 @@ for (i in c(7,8,9,10,11,12,13)) {
 
 saveWorkbook(wb, tmp_file_tpselection, overwrite = TRUE)
 
+
 bodyLastCheck = paste("Plugin completed. The attached excel file contains all import and export quantities, sorted by 5 years average.
                         ######### Figures description #########
                         Red figures: Missing values;
                         Yellow figures: Values minimum 50% less than the 5 year average;
+                        Blue figures: Values minimum twice more than the 5-year average;
                         Bold figures: Official data.
                         ",
                       sep='\n')

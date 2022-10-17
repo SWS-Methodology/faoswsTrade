@@ -42,7 +42,7 @@ useValidationCorrections <- function(data, corrections) {
       corrections[[sub('_value', '_qty', i)]] = NA
     }
   }
-
+  corrections$data_original_value <- as.double(corrections$data_original_value)
   complete_with_corrections <- left_join(
     data,
     corrections,

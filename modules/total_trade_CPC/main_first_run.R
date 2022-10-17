@@ -4,6 +4,7 @@
 ##'   - Marco Garieri
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
+##'   - Aydan Selek
 ##'   - Bo Werth\
 ##'
 ##'     Food and Agriculture Organization of the United Nations
@@ -63,7 +64,7 @@ local({
 
 if (CheckDebug()) {
   library(faoswsModules)
-  SETTINGS = ReadSettings("C:/Users/lombardi/Documents/Livia/total_trade_cpc_v54/Total_Trade/sws.yml")
+  SETTINGS = ReadSettings("modules/total_trade_CPC/sws.yml")
   ## Define where your certificates are stored
   faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
@@ -670,7 +671,7 @@ message("TOT: saving")
 
 stats <- SaveData("trade",
                   "total_trade_cpc_m49",
-                  total_trade_cpc_w_uv)
+                  total_trade_cpc_w_uv, waitTimeout = Inf)
 
 end_message <- sprintf(
   "Module completed in %1.2f minutes.
@@ -745,7 +746,7 @@ agric_data_tot <-
 
 setcolorder(agric_data_tot, names(agric_data))
 
-stats_agric <- SaveData("trade", "total_trade_cpc_m49", agric_data_tot)
+stats_agric <- SaveData("trade", "total_trade_cpc_m49", agric_data_tot, waitTimeout = Inf)
 
 
 if (!CheckDebug()) {

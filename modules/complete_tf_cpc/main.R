@@ -4,6 +4,7 @@
 ##'   - Marco Garieri
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
+##'   - Aydan Selek
 ##'   - Bo Werth\
 ##'
 ##'     Food and Agriculture Organization of the United Nations
@@ -17,7 +18,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2020-10-27-15-00"
+PLUGIN_VERSION <- "2021-10-26-15-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -37,7 +38,7 @@ library(faoswsUtil)
 library(faoswsTrade)
 library(faoswsFlag)
 library(bit64)
-
+`%!in%` = Negate(`%in%`)
 # Always source files in R/ (useful for local runs)
 sapply(dir("R", full.names = TRUE), source)
 
@@ -211,7 +212,7 @@ flog.debug("User's computation parameters:",
            name = "dev")
 
 flog.info("R session environment: ",
-           sessionInfo(), capture = TRUE, name = "dev")
+          sessionInfo(), capture = TRUE, name = "dev")
 
 PID <- Sys.getpid()
 
@@ -288,8 +289,8 @@ trademap_year <-
   merge(
     trademap_year,
     as.data.table(m49faomap)[,
-      .(m49 = as.character(m49), fao)
-    ],
+                             .(m49 = as.character(m49), fao)
+                             ],
     by.x = "area",
     by.y = "m49",
     all.x = TRUE
@@ -307,11 +308,11 @@ setnames(trademap_year, c("area", "fao"), c("m49", "area"))
 
 if (!only_pre_process) {
 
-##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
-##' quantity units) in Tariffline data into intelligible unit of measurement,
-##' which correspond to the standards of quantity recommended by the *World
-##' Customs Organization* (WCO) (e.g., `qunit`=8 corresponds to *kg*).
-##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
+  ##' - `comtradeunits`: Translation of the `qunit` variable (supplementary
+  ##' quantity units) in Tariffline data into intelligible unit of measurement,
+  ##' which correspond to the standards of quantity recommended by the *World
+  ##' Customs Organization* (WCO) (e.g., `qunit`=8 corresponds to *kg*).
+  ##' See: http://unstats.un.org/unsd/tradekb/Knowledgebase/UN-Comtrade-Reference-Tables
 
   flog.trace("[%s] Reading in 'comtradeunits' datatable", PID, name = "dev")
   #data("comtradeunits", package = "faoswsTrade", envir = environment())
@@ -323,7 +324,7 @@ if (!only_pre_process) {
 
   comtradeunits[, qunit := as.integer(qunit)]
 
-##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
+  ##' - `EURconversionUSD`: Annual EUR/USD currency exchange rates table from SWS.
 
   flog.trace("[%s] Reading in 'eur_conversion_usd' datatable", PID, name = "dev")
   EURconversionUSD <- ReadDatatable('eur_conversion_usd')
@@ -331,10 +332,10 @@ if (!only_pre_process) {
   stopifnot(nrow(EURconversionUSD) > 0)
   stopifnot(year %in% EURconversionUSD$eusd_year)
 
-##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
-##' meet FAO standards. According to FAO standard, all weights are reported in
-##' tonnes, animals in heads or 1000 heads and for certain commodities,
-##' only the value is provided.
+  ##' - `fclunits`: For UNSD Tariffline units of measurement are converted to
+  ##' meet FAO standards. According to FAO standard, all weights are reported in
+  ##' tonnes, animals in heads or 1000 heads and for certain commodities,
+  ##' only the value is provided.
 
   flog.trace("[%s] Reading in 'fclunits' datatable", PID, name = "dev")
   #data("fclunits", package = "faoswsTrade", envir = environment())
@@ -346,20 +347,20 @@ if (!only_pre_process) {
 
   fclunits[, fcl := as.integer(fcl)]
 
-##' - `fclcodes`: List of valid FCL codes.
+  ##' - `fclcodes`: List of valid FCL codes.
 
   flog.trace("[%s] Reading in 'fcl_codes' datatable", PID, name = "dev")
   fcl_codes <- as.numeric(ReadDatatable('fcl_2_cpc')$fcl)
 
   stopifnot(length(fcl_codes) > 0)
 
-##' - `livestockweights`: List of valid FCL codes.
+  ##' - `livestockweights`: List of valid FCL codes.
 
   flog.trace("[%s] Reading in 'livestock_weights' datatable", PID, name = "dev")
   livestock_weights <- ReadDatatable('livestock_weights')
   stopifnot(nrow(livestock_weights) > 0)
 
-##' - `hs6standard`: HS6standard will be used as last resort for mapping.
+  ##' - `hs6standard`: HS6standard will be used as last resort for mapping.
 
   flog.trace("[%s] Reading in 'standard_hs12_6digit' datatable", PID, name = "dev")
   hs6standard <- ReadDatatable('standard_hs12_6digit')
@@ -369,68 +370,68 @@ if (!only_pre_process) {
   hs6standard <-
     hs6standard[
       !duplicated(hs2012_code)
-    ][,
-      .(hs6 = as.integer(hs2012_code), hs2012_code, faostat_code)
-    ]
+      ][,
+        .(hs6 = as.integer(hs2012_code), hs2012_code, faostat_code)
+        ]
 
   ##@ if (trademap_year_available == FALSE) {
 
-##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
+  ##' - `hsfclmap4`: Additional mapping between HS and FCL codes (extends `hsfclmap`).
 
-    flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
-    add_map <- ReadDatatable('hsfclmap4')
+  flog.trace("[%s] Reading in 'hsfclmap4' datatable", PID, name = "dev")
+  add_map <- ReadDatatable('hsfclmap4')
 
-    stopifnot(nrow(add_map) > 0)
+  stopifnot(nrow(add_map) > 0)
 
-    add_map <- add_map[!is.na(year) & !is.na(reporter_fao) & !is.na(hs)]
+  add_map <- add_map[!is.na(year) & !is.na(reporter_fao) & !is.na(hs)]
 
-    add_map[, hs := stringr::str_replace_all(hs, ' ', '')]
+  add_map[, hs := stringr::str_replace_all(hs, ' ', '')]
 
-    add_map[hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0', hs := paste0("0", hs)]
+  add_map[hs_chap < 10 & stringr::str_sub(hs, 1, 1) != '0', hs := paste0("0", hs)]
 
-    ## XXX change some FCL codes that are not valid
-    add_map[fcl == 389, fcl := 390]
-    add_map[fcl == 654, fcl := 653]
+  ## XXX change some FCL codes that are not valid
+  add_map[fcl == 389, fcl := 390]
+  add_map[fcl == 654, fcl := 653]
 
-    setkeyv(add_map, c("reporter_fao", "flow", "hs", "year"))
+  setkeyv(add_map, c("reporter_fao", "flow", "hs", "year"))
 
-##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
-##' used to archive information existing in the previous trade system
-##' (Shark/Jellyfish). This mapping table contains (identifier: `hsfclmap5`)
-##' also some "corrections" to the original mapping found in the MDB files.
-##' These are contained in the `correction_*` variables (e.g.,
-##' `corrections_fcl`), and if for a given HS range one or more of these
-##' variables are non-missing they will replace the original corresponding
-##' variable (e.g., if `corresponding_fcl` is non-missing, it will replace
-##' `fcl`). Missing HS to FCL links in the MDB files are mapped by Team B/C
-##' and stored in a table (identifier: `hsfclmap4`) that will extend the
-##' original mapping table. *[Note: for reference, the actual name of the
-##' initial mapping table is `hsfclmap3`; the naming convention of these
-##' tables should probably be made more logical or, at least, more easily
-##' identifiable.]* The resulting mapping table gets subsetted with the
-##' condition that the`startyear` and `endyear` of the HS to FCL links
-##' should satisfy the condition: $startyear <= year <= endyear$.
+  ##' - `hsfclmap`: Mapping between HS and FCL codes extracted from MDB files
+  ##' used to archive information existing in the previous trade system
+  ##' (Shark/Jellyfish). This mapping table contains (identifier: `hsfclmap5`)
+  ##' also some "corrections" to the original mapping found in the MDB files.
+  ##' These are contained in the `correction_*` variables (e.g.,
+  ##' `corrections_fcl`), and if for a given HS range one or more of these
+  ##' variables are non-missing they will replace the original corresponding
+  ##' variable (e.g., if `corresponding_fcl` is non-missing, it will replace
+  ##' `fcl`). Missing HS to FCL links in the MDB files are mapped by Team B/C
+  ##' and stored in a table (identifier: `hsfclmap4`) that will extend the
+  ##' original mapping table. *[Note: for reference, the actual name of the
+  ##' initial mapping table is `hsfclmap3`; the naming convention of these
+  ##' tables should probably be made more logical or, at least, more easily
+  ##' identifiable.]* The resulting mapping table gets subsetted with the
+  ##' condition that the`startyear` and `endyear` of the HS to FCL links
+  ##' should satisfy the condition: $startyear <= year <= endyear$.
 
-    flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
-    if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
-      hsfclmap3 <- readRDS(file.path(Sys.getenv("R_SWS_SHARE_PATH"), "trade/datatables/hsfclmap5.rds"))
-    } else {
-      hsfclmap3 <- ReadDatatable('hsfclmap5')
-    }
+  flog.trace("[%s] Reading in 'hsfclmap5' datatable", PID, name = "dev")
+  if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) && !faosws::CheckDebug()) {
+    hsfclmap3 <- readRDS(file.path(Sys.getenv("R_SWS_SHARE_PATH"), "trade/datatables/hsfclmap5.rds"))
+  } else {
+    hsfclmap3 <- ReadDatatable('hsfclmap5')
+  }
 
-    stopifnot(nrow(hsfclmap3) > 0)
+  stopifnot(nrow(hsfclmap3) > 0)
   ##@ }
 
-##' - `force_mirroring`: Datatables for those reported that need to be
-##' treated as non-reporters as mirroring is required.
+  ##' - `force_mirroring`: Datatables for those reported that need to be
+  ##' treated as non-reporters as mirroring is required.
 
   flog.trace("[%s] Reading in 'force_mirroring' datatable", PID, name = "dev")
   force_mirroring <- ReadDatatable('force_mirroring')
 
   stopifnot(nrow(force_mirroring) > 0)
 
-##' - `corrections_table`: Table with corrections applied during the
-##' validation process.
+  ##' - `corrections_table`: Table with corrections applied during the
+  ##' validation process.
 
   flog.trace("[%s] Reading in corrections dataset", PID, name = "dev")
   corrections_dir <-
@@ -489,7 +490,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
   }
 
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
-      formatC(width = 2, format = "d", flag = "0")
+    formatC(width = 2, format = "d", flag = "0")
 
   esdata <- readRDS(local_esdata_file)
 
@@ -545,7 +546,7 @@ if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationPar
   }
 
   chapters <- c(1:24, 33, 35, 38, 40:41, 43, 50:53) %>%
-      formatC(width = 2, format = "d", flag = "0")
+    formatC(width = 2, format = "d", flag = "0")
 
   tldata <- readRDS(local_tldata_file)
   tldata <- setDT(tldata)
@@ -579,116 +580,32 @@ stopifnot(nrow(tldata) > 0)
 # NOTE: this is done only for a subset of countries. These countries are
 # those for which the new measurement units would have a huge impact as
 # weight is missing (e.g. USA).
-use_new_data_format <-
-  ReadDatatable('ess_trade_use_new_unsd_format', where = paste("year =", year))
 
-if (nrow(use_new_data_format) > 0) {
 
-  flog.trace("[%s] Patching Tariffline data", PID, name = "dev")
+# use_new_data_format <-
+#   ReadDatatable('ess_trade_use_new_unsd_format', where = paste("year =", year))
 
-  if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) & !faosws::CheckDebug()) {
+# if (nrow(use_new_data_format) > 0) {
 
-    local_tldata_file_patch <-
-      paste0(Sys.getenv("R_SWS_SHARE_PATH"),
-             "/trade/datatables/ct_tariffline_unlogged_", year, "_PATCH.rds")
+flog.trace("[%s] Patching Tariffline data", PID, name = "dev")
 
-    if (!file.exists(local_tldata_file_patch)) {
-      stop("Local tldata file does not exist.")
-    }
+if ((is.null(swsContext.computationParams$rdsfile) || !swsContext.computationParams$rdsfile) & !faosws::CheckDebug()) {
 
-    tldata_patch <- readRDS(local_tldata_file_patch)
+  local_tldata_file_patch <-
+    paste0(Sys.getenv("R_SWS_SHARE_PATH"),
+           "/trade/datatables/ct_tariffline_unlogged_", year, "_PATCH.rds")
 
-    # Special treatment for a couple of countries that were not complete on 202001
-    if (year == 2018L) {
-      flog.trace("[%s] Patching Tariffline data, AUS & MAR", PID, name = "dev")
-
-      local_tldata_file_patch_aus_mar <-
-        paste0(Sys.getenv("R_SWS_SHARE_PATH"),
-               "/trade/datatables/ct_tariffline_unlogged_", year, "_PATCH_AUS_MAR.rds")
-
-      tldata_patch_aus_mar <- readRDS(local_tldata_file_patch_aus_mar)
-
-      use_new_data_format <-
-        rbind(
-          use_new_data_format,
-          data.table(area = c('36', '504'), name = c('Australia', 'Morocco'), year = 2018L)
-        )
-
-      tldata_patch <- rbind(tldata_patch, tldata_patch_aus_mar)
-    }
-
-  } else {
-
-    tldata_patch <-
-      ReadDatatable(
-        table = paste0("ct_tariffline_v2_unlogged_", year),
-        columns =
-          c(
-            "refperiodid",
-            "reportercode",
-            "partnercode",
-            "flowcode",
-            "cmdcode",
-            "primaryvalue",
-            "netwgt",
-            "qty",
-            "qtyunitcode",
-            "chapter"
-          ),
-        where = paste0("chapter IN (", hs_chapters, ") AND reportercode IN (",
-                paste(shQuote(use_new_data_format$area, type = 'sh'),
-                collapse = ', '), ")")
-      )
-
-    tldata_patch <-
-      tldata_patch[,
-        .(tyear = substr(refperiodid, 1, 4), rep = as.character(reportercode),
-          flow = ifelse(grepl('M', flowcode), '1', '2'), comm = cmdcode,
-          prt = as.character(partnercode), tvalue = primaryvalue,
-          weight = netwgt, qty, qunit = as.character(qtyunitcode), chapter
-        )
-      ]
-
-    tldata_patch[qunit == -1, qunit := '1']
-
-    # The new measurement units that are easy to convert are:
-    # 15, "Weight in grams"
-    # 21, "Weight in thousand of kilograms"
-    tldata_patch[qunit == 15 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty / 1000]
-    tldata_patch[qunit == 15, `:=`(qty = weight * 1000, qunit = '8')]
-
-    tldata_patch[qunit == 21 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty * 1000]
-    tldata_patch[qunit == 21, `:=`(qty = weight / 1000, qunit = '8')]
-
-    # For the remaining units, we set them to NA
-    tldata_patch[
-      as.numeric(qunit) > 13 & (is.na(weight) | dplyr::near(weight, 0)),
-      `:=`(qty = NA_real_, weight = NA_real_, qunit = '1')
-    ]
-
-    tldata_patch[qunit > 13 & !(is.na(weight) | dplyr::near(weight, 0)), `:=`(qty = weight, qunit = '8')]
+  if (!file.exists(local_tldata_file_patch)) {
+    stop("Local tldata file does not exist.")
   }
 
-  message("TRADE: original data ", nrow(tldata))
+  tldata_patch <- readRDS(local_tldata_file_patch)
 
-  tldata <- tldata[!(rep %in% use_new_data_format$area)]
+} else {
 
-  message("TRADE: unpatched data ", nrow(tldata))
-
-  tldata <- rbind(tldata, tldata_patch, fill = TRUE)
-
-  message("TRADE: patched data ", nrow(tldata))
-}
-
-# Australia 2018
-if (year == 2018L) {
-  message("TRADE: Australia 2018 patch")
-
-  tldata <- tldata[rep != 36]
-
-  tldata_patch_AUS <-
+  tldata_patch <-
     ReadDatatable(
-      table = "unsd_tariffline_v3_2018_05_may_2020_36",
+      table = paste0("ct_tariffline_v2_unlogged_", year),
       columns =
         c(
           "refperiodid",
@@ -702,40 +619,52 @@ if (year == 2018L) {
           "qtyunitcode",
           "chapter"
         ),
-      where = paste0("chapter IN (", hs_chapters, ")")
+      where = paste0("chapter IN (", hs_chapters, ") AND reportercode IN (",
+                     paste(shQuote(use_new_data_format$area, type = 'sh'),
+                           collapse = ', '), ")")
     )
 
-  tldata_patch_AUS <-
-    tldata_patch_AUS[,
-      .(tyear = substr(refperiodid, 1, 4), rep = as.character(reportercode),
-        flow = ifelse(grepl('M', flowcode), '1', '2'), comm = cmdcode,
-        prt = as.character(partnercode), tvalue = primaryvalue,
-        weight = netwgt, qty, qunit = as.character(qtyunitcode), chapter
-      )
-    ]
+  tldata_patch <-
+    tldata_patch[,
+                 .(tyear = substr(refperiodid, 1, 4), rep = as.character(reportercode),
+                   flow = ifelse(grepl('M', flowcode), '1', '2'), comm = cmdcode,
+                   prt = as.character(partnercode), tvalue = primaryvalue,
+                   weight = netwgt, qty, qunit = as.character(qtyunitcode), chapter
+                 )
+                 ]
 
-  tldata_patch_AUS[qunit == -1, qunit := '1']
+  tldata_patch[qunit == -1, qunit := '1']
 
   # The new measurement units that are easy to convert are:
   # 15, "Weight in grams"
   # 21, "Weight in thousand of kilograms"
-  tldata_patch_AUS[qunit == 15 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty / 1000]
-  tldata_patch_AUS[qunit == 15, `:=`(qty = weight * 1000, qunit = '8')]
+  tldata_patch[qunit == 15 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty / 1000]
+  tldata_patch[qunit == 15, `:=`(qty = weight * 1000, qunit = '8')]
 
-  tldata_patch_AUS[qunit == 21 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty * 1000]
-  tldata_patch_AUS[qunit == 21, `:=`(qty = weight / 1000, qunit = '8')]
+  tldata_patch[qunit == 21 & (is.na(weight) | dplyr::near(weight, 0)), weight := qty * 1000]
+  tldata_patch[qunit == 21, `:=`(qty = weight / 1000, qunit = '8')]
 
   # For the remaining units, we set them to NA
-  tldata_patch_AUS[
+  tldata_patch[
     as.numeric(qunit) > 13 & (is.na(weight) | dplyr::near(weight, 0)),
     `:=`(qty = NA_real_, weight = NA_real_, qunit = '1')
-  ]
+    ]
 
-  tldata_patch_AUS[qunit > 13 & !(is.na(weight) | dplyr::near(weight, 0)), `:=`(qty = weight, qunit = '8')]
-
-  tldata <- rbind(tldata, tldata_patch_AUS, fill = TRUE)
+  tldata_patch[qunit > 13 & !(is.na(weight) | dplyr::near(weight, 0)), `:=`(qty = weight, qunit = '8')]
 }
 
+message("TRADE: original data ", nrow(tldata))
+
+# tldata <- tldata[!(rep %in% use_new_data_format$area)]
+tldata_patch_countries <- unique(tldata_patch$rep)
+tldata <- tldata[rep %!in% tldata_patch_countries, ]
+
+message("TRADE: unpatched data ", nrow(tldata))
+
+tldata <- rbind(tldata, tldata_patch, fill = TRUE)
+
+message("TRADE: patched data ", nrow(tldata))
+# }
 
 ###### National data, in UNSD tariffline legacy format
 #
@@ -782,9 +711,9 @@ flog.info("Raw Tariffline data preview:", rprt_glimpse0(tldata), capture = TRUE)
 esdata <-
   esdata[
     stat_regime == "4" & !(declarant == 'EU' | partner %in% c('1010', '1011'))
-  ][,
-    stat_regime := NULL
-  ]
+    ][,
+      stat_regime := NULL
+      ]
 
 flog.info("Records after removing 4th regime and EU totals: %s", nrow(esdata))
 
@@ -905,6 +834,14 @@ tldata <-
 ##' 1. Remove ES reporters from TL.
 
 flog.trace("[%s] TL: dropping reporters already found in Eurostat data", PID, name = "dev")
+
+#### UNITED KINGTOM ISSUE -- use UNSD data instead of EUROSTAT####
+if (year >= 2020L){
+  setDT(esdata)
+  esdata <- esdata[reporter != '229', ]
+  esdata <- tbl_df(esdata)
+}
+
 # They will be replaced by ES data
 tldata <- tldata %>%
   anti_join(
@@ -926,9 +863,9 @@ tldata_rep_table <- tldata %>%
 
 # XXX this is a duplication: a function should be created.
 to_mirror_raw <- bind_rows(
-    dplyr::select(esdata, year, reporter, partner, flow),
-    dplyr::select(tldata, year, reporter, partner, flow)
-  ) %>%
+  dplyr::select(esdata, year, reporter, partner, flow),
+  dplyr::select(tldata, year, reporter, partner, flow)
+) %>%
   dplyr::mutate(flow = recode(flow, '4' = 1L, '3' = 2L)) %>%
   flowsToMirror(names = TRUE)
 
@@ -941,235 +878,235 @@ if (only_pre_process) stop("Stop after reports on raw data")
 
 ##' 1. Apply explicit corrections to the HS-FCL mapping.
 
-  #data("hsfclmap3", package = "hsfclmap", envir = environment())
-  # NOTE: it is pulling now v5
-  # FCL, startyear, endyear codes can be overwritten by corrections
+#data("hsfclmap3", package = "hsfclmap", envir = environment())
+# NOTE: it is pulling now v5
+# FCL, startyear, endyear codes can be overwritten by corrections
+hsfclmap3 <- setDT(hsfclmap3)
+hsfclmap3[!is.na(correction_fcl), fcl := as.numeric(correction_fcl)]
 
-  hsfclmap3[!is.na(correction_fcl), fcl := correction_fcl]
+hsfclmap3[!is.na(correction_startyear), startyear := correction_startyear]
 
-  hsfclmap3[!is.na(correction_startyear), startyear := correction_startyear]
+hsfclmap3[!is.na(correction_endyear), endyear := correction_endyear]
 
-  hsfclmap3[!is.na(correction_endyear), endyear := correction_endyear]
-
-  hsfclmap3[, grep('correction', names(hsfclmap3)) := NULL]
+hsfclmap3[, grep('correction', names(hsfclmap3)) := NULL]
 
 ##' 1. Extend the `endyear` for those combinations of `area` / `flow` /
 ##' `fromcode` / `tocode` for which `endyear` < `year`.
 
-  # Extend endyear to 2050
-  hsfclmap3[, maxy := max(endyear), .(area, flow, fromcode, tocode)]
+# Extend endyear to 2050
+hsfclmap3[, maxy := max(endyear), .(area, flow, fromcode, tocode)]
 
-  hsfclmap3[, extend := ifelse(maxy < 2050, TRUE, FALSE), .(area, flow, fromcode, tocode)]
+hsfclmap3[, extend := ifelse(maxy < 2050, TRUE, FALSE), .(area, flow, fromcode, tocode)]
 
-  hsfclmap3[endyear == maxy & extend, endyear := 2050]
+hsfclmap3[endyear == maxy & extend, endyear := 2050]
 
-  hsfclmap3[, c("maxy", "extend") := NULL]
-  # / Extend endyear to 2050
+hsfclmap3[, c("maxy", "extend") := NULL]
+# / Extend endyear to 2050
 
 
-  # ADD UNMAPPED CODES
+# ADD UNMAPPED CODES
 
-  # Check that all FCL codes are valid
+# Check that all FCL codes are valid
 
-  fcl_diff <- setdiff(unique(add_map$fcl), fcl_codes)
+fcl_diff <- setdiff(unique(add_map$fcl), fcl_codes)
 
-  fcl_diff <- fcl_diff[!is.na(fcl_diff)]
+fcl_diff <- fcl_diff[!is.na(fcl_diff)]
 
-  fcl_diff <- setdiff(fcl_diff, 0)
+fcl_diff <- setdiff(fcl_diff, 0)
 
-  if (length(fcl_diff) > 0) {
-    warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
-  }
+if (length(fcl_diff) > 0) {
+  warning(paste('Invalid FCL codes:', paste(fcl_diff, collapse = ', ')))
+}
 
-  # Check that years are in a valid range
+# Check that years are in a valid range
 
-  if (min(add_map$year) < 2000) {
-    warning('The minimum year should not be lower than 2000.')
-  }
+if (min(add_map$year) < 2000) {
+  warning('The minimum year should not be lower than 2000.')
+}
 
-  if (max(add_map$year) > as.numeric(format(Sys.Date(), '%Y'))) {
-    warning('The maximum year should not be greater than the current year.')
-  }
+if (max(add_map$year) > as.numeric(format(Sys.Date(), '%Y'))) {
+  warning('The maximum year should not be greater than the current year.')
+}
 
-  # Check that there are no duplicate codes
+# Check that there are no duplicate codes
 
-  if (nrow(add_map[, .N, .(reporter_fao, year, flow, hs)][N > 1]) > 0) {
-    warning('Removing duplicate HS codes by reporter/year/flow.')
+if (nrow(add_map[, .N, .(reporter_fao, year, flow, hs)][N > 1]) > 0) {
+  warning('Removing duplicate HS codes by reporter/year/flow.')
 
-    add_map[, `:=`(n = .N, hs_ext_perc = sum(!is.na(hs_extend))/.N), .(reporter_fao, year, flow, hs)]
+  add_map[, `:=`(n = .N, hs_ext_perc = sum(!is.na(hs_extend))/.N), .(reporter_fao, year, flow, hs)]
 
-    # Prefer cases where hs_extend is available
-    add_map <- add_map[hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1)]
+  # Prefer cases where hs_extend is available
+  add_map <- add_map[hs_ext_perc == 0 | (hs_ext_perc > 0 & !is.na(hs_extend) & n == 1)]
 
-    add_map[, c("n", "hs_ext_perc") := NULL]
-  }
+  add_map[, c("n", "hs_ext_perc") := NULL]
+}
 
-  # Raise warning if countries were NOT in mapping.
+# Raise warning if countries were NOT in mapping.
 
-  if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
-    warning('Some countries were not in the original mapping.')
-  }
+if (length(setdiff(unique(add_map$reporter_fao), hsfclmap3$area)) > 0) {
+  warning('Some countries were not in the original mapping.')
+}
 
-  add_map <-
-    add_map[,
-      .(area = reporter_fao,
-        flow,
-        fromcode = gsub(' ', '', hs),
-        tocode = gsub(' ', '', hs),
-        fcl = as.numeric(fcl),
-        startyear = year,
-        endyear = 2050L,
-        recordnumb = NA_integer_,
-        area_name = reporter_name
-      )
-    ]
+add_map <-
+  add_map[,
+          .(area = reporter_fao,
+            flow,
+            fromcode = gsub(' ', '', hs),
+            tocode = gsub(' ', '', hs),
+            fcl = as.numeric(fcl),
+            startyear = year,
+            endyear = 2050L,
+            recordnumb = NA_integer_,
+            area_name = reporter_name
+          )
+          ]
 
-  max_record <- max(hsfclmap3$recordnumb)
+max_record <- max(hsfclmap3$recordnumb)
 
-  add_map$recordnumb <- (max_record + 1):(max_record + nrow(add_map))
+add_map$recordnumb <- (max_record + 1):(max_record + nrow(add_map))
 
 ##' 1. Add additional codes that were not present in the HS-FCL
 ##' original mapping file.
 
-  hsfclmap3 <- rbind(add_map, hsfclmap3)
+hsfclmap3 <- rbind(add_map, hsfclmap3)
 
-  hsfclmap3[, `:=`(startyear = as.integer(startyear), endyear = as.integer(endyear))]
+hsfclmap3[, `:=`(startyear = as.integer(startyear), endyear = as.integer(endyear))]
 
-  # / ADD UNMAPPED CODES
+# / ADD UNMAPPED CODES
 
-  # XXX: bring back
-  #flog.info("HS->FCL mapping table preview:",
-  #          rprt_glimpse0(hsfclmap3), capture = TRUE)
+# XXX: bring back
+#flog.info("HS->FCL mapping table preview:",
+#          rprt_glimpse0(hsfclmap3), capture = TRUE)
 
-  # XXX: bring back
-  #rprt(hsfclmap3, "hsfclmap", year)
+# XXX: bring back
+#rprt(hsfclmap3, "hsfclmap", year)
 
 ##' 1. Keep HS-FCL links for which `startyear` <= `year` & `endyear` >= `year`
 
-  hsfclmap <- hsfclmap3[startyear <= year & endyear >= year]
+hsfclmap <- hsfclmap3[startyear <= year & endyear >= year]
 
-  hsfclmap3 <- tbl_df(hsfclmap3)
+hsfclmap3 <- tbl_df(hsfclmap3)
 
-  hsfclmap[, c("startyear", "endyear") := NULL]
+hsfclmap[, c("startyear", "endyear") := NULL]
 
-  # Workaround issue #123
-  hsfclmap[, fromgtto := as.numeric(fromcode) > as.numeric(tocode)]
+# Workaround issue #123
+hsfclmap[, fromgtto := as.numeric(fromcode) > as.numeric(tocode)]
 
-  from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
+from_gt_to <- hsfclmap$recordnumb[hsfclmap$fromgtto]
 
-  if (length(from_gt_to) > 0)
-    flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
+if (length(from_gt_to) > 0)
+  flog.warn(paste0("In following records of hsfclmap fromcode greater than tocode: ",
                    paste0(from_gt_to, collapse = ", ")))
 
-  hsfclmap <- hsfclmap[fromgtto == FALSE][, fromgtto := NULL]
+hsfclmap <- hsfclmap[fromgtto == FALSE][, fromgtto := NULL]
 
-  stopifnot(nrow(hsfclmap) > 0)
+stopifnot(nrow(hsfclmap) > 0)
 
-  hsfclmap <- tbl_df(hsfclmap)
+hsfclmap <- tbl_df(hsfclmap)
 
-  flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
+flog.info("Rows in mapping table after dplyr::filtering by year: %s", nrow(hsfclmap))
 
 ##' 1. Generate HS to FCL map at HS6 level (if switched on)
 
-  if (generate_hs6mapping) {
+if (generate_hs6mapping) {
 
-# hs6fclmap ####
+  # hs6fclmap ####
 
-    flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
+  flog.trace("[%s] Extraction of HS6 mapping table", PID, name = "dev")
 
-##'     1. Universal (all years) HS6 mapping table.
+  ##'     1. Universal (all years) HS6 mapping table.
 
-    flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
+  flog.trace("[%s] Universal (all years) HS6 mapping table", PID, name = "dev")
 
-    hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
+  hs6fclmap_full <- extract_hs6fclmap(hsfclmap3, parallel = multicore)
 
-##'     1. Current year specific HS6 mapping table.
+  ##'     1. Current year specific HS6 mapping table.
 
-    flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
+  flog.trace("[%s] Current year specific HS6 mapping table", PID, name = "dev")
 
-    hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
+  hs6fclmap_year <- extract_hs6fclmap(hsfclmap, parallel = multicore)
 
-    hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
-      filter_(~fcl_links == 1L) %>%
-      distinct()
+  hs6fclmap <- bind_rows(hs6fclmap_full, hs6fclmap_year) %>%
+    filter_(~fcl_links == 1L) %>%
+    distinct()
 
-    reporters_not_in_mapping <-
-      setdiff(
-        (tldata %>% count(reporter))$reporter,
-        unique(hs6fclmap$reporter)
+  reporters_not_in_mapping <-
+    setdiff(
+      (tldata %>% count(reporter))$reporter,
+      unique(hs6fclmap$reporter)
     )
 
-    reporters_not_in_mapping <- setdiff(reporters_not_in_mapping, '252')
+  reporters_not_in_mapping <- setdiff(reporters_not_in_mapping, '252')
 
-    if (length(reporters_not_in_mapping) > 0) {
-      # Fallback HS and HS6 maps for countries not in the mapping file,
-      # or recently added. The fallback consists of the most common
-      # HS6-FCL combination for all countries, and for HS dummy entries
-      # (required, HS6 will be used)
-      hs6fclmap_fallback <- as.data.table(hs6fclmap)[, .N, .(hs6, fcl)]
-      hs6fclmap_fallback <- hs6fclmap_fallback[order(hs6, -N, fcl)]
-      hs6fclmap_fallback <- hs6fclmap_fallback[, .SD[1], hs6][, N := NULL]
+  if (length(reporters_not_in_mapping) > 0) {
+    # Fallback HS and HS6 maps for countries not in the mapping file,
+    # or recently added. The fallback consists of the most common
+    # HS6-FCL combination for all countries, and for HS dummy entries
+    # (required, HS6 will be used)
+    hs6fclmap_fallback <- as.data.table(hs6fclmap)[, .N, .(hs6, fcl)]
+    hs6fclmap_fallback <- hs6fclmap_fallback[order(hs6, -N, fcl)]
+    hs6fclmap_fallback <- hs6fclmap_fallback[, .SD[1], hs6][, N := NULL]
 
-      hs6fclmap_fallback <-
-        rbind(
-          data.table(flow = 1, hs6fclmap_fallback, fcl_links = 1),
-          data.table(flow = 2, hs6fclmap_fallback, fcl_links = 1)
-        )
-
-      hs6fclmap_fallback <- hs6fclmap_fallback[nchar(hs6) == 6]
-
-      hs6fclmap_fallback <-
-        data.table(
-          reporter = rep(reporters_not_in_mapping, each = nrow(hs6fclmap_fallback)),
-          hs6fclmap_fallback
+    hs6fclmap_fallback <-
+      rbind(
+        data.table(flow = 1, hs6fclmap_fallback, fcl_links = 1),
+        data.table(flow = 2, hs6fclmap_fallback, fcl_links = 1)
       )
 
-      hs6fclmap <- tbl_df(rbind(hs6fclmap, hs6fclmap_fallback))
+    hs6fclmap_fallback <- hs6fclmap_fallback[nchar(hs6) == 6]
 
-      hsfclmap3_fallback <-
-        hsfclmap3[1:2, ] %>%
-        mutate(
-          fromcode = '000001', tocode = '000001',
-          fcl = 0,
-          startyear = year, endyear = 2050,
-          area_name = "",
-          flow = 1:2
-        )
-
-      hsfclmap3_fallback <-
-        rbindlist(
-          lapply(
-            reporters_not_in_mapping,
-            function(x) mutate(hsfclmap3_fallback, area = x)
-          )
-        )
-
-      hsfclmap3_fallback <- tbl_df(hsfclmap3_fallback)
-
-      hsfclmap3_fallback <-
-        mutate(
-          hsfclmap3_fallback,
-          recordnumb = max(hsfclmap3$recordnumb) + 1:nrow(hsfclmap3_fallback)
-        )
-
-      hsfclmap3 <- bind_rows(hsfclmap3, hsfclmap3_fallback)
-    }
-
-  } else {
-
-    # A dummy zero-row dataframe needs to be created
-    hs6fclmap <-
-      data_frame(
-        reporter  = integer(),
-        flow      = integer(),
-        hs6       = integer(),
-        fcl       = double(),
-        fcl_links = integer()
+    hs6fclmap_fallback <-
+      data.table(
+        reporter = rep(reporters_not_in_mapping, each = nrow(hs6fclmap_fallback)),
+        hs6fclmap_fallback
       )
+
+    hs6fclmap <- tbl_df(rbind(hs6fclmap, hs6fclmap_fallback))
+
+    hsfclmap3_fallback <-
+      hsfclmap3[1:2, ] %>%
+      mutate(
+        fromcode = '000001', tocode = '000001',
+        fcl = 0,
+        startyear = year, endyear = 2050,
+        area_name = "",
+        flow = 1:2
+      )
+
+    hsfclmap3_fallback <-
+      rbindlist(
+        lapply(
+          reporters_not_in_mapping,
+          function(x) mutate(hsfclmap3_fallback, area = x)
+        )
+      )
+
+    hsfclmap3_fallback <- tbl_df(hsfclmap3_fallback)
+
+    hsfclmap3_fallback <-
+      mutate(
+        hsfclmap3_fallback,
+        recordnumb = max(hsfclmap3$recordnumb) + 1:nrow(hsfclmap3_fallback)
+      )
+
+    hsfclmap3 <- bind_rows(hsfclmap3, hsfclmap3_fallback)
   }
 
-  # XXX: bring back
-  #rprt(hs6fclmap, "hs6fclmap")
+} else {
+
+  # A dummy zero-row dataframe needs to be created
+  hs6fclmap <-
+    data_frame(
+      reporter  = integer(),
+      flow      = integer(),
+      hs6       = integer(),
+      fcl       = double(),
+      fcl_links = integer()
+    )
+}
+
+# XXX: bring back
+#rprt(hs6fclmap, "hs6fclmap")
 
 ##@ }
 
@@ -1239,15 +1176,15 @@ if (nrow(esdata[is.na(fcl)]) > 0) {
   # ES trade data mapping to FCL ####
   message(sprintf("[%s] Convert Eurostat HS to FCL", PID))
 
-##' 1. Map HS codes to FCL.
+  ##' 1. Map HS codes to FCL.
 
-##'     1. Extract HS6-FCL mapping table.
+  ##'     1. Extract HS6-FCL mapping table.
 
   message(sprintf("[%s] Convert Eurostat HS to FCL, HS6 LINKS", PID))
 
   esdatahs6links <- mapHS6toFCL(esdata, hs6fclmap)
 
-##'     1. Extract specific HS-FCL mapping table.
+  ##'     1. Extract specific HS-FCL mapping table.
 
   message(sprintf("[%s] Convert Eurostat HS to FCL, HS LINKS", PID))
 
@@ -1257,7 +1194,7 @@ if (nrow(esdata[is.na(fcl)]) > 0) {
                            year        = year,
                            parallel    = multicore)
 
-##'     1. Use HS6-FCL or HS-FCL mapping table.
+  ##'     1. Use HS6-FCL or HS-FCL mapping table.
 
   esdata <- esdata[is.na(fcl)]
 
@@ -1267,7 +1204,7 @@ if (nrow(esdata[is.na(fcl)]) > 0) {
                                 hs6links = esdatahs6links,
                                 links    = esdatalinks)
 
-##'     1. Use HS6 standard for unmapped codes.
+  ##'     1. Use HS6 standard for unmapped codes.
 
   esdata <- esdata %>%
     left_join(
@@ -1445,17 +1382,17 @@ if (nrow(tldata[is.na(fcl)]) > 0) {
   # In case already mapped
   tldata_mapped <- tldata[!is.na(fcl)]
 
-##' 1. Map HS codes to FCL.
-##+ tl_hs2fcl ####
+  ##' 1. Map HS codes to FCL.
+  ##+ tl_hs2fcl ####
 
 
-##'     1. Extract HS6-FCL mapping table.
+  ##'     1. Extract HS6-FCL mapping table.
 
   message(sprintf("[%s] Convert UNSD HS to FCL, HS6 LINKS", PID))
 
   tldatahs6links <- mapHS6toFCL(tldata, hs6fclmap)
 
-##'     1. Extract specific HS-FCL mapping table.
+  ##'     1. Extract specific HS-FCL mapping table.
 
   message(sprintf("[%s] Convert UNSD HS to FCL, HS LINKS", PID))
 
@@ -1465,7 +1402,7 @@ if (nrow(tldata[is.na(fcl)]) > 0) {
                            year        = year,
                            parallel    = multicore)
 
-##'     1. Use HS6-FCL or HS-FCL mapping table.
+  ##'     1. Use HS6-FCL or HS-FCL mapping table.
 
   tldata <- tldata[is.na(fcl)]
 
@@ -1475,7 +1412,7 @@ if (nrow(tldata[is.na(fcl)]) > 0) {
                                 hs6links = tldatahs6links,
                                 links    = tldatalinks)
 
-##'     1. Use HS6 starndard for unmapped codes.
+  ##'     1. Use HS6 starndard for unmapped codes.
 
   tldata <- tldata %>%
     left_join(
@@ -1526,12 +1463,12 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 
   unmapped_trademap <-
     unmapped_trademap[,
-      .(year, area = as.character(reporter), flow, hs,
-        cpc = NA_character_, fcl = NA_character_, map_src = NA_character_,
-        hs_description = NA_character_, cpc_description = NA_character_,
-        notes = NA_character_, hs6 = substr(hs, 1, 6)
-      )
-    ]
+                      .(year, area = as.character(reporter), flow, hs,
+                        cpc = NA_character_, fcl = NA_character_, map_src = NA_character_,
+                        hs_description = NA_character_, cpc_description = NA_character_,
+                        notes = NA_character_, hs6 = substr(hs, 1, 6)
+                      )
+                      ]
 
   unmapped_trademap[, geographicAreaM49 := faoswsUtil::fs2m49(area)]
 
@@ -1547,7 +1484,7 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
     )[
       nchar(hs) == 6,
       .(hs6 = hs, hs6_description = str_replace(hs6_description, '^.* - *', ''))
-    ]
+      ]
 
   rm(tmp)
   # / HS descriptions
@@ -1576,11 +1513,17 @@ if (any(nrow(esdata_unmapped) > 0, nrow(tldata_unmapped) > 0)) {
 
   unmapped_trademap[, c('area', 'hs6', 'hs6_description') := NULL]
 
-  unmapped_trademap[
-    !is.na(suggested_fcl),
-    measuredItemCPC :=
-      fcl2cpc(stringr::str_pad(suggested_fcl, 4, 'left', 0), version = "2.1")
-  ]
+  if (nrow(unmapped_trademap[is.na(suggested_fcl)]) != nrow(unmapped_trademap)){
+    unmapped_trademap[
+      !is.na(suggested_fcl),
+      measuredItemCPC :=
+        fcl2cpc(stringr::str_pad(suggested_fcl, 4, 'left', 0), version = "2.1")
+      ]
+
+  } else {
+    unmapped_trademap[ , measuredItemCPC := NA]
+  }
+
 
   unmapped_trademap <-
     nameData('trade', 'total_trade_cpc_m49', unmapped_trademap)
@@ -1625,7 +1568,7 @@ rawdata <-
     cpc      = fcl2cpc(sprintf("%04d", fcl), version = "2.1")
   ) %>%
   dplyr::select(year, reporter, partner, flow, hs, cpc, fcl, qunit,
-         value, weight, qty, map_src, recordnumb, nrows) %>%
+                value, weight, qty, map_src, recordnumb, nrows) %>%
   group_by(reporter, partner, flow, hs, cpc, fcl, qunit) %>%
   dplyr::mutate(n = sum(nrows)) %>%
   ungroup() %>%
@@ -1645,7 +1588,18 @@ for (i in unique(rawdata$reporter)) {
   saveRDS(rawdata[reporter == i], file.path(raw_dir, paste0(i, ".rds")))
 }
 
-if (trademap_year_available == FALSE) {
+# September 2022 update: the new_harvest variable will help us to check if any new country
+# has been added into the raw data. If so, the SWS trademap datatable needs to updated
+# to allow the visualisation and perform changes, if needed. It also keep the previous
+# Manual corrections.
+
+if (length(unique(rawdata$reporter)) > length(unique(trademap_year$m49))){
+  new_harvest <- TRUE
+} else {
+  new_harvest <- FALSE
+}
+
+if (trademap_year_available == FALSE | new_harvest == TRUE) {
   # The result will be the final trademap
 
   # HS descriptions
@@ -1660,7 +1614,7 @@ if (trademap_year_available == FALSE) {
     )[
       nchar(hs) == 6,
       .(hs6 = hs, description = str_replace(description, '^.* - *', ''))
-    ]
+      ]
 
   rm(tmp)
   # / HS descriptions
@@ -1669,11 +1623,11 @@ if (trademap_year_available == FALSE) {
   trademap_year_new <-
     unique(
       rawdata[,
-        .(year, area = reporter, flow, hs, cpc, fcl, map_src,
-          hs_description = NA_character_,
-          cpc_description = NA_character_,
-          notes = NA_character_)
-      ]
+              .(year, area = reporter, flow, hs, cpc, fcl, map_src,
+                hs_description = NA_character_,
+                cpc_description = NA_character_,
+                notes = NA_character_)
+              ]
     )
 
   orig_names <- copy(names(trademap_year_new))
@@ -1692,11 +1646,38 @@ if (trademap_year_available == FALSE) {
 
   trademap_year_new <- trademap_year_new[, orig_names, with = FALSE]
 
-  changeset <- Changeset(paste0("ess_trademap_", year))
+  if (trademap_year_available == FALSE) {
+    changeset <- Changeset(paste0("ess_trademap_", year))
 
-  AddInsertions(changeset, trademap_year_new)
+    AddInsertions(changeset, trademap_year_new)
 
-  Finalise(changeset)
+    Finalise(changeset)
+  } else {
+
+    manual_correction <- trademap_year[grepl('manu', map_src, ignore.case=TRUE), ]
+    manual_correction[, area:= NULL]
+    setnames(manual_correction, 'm49', 'area')
+    manual_correction_short <- manual_correction[, c("area", "year", "flow", "hs"), with = FALSE]
+    manual_correction_short[, delete:= TRUE]
+
+    trademap_year_new2 <- merge(trademap_year_new, manual_correction_short, by = c("area", "year", "flow", "hs"),
+                               all= TRUE)
+    trademap_year_new2 <- trademap_year_new2[is.na(delete),]
+    trademap_year_new2[, delete:= NULL]
+    trademap_year_new <- rbind(trademap_year_new2, manual_correction)
+
+    changeset <- Changeset(paste0("ess_trademap_", year))
+
+    olddat <- ReadDatatable(paste0("ess_trademap_", year), readOnly = FALSE)
+
+    AddDeletions(changeset, olddat)
+
+    Finalise(changeset)
+
+    ## Add
+    AddInsertions(changeset, trademap_year_new)
+    Finalise(changeset)
+  }
 
   # NOTE: now the codes saved are the ones actually mapped. An option can be
   # to APPEND new mapped codes to previous map, but see below:
@@ -1943,7 +1924,7 @@ eur_usd <- as.numeric(EURconversionUSD[eusd_year == year, eusd_exchangerate])
 esdata$value <- esdata$value * eur_usd
 
 esdata <- esdata %>%
-    setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
+  setFlag3(value > 0, type = 'method', flag = 'i', variable = 'value')
 
 
 ##' 1. Convert data in thousands of dollars.
@@ -1962,13 +1943,13 @@ if (dollars) {
 
 tldata_mid <- tldata
 
-  ###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
-  #
-  # NO: this isn't needed as below qty = weight and it has already its own flag
-  #
-  #tldata <- tldata %>%
-  #  dplyr::mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
-  #               ~starts_with('flag_'))
+###' 1. Assign 'weight' flags to 'qty' flags in TL XXX.
+#
+# NO: this isn't needed as below qty = weight and it has already its own flag
+#
+#tldata <- tldata %>%
+#  dplyr::mutate_each_(funs(swapFlags(., swap='\\1\\2\\2'), !is.na(weight)),
+#               ~starts_with('flag_'))
 
 esdata <- esdata %>%
   dplyr::mutate(qtyfcl = ifelse(fclunit == "mt", weight, qty))
@@ -1979,7 +1960,7 @@ esdata <- esdata %>%
 
 esdata <- esdata %>%
   dplyr::mutate_each_(funs(swapFlags(., swap='\\1\\3\\3', fclunit != "mt")),
-               ~starts_with('flag_'))
+                      ~starts_with('flag_'))
 
 
 ##' 1. Combine Tariff line and Eurostat data sources in a single data set:
@@ -1991,13 +1972,13 @@ flog.trace("[%s] Combine TL and ES data sets", PID, name = "dev")
 tradedata <- bind_rows(
   tldata %>%
     dplyr::select(year, reporter, partner, flow, fcl, fclunit, hs,
-            value, weight, qty = qtyfcl,
-            convspec_head, starts_with('flag_'), wco),
+                  value, weight, qty = qtyfcl,
+                  convspec_head, starts_with('flag_'), wco),
   esdata %>%
     dplyr::mutate(convspec_head = NA_real_, wco = NA_character_) %>%
     dplyr::select(year, reporter, partner, flow, fcl, fclunit, hs,
-            value, weight, qty = qtyfcl,
-            convspec_head, starts_with('flag_'), wco)
+                  value, weight, qty = qtyfcl,
+                  convspec_head, starts_with('flag_'), wco)
 )
 
 # XXX this is fine, but probably the name of the function should be changed
@@ -2021,7 +2002,7 @@ tradedata <- tradedata %>%
 ##' of monetary value over quantity: $uv = value / qty$.
 
 tradedata <- dplyr::mutate_(tradedata,
-                     uv = ~ifelse(no_quant | no_value, NA, value / qty))
+                            uv = ~ifelse(no_quant | no_value, NA, value / qty))
 
 ## Round UV in order to avoid floating point number problems (see issue #54)
 tradedata$uv <- round(tradedata$uv, 10)
@@ -2049,9 +2030,86 @@ if (detect_outliers) {
 ## These flags are also assigned to monetary values. This may need to be
 ## revised (monetary values are not supposed to be modified).
 
-tradedata <- computeMedianUnitValue(tradedata = tradedata)
+##' OCTOBER 2021: The Team BC has decided to cancel the hierarchical imputation
+##' methodology and the global unit value changes applied to impute the missing
+##' quantities.
+##' Old methodology was using computeMedianUnitValue and doImputation functions.
+##' so bring them back in case the team changes their idea.
 
-tradedata <- doImputation(tradedata = tradedata)
+setDT(tradedata)
+global_UVs <- ReadDatatable('ess_trade_global_unit_values')
+global_UVs <- global_UVs[region=='World',]
+global_UVs[, flow:= ifelse(flow=='import', 1, 2)]
+global_UVs[, c("measured_item_cpc_description", "region"):= NULL]
+
+map = ReadDatatable("fcl2cpc_ver_2_1")
+map[, c(names(map)[names(map) %!in% c('fcl', 'cpc')]):= NULL]
+map <- map[!duplicated(cpc),]
+out = merge(global_UVs, map, by.x = "measured_item_cpc", by.y = "cpc", all.x = TRUE)
+#### Take the previous year's UVs from Total trade level####
+geoKeys = GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")[type == "country"][,code] %>%
+  Dimension(name = "geographicAreaM49", keys = .)
+
+itemKeys = GetCodeList("trade", "total_trade_cpc_m49", "measuredItemCPC")[, code] %>%
+  Dimension(name = "measuredItemCPC", keys = .)
+
+eleKeys <- c("5630", "5930"
+              , "5638", "5639", "5938", "5939"
+             ) %>%
+  Dimension(name = "measuredElementTrade", keys = .)
+
+timeDim <- Dimension(name = "timePointYears", keys = as.character(year-1))
+
+key = DatasetKey(domain = "trade", dataset = "total_trade_cpc_m49", dimensions = list(
+    geographicAreaM49 = geoKeys,
+    measuredElementTrade = eleKeys,
+    measuredItemCPC = itemKeys,
+    timePointYears = timeDim
+    ))
+
+data_previous_year = GetData(key, omitna = FALSE, normalized = FALSE)
+data_previous_year[, c(names(data_previous_year)[grepl('flag', names(data_previous_year))]):= NULL]
+data_previous_year <- data_previous_year[!(measuredElementTrade==5630 & stringr::str_sub(measuredItemCPC, 1, 3) == '021'),]
+data_previous_year <- data_previous_year[!(measuredElementTrade==5930 & stringr::str_sub(measuredItemCPC, 1, 3) == '021'),]
+data_previous_year[, flow:= ifelse(substr(measuredElementTrade, 1, 2)=='56', 1, 2)]
+
+
+#####
+out_new <- out[time_point_years == as.character(year),]
+setnames(out_new, c('measured_item_cpc', 'time_point_years'), c('measuredItemCPC', 'timePointYears'))
+merged1 <- merge(out_new, data_previous_year, by = c('measuredItemCPC', 'flow'))
+
+merged1 <- merged1[, variation_unit_value:= 1+ variation_unit_value]
+setnames(merged1, c(paste0('Value_timePointYears_', as.character(year-1))), c('value_old'))
+merged1 <- merged1[, unitvalue_estimation_new:= value_old*variation_unit_value]
+
+merged1$fcl <- sub("^0+", "", merged1$fcl)
+
+merged1 <- merged1 %>%
+  dplyr::mutate_(
+    geographicAreaM49 = ~m492fs(as.character(geographicAreaM49)))
+# merged1 <- merged1[geographicAreaM49=='360', geographicAreaM49:='101']
+merged1$geographicAreaM49 <- as.integer(merged1$geographicAreaM49)
+setDT(merged1)
+merged1[, c("unit_value", "variation_unit_value", "measuredElementTrade", "value_old", "measuredItemCPC"):= NULL]
+merged1[, c(names(merged1)[grepl('flag', names(merged1))]):= NULL]
+merged1$timePointYears <- as.integer(merged1$timePointYears)
+merged1$fcl <- as.numeric(merged1$fcl)
+
+tradedata <- merge(tradedata, merged1, by.x = c('year', 'reporter', 'flow', 'fcl'),
+                               by.y = c('timePointYears', 'geographicAreaM49', 'flow', 'fcl'), all.x = TRUE)
+
+tradedata <- tradedata[, imputed_qty:= (value / unitvalue_estimation_new)*1000]
+
+tradedata <- tradedata[, qty := ifelse(no_quant==TRUE | outlier==TRUE, imputed_qty, qty)]
+tradedata <- tradedata[, flagTrade := ifelse(no_quant==TRUE | outlier==TRUE, 1, 0)]
+tradedata <- tradedata[, c("unitvalue_estimation_new", "imputed_qty"):=NULL]
+# tradedata <- tradedata[, weight:=qty]
+tbl_df(tradedata)
+
+# XX BRING BACK If Team BC decides again to use hierarchical imputation methodology
+# tradedata <- computeMedianUnitValue(tradedata = tradedata)
+# tradedata <- doImputation(tradedata = tradedata)
 
 # Team BC: do not assign imputed flag to imputed flows that
 # account for less than 10% of the total flow.
@@ -2069,10 +2127,10 @@ flog.trace("[%s] Flag stuff", PID, name = "dev")
 # XXX using flagTrade for the moment, but should go away
 # (Team BC: quantities below 1 tonne do not get imputed flag)
 tradedata <- tradedata %>%
-    setFlag2(flagTrade > 0 & qty > 1,
-             type = 'status', flag = 'I', var = 'quantity') %>%
-    setFlag2(flagTrade > 0 & qty > 1,
-             type = 'method', flag = 'e', var = 'quantity')
+  setFlag2(flagTrade > 0 & qty > 1,
+           type = 'status', flag = 'I', var = 'quantity') %>%
+  setFlag2(flagTrade > 0 & qty > 1,
+           type = 'method', flag = 'e', var = 'quantity')
 
 ##' # Additional operations
 
@@ -2085,7 +2143,7 @@ for (var in flag_vars) {
   tradedata <- separate_(tradedata, var, 1:2,
                          into = c('x', paste0(var, '_', c('v', 'q'))),
                          convert = TRUE) %>%
-               dplyr::select(-x)
+    dplyr::select(-x)
 }
 
 tradedata_flags <- tradedata %>%
@@ -2229,7 +2287,7 @@ for (var in flag_vars) {
   tradedata <- separate_(tradedata, var, 1:2,
                          into = c('x', paste0(var, '_', c('v', 'q'))),
                          convert = TRUE) %>%
-               dplyr::select(-x)
+    dplyr::select(-x)
 }
 
 ##' # Output for SWS
@@ -2369,13 +2427,13 @@ if (length(to_reimpute) > 0) {
     DatasetKey(
       domain = "trade",
       dataset = "total_trade_cpc_m49",
-        dimensions =
-          list(
-            allReportersDim_tot,
-            allElementsDim_tot,
-            allItemsDim_tot,
-            Dimension(name = "timePointYears", keys = as.character(year - 3:1))
-          )
+      dimensions =
+        list(
+          allReportersDim_tot,
+          allElementsDim_tot,
+          allItemsDim_tot,
+          Dimension(name = "timePointYears", keys = as.character(year - 3:1))
+        )
     )
 
   prev_totals <- GetData(key = total_trade_key_uv, omitna = TRUE, flags = FALSE)
@@ -2390,39 +2448,39 @@ if (length(to_reimpute) > 0) {
   # those for which there was data in 2 or 3 years
   prev_totals_avg <-
     prev_totals[,
-      .(n = .N, uv_prev = mean(uv_prev)),
-      .(geographicAreaM49Reporter, measuredItemCPC, flow)
-    ][
-      n %in% 2:3
-    ][,
-      n := NULL
-    ]
+                .(n = .N, uv_prev = mean(uv_prev)),
+                .(geographicAreaM49Reporter, measuredItemCPC, flow)
+                ][
+                  n %in% 2:3
+                  ][,
+                    n := NULL
+                    ]
 
   # World UV by CPC in the previous year
   prev_totals_median <-
     prev_totals[
       timePointYears  == (year - 1)
-    ][,
-      .(uv_tot_median_prev = median(uv_prev)), .(measuredItemCPC, flow)
-    ]
+      ][,
+        .(uv_tot_median_prev = median(uv_prev)), .(measuredItemCPC, flow)
+        ]
 
 
   current_totals <-
     complete_trade_flow_cpc[,
-      .(value = sum(value), qty = sum(qty)),
-      .(timePointYears, geographicAreaM49Reporter, measuredItemCPC, flow)
-    ][,
-      uv := value / qty * 1000
-    ]
+                            .(value = sum(value), qty = sum(qty)),
+                            .(timePointYears, geographicAreaM49Reporter, measuredItemCPC, flow)
+                            ][,
+                              uv := value / qty * 1000
+                              ]
 
   # World UV by CPC in current year
   current_totals_median <-
     current_totals[
       !is.na(uv)
-    ][,
-      .(uv_total_median = median(uv), n = .N),
-      .(measuredItemCPC, flow)
-    ]
+      ][,
+        .(uv_total_median = median(uv), n = .N),
+        .(measuredItemCPC, flow)
+        ]
 
   all_totals_median <-
     merge(
@@ -2459,25 +2517,25 @@ if (length(to_reimpute) > 0) {
     )
 
   uv_total_imputed[,
-    `:=`(
-      estimated_upwards = ifelse(x > 1, TRUE, FALSE),
-      uv_imputed = uv_prev * (1 + variation)
-    )
-  ]
+                   `:=`(
+                     estimated_upwards = ifelse(x > 1, TRUE, FALSE),
+                     uv_imputed = uv_prev * (1 + variation)
+                   )
+                   ]
 
   uv_total_imputed <-
     uv_total_imputed[,
-      .(geographicAreaM49Reporter, flow, timePointYears,
-      measuredItemCPC, uv_imputed, estimated_upwards)
-    ]
+                     .(geographicAreaM49Reporter, flow, timePointYears,
+                       measuredItemCPC, uv_imputed, estimated_upwards)
+                     ]
 
   complete_trade_flow_cpc[,
-    `:=`(
-      same_uv     = near(sd(uv), 0),
-      top_partner = value == max(value, na.rm = TRUE)
-    ),
-   by = c("timePointYears", "geographicAreaM49Reporter", "flow", "measuredItemCPC")
-  ]
+                          `:=`(
+                            same_uv     = near(sd(uv), 0),
+                            top_partner = value == max(value, na.rm = TRUE)
+                          ),
+                          by = c("timePointYears", "geographicAreaM49Reporter", "flow", "measuredItemCPC")
+                          ]
 
   complete_trade_flow_cpc <-
     merge(
@@ -2575,22 +2633,22 @@ if (length(to_reimpute) > 0) {
       flagObservationStatus_q = "I",
       flagMethod_q            = "e"
     )
-  ]
+    ]
 
   mirrored_reimputed <-
     complete_trade_flow_cpc[
       (!is.na(uv_imputed) & flagObservationStatus_q == "I" & (same_uv == TRUE | top_partner == TRUE)) |
         (!is.na(uv_imputed) & (geographicAreaM49Reporter == "840" | geographicAreaM49Reporter == "36")),
-    ][,
-      .(
-        timePointYears,
-        geographicAreaM49Reporter = geographicAreaM49Partner,
-        geographicAreaM49Partner = geographicAreaM49Reporter,
-        flow = ifelse(flow == 1, 2, 1),
-        measuredItemCPC,
-        qty_mirror_imputed = qty
-      )
-    ]
+      ][,
+        .(
+          timePointYears,
+          geographicAreaM49Reporter = geographicAreaM49Partner,
+          geographicAreaM49Partner = geographicAreaM49Reporter,
+          flow = ifelse(flow == 1, 2, 1),
+          measuredItemCPC,
+          qty_mirror_imputed = qty
+        )
+        ]
 
 
   complete_trade_flow_cpc <-
@@ -2605,10 +2663,10 @@ if (length(to_reimpute) > 0) {
   complete_trade_flow_cpc[
     !is.na(qty_mirror_imputed) & flagObservationStatus_q == 'T',
     qty := qty_mirror_imputed,
-  ][
-    !is.na(qty_mirror_imputed) & flagObservationStatus_q == 'T',
-    uv := value / qty * 1000
-  ]
+    ][
+      !is.na(qty_mirror_imputed) & flagObservationStatus_q == 'T',
+      uv := value / qty * 1000
+      ]
 
 
   complete_trade_flow_cpc[, c("same_uv", "top_partner", "uv_imputed", "estimated_upwards", "qty_mirror_imputed") := NULL]
@@ -2695,11 +2753,19 @@ if (corrections_exist) {
 
   flog.trace("[%s] Apply corrections to partner (if mirrored)", PID, name = "dev")
 
-  complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct,
-                                                        corrections_table_mirror)
+  if (nrow(complete_mirror_to_correct)>0) {
 
-  complete_all_corrected <- bind_rows(complete_corrected$corrected,
-                                      complete_mirror_corrected$corrected)
+    complete_mirror_corrected <- useValidationCorrections(complete_mirror_to_correct,
+                                                          corrections_table_mirror)
+
+    complete_all_corrected <- bind_rows(complete_corrected$corrected,
+                                        complete_mirror_corrected$corrected)
+
+  } else {
+
+    complete_all_corrected <- complete_corrected$corrected
+  }
+
 
   complete_uncorrected <- complete_trade_flow_cpc %>%
     anti_join(
@@ -2790,7 +2856,7 @@ if (corrections_exist) {
         corrections_unapplied,
         by = c('reporter', 'partner', 'year', 'item',
                'flow', 'data_type', 'correction_level')
-        )
+      )
 
     # Save the corrections again for reporters that had unapplied corrections
     # XXX add check for error in writing
@@ -2853,34 +2919,34 @@ convertMeasuredElementTrade(complete_trade_flow_cpc)
 complete_trade_flow_cpc <- complete_trade_flow_cpc[measuredElementTrade != "999"]
 
 complete_trade_flow_cpc[,
-  correction_metadata_uv :=
-    ifelse(
-      !is.na(correction_metadata_qty),
-      ifelse(
-        !is.na(correction_metadata_value),
-        paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
-        correction_metadata_qty
-      ),
-      correction_metadata_value
-    )
-]
+                        correction_metadata_uv :=
+                          ifelse(
+                            !is.na(correction_metadata_qty),
+                            ifelse(
+                              !is.na(correction_metadata_value),
+                              paste('QTY:', correction_metadata_qty, '| VALUE:', correction_metadata_value),
+                              correction_metadata_qty
+                            ),
+                            correction_metadata_value
+                          )
+                        ]
 
 complete_trade_flow_cpc[,
-  correction_metadata :=
-    ifelse(
-      measuredElementTrade %in% quantityElements,
-      correction_metadata_qty,
-      ifelse(
-        measuredElementTrade %in% uvElements,
-        correction_metadata_uv,
-        correction_metadata_value
-      )
-    )
-]
+                        correction_metadata :=
+                          ifelse(
+                            measuredElementTrade %in% quantityElements,
+                            correction_metadata_qty,
+                            ifelse(
+                              measuredElementTrade %in% uvElements,
+                              correction_metadata_uv,
+                              correction_metadata_value
+                            )
+                          )
+                        ]
 
 complete_trade_flow_cpc[,
-  c("flow", "unit", "correction_metadata_qty",
-    "correction_metadata_value", "correction_metadata_uv") := NULL]
+                        c("flow", "unit", "correction_metadata_qty",
+                          "correction_metadata_value", "correction_metadata_uv") := NULL]
 
 #apply_tp_criterion <-
 #  ReadDatatable("ess_trade_apply_tp_criterion",
@@ -2907,18 +2973,18 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
   mirrored_aggregated_total <-
     complete_trade_flow_cpc[
       geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
-      ###########################################################
+        ###########################################################
       # FIXME:
       # for now, removing items that can have heads as unit #####
       ###########################################################
       !(measuredItemCPC %in% fcl2cpc(stringr::str_pad((fclunits %>% dplyr::filter(fclunit != 'mt'))$fcl, 4, 'left', 0)))
-    ][
-      # Remove unit values
-      substr(measuredElementTrade, 3, 3) != 3,
-      .(Value = sum(Value)),
-      .(geographicAreaM49 = geographicAreaM49Reporter,
-        measuredElementTrade, measuredItemCPC, timePointYears)
-    ]
+      ][
+        # Remove unit values
+        substr(measuredElementTrade, 3, 3) != 3,
+        .(Value = sum(Value)),
+        .(geographicAreaM49 = geographicAreaM49Reporter,
+          measuredElementTrade, measuredItemCPC, timePointYears)
+        ]
 
   allReportersDim_tot <-
     Dimension(
@@ -2942,23 +3008,23 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
     DatasetKey(
       domain = "trade",
       dataset = "total_trade_cpc_m49",
-        dimensions =
-          list(
-            allReportersDim_tot,
-            allElementsDim_tot,
-            allItemsDim_tot,
-            Dimension(name = "timePointYears",
-                      keys = as.character((year-5):(year-1)))
-          )
+      dimensions =
+        list(
+          allReportersDim_tot,
+          allElementsDim_tot,
+          allItemsDim_tot,
+          Dimension(name = "timePointYears",
+                    keys = as.character((year-5):(year-1)))
+        )
     )
 
   existing_total_data <- GetData(key = totaltradekey)
 
   existing_data_mean <-
     existing_total_data[,
-      .(Value_mean = mean(Value)),
-      .(geographicAreaM49, measuredElementTrade, measuredItemCPC)
-    ]
+                        .(Value_mean = mean(Value)),
+                        .(geographicAreaM49, measuredElementTrade, measuredItemCPC)
+                        ]
 
   mirrored_to_compare <-
     merge(
@@ -2975,25 +3041,25 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
 
   exclude_from_mirroring <-
     mirrored_to_compare[,
-      Value_ratio := Value / Value_mean
-    ][,
-      `:=`(
-        low = sum(Value_ratio < 0.6),
-        n = .N,
-        big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
-      ),
-      .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
-    ][,
-        # low == n means that both elements of a flow are low (e.g.,
-        # import quantity and monetary values are both low). If only
-        # one of the elements is low, that is an outlier, not bad TP.
-        exclude := (low == n & big_qty == TRUE)
-    ][
-      timePointYears == year &
-        geographicAreaM49 %in% countries_to_apply_tp_criterion
-    ][,
-      .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
-    ]
+                        Value_ratio := Value / Value_mean
+                        ][,
+                          `:=`(
+                            low = sum(Value_ratio < 0.6),
+                            n = .N,
+                            big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
+                          ),
+                          .(timePointYears, geographicAreaM49, substr(measuredElementTrade, 2, 2), measuredItemCPC)
+                          ][,
+                            # low == n means that both elements of a flow are low (e.g.,
+                            # import quantity and monetary values are both low). If only
+                            # one of the elements is low, that is an outlier, not bad TP.
+                            exclude := (low == n & big_qty == TRUE)
+                            ][
+                              timePointYears == year &
+                                geographicAreaM49 %in% countries_to_apply_tp_criterion
+                              ][,
+                                .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
+                                ]
 
   if (nrow(exclude_from_mirroring) > 0) {
     complete_trade_flow_cpc <-
@@ -3038,7 +3104,7 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
 if (corrections_exist) {
   flog.trace("[%s] Generating metadata data.table", PID, name = "dev")
 
-##' 1. Generate metadata for corrections.
+  ##' 1. Generate metadata for corrections.
 
   metad <- complete_trade_flow_cpc %>%
     dplyr::filter(!is.na(correction_metadata)) %>%
@@ -3056,38 +3122,38 @@ if (corrections_exist) {
       Metadata_Language = "en",
       Metadata_Value    = correction_metadata
     ) #%>%
-    ### NOTE: metadata can be splitted as shown below, though there is
-    ### still some work to do on how to store metadata of unit values
-    #separate(
-    #  correction_metadata, # Or Metadata_Value, if computed above
-    #  into = c(
-    #    'name_analyst',
-    #    'data_original',
-    #    'correction_type',
-    #    'correction_note',
-    #    'note_analyst',
-    #    'note_supervisor',
-    #    'name_supervisor',
-    #    'date_correction',
-    #    'date_validation'
-    #  ),
-    #  sep = ' *; *'
-    #) %>%
-    #gather(
-    #  key,
-    #  value,
-    #  name_analyst,
-    #  data_original,
-    #  correction_type,
-    #  correction_note,
-    #  note_analyst,
-    #  note_supervisor,
-    #  name_supervisor,
-    #  date_correction,
-    #  date_validation
-    #) %>%
-    #select(-key) %>%
-    #dplyr::rename(Metadata_Value = value)
+  ### NOTE: metadata can be splitted as shown below, though there is
+  ### still some work to do on how to store metadata of unit values
+  #separate(
+  #  correction_metadata, # Or Metadata_Value, if computed above
+  #  into = c(
+  #    'name_analyst',
+  #    'data_original',
+  #    'correction_type',
+  #    'correction_note',
+  #    'note_analyst',
+  #    'note_supervisor',
+  #    'name_supervisor',
+  #    'date_correction',
+  #    'date_validation'
+  #  ),
+  #  sep = ' *; *'
+  #) %>%
+  #gather(
+  #  key,
+  #  value,
+  #  name_analyst,
+  #  data_original,
+  #  correction_type,
+  #  correction_note,
+  #  note_analyst,
+  #  note_supervisor,
+  #  name_supervisor,
+  #  date_correction,
+  #  date_validation
+  #) %>%
+  #select(-key) %>%
+  #dplyr::rename(Metadata_Value = value)
 
   # Required to be a data.table
   metad <- dplyr::select(metad, -correction_metadata) %>%
@@ -3199,14 +3265,14 @@ if (remove_nonexistent_transactions) {
   # should not be overwritten/removed
   protected_flags <-
     flagValidTable[(Protected == TRUE &
-                   !(flagObservationStatus == 'T' &  flagMethod == 'c') &
-                   !(flagObservationStatus == 'I' &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'c') &
-                   !(flagObservationStatus == ''  &  flagMethod == 'h')) |
-                   # Protect T,q
-                   (flagObservationStatus == 'T' &  flagMethod == 'q') |
-                   # Protect X,p
-                   (flagObservationStatus == 'X' &  flagMethod == 'p'),
+                      !(flagObservationStatus == 'T' &  flagMethod == 'c') &
+                      !(flagObservationStatus == 'I' &  flagMethod == 'c') &
+                      !(flagObservationStatus == ''  &  flagMethod == 'c') &
+                      !(flagObservationStatus == ''  &  flagMethod == 'h')) |
+                     # Protect T,q
+                     (flagObservationStatus == 'T' &  flagMethod == 'q') |
+                     # Protect X,p
+                     (flagObservationStatus == 'X' &  flagMethod == 'p'),
                    paste(flagObservationStatus, flagMethod)]
 
   # Data that should be left untouched
@@ -3267,9 +3333,9 @@ setnames(
 )
 
 x <- existing_data[
-    complete_trade_flow_cpc,
-    on = c("geographicAreaM49Reporter", "geographicAreaM49Partner",
-           "measuredElementTrade", "measuredItemCPC", "timePointYears")
+  complete_trade_flow_cpc,
+  on = c("geographicAreaM49Reporter", "geographicAreaM49Partner",
+         "measuredElementTrade", "measuredItemCPC", "timePointYears")
   ]
 
 complete_trade_flow_cpc_changed <-
@@ -3277,11 +3343,11 @@ complete_trade_flow_cpc_changed <-
     complete_trade_flow_cpc,
     on = c("geographicAreaM49Reporter", "geographicAreaM49Partner",
            "measuredElementTrade", "measuredItemCPC", "timePointYears")
-  ][
-    !((dplyr::near(Value, Value_ex, tol = 0.000001) &
-       flagObservationStatus == flagObservationStatus_ex &
-       flagMethod == flagMethod_ex) %in% TRUE)
-  ]
+    ][
+      !((dplyr::near(Value, Value_ex, tol = 0.000001) &
+           flagObservationStatus == flagObservationStatus_ex &
+           flagMethod == flagMethod_ex) %in% TRUE)
+      ]
 
 complete_trade_flow_cpc_changed[, c("Value_ex", "flagObservationStatus_ex", "flagMethod_ex") := NULL]
 

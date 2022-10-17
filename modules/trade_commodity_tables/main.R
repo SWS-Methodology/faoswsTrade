@@ -104,16 +104,18 @@ send_mail <- function(from = NA, to = NA, subject = NA,
   sendmailR::sendmail(from, to, subject, as.list(body))
 }
 
+R_SWS_SHARE_PATH <- Sys.getenv("R_SWS_SHARE_PATH")
+
 if (CheckDebug()) {
-  R_SWS_SHARE_PATH <- "//hqlprsws1.hq.un.fao.org/sws_r_share"
 
-  # mydir <- "/Users/aydanselek/Dropbox/1-FAO-DROPBOX/faosws_Trade/modules/top_commodities_selection_routine"
+  library(faoswsModules)
+  SETTINGS = ReadSettings("modules/trade_commodity_tables/sws.yml")
+  ## Define where your certificates are stored
+  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  ## Get session information from SWS. Token must be obtained from web interface
+  GetTestEnvironment(baseUrl = SETTINGS[["server"]],
+                     token = SETTINGS[["token"]])
 
-  # SETTINGS <- faoswsModules::ReadSettings(file.path(mydir, "sws.yml"))
-
-  SetClientFiles(dir='C:/Users/Selek/Dropbox/certificates/qa')
-
-  GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws',token = '2062128a-ad9d-46e5-8c91-051f90cd4609')
 }
 
 # Parameters
@@ -434,8 +436,8 @@ timeseriesDataRegion <-
           ]
 
 
-timeseriesDataRegion[measuredElementTrade == "5610", measuredElementTrade:= "Import_Quantity (t)"]
-timeseriesDataRegion[measuredElementTrade == "5910", measuredElementTrade:= "Export_Quantity (t)"]
+timeseriesDataRegion[measuredElementTrade == "5610", measuredElementTrade := "Import_Quantity (t)"]
+timeseriesDataRegion[measuredElementTrade == "5910", measuredElementTrade := "Export_Quantity (t)"]
 timeseriesDataRegion[measuredElementTrade == "5608", measuredElementTrade := "Import_Quantity [head]"]
 timeseriesDataRegion[measuredElementTrade == "5908", measuredElementTrade := "Export_Quantity [head]"]
 timeseriesDataRegion[measuredElementTrade == "5609", measuredElementTrade := "Import_Quantity [1000 head]"]
@@ -467,7 +469,7 @@ setnames(timeseriesDataRegion, c("measuredElementTrade"), c("Trade Dimension"))
 timeseriesDataRegion[, Country:= NA]
 
 setcolorder(timeseriesDataRegion, c("Country Group","Country","Commodity name","Commodity CPC Code","Trade Dimension"
-                                    ,"2010","2011","2012","2013","2014","2015","2016","2017","2018"))
+                                    ,c(as.character(year))))
 
 
 timeseriesDataRegion[, `Trade Dimension`:= as.character(`Trade Dimension`)] # Region wise calculation finalised
@@ -622,7 +624,7 @@ setnames(world, c( "measuredElementTrade"), c("Trade Dimension"))
 world[,Country:= NA]
 
 setcolorder(world, c("Country Group","Country","Commodity name","Commodity CPC Code","Trade Dimension",
-                     "2010","2011","2012","2013","2014","2015","2016","2017", "2018"))
+                     c(as.character(year))))
 
 world[, `Trade Dimension` := as.character(`Trade Dimension`)] # World wise calculation finalised
 
@@ -714,33 +716,35 @@ item_names <- unique(foritem_names$`Commodity name`)
 TMP_DIR <- file.path(tempdir())
 if (!file.exists(TMP_DIR)) dir.create(TMP_DIR, recursive = TRUE)
 tmp_file_commoditytables <- file.path(TMP_DIR, paste0("item_", item_names,".xlsx"))
-# tmp_file_commoditytables <- file.path('C:/Users/aydan/Desktop/', paste0("item_", item_names,".xlsx"))
+
+# tmp_file_commoditytables <- file.path(R_SWS_SHARE_PATH, "selek", paste0("item_", item_names,".xlsx"))
+tmp_file_commoditytables <- file.path('C:/Users/Selek/Desktop/ALL', paste0("item_", item_names,".xlsx"))
 
 # Item files is being producing
-
-for (i in unique(world$`Commodity CPC Code`)){
+list_of_commodity <- unique(world$`Commodity CPC Code`)
+for (i in 1:length(list_of_commodity)){
 
   item_name <- unique(country[, c("Commodity name","Commodity CPC Code"), with = FALSE])
-  if(i == "02140"){
+  if(list_of_commodity[i] == "02140"){
 
     item_name <- c("Swine_Pigs")
   }else{
 
-    item_name <- unique(item_name[`Commodity CPC Code` == i]$`Commodity name`)
+    item_name <- unique(item_name[`Commodity CPC Code` == list_of_commodity[i]]$`Commodity name`)
 
   }
   # TMP_DIR <- file.path(tempdir())
   # if (!file.exists(TMP_DIR)) dir.create(TMP_DIR, recursive = TRUE)
   # tmp_file_commoditytables <- file.path(TMP_DIR, paste0("item_", item_name,".xlsx"))
 
-  x1 <- subset(world, `Commodity CPC Code` == i)
+  x1 <- subset(world, `Commodity CPC Code` == list_of_commodity[i])
 
-  if (i %in% crops){
+  if (list_of_commodity[i] %in% crops){
 
     z <- c("Import_Quantity (t)","Import Value [1000 $]", "Import UV [$/t]", "Export_Quantity (t)", "Export Value [1000 $]","Export UV [$/t]","Import - Export",
            "[(Import/Export) - 1] in %", "[Import_growth] in %", "[Export_growth] in % ", "Status" )
 
-  } else if (i %in% big_animals) {
+  } else if (list_of_commodity[i] %in% big_animals) {
 
     z <- c("Import_Quantity [head]","Import Value [1000 $]", "Import UV [$/head]", "Export_Quantity [head]", "Export Value [1000 $]","Export UV [$/head]","Import - Export",
            "[(Import/Export) - 1] in %", "[Import_growth] in %", "[Export_growth] in % ", "Status" )
@@ -769,11 +773,11 @@ for (i in unique(world$`Commodity CPC Code`)){
 
   # Country details
 
-  if (i %in% crops){
+  if (list_of_commodity[i] %in% crops){
 
     z2 <- c("Import_Quantity (t)","Import Value [1000 $]", "Import UV [$/t]", "Export_Quantity (t)", "Export Value [1000 $]","Export UV [$/t]")
 
-  } else if (i %in% big_animals) {
+  } else if (list_of_commodity[i] %in% big_animals) {
 
     z2 <- c("Import_Quantity [head]","Import Value [1000 $]", "Import UV [$/head]", "Export_Quantity [head]", "Export Value [1000 $]","Export UV [$/head]")
 
@@ -782,19 +786,19 @@ for (i in unique(world$`Commodity CPC Code`)){
     z2 <- c("Import_Quantity [1000 head]","Import Value [1000 $]", "Import UV [$/1000 head]", "Export_Quantity [1000 head]", "Export Value [1000 $]","Export UV [$/1000 head]")
   }
 
-  x2 <- subset(country, `Commodity CPC Code` == i & `Trade Dimension` %in% z2)
+  x2 <- subset(country, `Commodity CPC Code` == list_of_commodity[i] & `Trade Dimension` %in% z2)
 
   x2 <- x2[order(match(`Trade Dimension`, z2)),]
   x2 <- x2[order(Country),]
 
   # Regions
-  x3 <- subset(timeseriesDataRegion, `Commodity CPC Code` == i)
+  x3 <- subset(timeseriesDataRegion, `Commodity CPC Code` == list_of_commodity[i])
   x3 <- x3[order(match(`Trade Dimension`, z)),]
   xxx <- list()
 
-  for (j in unique(x3$`Country Group`)){
+  for (j in 1:length(unique(x3$`Country Group`))){
 
-    xx <- subset(x3, `Country Group` == j)
+    xx <- subset(x3, `Country Group` == unique(x3$`Country Group`)[j])
     xx <- xx[order(match(`Trade Dimension`, z)),]
 
     xx_1<-rbind(xx[1:3,],xx[1:3,][nrow(xx[1:3,]) + 1L])
@@ -834,20 +838,20 @@ for (i in unique(world$`Commodity CPC Code`)){
 
   style_comma <- createStyle(numFmt = "COMMA")
 
-  for (i in 6:length(x1)) {
-    addStyle(wb, "World_summary", cols = i, rows = 1:nrow(x1)+1, style = style_comma, gridExpand = TRUE, stack = TRUE)
+  for (y in 6:length(x1)) {
+    addStyle(wb, "World_summary", cols = y, rows = 1:nrow(x1)+1, style = style_comma, gridExpand = TRUE, stack = TRUE)
   }
 
-  for (i in c((6:length(x2)) [6:length(x2)%%3 == 0])) {
-    addStyle(wb, "Country_details", cols = i, rows = 1:nrow(x2)+1, style = style_comma, gridExpand = TRUE, stack = TRUE)
+  for (y in c((6:length(x2)) [6:length(x2)%%3 == 0])) {
+    addStyle(wb, "Country_details", cols = y, rows = 1:nrow(x2)+1, style = style_comma, gridExpand = TRUE, stack = TRUE)
   }
 
-  for (i in 6:length(x3)) {
-    addStyle(wb, "Regions", cols = i, rows = 1:nrow(x3)+1, style = style_comma, gridExpand = TRUE, stack = TRUE)
+  for (y in 6:length(x3)) {
+    addStyle(wb, "Regions", cols = y, rows = 1:nrow(x3)+1, style = style_comma, gridExpand = TRUE, stack = TRUE)
   }
 
-  # saveWorkbook(wb, tmp_file_commoditytables[i], overwrite = TRUE)
-  saveWorkbook(wb, file = file.path("C:/Users/aydan/Desktop/all_items", paste0("item_", item_name,".xlsx")), overwrite = TRUE)
+  saveWorkbook(wb, tmp_file_commoditytables[i], overwrite = TRUE)
+  # saveWorkbook(wb, file = file.path("C:/Users/aydan/Desktop/all_items", paste0("item_", item_name,".xlsx")), overwrite = TRUE)
 
 }
 
@@ -881,6 +885,8 @@ world2$`2015` <- as.numeric(world2$`2015`)
 world2$`2016` <- as.numeric(world2$`2016`)
 world2$`2017` <- as.numeric(world2$`2017`)
 world2$`2018` <- as.numeric(world2$`2018`)
+world2$`2019` <- as.numeric(world2$`2019`)
+world2$`2020` <- as.numeric(world2$`2020`)
 
 wb <- createWorkbook("Creator of workbook2")
 addWorksheet(wb, sheetName = "World_trade_tables")
@@ -904,7 +910,7 @@ for (i in 5:ncol(world2)) {
 }
 
 saveWorkbook(wb, tmp_file_world, overwrite = TRUE)
-# saveWorkbook(wb,file = "C:/Users/Selek/Desktop/world2.xlsx", overwrite = TRUE)
+# saveWorkbook(wb,file = "C:/Users/aydan/Desktop/world.xlsx", overwrite = TRUE)
 
 # files2zip <- dir("C:/Users/aydan/Desktop/items_nonlivestock/", full.names = TRUE)
 # zipped <- zip(zipfile = 'C:/Users/aydan/Desktop/testzip', files = files2zip)
@@ -912,7 +918,7 @@ saveWorkbook(wb, tmp_file_world, overwrite = TRUE)
 
 bodyCommodityTables = paste("Plugin completed.")
 
-# send_mail(from = "no-reply@fao.org", subject = "Commodity tables", body = c(bodyCommodityTables, tmp_file_commoditytables), remove = TRUE)
+send_mail(from = "no-reply@fao.org", subject = "Commodity tables", body = c(bodyCommodityTables, tmp_file_commoditytables), remove = TRUE)
 # send_mail(from = "no-reply@fao.org", subject = "Commodity tables", body = c(bodyCommodityTables, tmp_file_commoditytables[21:length(tmp_file_commoditytables)]), remove = TRUE)
 send_mail(from = "no-reply@fao.org", subject = "World", body = c(bodyCommodityTables, tmp_file_world), remove = TRUE)
 

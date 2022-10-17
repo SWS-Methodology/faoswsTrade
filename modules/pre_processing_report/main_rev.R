@@ -7,8 +7,8 @@
 ##' The Pre-processing reports -in same format- were being produced by the plug-in of CAETANO. Over the time
 ##' there have been some changes on countries' codes and names. This plug-in has been created from scratch and
 ##' it stands alone.
-##' It reads the raw data and the previous version of report from R-share folder, saves the new versions of reports to R-share
-##' folder and to SWS as datatable. It also generates and saves a complete excel file of the reports.
+##' It reads the raw data from R-share folder and the previous version of reports from the datatbles in SWS,
+##' saves the new versions of reports to R-share folder and to SWS as datatable. It also generates and saves a complete excel file of the reports.
 ##' The implemented methodology is in use since January 2020.
 ##' * REPORT 1: Reporters by year
 ##' * REPORT 2: Non-reporting countries
@@ -27,18 +27,22 @@
 suppressPackageStartupMessages(library(data.table))
 library(faoswsTrade)
 library(faosws)
-library(faoswsModules)
+# library(faoswsModules)
 library(dplyr)
+library(stringr)
 library(openxlsx)
+library(faoswsUtil)
+library(sendmailR)
+library(faoswsModules)
 
 # ## set up for the test environment and parameters
-#R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
+R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
 
 if(CheckDebug()){
   message("Not on server, so setting up environment...")
 
-  library(faoswsModules)
-  SETT <- ReadSettings("C:/Users/aydan selek/Dropbox/HOME/faoswsTrade/modules/pre_processing_report/sws.yml")
+  # library(faoswsModules)
+  SETT <- ReadSettings("modules/pre_processing_report/sws.yml")
 
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters
@@ -50,9 +54,9 @@ if(CheckDebug()){
 }
 
 # if (CheckDebug()) {
-#   SetClientFiles(dir = "C:/Users/aydan selek/Desktop/qa")
+#   SetClientFiles(dir = "C:/Users/Selek/Documents/certificates/production")
 #
-#   GetTestEnvironment(baseUrl = 'https://hqlqasws1.hq.un.fao.org:8181/sws', token = '8d61d27c-21bf-4d70-9e46-d0e6981beee8')
+#   GetTestEnvironment(baseUrl = 'https://swsdev.aws.fao.org:8181', token = 'ba4f9eb4-c716-4f47-98be-a505748e487a')
 # }
 
 
@@ -79,7 +83,7 @@ year_of_report = (minYearToProcess : maxYearToProcess)
 
 # Read the yearly basis raw trade data for reporting
 datapath <- file.path(R_SWS_SHARE_PATH, '/trade/datatables')
-# datapath <- file.path('E:/FAO DESKTOP/TRADE/Data tables')
+# datapath <- file.path('D:/WINDOWS/trade/datatables')
 
 # file_ce = paste0('ce_combinednomenclature_unlogged_', year_of_report, '.rds') # Europe countries
 # file_ct = paste0('ct_tariffline_unlogged_', year_of_report, '.rds') # UNSD countries
@@ -93,19 +97,113 @@ save    <- file.path(R_SWS_SHARE_PATH, "trade/pre_processing_report")
 # initial <- file.path('E:/FAO DESKTOP/TRADE/pre-processing reports v0.3')
 # save    <- file.path("C:/Users/aydan selek/Desktop/pre_processing_report")
 
-report_old_1 <- readRDS(file = file.path(initial, paste0('report_1.rds')))
-report_old_2 <- readRDS(file = file.path(initial, paste0('report_2.rds')))
-report_old_3 <- readRDS(file = file.path(initial, paste0('report_3.rds')))
-report_old_4 <- readRDS(file = file.path(initial, paste0('report_4.rds')))
-report_old_5 <- readRDS(file = file.path(initial, paste0('report_5.rds')))
-report_old_6 <- readRDS(file = file.path(initial, paste0('report_6.rds')))
+# Create temporary location for the excel output
+TMP_DIR <- file.path(tempdir())
+if (!file.exists(TMP_DIR)) dir.create(TMP_DIR, recursive = TRUE)
+tmp_file_PreProcessing <- file.path(TMP_DIR, paste0("PreProcessing_reports_", date_of_run, ".xlsx"))
+
+##### READ PREVIOUS VERSIONS OF REPORTS (NOT FROM SHARED FOLDER ANYMORE BUT FROM SWS DATATABLE) ####
+
+# report_old_1 <- readRDS(file = file.path(initial, paste0('report_1.rds')))
+report_old_1 <- ReadDatatable('reporters_by_year_new_version')
+report_old_1 <- select_if(report_old_1, function(x){any(!is.na(x))})
+for (col in 1:ncol(report_old_1)){
+  colnames(report_old_1)[col] <-  sub("year_", "", colnames(report_old_1)[col])
+}
+# report_old_2 <- readRDS(file = file.path(initial, paste0('report_2.rds')))
+report_old_2 <- ReadDatatable("non_reporting_countries_new_version")
+report_old_2 <- select_if(report_old_2, function(x){any(!is.na(x))})
+for (col in 1:ncol(report_old_2)){
+  colnames(report_old_2)[col] <-  sub("year_", "", colnames(report_old_2)[col])
+}
+# report_old_3 <- readRDS(file = file.path(initial, paste0('report_3.rds')))
+report_old_3<- ReadDatatable("number_records_by_reporter_year_new_version")
+# report_old_4 <- readRDS(file = file.path(initial, paste0('report_4.rds')))
+report_old_4 <- ReadDatatable('import_and_export_content_check_new_version')
+# report_old_5 <- readRDS(file = file.path(initial, paste0('report_5.rds')))
+report_old_5 <- ReadDatatable("check_qty_and_value_included_new_version")
+# report_old_6 <- readRDS(file = file.path(initial, paste0('report_6.rds')))
+report_old_6 <- ReadDatatable("missing_data_by_report_new_version")
 
 country_names <- GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")
 stopifnot(nrow(country_names) > 0)
 
 country_names <- country_names[, .(m49 = code, description)]
 
+# use_new_data_format <- ReadDatatable('ess_trade_use_new_unsd_format')
+
 ################# FUNCTIONS ################
+
+########## MAIL SEND FUNCTION #############
+
+send_mail <- function(from = NA, to = NA, subject = NA,
+                      body = NA, remove = FALSE) {
+
+  if (missing(from)) from <- 'no-reply@fao.org'
+
+  if (missing(to)) {
+    if (exists('swsContext.userEmail')) {
+      to <- swsContext.userEmail
+    }
+  }
+
+  if (is.null(to)) {
+    stop('No valid email in `to` parameter.')
+  }
+
+  if (missing(subject)) stop('Missing `subject`.')
+
+  if (missing(body)) stop('Missing `body`.')
+
+  if (length(body) > 1) {
+    body <-
+      sapply(
+        body,
+        function(x) {
+          if (file.exists(x)) {
+            # https://en.wikipedia.org/wiki/Media_type
+            file_type <-
+              switch(
+                tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
+                txt  = 'text/plain',
+                csv  = 'text/csv',
+                png  = 'image/png',
+                jpeg = 'image/jpeg',
+                jpg  = 'image/jpeg',
+                gif  = 'image/gif',
+                xls  = 'application/vnd.ms-excel',
+                xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                doc  = 'application/msword',
+                docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                pdf  = 'application/pdf',
+                zip  = 'application/zip',
+                # https://stackoverflow.com/questions/24725593/mime-type-for-serialized-r-objects
+                rds  = 'application/octet-stream'
+              )
+
+            if (is.null(file_type)) {
+              stop(paste(tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
+                         'is not a supported file type.'))
+            } else {
+              res <- sendmailR:::.file_attachment(x, basename(x), type = file_type)
+
+              if (remove == TRUE) {
+                unlink(x)
+              }
+
+              return(res)
+            }
+          } else {
+            return(x)
+          }
+        }
+      )
+  } else if (!is.character(body)) {
+    stop('`body` should be either a string or a list.')
+  }
+
+  sendmailR::sendmail(from, to, subject, as.list(body))
+}
 
 ########## CONVERTING FUNCTIONS ###########
 
@@ -160,6 +258,19 @@ createReports<- function(year, names = country_names, report_number = 1){
 
   data_ce = readRDS(file_path_ce)
   data_ct = readRDS(file_path_ct)
+
+  # New UNSD data structure
+  # if (year %in% unique(use_new_data_format$year)){
+    file_ct_2 = paste0('/ct_tariffline_unlogged_', year, '_PATCH.rds')
+    file_path_ct_2 = paste0(datapath, file_ct_2)
+    data_ct_2 = readRDS(file_path_ct_2)
+    data_ct_2_countries <- unique(data_ct_2$rep)
+    data_ct <- data_ct[rep %!in% data_ct_2_countries, ]
+
+    # data_ct <- data_ct[!(rep %in% use_new_data_format$area[use_new_data_format$year==year])]
+    data_ct <- rbind(data_ct, data_ct_2, fill = TRUE)
+  # }
+
   setDT(data_ce)
   setDT(data_ct)
 
@@ -172,7 +283,7 @@ createReports<- function(year, names = country_names, report_number = 1){
 
   data_ce <- data_ce[, remover:=ifelse(nchar(product_nc)==2, NA, product_nc)]
   data_ce <- na.omit(data_ce, cols="remover")
-  data_ct <- data_ct[, remover:=ifelse(nchar(comm)==2, NA, comm)]
+  data_ct <- data_ct[, remover:=ifelse(nchar(as.character(comm))==2, NA, comm)]
   data_ct <- na.omit(data_ct, cols="remover")
 
   eu_codes <- convert_geonom_to_faoandm49(data_ce)
@@ -182,7 +293,7 @@ createReports<- function(year, names = country_names, report_number = 1){
   # The column 'code' should contain the Geonom code for eurospean countries and the UNSD M49 codefor the rest
   com_codes <- com_codes[,colnames(eu_codes),with=FALSE]
   forreport <- rbind(eu_codes,com_codes[!eu_codes,on=c("fao", "m49")])
-
+  forreport <- setDT(forreport)
   report <- merge(forreport, names, by='m49' )
 
   if (report_number == 1) {
@@ -226,9 +337,9 @@ createReports<- function(year, names = country_names, report_number = 1){
     eurNumRec <- merge(eurNumRec, report, by=c("fao","code", 'm49'), all.x = TRUE)
     eurNumRec <- eurNumRec[is.na(description)!= TRUE,]
 
-    comNumRec <- data_ct[,.(hs_min= min(nchar(comm)),
-                            hs_max=max(nchar(comm)),
-                            hs_n= length(unique(nchar(comm))), .N), by=.(rep, flow)]
+    comNumRec <- data_ct[,.(hs_min= min(nchar(as.character(comm))),
+                            hs_max=max(nchar(as.character(comm))),
+                            hs_n= length(unique(nchar(as.character(comm)))), .N), by=.(rep, flow)]
     setnames(comNumRec, 'rep', 'code')
     comNumRec$code <- as.numeric(as.character(comNumRec[,code]))
     comNumRec <- merge(comNumRec, com_codes, by='code', all.y = TRUE)
@@ -278,16 +389,16 @@ createReports<- function(year, names = country_names, report_number = 1){
 
   } else if (report_number == 5) {
     ## REPORT 5 ###
-    eurQty = data_ce[, .(qty = ifelse((is.na(qty_ton) | qty_ton == 0) & (is.na(sup_quantity) | sup_quantity == 0),1,0),
-                         value = ifelse((is.na(value_1k_euro) | value_1k_euro == 0),1,0)), .(declarant, flow)]
+    eurQty = data_ce[, .(qty = as.character(ifelse((is.na(qty_ton) | qty_ton == 0) & (is.na(sup_quantity) | sup_quantity == 0),"X",NA)),
+                         value = as.character(ifelse((is.na(value_1k_euro) | value_1k_euro == 0),"X",NA))), .(declarant, flow)]
 
     setnames(eurQty, 'declarant', 'code')
     eurQty <- merge(eurQty, eu_codes, by='code', all.x = TRUE)
     eurQty <- merge(eurQty, report, by=c("fao", "m49", "code"), all.x = TRUE)
     eurQty <- eurQty[is.na(description)!= TRUE,]
 
-    comQty = data_ct[, .(qty = ifelse((is.na(weight) | weight == 0) & (is.na(qty) | qty == 0),1,0),
-                         value = ifelse((is.na(tvalue) | tvalue == 0),1,0)), .(rep, flow)]
+    comQty = data_ct[, .(qty = as.character(ifelse((is.na(weight) | weight == 0) & (is.na(qty) | qty == 0),"X",NA)),
+                         value = as.character(ifelse((is.na(tvalue) | tvalue == 0),"X",NA))), .(rep, flow)]
     setnames(comQty, 'rep', 'code')
     comQty$code <- as.numeric(as.character(comQty[,code]))
     comQty <- merge(comQty, com_codes, by='code', all.y = TRUE)
@@ -424,6 +535,7 @@ saveRDS(report_2, file = file.path(save, "report_2.rds"))
 
 data_third_report = lapply(year_of_report, createReports, report_number=3)
 
+
 data_third_report_all = rbindlist(data_third_report)
 
 data_third_report_all2 = data_third_report_all[order(data_third_report_all$description, data_third_report_all$flow),]
@@ -442,7 +554,7 @@ report_3 <- rbind(report_old_3, report_new_3)
 
 report_3 = report_3[order(report_3$description, report_3$flow),] # Repeating the same thing since the report requires comparaison between the years
 report_3 <- na.omit(report_3, cols="description")
-
+report_3$records_count <- as.numeric(report_3$records_count)
 report_3 = report_3[ , .(hs_min_diff= ifelse(hs_min==shift(hs_min), FALSE, TRUE),
                          hs_max_diff= ifelse(hs_max==shift(hs_max),FALSE, TRUE),
                          records_diff=(records_count/shift(records_count)-1),
@@ -489,13 +601,13 @@ saveRDS(report_5, file = file.path(save, "report_5.rds"))
 
 data_sixth_report = lapply(year_of_report, createReports, report_number=6)
 
-data_sixth_report_all = rbindlist(data_sixth_report)
+data_sixth_report_all = rbindlist(data_sixth_report, fill = TRUE)
 
 report_new_6 = data_sixth_report_all
 
 report_old_6 = report_old_6[report_old_6$year %!in% report_new_6$year] # Remove the years previously reported. So that they can change with new data
 
-report_6 = rbind(report_old_6, report_new_6)
+report_6 = rbind(report_old_6, report_new_6, fill=TRUE)
 
 setcolorder(report_6, c("m49", "code", "description", "year", "noqty_export", "noqty_import",
                         "noqty_reexport", "noqty_reimport", "noqty_prop_export", "noqty_prop_import", "noqty_prop_reexport", "noqty_prop_reimport"))
@@ -520,7 +632,13 @@ writeData(wb, "import and export content check", report_4, rowNames = FALSE)
 writeData(wb, "check qty and value included", report_5, rowNames = FALSE)
 writeData(wb, "missing data by report", report_6, rowNames = FALSE)
 
+### SAVE THE EXCEL FORMAT OF REPORTS TO THE SHARED FOLDER AND SEND BY EMAIL TO THE USER ######
 saveWorkbook(wb, file = file.path(paste0(save, "/pre-processing reports.", date_of_run, ".xlsx")), overwrite = TRUE)
+saveWorkbook(wb, tmp_file_PreProcessing, overwrite = TRUE)
+
+bodyPreProcessing = paste("Plugin completed. The attached excel file contains all the Trade Pre-Processing Reports")
+
+send_mail(from = "no-reply@fao.org", subject = "Trade Pre-Processing Reports", body = c(bodyPreProcessing, tmp_file_PreProcessing), remove = TRUE)
 
 ####### SAVE THE DATATABLE ON SWS #######
 # Before saving datatable on sws, we should delete the existing ones.

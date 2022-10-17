@@ -4,6 +4,7 @@
 ##'   - Marco Garieri
 ##'   - Alexander Matrunich
 ##'   - Christian A. Mongeau Ospina
+##'   - Aydan Selek
 ##'   - Bo Werth\
 ##'
 ##'     Food and Agriculture Organization of the United Nations
@@ -666,7 +667,7 @@ message("TOT: saving")
 
 stats <- SaveData("trade",
                   "total_trade_cpc_m49",
-                  total_trade_cpc_w_uv_changed)
+                  total_trade_cpc_w_uv_changed, waitTimeout = Inf)
 
 end_message <- sprintf(
   "Module completed in %1.2f minutes.
@@ -741,7 +742,7 @@ agric_data_tot <-
 
 setcolorder(agric_data_tot, names(agric_data))
 
-stats_agric <- SaveData("trade", "total_trade_cpc_m49", agric_data_tot)
+stats_agric <- SaveData("trade", "total_trade_cpc_m49", agric_data_tot, waitTimeout = Inf)
 
 
 if (!CheckDebug()) {

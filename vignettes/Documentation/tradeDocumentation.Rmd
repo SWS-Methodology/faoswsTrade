@@ -210,45 +210,45 @@ level, all countries classify products in the same way (a few exceptions
 exist where some countries apply old versions of the HS)."
 <https://unstats.un.org/unsd/tradekb/Knowledgebase/50018/Harmonized-Commodity-Description-and-Coding-Systems-HS>
 
-```{r}
-knitr::kable(dplyr::tribble(
-  ~chapter, ~description,
-      "01", "Animals; live",
-      "02", "Meat and edible meat offal",
-      "03", "Fish and crustaceans, molluscs and other aquatic invertebrates",
-      "04", "Dairy produce; birds' eggs; natural honey; edible products of animal origin, not elsewhere specified or included",
-      "05", "Animal originated products; not elsewhere specified or included",
-      "06", "Trees and other plants, live; bulbs, roots and the like; cut flowers and ornamental foliage",
-      "07", "Vegetables and certain roots and tubers; edible",
-      "08", "Fruit and nuts, edible; peel of citrus fruit or melons",
-      "09", "Coffee, tea, mate and spices",
-      "10", "Cereals",
-      "11", "Products of the milling industry; malt, starches, inulin, wheat gluten",
-      "12", "Oil seeds and oleaginous fruits; miscellaneous grains, seeds and fruit, industrial or medicinal plants; straw and fodder",
-      "13", "Lac; gums, resins and other vegetable saps and extracts",
-      "14", "Vegetable plaiting materials; vegetable products not elsewhere specified or included",
-      "15", "Animal or vegetable fats and oils and their cleavage products; prepared animal fats; animal or vegetable waxes",
-      "16", "Meat, fish or crustaceans, molluscs or other aquatic invertebrates; preparations thereof",
-      "17", "Sugars and sugar confectionery",
-      "18", "Cocoa and cocoa preparations",
-      "19", "Preparations of cereals, flour, starch or milk; pastrycooks' products",
-      "20", "Preparations of vegetables, fruit, nuts or other parts of plants",
-      "21", "Miscellaneous edible preparations",
-      "22", "Beverages, spirits and vinegar",
-      "23", "Food industries, residues and wastes thereof; prepared animal fodder",
-      "24", "Tobacco and manufactured tobacco substitutes",
-      "33", "Essential oils and resinoids; perfumery, cosmetic or toilet preparations",
-      "35", "Albuminoidal substances; modified starches; glues; enzymes",
-      "38", "Chemical products n.e.s.",
-      "40", "Rubber and articles thereof",
-      "41", "Raw hides and skins (other than furskins) and leather",
-      "43", "Furskins and artificial fur; manufactures thereof",
-      "50", "Silk",
-      "51", "Wool, fine or coarse animal hair; horsehair yarn and woven fabric",
-      "52", "Cotton",
-      "53", "Vegetable textile fibres; paper yarn and woven fabrics of paper yarn"
-))
-```
+# ```{r}
+# knitr::kable(dplyr::tribble(
+#   ~chapter, ~description,
+#       "01", "Animals; live",
+#       "02", "Meat and edible meat offal",
+#       "03", "Fish and crustaceans, molluscs and other aquatic invertebrates",
+#       "04", "Dairy produce; birds' eggs; natural honey; edible products of animal origin, not elsewhere specified or included",
+#       "05", "Animal originated products; not elsewhere specified or included",
+#       "06", "Trees and other plants, live; bulbs, roots and the like; cut flowers and ornamental foliage",
+#       "07", "Vegetables and certain roots and tubers; edible",
+#       "08", "Fruit and nuts, edible; peel of citrus fruit or melons",
+#       "09", "Coffee, tea, mate and spices",
+#       "10", "Cereals",
+#       "11", "Products of the milling industry; malt, starches, inulin, wheat gluten",
+#       "12", "Oil seeds and oleaginous fruits; miscellaneous grains, seeds and fruit, industrial or medicinal plants; straw and fodder",
+#       "13", "Lac; gums, resins and other vegetable saps and extracts",
+#       "14", "Vegetable plaiting materials; vegetable products not elsewhere specified or included",
+#       "15", "Animal or vegetable fats and oils and their cleavage products; prepared animal fats; animal or vegetable waxes",
+#       "16", "Meat, fish or crustaceans, molluscs or other aquatic invertebrates; preparations thereof",
+#       "17", "Sugars and sugar confectionery",
+#       "18", "Cocoa and cocoa preparations",
+#       "19", "Preparations of cereals, flour, starch or milk; pastrycooks' products",
+#       "20", "Preparations of vegetables, fruit, nuts or other parts of plants",
+#       "21", "Miscellaneous edible preparations",
+#       "22", "Beverages, spirits and vinegar",
+#       "23", "Food industries, residues and wastes thereof; prepared animal fodder",
+#       "24", "Tobacco and manufactured tobacco substitutes",
+#       "33", "Essential oils and resinoids; perfumery, cosmetic or toilet preparations",
+#       "35", "Albuminoidal substances; modified starches; glues; enzymes",
+#       "38", "Chemical products n.e.s.",
+#       "40", "Rubber and articles thereof",
+#       "41", "Raw hides and skins (other than furskins) and leather",
+#       "43", "Furskins and artificial fur; manufactures thereof",
+#       "50", "Silk",
+#       "51", "Wool, fine or coarse animal hair; horsehair yarn and woven fabric",
+#       "52", "Cotton",
+#       "53", "Vegetable textile fibres; paper yarn and woven fabrics of paper yarn"
+# ))
+# ```
 
 In Table \@ref(tab:rawunsd), an example of filtered UNSD data is shown
 (variable names have been modified). It contains information on the
@@ -1149,29 +1149,29 @@ depending on the type of operation is done on the data . The
 different kind of flags, and the conditions that should be met in
 order to assign them, are reported in Table \@ref(tab:tradeflags).
 
-```{r tradeflags}
-kableExtra::column_spec(
-knitr::kable(
-tibble::tribble(
-~ObservationStatus, 	~Method, 	~When,
-  'BLANK','h','Official data, harvested (No unit or currency conversion made) representing only one flow.',
-  'BLANK','i','Official data, identity (with unit conversion or currency conversion made) e.g:  kg/ton;  eur/$;  $/ton (so can be only one or multiple flows)',
-  'BLANK','s','Official data, sum (where shipments have been added/aggregated; and no conversions have been done)',
-  'BLANK','p','Official data, publication (collected from official country publication, national website, UNCOMTRADE, TRADEMAP)',
-  'I','e','Imputation, module (if the quantities have been imputed based on median unit values)',
-  'I','i','Imputation, identity (for unit value if quantities or values are imputed)',
-  'I','s','Imputation, sum (if one of the aggregated items into one FCL/CPC was imputed). i.e. if one or more flows representing >10% of total have been modified.',
-  'T','i','Mirror data, identity (only for $ values due to +/-12% CIF/FOB conversion)',
-  'T','c','Mirror data, of only one flow (includes "blank/i" flows)',
-  'T','s','Mirror data, sum (for quantities/values if they are aggregated)',
-  'T','p','Mirror data from TRADEMAP, USDA, publications (for quantities/values if they are collected from publications and online databases)',
-  'E','f','Manual estimation',
-  'X','p','Estimation/imputation from UNCOMTRADE or TRADEMAP'
-),
-row.names = FALSE,
-caption = 'Trade flags'),
-3, width = "30em")
-```
+<!-- ```{r tradeflags} -->
+<!-- kableExtra::column_spec( -->
+<!-- knitr::kable( -->
+<!-- tibble::tribble( -->
+<!-- ~ObservationStatus, 	~Method, 	~When, -->
+<!--   'BLANK','h','Official data, harvested (No unit or currency conversion made) representing only one flow.', -->
+<!--   'BLANK','i','Official data, identity (with unit conversion or currency conversion made) e.g:  kg/ton;  eur/$;  $/ton (so can be only one or multiple flows)', -->
+<!--   'BLANK','s','Official data, sum (where shipments have been added/aggregated; and no conversions have been done)', -->
+<!--   'BLANK','p','Official data, publication (collected from official country publication, national website, UNCOMTRADE, TRADEMAP)', -->
+<!--   'I','e','Imputation, module (if the quantities have been imputed based on median unit values)', -->
+<!--   'I','i','Imputation, identity (for unit value if quantities or values are imputed)', -->
+<!--   'I','s','Imputation, sum (if one of the aggregated items into one FCL/CPC was imputed). i.e. if one or more flows representing >10% of total have been modified.', -->
+<!--   'T','i','Mirror data, identity (only for $ values due to +/-12% CIF/FOB conversion)', -->
+<!--   'T','c','Mirror data, of only one flow (includes "blank/i" flows)', -->
+<!--   'T','s','Mirror data, sum (for quantities/values if they are aggregated)', -->
+<!--   'T','p','Mirror data from TRADEMAP, USDA, publications (for quantities/values if they are collected from publications and online databases)', -->
+<!--   'E','f','Manual estimation', -->
+<!--   'X','p','Estimation/imputation from UNCOMTRADE or TRADEMAP' -->
+<!-- ), -->
+<!-- row.names = FALSE, -->
+<!-- caption = 'Trade flags'), -->
+<!-- 3, width = "30em") -->
+<!-- ``` -->
 
 An observation can have multiple Observation Status flags and
 Method flags associated with it. The final flag is the "weakest"

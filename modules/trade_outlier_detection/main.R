@@ -26,7 +26,21 @@ library(sendmailR)
 # ## set up for the test environment and parameters
 # R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
 
-if(CheckDebug()){
+# if(CheckDebug()){
+#   message("Not on server, so setting up environment...")
+#
+#   library(faoswsModules)
+#   SETT <- ReadSettings("modules/trade_outlier_detection/sws.yml")
+#
+#   R_SWS_SHARE_PATH <- SETT[["share"]]
+#   ## Get SWS Parameters
+#   SetClientFiles(dir = SETT[["certdir"]])
+#   GetTestEnvironment(
+#     baseUrl = SETT[["server"]],
+#     token = SETT[["token"]]
+#   )
+# }
+if (CheckDebug()) {
   message("Not on server, so setting up environment...")
 
   library(faoswsModules)
@@ -40,7 +54,6 @@ if(CheckDebug()){
     token = SETT[["token"]]
   )
 }
-
 
 
 sendMailAttachment=function(fileToSend,name,textBody){

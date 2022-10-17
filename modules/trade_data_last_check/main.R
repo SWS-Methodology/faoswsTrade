@@ -110,7 +110,7 @@ if(CheckDebug()){
   message("Not on server, so setting up environment...")
 
   library(faoswsModules)
-  SETT <- ReadSettings("C:/Users/aydan/Dropbox/HOME2/faoswsTrade/modules/trade_data_last_check/sws.yml")
+  SETT <- ReadSettings("modules/trade_data_last_check/sws.yml")
 
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters

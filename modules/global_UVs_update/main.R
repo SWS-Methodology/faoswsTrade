@@ -62,13 +62,10 @@ geoDim = Dimension(name = "geographicAreaM49", keys = geoKeys)
 
 itemKeys = GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredItemCPC")
 itemKeys = itemKeys[, code]
-
-eleKeys <- GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredElementTrade")
-eleKeys <- eleKeys[, code]
-
-eleDim <- Dimension(name = "measuredElementTrade", keys = eleKeys)
-
 itemDim <- Dimension(name = "measuredItemCPC", keys = itemKeys)
+
+eleDim <- c('5607', '5608', '5609', '5610', '5907', '5908', '5909', '5910', '5622', '5922',
+  '5630', '5930', '5638', '5938', '5639', '5939', '5637', '5937') %>% Dimension(name = "measuredElementTrade", keys = .)
 
 timeDim <- Dimension(name = "timePointYears", keys = as.character(yearVals))
 

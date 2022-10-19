@@ -3242,7 +3242,8 @@ if (remove_nonexistent_transactions) {
   Keys <- list(reporters = GetCodeList2(dimension = 'geographicAreaM49Reporter')[type == 'country', code],
                partners  = GetCodeList2(dimension = 'geographicAreaM49Partner')[type == 'country', code],
                items     = GetCodeList2(dimension = 'measuredItemCPC')[, code],
-               elements  = GetCodeList2(dimension = 'measuredElementTrade')[, code],
+               elements  = GetCodeList2(dimension = 'measuredElementTrade')[code %in% c('5607', '5608', '5609', '5610', '5907', '5908', '5909', '5910', '5622', '5922',
+                                                                                        '5630', '5930', '5638', '5938', '5639', '5939', '5637', '5937'), code],
                years     = as.character(year))
 
   # TODO: use error handling

@@ -1,0 +1,118 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {section}{\numberline {2}Raw data processing}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Data harvesting}{3}{subsection.2.1}%
+\contentsline {subsubsection}{\numberline {2.1.1}UNSD}{3}{subsubsection.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.2}Eurostat}{4}{subsubsection.2.1.2}%
+\contentsline {subsubsection}{\numberline {2.1.3}Specifications}{4}{subsubsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.2}Raw data: SWS datatables vs.\nobreakspace {}RDS files}{7}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}``Pre-Processing Report'' plugin}{7}{subsection.2.3}%
+\contentsline {subsubsection}{\numberline {2.3.1}``Reporters by years''}{8}{subsubsection.2.3.1}%
+\contentsline {subsubsection}{\numberline {2.3.2}``Non-reporting countries''}{8}{subsubsection.2.3.2}%
+\contentsline {subsubsection}{\numberline {2.3.3}``Number records by reporter/year''}{9}{subsubsection.2.3.3}%
+\contentsline {subsubsection}{\numberline {2.3.4}``Import and export content check''}{10}{subsubsection.2.3.4}%
+\contentsline {subsubsection}{\numberline {2.3.5}``Check qty and value included''}{10}{subsubsection.2.3.5}%
+\contentsline {subsubsection}{\numberline {2.3.6}``Missing data by report''}{11}{subsubsection.2.3.6}%
+\contentsline {section}{\numberline {3}Bilateral trade processing}{11}{section.3}%
+\contentsline {subsection}{\numberline {3.1}``Complete Trade Flow CPC'' plugin (bilateral transactions)}{11}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Aggregation of UNSD Tariff line shipments}{11}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Mapping UNSD Tariff line and Eurostat data}{12}{subsubsection.3.1.2}%
+\contentsline {paragraph}{UNSD Tariff line}{12}{section*.2}%
+\contentsline {paragraph}{Eurostat}{15}{section*.3}%
+\contentsline {paragraph}{\numberline {3.1.2.1}HS-FCL-CPC code mapping}{16}{paragraph.3.1.2.1}%
+\contentsline {subsubsection}{\numberline {3.1.3}Unified official trade flows dataset}{20}{subsubsection.3.1.3}%
+\contentsline {subsubsection}{\numberline {3.1.4}Standardization, editing and outlier detection}{20}{subsubsection.3.1.4}%
+\contentsline {paragraph}{\numberline {3.1.4.1}Unit values computation}{20}{paragraph.3.1.4.1}%
+\contentsline {paragraph}{\numberline {3.1.4.2}Missing quantities imputation}{20}{paragraph.3.1.4.2}%
+\contentsline {paragraph}{\numberline {3.1.4.3}Re-imputation of flows}{20}{paragraph.3.1.4.3}%
+\contentsline {paragraph}{\numberline {3.1.4.4}Outlier detection and imputation}{21}{paragraph.3.1.4.4}%
+\contentsline {subsubsection}{\numberline {3.1.5}Mirroring}{22}{subsubsection.3.1.5}%
+\contentsline {paragraph}{\numberline {3.1.5.1}Forced mirroring}{23}{paragraph.3.1.5.1}%
+\contentsline {paragraph}{\numberline {3.1.5.2}Discarding incompatible mirror data (``TP criterion'')}{23}{paragraph.3.1.5.2}%
+\contentsline {subsection}{\numberline {3.2}Flags management}{24}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Conversion to FAO SWS standards}{26}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Use of validation corrections}{26}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Remove non-existent transactions}{27}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}``Total Trade CPC'' plugin (totals by reporter)}{27}{subsection.3.6}%
+\contentsline {section}{\numberline {4}Data validation}{27}{section.4}%
+\contentsline {subsection}{\numberline {4.1}List of validation plugins}{28}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}\texttt {trade\_outlier\_detection} plugin}{28}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}\texttt {trade\_data\_last\_check} plugin}{30}{subsubsection.4.1.2}%
+\contentsline {subsubsection}{\numberline {4.1.3}\texttt {top\_commodities\_selection\_routine} plugin}{31}{subsubsection.4.1.3}%
+\contentsline {subsubsection}{\numberline {4.1.4}\texttt {monetary\_values\_ranked\_commodities} plugin}{33}{subsubsection.4.1.4}%
+\contentsline {subsubsection}{\numberline {4.1.5}\texttt {trade\_commodity\_tables} plugin}{35}{subsubsection.4.1.5}%
+\contentsline {subsection}{\numberline {4.2}Interactive tool for data validation (Shiny tool)}{36}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Authentication}{36}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Tool tabs}{40}{subsubsection.4.2.2}%
+\contentsline {paragraph}{\numberline {4.2.2.1}Welcome}{40}{paragraph.4.2.2.1}%
+\contentsline {paragraph}{\numberline {4.2.2.2}Outliers}{41}{paragraph.4.2.2.2}%
+\contentsline {paragraph}{\numberline {4.2.2.3}Main items}{41}{paragraph.4.2.2.3}%
+\contentsline {paragraph}{\numberline {4.2.2.4}Total}{42}{paragraph.4.2.2.4}%
+\contentsline {paragraph}{\numberline {4.2.2.5}Bilateral}{44}{paragraph.4.2.2.5}%
+\contentsline {paragraph}{\numberline {4.2.2.6}TO COMMIT}{46}{paragraph.4.2.2.6}%
+\contentsline {paragraph}{\numberline {4.2.2.7}Corrections saved}{46}{paragraph.4.2.2.7}%
+\contentsline {paragraph}{\numberline {4.2.2.8}Raw data / MAP}{46}{paragraph.4.2.2.8}%
+\contentsline {paragraph}{\numberline {4.2.2.9}Other checks}{46}{paragraph.4.2.2.9}%
+\contentsline {paragraph}{\numberline {4.2.2.10}Help}{48}{paragraph.4.2.2.10}%
+\contentsline {subsubsection}{\numberline {4.2.3}Final notes / recommendations}{48}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Technical information}{49}{subsubsection.4.2.4}%
+\contentsline {section}{\numberline {5}Workflow}{49}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Flow chart}{49}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Plugin flow}{51}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Validation flow}{54}{subsection.5.3}%
+\contentsline {subsubsection}{\numberline {5.3.1}Reporting countries}{54}{subsubsection.5.3.1}%
+\contentsline {subsubsection}{\numberline {5.3.2}Non-reporting countries}{55}{subsubsection.5.3.2}%
+\contentsline {subsubsection}{\numberline {5.3.3}Total merchandise trade}{56}{subsubsection.5.3.3}%
+\contentsline {subsubsection}{\numberline {5.3.4}Commodity tables}{56}{subsubsection.5.3.4}%
+\contentsline {section}{\numberline {6}Future work}{56}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Streamline raw data updates}{56}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Outlier identification/imputation at the bilateral level}{57}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}CIF/FOB}{57}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Self trade analysis}{57}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Mapping from HS to FCL/CPC}{57}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}Mapping from Comtrade M49 and Geonomenclature directly to M49}{57}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}Food-aid}{60}{subsection.6.7}%
+\contentsline {subsection}{\numberline {6.8}Other tasks}{60}{subsection.6.8}%
+\contentsline {section}{Appendix: Statistical Working System}{60}{section*.4}%
+\contentsline {subsection}{\numberline {6.9}Datasets and datatables}{61}{subsection.6.9}%
+\contentsline {subsubsection}{\numberline {6.9.1}List of datasets used by the trade module}{62}{subsubsection.6.9.1}%
+\contentsline {paragraph}{\numberline {6.9.1.1}Trade Flows (CPC)}{62}{paragraph.6.9.1.1}%
+\contentsline {paragraph}{\numberline {6.9.1.2}Total Trade (CPC)}{63}{paragraph.6.9.1.2}%
+\contentsline {subsubsection}{\numberline {6.9.2}List of datatables used by the trade module}{63}{subsubsection.6.9.2}%
+\contentsline {paragraph}{\numberline {6.9.2.1}\texttt {trade-input-data}}{63}{paragraph.6.9.2.1}%
+\contentsline {subparagraph}{\numberline {6.9.2.1.1}EU Commission - Combined Nomenclature \emph {YEAR}}{64}{subparagraph.6.9.2.1.1}%
+\contentsline {subparagraph}{\numberline {6.9.2.1.2}UNSD Tariffline \emph {YEAR}}{64}{subparagraph.6.9.2.1.2}%
+\contentsline {subparagraph}{\numberline {6.9.2.1.3}UNSD Tariffline v2 \emph {YEAR}}{65}{subparagraph.6.9.2.1.3}%
+\contentsline {subparagraph}{\numberline {6.9.2.1.4}National tariffline \emph {COUNTRY}}{66}{subparagraph.6.9.2.1.4}%
+\contentsline {subparagraph}{\numberline {6.9.2.1.5}Total Merchandise Trade}{67}{subparagraph.6.9.2.1.5}%
+\contentsline {paragraph}{\numberline {6.9.2.2}\texttt {trade-reference-files}}{68}{paragraph.6.9.2.2}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.1}Adjustments}{68}{subparagraph.6.9.2.2.1}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.2}Aggregation \emph {TYPE}}{68}{subparagraph.6.9.2.2.2}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.3}commodity\_list\_for\_total\_trade\_tables}{68}{subparagraph.6.9.2.2.3}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.4}Comtrade Units}{68}{subparagraph.6.9.2.2.4}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.5}continent\_country\_mapping\_for\_total\_trade\_tables}{69}{subparagraph.6.9.2.2.5}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.6}ESS trade global UVs}{70}{subparagraph.6.9.2.2.6}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.7}ESS trademap \emph {YEAR}}{71}{subparagraph.6.9.2.2.7}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.8}ess\_trade\_exclude\_outlier\_check}{72}{subparagraph.6.9.2.2.8}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.9}ess\_trade\_people\_in\_charge}{73}{subparagraph.6.9.2.2.9}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.10}ess\_trade\_use\_new\_unsd\_format}{73}{subparagraph.6.9.2.2.10}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.11}EUR/USD conversion}{74}{subparagraph.6.9.2.2.11}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.12}FCL Units}{74}{subparagraph.6.9.2.2.12}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.13}Force mirroring}{75}{subparagraph.6.9.2.2.13}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.14}geonom2fao}{76}{subparagraph.6.9.2.2.14}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.15}HS to FCL mapping (old)}{76}{subparagraph.6.9.2.2.15}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.16}HS to FCL mapping (v3)}{76}{subparagraph.6.9.2.2.16}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.17}HS to FCL mapping (v4)}{76}{subparagraph.6.9.2.2.17}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.18}HS to FCL mapping (v5)}{77}{subparagraph.6.9.2.2.18}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.19}HS2012-6 digits Standard}{77}{subparagraph.6.9.2.2.19}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.20}HS6 interest codes}{78}{subparagraph.6.9.2.2.20}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.21}Livestock weights}{78}{subparagraph.6.9.2.2.21}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.22}Reimpute unit values}{79}{subparagraph.6.9.2.2.22}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.23}Trade outlier country thresholds}{79}{subparagraph.6.9.2.2.23}%
+\contentsline {subparagraph}{\numberline {6.9.2.2.24}UNSD Partners Block}{80}{subparagraph.6.9.2.2.24}%
+\contentsline {paragraph}{\numberline {6.9.2.3}\texttt {trade-reports}}{80}{paragraph.6.9.2.3}%
+\contentsline {subsection}{\numberline {6.10}R server}{81}{subsection.6.10}%
+\contentsline {subsection}{\numberline {6.11}Specific plugins-related information}{81}{subsection.6.11}%
+\contentsline {subsubsection}{\numberline {6.11.1}Standard vs.\nobreakspace {}core plugins}{81}{subsubsection.6.11.1}%
+\contentsline {subsubsection}{\numberline {6.11.2}Plugin scheduling}{81}{subsubsection.6.11.2}%
+\contentsline {section}{Appendix: Accessing/updating files in the R shared drive}{83}{section*.5}%
+\contentsline {section}{Disclaimer}{84}{section*.6}%

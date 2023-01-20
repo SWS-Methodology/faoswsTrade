@@ -2,6 +2,7 @@
 title: "FAO ESS trade processing system"
 author:
 - Christian A. Mongeau Ospina\
+- Aydan Selek\
   
   Food and Agriculture Organization of the United Nations
 abstract: |
@@ -49,10 +50,10 @@ processes."
 Two R[^r] routines (called also plugins)[^plugins] deal with this first phase:
 "Complete Trade Flow CPC" and "Total Trade CPC". The former deals with raw bilateral
 data, applies the operations mentioned before, and saves data to the
-`Bilateral Trade Flow (CPC)` SWS dataset; the latter takes as input the data
+`Trade Flows (CPC)` SWS dataset; the latter takes as input the data
 obtained as output from the "Complete Trade Flow CPC" plugin, aggregate all
 bilateral partner data for each combination of reporter/flow/item,
-calculates the aggregated unit values, and saves data to the `Bilateral
+calculates the aggregated unit values, and saves data to the `Total
 Trade Flow (CPC)` SWS dataset.
 
 [^r]: "R is a language and environment for statistical computing and
@@ -74,16 +75,16 @@ analysts to correct flows in an informed way by means of an interactive
 validation tool.
 
 The trade module was developed by (in alphabetical order): Marco Garieri,
-Alexander Matrunich, Christian Mongeau, and Bo Werth.  Plugins for data
+Alexander Matrunich, Christian Mongeau, Aydan Selek and Bo Werth. Plugins for data
 validation have been developed by (in alphabetical order): Carlo Del Bello,
-Alberto Munisso, Aydan Selek, Sumeda Siriwardena, Cristina Valdivia.  The
+Alberto Munisso, Aydan Selek, Sumeda Siriwardena.  The
 interactive tool for data validation has been developed by Christian
 Mongeau.  Useful feedback has been given by (in alhpabetical order):
 Katherine Baldwin, Claudia De Vita, Carola Fabi, Dominique Habimana, Salar
 Tayyib.
 
-Any remaining error/inaccuracy in this document (as of June 2020) can be
-attributed exclusively to the author. A correction and pull request can
+Any remaining error/inaccuracy in this document (as of February 2023) can be
+attributed exclusively to the authors. A correction and pull request can
 be made in the module git repo at:
 
 <https://github.com/SWS-Methodology/faoswsTrade/>
@@ -92,21 +93,20 @@ be made in the module git repo at:
 # Raw data processing
 
 The sources of bilateral raw data are the United Nations Statistics Division
-(UNSD) for non-European countries, and Eurostat for European countries. In
+(UNSD) for all the countries except the European Union members, and Eurostat for European countries. In
 order for these two data sources to be combined and saved into a single SWS
 dataset they need to pass trough different processing steps, which will be
 explained in this section.
 
 ## Data harvesting
 
-Data harvesting is done by the Methodological team. The
-explanation of the process below is temporary as the team finish
-documentation of their harvesters. Instructions below can be
-outdated as of this writing (June 2020).
+Data harvesting of UNSD data is done by using an integrated tool of SWS. The tool has been prepared initially by the Methodological team, and then extended and integrated to SWS by CSI division. On the other hand, the harvesting of Eurostat data is done by using their bulk download facility. The raw data obtained from both data sources can be found in their respective datatable by year under the trade-input-data domain of SWS.
+
+Instructions and links below can be outdated as of this writing.
 
 ### UNSD
 
-UNSD data can be obtained through UNSD's API (Application
+The SWS harvester of UNSD data uses the UNSD's API (Application
 programming interface).  There are two methods: "simple" and bulk
 download. The first method is more suitable when there are few
 cases to be downloaded. It consists in querying an UNSD webservice
@@ -116,7 +116,7 @@ need to be converted[^rsdmx] into a tabular format so that it can
 then be uploaded to SWS. A list of access points and parameters
 can be found at:
 <https://unstats.un.org/unsd/tradekb/Print50044.aspx>. For
-instance, to download all tariff line data for COlombia's (M49
+instance, to download all tariff line data for Colombia's (M49
 170) imports and exports of chapter 10 (Cereals) on 2017, the
 address is:
 
@@ -177,9 +177,6 @@ before uploading to SWS. The operations that need to be done are:
 
 [^eurostatbulk]: <https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?sort=1&file=comext%2F%23%23%23IMPORTANT_NOTE.pdf>
 
-**NOTE: please double check this, by downloading a previous year,
-applying the operations and compare them with data already saved
-in SWS Eurostat datatables.**
 
 ### Specifications
 
@@ -210,45 +207,9 @@ level, all countries classify products in the same way (a few exceptions
 exist where some countries apply old versions of the HS)."
 <https://unstats.un.org/unsd/tradekb/Knowledgebase/50018/Harmonized-Commodity-Description-and-Coding-Systems-HS>
 
-# ```{r}
-# knitr::kable(dplyr::tribble(
-#   ~chapter, ~description,
-#       "01", "Animals; live",
-#       "02", "Meat and edible meat offal",
-#       "03", "Fish and crustaceans, molluscs and other aquatic invertebrates",
-#       "04", "Dairy produce; birds' eggs; natural honey; edible products of animal origin, not elsewhere specified or included",
-#       "05", "Animal originated products; not elsewhere specified or included",
-#       "06", "Trees and other plants, live; bulbs, roots and the like; cut flowers and ornamental foliage",
-#       "07", "Vegetables and certain roots and tubers; edible",
-#       "08", "Fruit and nuts, edible; peel of citrus fruit or melons",
-#       "09", "Coffee, tea, mate and spices",
-#       "10", "Cereals",
-#       "11", "Products of the milling industry; malt, starches, inulin, wheat gluten",
-#       "12", "Oil seeds and oleaginous fruits; miscellaneous grains, seeds and fruit, industrial or medicinal plants; straw and fodder",
-#       "13", "Lac; gums, resins and other vegetable saps and extracts",
-#       "14", "Vegetable plaiting materials; vegetable products not elsewhere specified or included",
-#       "15", "Animal or vegetable fats and oils and their cleavage products; prepared animal fats; animal or vegetable waxes",
-#       "16", "Meat, fish or crustaceans, molluscs or other aquatic invertebrates; preparations thereof",
-#       "17", "Sugars and sugar confectionery",
-#       "18", "Cocoa and cocoa preparations",
-#       "19", "Preparations of cereals, flour, starch or milk; pastrycooks' products",
-#       "20", "Preparations of vegetables, fruit, nuts or other parts of plants",
-#       "21", "Miscellaneous edible preparations",
-#       "22", "Beverages, spirits and vinegar",
-#       "23", "Food industries, residues and wastes thereof; prepared animal fodder",
-#       "24", "Tobacco and manufactured tobacco substitutes",
-#       "33", "Essential oils and resinoids; perfumery, cosmetic or toilet preparations",
-#       "35", "Albuminoidal substances; modified starches; glues; enzymes",
-#       "38", "Chemical products n.e.s.",
-#       "40", "Rubber and articles thereof",
-#       "41", "Raw hides and skins (other than furskins) and leather",
-#       "43", "Furskins and artificial fur; manufactures thereof",
-#       "50", "Silk",
-#       "51", "Wool, fine or coarse animal hair; horsehair yarn and woven fabric",
-#       "52", "Cotton",
-#       "53", "Vegetable textile fibres; paper yarn and woven fabrics of paper yarn"
-# ))
-# ```
+```{r, echo = FALSE}
+knitr::include_graphics("assets/chapters.png")
+```
 
 In Table \@ref(tab:rawunsd), an example of filtered UNSD data is shown
 (variable names have been modified). It contains information on the
@@ -349,8 +310,7 @@ complete) time is evident.
 [^rds]: RDS is a file format used to read/write serialized data in R.
 
 [^shareddrive]: The "R shared drive" is a folder in the SWS server where R
-  plugins can write and read data to/from, and can be accessed also by local
-  PCs in the FAO network by means of a Samba service.
+  plugins can write and read data to/from, and can be accessed only through the Rstudio workbench development environment of FAO, with an assigned user account provided by CSI.
 
 A more detailed information on how to access the raw data files stored in
 the R shared drive, and how to updated them, will be given in
@@ -393,13 +353,13 @@ knitr::include_graphics("assets/ppr_plugin_launch.png")
 ```
 
 All tables report the "m49" column, indicating the M49 code assigned to the
-country as it wilkl be saved in SWS, and a "code" column containing the
+country as it will be saved in SWS, and a "code" column containing the
 original code assigned by the country either by UNSD (M49-comtrade) or
 Eurostat (geonom).
 
 ### "Reporters by years"
 
-This table reporter whether the country is available in the raw data file
+This table reports whether the country is available in the raw data file
 as a reporter, and it is indicated with an "X" in the specific
 country/year combination.
 
@@ -447,7 +407,7 @@ transactions in 2002 (an increase of 0.685%, as indicated by the
 ### "Import and export content check"
 
 This table shows by country/year whether the country reported import/exports
-(and eventuallu re-imports and re-exports) and indicates it with an "X".
+(and eventually re-imports and re-exports) and indicates it with an "X".
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/ppr_4.png")
@@ -461,9 +421,6 @@ exports (Myanmar reported only imports); Sri Lanka also reported re-exports.
 This reports shows whether information is missing for quantity or value by
 country/flow. If the information is missing, this is indicated with a "1".
 
-**NOTE: THIS NEED TO BE CHANGED, SO TO DO IT AS IN OTHER TABLES WHERE BINARY
-INFORMATION IS GIVEN WITH X/BLANK INSTEAD OF 1/0.
-
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/ppr_5.png")
 ```
@@ -471,7 +428,7 @@ knitr::include_graphics("assets/ppr_5.png")
 ### "Missing data by report"
 
 This table contains information of missing or zero quantities by reporter
-and year. This information is encoded as $noqty_F$ and $noqty_prop_F$, where
+and year. This information is encoded as $noqty_F$ and $noqty-prop-_F$, where
 $F$ is the flow (import, export, re-import, re-export). The former indicates
 how many observations are either missing or zero, and the latter is the
 proportion of the former to the total number of observations.
@@ -489,7 +446,7 @@ knitr::include_graphics("assets/ppr_6.png")
 After raw data have been harvested from UNSD/Eurostat, and after a decision
 on data completeness and quality has been achieved, bilateral raw data can
 be processed with the "Complete Trade Flow CPC" plugin. When this completes,
-its output is saved to the "Bilateral Trade Flow (CPC)" dataset, were
+its output is saved to the "Trade Flows (CPC)" dataset, were
 bilateral transactions are saved by year as unique combinations of reporter and
 partner M49 codes, CPC item codes, SWS element codes that represent the flow
 and the type of variable (e.g., 5622 indicates imports in 1,000 US dollar,
@@ -508,7 +465,7 @@ aggregation plugin).
 The "Complete Trade Flow CPC" plugin (SWS id: 5636) takes as input the raw
 UNSD and Eurostat data and saves bilateral transactions for reporters and
 partners expressed in M49 codes, items expressed in CPC codes, and elements
-in SWS-specific element codes, in the "Bilateral Trade Flow (CPC)" SWS
+in SWS-specific element codes, in the "Trade Flows (CPC)" SWS
 dataset. In between, the plugin carries out several operations. These are
 explained below.
 
@@ -518,7 +475,7 @@ The tariffline data from UNSD contains multiple rows with
 identical `reporter`/`partner`/`commodity`/`flow`/`year`/`qunit`
 combinations. See, e.g., the data reported in Table \@ref(tab:multipletl),
 where for the same year/reporter/partner/flow/qunit there are 15 recorded
-transactions involving the the item with code `22071090`.
+transactions involving the item with code `22071090`.
 
 ```{r multipletl}
 knitr::kable(examples$tldata_multiple, row.names = FALSE,
@@ -643,7 +600,7 @@ the nature of the differences among the two datasets.
    involve multiplying by a fixed factor known *a priori*. Other
    conversions are less trivial and need to be obtained with
    information derived from within the data. This is handled in
-   the next step
+   the next step.
 
 1. Non-livestock commodity specific conversions are added. If a
    quantity is originally expressed in "units", and weight is not
@@ -873,50 +830,13 @@ $$uv = \frac{value}{quantity}$$
 For records where the commodity has to be reported in quantity
 and the quantity is missing and the value is present, the
 corresponding quantity is imputed dividing the corresponding value
-by a median unit value:
+by the unit value reflecting the annual global price change:
 
-$$quantity = \frac{value}{uv_{median}}$$
+$$quantity_{t,x} = \frac{value_{t,x}}{uv_{t-1,x} * \frac{uv_{t,global\text{ } average}}{uv_{t-1,global\text{ }average}}}$$
 
-The median unit value ($uv_{median}$) is obtained in a
-specific-to-generic fashion (in all cases, the unit values are
-calculated separately for imports and exports). A first attempt is
-done by calculating unit values at the most specific HS level
-(i.e., the one at which the quantity is expressed). If the number
-of partners for which this unit value can be calculated is greater
-than a certain threshold (currently 10) the median unit value
-across partner is calculated and used for imputation. If the first
-attempt fails (i.e., it is not possible to calculate a unit value
-at the most specific HS level), then the same approach is used by
-taking into account more generic HS levels, in particular at eight
-and six digits, and the most generic level for which a sufficient
-number of partners (at least 10) is available is used for
-calculating the median unit value. Usually a suitable median can
-be calculated at the 8-digit level or, at least, at the 6-digit
-level. However, if the previous strategies fail (which implies
-that there is not a sufficient number of partners in order to
-calculate the median) two attempts at calculating a non
-reporter-specific median unit values (i.e., median unit values
-valid for all reporters) are sequentially undertaken: by HS and by
-FCL. In most cases it should be possible to calculate the median
-unit value by HS, thus that the FCL level is used as the strategy
-of last resort.  Actually, for completeness sake, the very last
-*fallback* is the median unit value by flow. This is the most
-generic unit value that can be used for imputation and is
-calculated just for precaution, as it is very unlikely that an
-appropriate more specific median unit value can not be calculated.
+where $x$ represents the country and $t$ represents the year in subject. To have a validated and better global price change, the countries with missing quantities are validated last among the reporter countries.
 
-In short, the first one of the following median unit values that
-can be calculated is used for imputation (import and export unit
-values are always calculated separately):
-
-1. most specific HS code, across partners;
-1. 8-digit HS level, across partners;
-1. 6-digit HS level, across partners;
-1. most specific HS code, across reporters/partners;
-1. FCL code of the most specific HS code, across
-   reporters/partners;
-1. by flow (without taking into account any commodity code; this is
-   very unlikely to be applied).
+The global prices changes of import and export, together with more detailed information on regional changes, can be found in ESS trade global UVs datatable in SWS. More details on this datatable will be given below.
 
 For how flags are assigned, please refer to Section "Flag
 management".
@@ -1103,11 +1023,11 @@ external data or manual imputation by analysts during the validation stage.
 
 The criteria for which a mirrored flow is incomplete is the following:
 
-- $value / value_{mean} < 0.6$
-- $quantity / quantity_{mean} < 0.6$
+- $value / value_{mean} < 0.4$
+- $quantity / quantity_{mean} < 0.4$
 - $quantity_{mean} > 1,000$ tonnes
 
-where $value_{mean}$ and $quantity_{mean}$ are the 5-year average of the
+where $value_{mean}$ and $quantity_{mean}$ are the 3-year average of the
 lagged value of $value$ and $quantity$, respectively, which are the
 aggregated monetary value and quantity of a reporter's given item/flow.
 
@@ -1119,8 +1039,8 @@ aggregation of the bilateral flows declared by the country, indicated as
 those in the upper part of the table), indicated as "mirrored". Given that
 2018 is missing (orange highlighted part), the sum of flows declared by
 partners (in the yellow highlighted cell) are considered to fill the gap.
-However, these represent only around 40% of what is usually declared by the
-country (making the comparison with its 5-year average). Thus, according to
+However, these represent only around 35% of what is usually declared by the
+country (making the comparison with its 3-year average). Thus, according to
 the criteria shown above, such aggregation is not used to impute the missing
 flows.[^missingtp]
 
@@ -1132,7 +1052,7 @@ transaction did not meet the threshold: in this case, an important partner
 knitr::include_graphics("assets/tp_criteria.png")
 ```
 
-When the plugin removes mirrored flows because they did not meet the 60%
+When the plugin removes mirrored flows because they did not meet the 40%
 threshold, then an email is sent to officers informing them that the removal
 took place. The subject of the email is (e.g., for 2018) "Trade plugin:
 Excluded Tp, year 2018".
@@ -1147,37 +1067,18 @@ Status flag and an "h" Method flag. They indicate that data are
 official and were harvested, respectively. After these, flags are assigned
 depending on the type of operation is done on the data . The
 different kind of flags, and the conditions that should be met in
-order to assign them, are reported in Table \@ref(tab:tradeflags).
+order to assign them, are reported in the table below.
 
-<!-- ```{r tradeflags} -->
-<!-- kableExtra::column_spec( -->
-<!-- knitr::kable( -->
-<!-- tibble::tribble( -->
-<!-- ~ObservationStatus, 	~Method, 	~When, -->
-<!--   'BLANK','h','Official data, harvested (No unit or currency conversion made) representing only one flow.', -->
-<!--   'BLANK','i','Official data, identity (with unit conversion or currency conversion made) e.g:  kg/ton;  eur/$;  $/ton (so can be only one or multiple flows)', -->
-<!--   'BLANK','s','Official data, sum (where shipments have been added/aggregated; and no conversions have been done)', -->
-<!--   'BLANK','p','Official data, publication (collected from official country publication, national website, UNCOMTRADE, TRADEMAP)', -->
-<!--   'I','e','Imputation, module (if the quantities have been imputed based on median unit values)', -->
-<!--   'I','i','Imputation, identity (for unit value if quantities or values are imputed)', -->
-<!--   'I','s','Imputation, sum (if one of the aggregated items into one FCL/CPC was imputed). i.e. if one or more flows representing >10% of total have been modified.', -->
-<!--   'T','i','Mirror data, identity (only for $ values due to +/-12% CIF/FOB conversion)', -->
-<!--   'T','c','Mirror data, of only one flow (includes "blank/i" flows)', -->
-<!--   'T','s','Mirror data, sum (for quantities/values if they are aggregated)', -->
-<!--   'T','p','Mirror data from TRADEMAP, USDA, publications (for quantities/values if they are collected from publications and online databases)', -->
-<!--   'E','f','Manual estimation', -->
-<!--   'X','p','Estimation/imputation from UNCOMTRADE or TRADEMAP' -->
-<!-- ), -->
-<!-- row.names = FALSE, -->
-<!-- caption = 'Trade flags'), -->
-<!-- 3, width = "30em") -->
-<!-- ``` -->
+
+```{r, echo = FALSE}
+knitr::include_graphics("assets/tradeflags.png")
+```
 
 An observation can have multiple Observation Status flags and
 Method flags associated with it. The final flag is the "weakest"
 flag: the `flagWeightTable` table of the `faoswsFlag` R package contains the
 weights that should be assigned to all flags, and the one with the lowest
-value prevails over the other flags. For instance, if one shipment if
+value prevails over the other flags. For instance, if one shipment of
 official ("BLANK" Observation Status flag) needs to be aggregated with another
 shipment that was originally missing the quantity and was thus imputed ("I"
 observation status flag), the final flag will be "I" as it is the weakest
@@ -1312,7 +1213,7 @@ validating is selected. In order to open a session the user needs
 to click on "New query", then select the "Trade" domain, and the
 "Total Trade (CPC)" dataset. After that, the country for which
 validation is being carried out needs to be selected in the
-"Geographic Area M49" dimension (remaining dime4nsions can be set
+"Geographic Area M49" dimension (remaining dimensions can be set
 arbitrarily), then ther "Run" button needs to ne selected.
 
 
@@ -1335,7 +1236,7 @@ validation tool (Shiny tool).
 
 ## List of validation plugins
 
-### `Tradeoutliers_most_recent_version` plugin
+### `trade_outlier_detection` plugin
 
 This plugin calculates the 5-year average value of validated years for each
 item/flow/quantity (`meanOld`) and calculates the ratio of the current year
@@ -1381,7 +1282,7 @@ outliers.
 
 ### `trade_data_last_check` plugin
 
-This plugin calculate the ratio of the current year quantity and diveds it
+This plugin calculate the ratio of the current year quantity and divides it
 by the 5-year moving average (`movav`) of the same flow/item:
 
 $$quantity / movav$$
@@ -1389,6 +1290,7 @@ $$quantity / movav$$
 It sends an Excel file that indicates:
 
 * yellow cells: $quantity / movav < 0.5$, i.e., values less than the 5-year average of at least 50%
+* blue cells: $quantity / movav > 2$, i.e., Values minimum twice more than the 5-year average
 * red cells: missing values
 * boldface: official data
 
@@ -1419,6 +1321,7 @@ When the plugin completes, it sends an email with subject
 "main_commodities" with an Excel that indicates:
 
 * yellow cells: values less than 50% of their 5-year average
+* blue cells: values minimum twice more than the 5-year average
 * red cells: missing or deleted values considered to be incompatible with their time series ("bad TP")
 * boldface: official data
 
@@ -1495,7 +1398,7 @@ where its can be saved to the dataset.
 
 It can be used at the following URL:
 
-<http://hqlprsws1.hq.un.fao.org:3838/TRADEvalidation_test/>
+<https://rstudioc.fao.org/TRADEvalidation/>
 
 ### Authentication
 
@@ -1513,7 +1416,7 @@ The steps for doing so are (all mentioned datasets are in the "Trade" domain):
        ```{r, echo = FALSE}
        knitr::include_graphics("assets/rename_total.png")
        ```
-1. create a session in the "Completed Trade Flow (CPC)" dataset
+1. create a session in the "Trade Flows (CPC)" dataset
   1. in the first country field, insert the country name/code of the reporter that you will validate
   1. select the other dimensions
   1. click on "Run"  
@@ -1538,7 +1441,7 @@ The steps for doing so are (all mentioned datasets are in the "Trade" domain):
      ```{r, echo = FALSE}
      knitr::include_graphics("assets/copy_token.png")
      ```
-1. open <http://hqlprsws1.hq.un.fao.org:3838/TRADEvalidation_test/> (well, this.)
+1. open <https://rstudioc.fao.org/TRADEvalidation/>
 1. click on the red button on the upper left corner on the page (it says "Token")  
    ```{r, echo = FALSE}
    knitr::include_graphics("assets/click_token.png")
@@ -1951,11 +1854,7 @@ Its source code is publicly available at:
 <https://github.com/SWS-Methodology/TRADEvalidation>
 
 When a modification of the app is required, after the modification
-is done, the developer needs to update the version in the server.
-The path in the server where the application is stored is:
-
-`/srv/shiny-server/TRADEvalidation_test`
-
+is done, the developer needs to update the version in the server. To this so, the developer needs to have FAO R Studio Connect account and publish the updated version using local R studio connected to this account. <https://rstudioc.fao.org/connect/>
 
 [^shiny]: https://shiny.rstudio.com/
 
@@ -1985,7 +1884,7 @@ The steps required to complete one full round of the trade process so to
 save data in the appropriate trade datasets are the following (validation
 will be covered in the "Data validation" section):
 
-1. Open a query in the "Bilateral Trade Flow (CPC)" dataset of the "Trade"
+1. Open a query in the "Trade Flows (CPC)" dataset of the "Trade"
    domain (dimensions should not be set, as this is a *core* plugin), and
    click on "Run plugin":
 
@@ -1993,7 +1892,7 @@ will be covered in the "Data validation" section):
    knitr::include_graphics("assets/runs_bilateral_query.png")
    ```
 
-2. Select the "[FAODOMAIN/mongeau] Complete Trade Flow (CPC) (core)" plugin,
+2. Select the "[FAODOMAIN/Terrinoni] Complete Trade Flow CPC - from QA (core)" plugin,
    set the year the plugin needs to process data, and click "Run plugin":
 
    ```{r, echo = FALSE}
@@ -2009,7 +1908,7 @@ will be covered in the "Data validation" section):
    successfully" (where *YEAR* is the year set as parameter).
 
 3. Once the "Complete Trade Flow (CPC)" plugin has completed successfully,
-   open a query in the "Total Trade (CPC)" dataset of the "Trade" domani (as
+   open a query in the "Total Trade (CPC)" dataset of the "Trade" domain (as
    before, no dimensions need to be set given this is a *core* plugin), and
    click on "Run plugin":
 
@@ -2017,11 +1916,11 @@ will be covered in the "Data validation" section):
    knitr::include_graphics("assets/runs_total_query.png")
    ```
 
-4. Select the "[FAODOMAIN/mongeau] Complete Trade Flow (CPC) (core)" plugin,
+4. Select the "[FAODOMAIN/Terrinoni] Total Trade CPC - from QA (core)" plugin,
    set the year the plugin needs to process data, and click "Run plugin":
 
    ```{r, echo = FALSE}
-   knitr::include_graphics("assets/runs_bilateral_run.png")
+   knitr::include_graphics("assets/runs_total_run.png")
    ```
 
    As for the bilateral plugin, SWS will send an email on the completion status of
@@ -2078,7 +1977,7 @@ officer at the beginning of the cycle.
 This step will show the analyst outliers at the total level, by running the
 plugin:
 
-`Tradeoutlier_most_recent_version`
+`trade_outlier_detection`
 
 when it completes, and email will be sent with a list of outliers. The
 analysts is required to have a look at the historical time series of all
@@ -2086,7 +1985,7 @@ items contained in the email to check whether the identified outlier is a
 true positive (i.e., an actual outlier) and, thus, it deserves attention.
 For doing this, there are two options:
 
-* open a session in the "Bilateral Trade Flow (CPC)" dataset with the
+* open a session in the "Trade Flows (CPC)" dataset with the
   required reporter/item/flow/years combination, making sure to include all
   partners (as for years, it would be useful to have data for at least five
   years previous of the identified outlier).
@@ -2099,13 +1998,13 @@ through the Shiny tool, the second option is preferred.
 The analyst is required to use the tools available in the Shiny tool to make
 corrections to bilateral data, and keep comments on the actions made. These
 can be saved in the Excel file sent by the
-`Tradeoutlier_most_recent_version` plugin. Taking notes will help
+`trade_outlier_detection` plugin. Taking notes will help
 post-validation checks by officers.
 
 If, for some valid reason, bilateral flows cannot be reconciled with the sum
 of bilateral flows even after these are validated, the analyst have the
 option to override the aggregated total obtained from bilateral data, and
-input some exteranl figure, considered to be more in line with the country
+input some external figure, considered to be more in line with the country
 historical trend. In this case, the analyst need to write the appropriate
 number in the corresponding cell on the SWS session on the total dataset,
 and change flags in an appropriate way (e.g., if the data comes from a
@@ -2142,13 +2041,7 @@ rare occasions, estimate themselves what the flow should be.
 It may happen that external sources confirm the removed figure (e.g., a
 drought affected seriously the country and the exports are much lower
 compared to its standards). If this is the case, the analysts will need to
-"restore" a figure, i.e., selecting the deleted figure and selecting
-"History" in the lower part of the SWS UI, then the appropriate history
-entry, then click the restore symbol, as shown in the following Figure:
-
-```{r, echo = FALSE}
-knitr::include_graphics("assets/sws_restore.png")
-```
+"restore" a figure which comes with Excel.
 
 After data has been restored, a red triangle will appear, indicating it is
 "session data". The analyst will need to click on th "Save to database"
@@ -2164,15 +2057,15 @@ countries or, more likely, what is not an outlier (or important one) for a
 reporter, may be so for a non-reporting country. Thus, a check for the
 presence of outliers will be required by using the following plugin:
 
-`Tradeoutlier_most_recent_version`
+`trade_outlier_detection`
 
 Once outliers are identified, the analyst will need to check if the
-bilateral flow that creates the outlier at the total level is an
+trade flows dataset that creates the outlier at the total level is an
 outlier also for the country that originally reported that flow, or if it is
 an outlier only for the non-reporting country that is being analysed. In the
 former case, the analyst need to contact the colleague that had that country
 under his/her responsibility and ask for this to be re-validated. In the
-latter case, the analyst will need to contact the trade officer and agreen
+latter case, the analyst will need to contact the trade officer and agree
 on a solution.
 
 ### Total merchandise trade
@@ -2187,7 +2080,7 @@ on a solution.
 
 ## Streamline raw data updates
 
-As of June 2020 the process of checking whether a country that in
+As of Jamuary 2023 the process of checking whether a country that in
 a previous round had no official data, or any other major data
 update, is done manually. The person in charge looks at the "Data
 availability" comtrade page at:
@@ -2216,10 +2109,10 @@ that says when Tariffline data are updated.
 Outliers were identified in a previous version of the
 "Complete Trade Flow CPC" module and imputed automatically by using the
 median unit value with a specific-to-generic median unit value
-calculation, i.e., with the method used for estimating mising quantities.
+calculation.
 Results were found to be unsatisfactory, thus automatic imputation was
 switched off. Said strategy could be supplemented by using information of
-neighbour or similar countries (e.g., the median unit value of Asian
+neighbor or similar countries (e.g., the median unit value of Asian
 countries for a detailed HS level can be used for imputing an outlier for an
 Asian country instead of going up to the HS8 or HS6 level for the country
 itself as attempted in the specific-to-generic approach).
@@ -2308,7 +2201,7 @@ Some of the issues are feature requests. For instance, the latest issue as
 of this writing (June 2020) is issue #176: it is suggested to merge the
 "Complete Trade Flow CPC" and "Total Trade CPC" plugins into a single
 plugin. The reason is that the two are usually run together in two different
-scheduled runs, and for the reasons exaplained in the issue, it seems
+scheduled runs, and for the reasons explained in the issue, it seems
 sensible to have a single plugin for the process. As an additional comment,
 the "Total Trade CPC" may be recreated as a function that can be called as
 "Complete Trade Flow CPC" ends or from a standalone small plugin that just
@@ -2330,19 +2223,19 @@ concerned), the SWS is composed of three different elements: a user
 interface (UI), a datataset backend, an R server.
 
 There are two SWS environments: *QA* (for *Quality Assurance*) and *LIVE*
-(known more frequently by CIO and other divisions as
+(known more frequently by CSI and other divisions as
 *production*).[^liveproduction] The two are conceptually the same, the main
 difference being that QA is used during the development phase, from both
-statistical (by ESS and other techincal units), and information techonology
-(by CIO) points of view. These are the URL from accessing the two servers,
+statistical (by ESS and other technical units), and information technology
+(by CSI) points of view. These are the URL from accessing the two servers,
 from the web and R-API:
 
 * QA:
-  * web: https://hqlqasws1.hq.un.fao.org:8443/sws/
-  * R-API: https://hqlqasws1.hq.un.fao.org:8181/sws
+  * web: https://sws.qa.fao.org/
+  * R-API: https://sws.qa.aws.fao.org:8181
 * LIVE (production):
   * web: https://sws.fao.org/
-  * R-API: https://sws.fao.org:8181
+  * R-API: https://sws.aws.fao.org:8181
 
 [^liveproduction]: The CLFS team decided to call the *production*
   environment as *LIVE* in order to avoid confusion with the *production*
@@ -2387,11 +2280,11 @@ knitr::include_graphics("assets/sws_datatable.png")
 ### List of datasets used by the trade module
 
 There are two datasets relative to the trade process stored in the "Trade"
-domain: "Bilateral Trade Flow (CPC)" and "Total Trade (CPC)". As the names
+domain: "Trade Flows (CPC)" and "Total Trade (CPC)". As the names
 suggest, the former contains bilateral transactions, while the latter
 contains total flows (computed as aggregation of bilateral transactions).
 
-#### Bilateral Trade Flow (CPC)
+#### Trade Flows (CPC)
 
 <p>&nbsp;</p>
 
@@ -2606,7 +2499,7 @@ out aggregation, not by trade-related plugins.
 This datatable contains the items used by the
 `trade_commodity_tables` plugin for doing the "Commodity tables".
 
-Note that that this mapping also includes:
+Note that this mapping also includes:
 
 * the "European Union" aggregate, which includes 28 countries EU countries
 * the "Europe" aggregate, which excludes 28 countries that are member of European Union
@@ -2741,7 +2634,7 @@ knitr::include_graphics("assets/sws_datatable_force_mirroring.png")
 
 <p>&nbsp;</p>
 
-The correspondences betwee FAO area codes and geonomenclature (Eurostat
+The correspondences between FAO area codes and geonomenclature (Eurostat
 country codes) are reported in this table.
 
 ```{r, echo = FALSE}
@@ -2877,13 +2770,13 @@ The datatables contained in this domain have already been presented in the
 * "Number records by reporter/year"
 * "Reporters by years"
 
-There other datatables with the name corresponding to the previous one, but
+There are other datatables with the name corresponding to the previous one, but
 suffixed "OLD": these were used in a first version of the "Pre-Processing
 Report" plugin, and are stored for reference. Finally, there are a couple of
 datatables that were used to keep a log of the plugins runs ("Info runs:
 complete trade" and "Info runs: total trade"), but a filesystem log
 mechanism was developed, which contains additional information with respect
-to tsaid datatables.
+to said datatables.
 
 ## R server
 
@@ -2933,7 +2826,7 @@ Below, the steps for scheduling a plugin are explained, by using the case of
 the "Complete Trade Flow CPC" plugin.
 
 1. Create a new query to the appropriate dataset (i.e., where the plugin
-   runs; in the example it is the "Bilateral Trade Flow (CPC)" dataset of
+   runs; in the example it is the "Trade Flows (CPC)" dataset of
    the "Trade" domain) and click on "Run plugin" (notice that no dimension
    is specified):
 
@@ -2969,22 +2862,15 @@ plugins are scheduled to run **twice** per night.
 As mentioned in the "Raw data: SWS datatables vs. RDS files" Section, the
 "Complete Trade Flow CPC" reads raw data from RDS files stored in the *R
 shared drive*, which is a folder in the SWS server where R plugins can write
-and read data to/from, and can be accessed also by local PCs in the FAO
-network by means of a Samba service.
+and read data to/from, and can be accessed only by the persons who has FAO R Studio Workbench account, through this link: <https://rstudios.fao.org/>.
 
-It can be accessed by PCs inside the FAO network at the following addresses:
-
-* QA: \\\\hqlprsws1.hq.un.fao.org\\sws_r_share
-* LIVE: \\\\hqlprsws2.hq.un.fao.org\\sws_r_share
-
-The location in the SWS server, where R can read from and write to, is in
-both cases `/work/SWS_R_Share`.
+The location in the SWS server, where R can read from and write to, is `/work/SWS_R_Share`.
 
 In what follows, the R shared drive folder will be referenced to simply as
 "SHARE": the user will need to modify that accordingly if he/she is using a
 local PC or the SWS server itself.
 
-The UNSD and Eurostat raw tables (for years 2014-2018) are stored in the
+The UNSD and Eurostat raw tables (for years 2014-2021) are stored in the
 `SHARE/trade/datatables` folder. For instance, the UNSD raw data file form
 2018 is available as:
 
@@ -3013,7 +2899,7 @@ of the trade-process need to keep the RDS files updated with respect to any
 modification occurred to the correspondent SWS datatables. However, given
 that raw data files are not changed frequently, it is suggested to keep
 using the readRDS() method, as the performance gained with it outweighs the
-need to do these infrequent synchnronisations.
+need to do these infrequent synchronizations.
 
 The following R instructions will download the SWS datatable and will save
 it to the R shared drive (the examples will use the
@@ -3031,7 +2917,7 @@ drive, change both accordingly):
 
 This Working Paper should not be reported as representing the
 official view of the FAO. The views expressed in this Working
-Paper are those of the author and do not necessarily represent
+Paper are those of the authors and do not necessarily represent
 those of the FAO or FAO policy. Working Papers describe research
 in progress by the authors and are published to elicit comments
 and to further discussion.

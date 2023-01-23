@@ -65,7 +65,7 @@ SWS. These plugins take as input data available as SWS datasets/datatables,
 carry out statistical procedures based on these data and parameters, then
 save processed data back to SWS datasets/datatables (though some plugins'
 scope is not saving data, but computing some analysis that is sent back to
-the user by email). More information of hwo the SWS works is given in the
+the user by email). More information of how the SWS works is given in the
 appendix "Statistical Working System".
 
 When data have been processed and saved to the datasets, data validation by
@@ -643,7 +643,7 @@ the nature of the differences among the two datasets.
   all countries eggs weigh the same, thus a more realistic approach would be
   to compute regional medians (e.g., for Thailand use the Asian median of
   the weight/quantity ratio). The first-best approach, in any case, would be
-  to have speficic tables derived from external sources. This is currently
+  to have specific tables derived from external sources. This is currently
   under investigation.
 
 #### Eurostat {-}
@@ -802,7 +802,7 @@ will be made `previous`, and will be finally saved as `ESS trademap 2019`.
 It is usually the case that countries have new codes, so these will be
 initially "unmapped". For those codes for which a conversion with any of the
 `hsfclmap`, `standard`, or `auto HS6` is possible, the plugin will save the
-corresponding correspondencies, otherwise it will keep them unmapped. For
+corresponding commodities, otherwise it will keep them unmapped. For
 this the `manual` intervention is required.
 
 
@@ -846,7 +846,7 @@ management".
 Given the cross-section nature of the "Complete Trade Flow CPC" plugin,
 there can be cases where imputations of missing quantities are not of the
 same order of magnitude with respect to the time series of the country. For
-instace, if a country reports quantity data for 19 out of 20 partners, but
+instance, if a country reports quantity data for 19 out of 20 partners, but
 the reported data was biased upwards by a factor of, say, 1,000, then when
 an imputation is done for the missing quantity partner, it will be also be
 biased by a factor of 1,000. In order to take this into account, a
@@ -981,7 +981,7 @@ quantities may not be the same because of several reasons: countries use
 Tariff line descriptions that can bring some difference on how items are
 recorded as they are aggregated into the CPC; timing differences in how
 transactions are recorded (e.g., a transaction can be exported in December,
-but arrives at destinatio in January); transaction may have been reported
+but arrives at destination in January); transaction may have been reported
 with non-standard units by at least one reporter; net weight was used by one
 reporter, while gross weight was used by the other; etc.
 
@@ -997,7 +997,7 @@ Additionally to countries that are completely missing, or those that appear
 but that only report one of the two flows (either exports or imports), some
 countries that do appear with both imports and exports are mirrored. This is
 called "Forced mirroring". This happens for countries that have been
-conmsidered to have incomplete or low quality data (for any reason). This is
+considered to have incomplete or low quality data (for any reason). This is
 *not* an automatic process and is decided after having analysed the dataset
 through the pre-processing reports. When a country is considered to have
 incomplete data, so that the mirroring process would improve the coverage,
@@ -1033,7 +1033,7 @@ aggregated monetary value and quantity of a reporter's given item/flow.
 
 The following table contains an example of a country that is non-reporter in
 2014 and 2018.  The upper side of the table contains bilateral flows with
-its threee partners, as the partners declared; the lower part contains the
+its three partners, as the partners declared; the lower part contains the
 aggregation of the bilateral flows declared by the country, indicated as
 "total", and the sum of the flows declared by the other partners (i.e.,
 those in the upper part of the table), indicated as "mirrored". Given that
@@ -1095,7 +1095,7 @@ quantity in both cases. After the shipment with missing data is imputed (it
 gets the "I" Observation Status flag), the total bilateral transaction is
 computed and the final Observation Status flag will be "BLANK" for Item A
 because the imputed shipment accounts for less than 10% of the total
-transacttion (specifically, 7.8%), while the flag for Item B is "I" because
+transaction (specifically, 7.8%), while the flag for Item B is "I" because
 the imputation is more than 10% of the total (17.5%).
 
 ```{r, echo = FALSE}
@@ -1176,9 +1176,6 @@ by the plugin. Values and flags of the resulting combinations will be set to
 NA as there is actually no way to remove the observation. In any case, the
 result is substantially the same.
 
-
-
-
 ## "Total Trade CPC" plugin (totals by reporter)
 
 The "Total Trade CPC" plugin (SWS id: 5662) uses as input the output of the
@@ -1214,7 +1211,7 @@ to click on "New query", then select the "Trade" domain, and the
 "Total Trade (CPC)" dataset. After that, the country for which
 validation is being carried out needs to be selected in the
 "Geographic Area M49" dimension (remaining dimensions can be set
-arbitrarily), then ther "Run" button needs to ne selected.
+arbitrarily), then their "Run" button needs to be selected.
 
 
 ```{r, echo = FALSE}
@@ -1654,7 +1651,7 @@ Select a partner in the "Partner" menu.
 Note that:
 1) only available partners for the selected flow/item are shown,
 so you don't need to figure out what countries to choose;
-2) the partner shuould be automatically populated if you select it in the bilaterals that appear in the "Total" tab.
+2) the partner should be automatically populated if you select it in the bilaterals that appear in the "Total" tab.
 
 If there are years that can be corrected (corrections can be done just after 2014, included),
 then available years will be displayed in the "Year to correct" menu.
@@ -1737,7 +1734,7 @@ More on this later.
 This tab contains a list of corrections that are ready to be saved.
 To do so,
 you need to click on "Send to SWS datasets".
-What this action will do is that all corrections will be stored in the "correcitons table",
+What this action will do is that all corrections will be stored in the "corrections table",
 which is a dataset of already saved corrections,
 and will send corrected data to SWS.
 
@@ -1833,9 +1830,9 @@ respectively.
 
 The tool allows you to do "multiple corrections" to correct ALL bilateral flows in one go.
 Please, use this very cautiously.
-If you find, e.g., that ALL partners's quantities are to be divided by 1,000,
+If you find, e.g., that ALL partners' quantities are to be divided by 1,000,
 this may be better handled at the source of the data.
-It could be useful to liase with UNSD so that in a coordinated manner these flows get fixed.
+It could be useful to liaise with UNSD so that in a coordinated manner these flows get fixed.
 All agencies will benefit from this.
 Also, another reason why this needs to be used conservatively is that it
 will be difficult to "undo" all corrections (after they are saved) if they were made by mistake
@@ -1936,7 +1933,7 @@ will be covered in the "Data validation" section):
 As of this writing (June 2020), the "Complete Trade Flow (CPC)"
 plugin and the "Total Trade (CPC)" plugin take around 25 and 7 minutes on
 average, respectively (the amount of time depends on the SWS server
-performance, the amount of data, and other techincal factors).
+performance, the amount of data, and other technical factors).
 
 ## Validation flow
 
@@ -1951,7 +1948,7 @@ taken into account. Validation occurs in the following order:
 1. total merchandise trade
 1. commodity tables
 
-At the beginning of the data validation excercise, a "monitoring table" will
+At the beginning of the data validation exercise, a "monitoring table" will
 be compiled by the trade officer. It contains the distribution of countries
 for the first 3 validation phases (reporting countries, non-reporting countries, and 
 total merchandise trade), and the distribution of commodities (for commodity
@@ -2035,7 +2032,7 @@ criterion") Section"), or flows that are relatively small, compared to
 previous data.
 
 Analysts will need to find external data sources for **all deleted flows**
-(highlited with red cells in the email sent by the plugin) or, though in
+(highlighted with red cells in the email sent by the plugin) or, though in
 rare occasions, estimate themselves what the flow should be.
 
 It may happen that external sources confirm the removed figure (e.g., a
@@ -2080,7 +2077,7 @@ on a solution.
 
 ## Streamline raw data updates
 
-As of Jamuary 2023 the process of checking whether a country that in
+As of January 2023 the process of checking whether a country that in
 a previous round had no official data, or any other major data
 update, is done manually. The person in charge looks at the "Data
 availability" comtrade page at:
@@ -2457,7 +2454,7 @@ years: given that countries do not generally share the files with this
 format, the original files are converted into the UNSD format.  The only
 country for which such datatable exists, so far, is Venezuela ("National
 tariffline Venezuela"). In the example below a portion of the table is
-shown, where it can be seen that 2014 and 2015 are avaiable.
+shown, where it can be seen that 2014 and 2015 are available.
 
 ```{r, echo = FALSE}
 knitr::include_graphics("assets/sws_datatable_rawdata_national.png")
@@ -2551,8 +2548,8 @@ knitr::include_graphics("assets/sws_datatable_global_unit_values.png")
 
 <p>&nbsp;</p>
 
-These datatbales have already been presented in the Section "HS-FCL-CPC code
-mapping". They contain the correpondences of country HS codes to the FCL
+These datatables have already been presented in the Section "HS-FCL-CPC code
+mapping". They contain the correspondences of country HS codes to the FCL
 and CPC, by *YEAR*.
 
 ```{r, echo = FALSE}
@@ -2671,7 +2668,7 @@ knitr::include_graphics("assets/hsfclmapv4.png")
 The contents of this table were already shown in the "HS-FCL-CPC code
 mapping" Section. It contains the latest version of the "historical" HS to
 FCL correspondence table. Any correction to this table is done in the
-"correction_X" column, where *X* is the variabole that needs to be corrected
+"correction_X" column, where *X* is the variable that needs to be corrected
 (e.g., "correction_startdate" will correct the `startdate` variable).
 
 ```{r, echo = FALSE}
@@ -2848,7 +2845,7 @@ the "Complete Trade Flow CPC" plugin.
      option is selected, the plugin will run each day at the required time
      (this is how the trade plugins are set to run, every day at a specific
      time).
-   * *Custom schedule (advanced)*: this is a more advanced schedulin
+   * *Custom schedule (advanced)*: this is a more advanced scheduling
      specification, that allows to set seconds, minutes, hours, day of week,
      day of month, year (as this option is selected a help page can be
      consulted by clicking on the "Help" button).

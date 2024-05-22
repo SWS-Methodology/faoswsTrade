@@ -168,7 +168,14 @@ data = normalise(data, areaVar = "geographicAreaM49",
 
 trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, except = "timePointYears")
 
-data_to_delete <- trade[(flagObservationStatus=='T' & flagMethod=='q') | (flagObservationStatus=='' & flagMethod=='q'),]
+data_to_delete <- trade[(flagObservationStatus=='T'   & flagMethod=='q')  |
+                          (flagObservationStatus=='x' & flagMethod=='q')  |
+                          (flagObservationStatus==''  & flagMethod=='q')  |
+                          (flagObservationStatus==''  & flagMethod=='q'),]
+# Convert flags that haven't been converted to OCS2023 standard
+data_to_delete <- data_to_delete[flagObservationStatus=='T', flagObservationStatus:='X']
+data_to_delete <- data_to_delete[flagObservationStatus=='', flagObservationStatus:='A']
+
 data_to_delete <- data_to_delete[, flagMethod:='p']
 
 

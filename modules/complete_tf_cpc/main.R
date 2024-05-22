@@ -2303,7 +2303,7 @@ for (var in flag_vars) {
 # Modified in order to have X in the table
 flagWeightTable_status <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
-  'Y',                   1.00, # This acts as blank
+  'Y',                   1.00, # This acts as A/Official value, previously blank
   '',                    0.99,
   'X',                   0.90,
   'T',                   0.80,
@@ -2328,6 +2328,8 @@ flagWeightTable_method <- frame_data(
 )
 
 # XXX This will need a refactoring
+
+# Get minimum flag weight to determine final flag
 flog.trace("[%s] Cycle on status and method flags", PID, name = "dev")
 for (i in c('status', 'method')) {
   for (j in c('v', 'q')) {
@@ -3220,7 +3222,7 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 # "official" status flag should be <BLANK> instead of X (this was a choice
 # made after X was chosen as official flag). Thus, change X to <BLANK>. THEN
 # Xp was introduced, so these need to stay
-complete_trade_flow_cpc[flagObservationStatus == 'Y', flagObservationStatus := '']
+complete_trade_flow_cpc[flagObservationStatus == 'Y', flagObservationStatus := 'A']
 
 
 ##' 1. Removed "protected" data from the module's output.

@@ -21,6 +21,7 @@ library(faosws)
 library(data.table)
 library(faoswsUtil)
 library(sendmailR)
+suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
 
 
 # ## set up for the test environment and parameters
@@ -157,10 +158,11 @@ geoDim = Dimension(name = "geographicAreaM49", keys = selectedGEOCode)
 
 #Define element dimension. These elements are needed to calculate net supply (production + net trade)
 
-eleKeys <- GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredElementTrade")
-eleKeys <- eleKeys[, code]
+# eleKeys <- GetCodeList(domain = "trade", dataset = "total_trade_cpc_m49", "measuredElementTrade")
+# eleKeys <- eleKeys[, code]
 
-eleDim <- Dimension(name = "measuredElementTrade", keys = eleKeys)
+eleDim <- c('5607', '5608', '5609', '5610', '5907', '5908', '5909', '5910', '5622', '5922',
+            '5630', '5930', '5638', '5938', '5639', '5939', '5637', '5937') %>% Dimension(name = "measuredElementTrade", keys = .)
 
 #Define item dimension
 

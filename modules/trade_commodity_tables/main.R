@@ -717,8 +717,8 @@ TMP_DIR <- file.path(tempdir())
 if (!file.exists(TMP_DIR)) dir.create(TMP_DIR, recursive = TRUE)
 tmp_file_commoditytables <- file.path(TMP_DIR, paste0("item_", item_names,".xlsx"))
 
-# tmp_file_commoditytables <- file.path(R_SWS_SHARE_PATH, "selek", paste0("item_", item_names,".xlsx"))
-tmp_file_commoditytables <- file.path('C:/Users/Selek/Desktop/ALL', paste0("item_", item_names,".xlsx"))
+
+# tmp_file_commoditytables <- file.path('C:/Users/Selek/Desktop/ALL-2021/', paste0("item_", item_names,".xlsx"))
 
 # Item files is being producing
 list_of_commodity <- unique(world$`Commodity CPC Code`)
@@ -851,7 +851,6 @@ for (i in 1:length(list_of_commodity)){
   }
 
   saveWorkbook(wb, tmp_file_commoditytables[i], overwrite = TRUE)
-  # saveWorkbook(wb, file = file.path("C:/Users/aydan/Desktop/all_items", paste0("item_", item_name,".xlsx")), overwrite = TRUE)
 
 }
 
@@ -876,17 +875,8 @@ world2<- do.call(rbind, lapply(split(world2, ceiling(1:NROW(world2)/after_rows))
 world2 <- as.data.table(world2)
 world2[, Country:= NULL]
 
-world2$`2010` <- as.numeric(world2$`2010`)
-world2$`2011` <- as.numeric(world2$`2011`)
-world2$`2012` <- as.numeric(world2$`2012`)
-world2$`2013` <- as.numeric(world2$`2013`)
-world2$`2014` <- as.numeric(world2$`2014`)
-world2$`2015` <- as.numeric(world2$`2015`)
-world2$`2016` <- as.numeric(world2$`2016`)
-world2$`2017` <- as.numeric(world2$`2017`)
-world2$`2018` <- as.numeric(world2$`2018`)
-world2$`2019` <- as.numeric(world2$`2019`)
-world2$`2020` <- as.numeric(world2$`2020`)
+year_cols <- c(names(world2)[names(world2) %!in% c("Country Group", "Commodity name", "Commodity CPC Code", "Trade Dimension")])
+world2[,(year_cols):= lapply(.SD, as.numeric), .SDcols = year_cols]
 
 wb <- createWorkbook("Creator of workbook2")
 addWorksheet(wb, sheetName = "World_trade_tables")

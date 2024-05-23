@@ -683,6 +683,21 @@ if (nrow(national_data_tariffline) > 0) {
   tldata <- rbind(tldata, national_data_tariffline)
 }
 
+# PHILIPPINES 2021 (UNSD has only dollar values, while we have the official data thanks to our mission)
+national_data_tariffline_ph <-
+  ReadDatatable("national_tariffline_philippines", where = paste0("tyear IN ('", year, "')"))
+
+if (nrow(national_data_tariffline_ph) > 0) {
+  national_data_tariffline_ph <- national_data_tariffline_ph[, names(tldata), with = FALSE]
+
+  # This should't really happen, but let's check.
+  if (any(unique(national_data_tariffline_ph$rep) %in% tldata$rep)) {
+    tldata <- tldata[rep!= unique(national_data_tariffline_ph$rep), ]
+  }
+
+  tldata <- rbind(tldata, national_data_tariffline_ph)
+}
+
 #### Fix zero weights:
 # These cannot be anything but NAs
 tldata[near(weight, 0) & is.na(qty) & qunit == 1, weight := NA_real_]
@@ -3014,7 +3029,7 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
           allElementsDim_tot,
           allItemsDim_tot,
           Dimension(name = "timePointYears",
-                    keys = as.character((year-5):(year-1)))
+                    keys = as.character((year-3):(year-1)))
         )
     )
 
@@ -3044,7 +3059,7 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
                         Value_ratio := Value / Value_mean
                         ][,
                           `:=`(
-                            low = sum(Value_ratio < 0.6),
+                            low = sum(Value_ratio < 0.2),
                             n = .N,
                             big_qty = Value_mean[substr(measuredElementTrade, 3, 3) == "1"] > 1000
                           ),
@@ -3060,6 +3075,44 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
                               ][,
                                 .(timePointYears, geographicAreaM49Reporter = geographicAreaM49, measuredItemCPC, measuredElementTrade, exclude)
                                 ]
+
+
+  # ## Additional check: IF the main partners are exist
+  # main_partners <- ReadDatatable('main_trading_partners')
+  # setnames(main_partners, 'year', 'Year')
+  # main_partners <- main_partners[Year %in% as.character((year-3):(year-1)), ]
+  # main_partners2 <- main_partners[, .(partners= toString(unique(main_partners))),
+  #                              by = c("reporter_m49", "flow", "item_cpc")] # all main partners of previous three years
+  # main_partners2$flow <- as.numeric(main_partners2$flow)
+  #
+  #
+  # complete_trade_flow_cpc_forTPselection <-
+  #   complete_trade_flow_cpc[
+  #     geographicAreaM49Reporter %in% fs2m49(as.character(to_mirror$area)) &
+  #     !(measuredItemCPC %in% fcl2cpc(stringr::str_pad((fclunits %>% dplyr::filter(fclunit != 'mt'))$fcl, 4, 'left', 0)))]
+  #
+  # complete_trade_flow_cpc_forTPselection <- complete_trade_flow_cpc_forTPselection[measuredElementTrade %in% c('5610', '5910'),]
+  #
+  # complete_trade_flow_cpc_forTPselection[, flow:= ifelse(measuredElementTrade == "5610", 1,2)]
+  # complete_trade_flow_cpc_forTPselection<- complete_trade_flow_cpc_forTPselection[, c("geographicAreaM49Reporter",
+  #                                                                                     "geographicAreaM49Partner", "timePointYears", "measuredItemCPC", "flow"), with = FALSE]
+  # complete_trade_flow_cpc_forTPselection <- complete_trade_flow_cpc_forTPselection[, is_there:='Yes']
+  #
+  # main_partner_check <- merge(complete_trade_flow_cpc_forTPselection, main_partners2,
+  #                             by.x = c('geographicAreaM49Reporter', "measuredItemCPC", "flow"),
+  #                             by.y = c("reporter_m49", "item_cpc","flow"), all.x = TRUE)
+  # main_partner_check <- main_partner_check[, current_sit:= toString(unique(geographicAreaM49Partner)),
+  #                                          by = c("geographicAreaM49Reporter", "measuredItemCPC", "flow")]
+  #
+  # for (i in 1:nrow(main_partner_check)){
+  #   if (main_partner_check[i]$partners %in% main_partner_check[i]$current_sit){
+  #     main_partner_check[i]$is_there = 'Yes'
+  #   } else {
+  #     main_partner_check[i]$is_there = 'No'
+  #   }
+  #
+  # }
+
 
   if (nrow(exclude_from_mirroring) > 0) {
     complete_trade_flow_cpc <-

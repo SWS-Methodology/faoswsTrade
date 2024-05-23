@@ -702,7 +702,7 @@ for (i in 1:length(list_of_commodity)){
 
 }
 
-tmp_file_world <- file.path(TMP_DIR, paste0(min_year, "_", max_year, "_trade_commodity_tables.xlsx"))
+tmp_file_world <- file.path(TMP_DIR, paste0(min_year, "_", max_year, "_trade_commodity_tables_nutrients.xlsx"))
 
 world2 <- world[`Trade Dimension` %!in% c("Import UV [$/t]", "Export UV [$/t]"),]
 

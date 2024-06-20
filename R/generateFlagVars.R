@@ -7,9 +7,9 @@
 #' @export
 
 generateFlagVars <- function(data = stop("'data' needs to be set."),
-                             status = c('T', 'I', 'X', 'Y'),
+                             status = c('X', 'I', 'E', 'A'),
                              method = c('c', 'i', 'e', 's', 'h')) {
-  
+
   var_names <- c(paste0('flag_status_', sort(status)),
                  paste0('flag_method_', sort(method)))
 

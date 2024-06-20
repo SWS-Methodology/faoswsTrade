@@ -59,8 +59,8 @@ useValidationCorrections <- function(data, corrections) {
       # so the value was changed by definition.
       data_original_value =
         case_when(
-          .$flagObservationStatus_v == 'T' & .$flow == 1 ~ .$data_original_value * 1.12,
-          .$flagObservationStatus_v == 'T' & .$flow == 2 ~ .$data_original_value / 1.12,
+          .$flagObservationStatus_v == 'X' & .$flow == 1 ~ .$data_original_value * 1.12,
+          .$flagObservationStatus_v == 'X' & .$flow == 2 ~ .$data_original_value / 1.12,
           TRUE                                           ~ .$data_original_value
         ),
       x_qty   = !is.na(correction_input_qty),
@@ -78,7 +78,7 @@ useValidationCorrections <- function(data, corrections) {
                                   correction_qty_apply %in% TRUE,
                                   ifelse(
                                     correction_type_qty != 'None',
-                                    ifelse(correction_type_qty == 'Mirror flow', 'T', 'I'),
+                                    ifelse(correction_type_qty == 'Mirror flow', 'X', 'I'),
                                     flagObservationStatus_q
                                   ),
                                   flagObservationStatus_q
@@ -87,7 +87,7 @@ useValidationCorrections <- function(data, corrections) {
                                   correction_value_apply %in% TRUE,
                                   ifelse(
                                     correction_type_value != 'None',
-                                    ifelse(correction_type_value == 'Mirror flow', 'T', 'I'),
+                                    ifelse(correction_type_value == 'Mirror flow', 'X', 'I'),
                                     flagObservationStatus_v
                                   ),
                                   flagObservationStatus_v

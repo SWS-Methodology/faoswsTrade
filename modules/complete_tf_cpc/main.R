@@ -18,7 +18,7 @@
 ##' the module's approach, please see its main document.
 
 # format(Sys.time(), "%F-%H-%M")
-PLUGIN_VERSION <- "2021-10-26-15-00"
+PLUGIN_VERSION <- "2024-06-12-15-00"
 
 ##+ setup, include=FALSE
 knitr::opts_chunk$set(echo = FALSE, eval = FALSE)
@@ -145,9 +145,6 @@ if (faosws::CheckDebug()){
 # E-mail addresses of people that will get notified.
 EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
 EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
-
-# Remove S.T.:
-EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
 
 # Stop if required parameters were not set
 # The out_coef was removed as a parameter given that the
@@ -1134,9 +1131,9 @@ if (generate_hs6mapping) {
 esdata <- generateFlagVars(esdata)
 
 esdata <- esdata %>%
-  setFlag3(!is.na(value),  type = 'status', flag = 'Y', variable = 'value') %>%
-  setFlag3(!is.na(weight), type = 'status', flag = 'Y', variable = 'weight') %>%
-  setFlag3(!is.na(qty),    type = 'status', flag = 'Y', variable = 'quantity') %>%
+  setFlag3(!is.na(value),  type = 'status', flag = 'A', variable = 'value') %>%
+  setFlag3(!is.na(weight), type = 'status', flag = 'A', variable = 'weight') %>%
+  setFlag3(!is.na(qty),    type = 'status', flag = 'A', variable = 'quantity') %>%
   setFlag3(!is.na(value),  type = 'method', flag = 'h', variable = 'value') %>%
   setFlag3(!is.na(weight), type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),    type = 'method', flag = 'h', variable = 'quantity')
@@ -1327,9 +1324,9 @@ flog.trace("[%s] TL: add flag variables")
 tldata <- generateFlagVars(tldata)
 
 tldata <- tldata %>%
-  setFlag3(!is.na(value),    type = 'status', flag = 'Y', variable = 'value') %>%
-  setFlag3(!is.na(weight),   type = 'status', flag = 'Y', variable = 'weight') %>%
-  setFlag3(!is.na(qty),      type = 'status', flag = 'Y', variable = 'quantity') %>%
+  setFlag3(!is.na(value),    type = 'status', flag = 'A', variable = 'value') %>%
+  setFlag3(!is.na(weight),   type = 'status', flag = 'A', variable = 'weight') %>%
+  setFlag3(!is.na(qty),      type = 'status', flag = 'A', variable = 'quantity') %>%
   setFlag3(!is.na(value),    type = 'method', flag = 'h', variable = 'value') %>%
   setFlag3(!is.na(weight),   type = 'method', flag = 'h', variable = 'weight') %>%
   setFlag3(!is.na(qty),      type = 'method', flag = 'h', variable = 'quantity') %>%
@@ -2278,7 +2275,7 @@ tradedata <- tradedata %>%
 flog.trace("[%s] Flags to mirrored flows", PID, name = "dev")
 
 tradedata <- tradedata %>%
-  setFlag2(!is.na(mirrored), type = 'status', flag = 'T', var = 'all') %>%
+  setFlag2(!is.na(mirrored), type = 'status', flag = 'X', var = 'all') %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'i', var = 'value') %>%
   setFlag2(!is.na(mirrored), type = 'method', flag = 'c', var = 'quantity') %>%
   dplyr::select(-mirrored)
@@ -2318,10 +2315,10 @@ for (var in flag_vars) {
 # Modified in order to have X in the table
 flagWeightTable_status <- frame_data(
   ~flagObservationStatus, ~flagObservationWeights,
-  'Y',                   1.00, # This acts as A/Official value, previously blank
+  'A',                   1.00, # This acts as A/Official value, previously blank
   '',                    0.99,
-  'X',                   0.90,
-  'T',                   0.80,
+  # 'X',                   0.90,
+  'X',                   0.80,
   'E',                   0.75,
   'I',                   0.50,
   'M',                   0.00
@@ -2395,6 +2392,7 @@ complete_trade_flow_cpc <- tradedata %>%
   ## unit of monetary values is "1000 $"
   dplyr::mutate(uv = ifelse(qty > 0, value * 1000 / qty, NA))
 
+
 ##' 1. Keep officially reported weight in kilograms for livestock.
 ##' Besides of quantities in "heads" or "1000 heads" if a country
 ##' reported also the weight, it will be kept and saved to SWS.
@@ -2403,9 +2401,9 @@ complete_trade_flow_cpc <- tradedata %>%
 complete_trade_flow_cpc_live <-
   complete_trade_flow_cpc %>%
   dplyr::filter(unit %in% c('heads', '1000 heads')) %>%
-  # XXX for now, no flags
+  # XXX for now, no flags # JULY 2024: the flags are added in compliance with SDMX (and also with historical data)
   dplyr::select(-starts_with('flag')) %>%
-  dplyr::mutate(flagObservationStatus = '', flagMethod = '') %>%
+  dplyr::mutate(flagObservationStatus = 'A', flagMethod = '-') %>%
   # we need here just weight
   dplyr::mutate(measuredElementTrade = ifelse(flow == 1, '5610', '5910')) %>%
   dplyr::select(-value, -qty, -uv, -unit, -flow) %>%
@@ -2730,7 +2728,7 @@ if (corrections_exist) {
                                                  corrections_table)
 
   complete_trade_flow_cpc_mirror <- complete_trade_flow_cpc %>%
-    dplyr::mutate(is_mirror = (flagObservationStatus_v %in% 'T' | flagObservationStatus_q %in% 'T')) %>%
+    dplyr::mutate(is_mirror = (flagObservationStatus_v %in% 'X' | flagObservationStatus_q %in% 'X')) %>%
     dplyr::filter(is_mirror) %>%
     dplyr::select(-is_mirror)
 
@@ -3275,8 +3273,8 @@ complete_trade_flow_cpc[is.na(Value), Value := 0]
 # "official" status flag should be <BLANK> instead of X (this was a choice
 # made after X was chosen as official flag). Thus, change X to <BLANK>. THEN
 # Xp was introduced, so these need to stay
-complete_trade_flow_cpc[flagObservationStatus == 'Y', flagObservationStatus := 'A']
-
+# complete_trade_flow_cpc[flagObservationStatus == 'Y', flagObservationStatus := 'A']
+## 2024: The SDMX requires to change the blank with A anyway so all the plugin is updated and this doesn't need anymore.
 
 ##' 1. Removed "protected" data from the module's output.
 
@@ -3319,17 +3317,45 @@ if (remove_nonexistent_transactions) {
 
   # Some flags are "protected", i.e., data with these flags
   # should not be overwritten/removed
+  ##
+  ##2024 SMDX: The old flagValidTable is now dumped. We need to use new valid_flags_ocs2023 datatable.
+  ##
+  # protected_flags <-
+  #   flagValidTable[(Protected == TRUE &
+  #                     !(flagObservationStatus == 'T' &  flagMethod == 'c') &
+  #                     !(flagObservationStatus == 'I' &  flagMethod == 'c') &
+  #                     !(flagObservationStatus == ''  &  flagMethod == 'c') &
+  #                     !(flagObservationStatus == ''  &  flagMethod == 'h')) |
+  #                    # Protect T,q
+  #                    (flagObservationStatus == 'T' &  flagMethod == 'q') |
+  #                    # Protect X,p
+  #                    (flagObservationStatus == 'X' &  flagMethod == 'p'),
+  #                  paste(flagObservationStatus, flagMethod)]
+
+  new_valid_flags <- ReadDatatable('valid_flags_ocs2023')
   protected_flags <-
-    flagValidTable[(Protected == TRUE &
-                      !(flagObservationStatus == 'T' &  flagMethod == 'c') &
-                      !(flagObservationStatus == 'I' &  flagMethod == 'c') &
-                      !(flagObservationStatus == ''  &  flagMethod == 'c') &
-                      !(flagObservationStatus == ''  &  flagMethod == 'h')) |
-                     # Protect T,q
-                     (flagObservationStatus == 'T' &  flagMethod == 'q') |
-                     # Protect X,p
-                     (flagObservationStatus == 'X' &  flagMethod == 'p'),
-                   paste(flagObservationStatus, flagMethod)]
+    new_valid_flags[(Protected == TRUE & Current == TRUE & flagObservationStatus %in% c('A', 'X', 'E', 'I', 'M') &
+                       !(flagObservationStatus == 'A' &  flagMethod == 'c') &
+                       !(flagObservationStatus == 'A' &  flagMethod == 'e') &
+                       !(flagObservationStatus == 'A' &  flagMethod == 'f') &
+                       !(flagObservationStatus == 'A' &  flagMethod == 'h') &
+                       !(flagObservationStatus == 'A' &  flagMethod == 's') &
+
+                       !(flagObservationStatus == 'I' &  flagMethod == 'c') &
+                       !(flagObservationStatus == 'I' &  flagMethod == 'f') &
+                       !(flagObservationStatus == 'I' &  flagMethod == 'h') &
+                       !(flagObservationStatus == 'I' &  flagMethod == 'p') &
+
+                       !(flagObservationStatus == 'M' &  flagMethod == 'c') &
+                       !(flagObservationStatus == 'M' &  flagMethod == 'h') &
+                       !(flagObservationStatus == 'M' &  flagMethod == 'p') &
+
+                       !(flagObservationStatus == 'X' &  flagMethod == 'c') &
+                       !(flagObservationStatus == 'X' &  flagMethod == 'f')) |
+                      # Protect X,q (there is no such flag but probably there are some mistakes creates issue)
+                      (flagObservationStatus == 'X' &  flagMethod == 'q'),
+                    paste(flagObservationStatus, flagMethod)]
+
 
   # Data that should be left untouched
   protected_data <-

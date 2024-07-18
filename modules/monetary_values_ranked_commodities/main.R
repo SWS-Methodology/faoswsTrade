@@ -233,7 +233,7 @@ trade2 <- dcast.data.table(trade_mnt, geographicAreaM49 + geographicAreaM49_desc
                              measuredItemCPC_description + measuredElementTrade + measuredElementTrade_description
                            ~ timePointYears, value.var = list('Value'))
 
-official_data <- trade_mnt[, official:= ifelse(flagObservationStatus=='' & flagMethod=='s',TRUE, FALSE)]
+official_data <- trade_mnt[, official:= ifelse(flagObservationStatus=='A' ,TRUE, FALSE)] # SDMX flags are implemented.
 
 official_data2 <- dcast.data.table(official_data, geographicAreaM49 + geographicAreaM49_description + measuredItemCPC +
                                      measuredItemCPC_description + measuredElementTrade + measuredElementTrade_description

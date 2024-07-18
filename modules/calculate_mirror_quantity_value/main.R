@@ -177,14 +177,14 @@ completetrade2 <- copy(completetrade)
 
 message("calculate mirror")
 
-# Do not take into consideration the T flag for Quantity and Dollar Value.
+# Do not take into consideration the X flag for Quantity and Dollar Value.
 completetrade2_dcasted <- dcast.data.table(completetrade2, geographicAreaM49 + geographicAreaM49Partner +  measuredItemCPC +
                                            timePointYears ~ measuredElementTrade, value.var = c('Value', 'flagObservationStatus', 'flagMethod'))
 
 
-completetrade2_dcasted <- completetrade2_dcasted[!apply(completetrade2_dcasted, 1, function(r) any(r %in% c("T"))),]
+completetrade2_dcasted <- completetrade2_dcasted[!apply(completetrade2_dcasted, 1, function(r) any(r %in% c("X"))),]
 
-# MELT the 3 variables over the unknown column anmes and then merge all....
+# MELT the 3 variables over the unknown column names and then merge all....
 
 cols_val <- c(names(completetrade2_dcasted)[grepl('Value_', names(completetrade2_dcasted))])
 
@@ -215,7 +215,7 @@ quantity <- merge_all[measuredElementTrade %in% c('5610', '5608', '5609', '5607'
 mirrored_quantity <- list()
 for (i in 1:length(min_year:max_year)){
   year_i <- sort(unique(quantity$timePointYears))[i]
-  mirrored_quantity[[i]] <- quantity[timePointYears==year_i, sum(Value)]
+  mirrored_quantity[[i]] <- quantity[timePointYears==year_i, sum(Value, na.rm = TRUE)]
 }
 
 
@@ -225,7 +225,7 @@ value <- merge_all[measuredElementTrade %in% c('5622', '5922')]
 mirrored_value <- list()
 for (i in 1:length(min_year:max_year)){
   year_i <- sort(unique(value$timePointYears))[i]
-  mirrored_value[[i]] <- value[timePointYears==year_i, sum(Value)]
+  mirrored_value[[i]] <- value[timePointYears==year_i, sum(Value, na.rm = TRUE)]
 }
 
 

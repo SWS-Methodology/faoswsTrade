@@ -171,11 +171,9 @@ trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, excep
 
 
 
-data_to_delete <- trade[(flagObservationStatus=='T' & flagMethod=='p')  |  # Legacy flag
-                        (flagObservationStatus=='X' & flagMethod=='p')  |
+data_to_delete <- trade[(flagObservationStatus=='X' & flagMethod=='p')  |
                         (flagObservationStatus=='E' & flagMethod=='f')  |
-                        (flagObservationStatus==''  & flagMethod=='p')  |  # Legacy flag
-                        (flagObservationStatus==''  & flagMethod=='q')  |  # Legacy flag
+                        (flagObservationStatus=='E' & flagMethod=='p')  |
                         (flagObservationStatus=='A' & flagMethod=='p')  |
                         (flagObservationStatus=='A' & flagMethod=='q'),]
 

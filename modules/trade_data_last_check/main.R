@@ -228,7 +228,7 @@ trade2 <- dcast.data.table(trade1, geographicAreaM49 + geographicAreaM49_descrip
                              measuredItemCPC_description + measuredElementTrade + measuredElementTrade_description
                            ~ timePointYears, value.var = list('Value'))
 
-official_data <- trade1[, official:= ifelse(flagObservationStatus=='' & flagMethod=='s',TRUE, FALSE)]
+official_data <- trade1[, official:= ifelse(flagObservationStatus=='A',TRUE, FALSE)]
 
 official_data2 <- dcast.data.table(official_data, geographicAreaM49 + geographicAreaM49_description + measuredItemCPC +
                                      measuredItemCPC_description + measuredElementTrade + measuredElementTrade_description

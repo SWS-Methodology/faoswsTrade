@@ -153,7 +153,7 @@ itemDim <- Dimension(name = "measuredItemCPC", keys = itemKeys)
 timeDim <- Dimension(name = "timePointYears", keys = as.character(yearVals))
 
 # Define the key to pull Trade data
-key = DatasetKey(domain = "trade", dataset = "total_trade_cpc_m49", dimensions = list(
+key = DatasetKey(domain = "trade", dataset = sessionKey@dataset, dimensions = list(
   geographicAreaM49 = geoDim,
   measuredElementTrade = eleDim,
   measuredItemCPC = itemDim,

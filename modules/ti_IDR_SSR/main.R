@@ -6,18 +6,18 @@
 #
 # Name: ti_IDR_SSR.
 #
-# Description: R script to calculate the Import Dependency Ratio (IDR) and the 
-#              Self-Sufficiency Ratio (SSR) starting from elements 5510 
+# Description: R script to calculate the Import Dependency Ratio (IDR) and the
+#              Self-Sufficiency Ratio (SSR) starting from elements 5510
 #              (Production), 5610 (Import Quantity), and 5910 (Export quantity).
 #              The following is a brief description of the indicators.
-#              IDR: measures a country's import dependency on a specific 
+#              IDR: measures a country's import dependency on a specific
 #                   commodity. A higher ratio indicates that the country is more
-#                   import dependent on that commodity, while negative values 
-#                   denote that the country is a net exporter.  
+#                   import dependent on that commodity, while negative values
+#                   denote that the country is a net exporter.
 #              SSR: shows the magnitude of production in relation to domestic
 #                   supply. A higher ratio indicates that the country is more
 #                   self-sufficient on that commodity, while a ratio less than 1
-#                   implies that food production is insufficient to meet the 
+#                   implies that food production is insufficient to meet the
 #                   population demand.
 #
 # Author's email: riccardo.giubilei@fao.org
@@ -47,28 +47,42 @@ suppressMessages({
   library(faoswsUtil)
   library(faoswsFlag)
   library(data.table)
-}) 
+})
 
 
 # Environment -------------------------------------------------------------
 
 if (faosws::CheckDebug()) {
-  
+
   # Connect to .yml file
   library(faoswsModules)
-  SETT <- faoswsModules::ReadSettings("sws_trade_indicators.yml")
-  
+  SETT <- faoswsModules::ReadSettings("sws.yml")
+
   # Set up offline environment
   server <- SETT[["server"]]
   token <- SETT[["token"]]
   faosws::GetTestEnvironment(baseUrl = server,
                              token = token)
-  
+
   # Load helper functions
-  source('plugin_helper_functions.R')
-  
+  # source('plugin_helper_functions.R')
+
 }
 
+#  Sourcing files is different in git renv context.
+# please use the following
+### from here
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
+## to here
 
 # Import datatables -------------------------------------------------------
 
@@ -101,7 +115,7 @@ empty_cols <- reporters_cols[na_number == nrow(reporters_by_year)]
 NA_years_reporters <- sub('year_', '', empty_cols)
 years_reporters <- setdiff(years_reporters,
                            NA_years_reporters)
-# NB: this is not strictly necessary as countryReports() already excludes these 
+# NB: this is not strictly necessary as countryReports() already excludes these
 #     years, but it allows to download the minimal set of data that is required.
 
 # NB: years can be possibly further refined using input parameters.
@@ -131,10 +145,10 @@ if (is.null(starting_year)) starting_year <- min(years_reporters)
 if (is.null(ending_year)) ending_year <- max(years_reporters)
 
 # Check that the starting year does not come after the ending year
-stopifnot("The starting year cannot come after the ending year." = 
+stopifnot("The starting year cannot come after the ending year." =
             starting_year <= ending_year)
 
-# Compute input year-range 
+# Compute input year-range
 input_years <- starting_year:ending_year
 
 # Final set of years as intersection between reporters and user interface input
@@ -149,7 +163,7 @@ query_only <- swsContext.computationParams$query_only
 
 # If query_only is 'yes', retrieve input keys from the query
 if (query_only == 'yes') {
-  
+
   # Input keys
   query_geo <- query_keys('geographicAreaM49')
   query_elem <- query_keys('measuredElementTrade')
@@ -158,15 +172,15 @@ if (query_only == 'yes') {
   # N.B.: query_elem is only used to choose which results to return; the others
   #       are used to get input data, and will override the three corresponding
   #       vectors of keys.
-  
-  # Replace m49_codes with the query_geo that are in m49_codes (reporter 
+
+  # Replace m49_codes with the query_geo that are in m49_codes (reporter
   # countries), if any; otherwise, throw warning and use the original m49_codes
   if (any(query_geo %in% m49_codes)) {
     m49_codes <- query_geo[query_geo %in% m49_codes]
   } else {
     warning('The queried key(s) for geographicAreaM49 is not present among the reporter countries. All the reporter countries will be considered instead.')
   }
-  
+
   # Replace cpc_codes with the query_item that are in cpc_codes (key
   # commodities), if any; otherwise, throw warning and use the original cpc_codes
   if (any(query_item %in% cpc_codes)) {
@@ -174,7 +188,7 @@ if (query_only == 'yes') {
   } else {
     warning('The queried key(s) for measuredItemCPC is not present among the key commodities. All the key commodities will be considered instead.')
   }
-  
+
   # Replace selected_years with the query_years that are in selected_years, if
   # any; otherwise, throw warning and use the original selected_years
   if (any(query_years %in% selected_years)) {
@@ -182,7 +196,7 @@ if (query_only == 'yes') {
   } else {
     warning('The queried key(s) for timePointsYears is not included in the years specified when running the plugin. The latter are used instead.')
   }
-  
+
 }
 
 
@@ -195,14 +209,14 @@ message(paste("The", plugin_name, "plugin is importing input data."))
 # Agriculture dataset: Production [t] (5510)
 data_agr <- sws2dataset(dataset = agriculture_dataset,
                         keys = list(geo = m49_codes,
-                                    elem = '5510',   
+                                    elem = '5510',
                                     item = cpc_codes,
                                     years = selected_years))
 
 # Trade dataset: Import Quantity (5610) and Export Quantity (5910)
 data_trade <- sws2dataset(dataset = trade_dataset,
                           keys = list(geo = m49_codes,
-                                      elem = c('5610', '5910'),   
+                                      elem = c('5610', '5910'),
                                       item = cpc_codes,
                                       years = selected_years),
                           elem_colnames = c('import', 'export'))
@@ -265,9 +279,9 @@ compute_ssr <- if ('502' %in% select_elem | nelem == 0) TRUE else FALSE
 
 # IDR
 if (isTRUE(compute_idr)) {
-  
+
   # Save the results back to the session
-  idr_save <- 
+  idr_save <-
     faosws::SaveData(domain = 'trade',
                      dataset = 'trade_indicators',
                      data = data_idrssr[, .(geographicAreaM49 = geographicAreaM49,
@@ -282,20 +296,20 @@ if (isTRUE(compute_idr)) {
                                                                  NA_character_,
                                                                  'i'))],
                      waitTimeout = 100000)
-  
+
   # Log
   base_string <- paste("Log for the IDR indicator:",
                        "%d written observations, %d appended, %d ignored, %d discarded.")
   message(do.call(sprintf, c(base_string,
                              lapply(idr_save[1:4], FUN = identity))))
-  
+
 }
 
 # SSR
 if (isTRUE(compute_ssr)) {
-  
+
   # Save the results back to the session
-  ssr_save <- 
+  ssr_save <-
     faosws::SaveData(domain = 'trade',
                      dataset = 'trade_indicators',
                      data = data_idrssr[, .(geographicAreaM49 = geographicAreaM49,
@@ -310,20 +324,20 @@ if (isTRUE(compute_ssr)) {
                                                                  NA_character_,
                                                                  'i'))],
                      waitTimeout = 100000)
-  
+
   # Log
   base_string <- paste("Log for the SSR indicator:",
                        "%d written observations, %d appended, %d ignored, %d discarded.")
   message(do.call(sprintf, c(base_string,
                              lapply(ssr_save[1:4], FUN = identity))))
-  
+
 }
 
 # Print information
 #print(sessionInfo())
 #print(version)
 
-# Print ending message 
+# Print ending message
 message(paste("Process completed successfully!"))
 
 
@@ -331,21 +345,21 @@ message(paste("Process completed successfully!"))
 # Bin ---------------------------------------------------------------------
 
 # Check that input years are in the correct format
-#stopifnot("The starting year should be a number in the format yyyy." = 
-#            nchar(starting_year) == 4L) 
-#stopifnot("The ending year should be a number in the format yyyy." = 
+#stopifnot("The starting year should be a number in the format yyyy." =
+#            nchar(starting_year) == 4L)
+#stopifnot("The ending year should be a number in the format yyyy." =
 #            nchar(ending_year) == 4L)
 # No longer needed because now years must be between 1900 (minimum) and 2100 (maximum).
 
-# Find input year-range and check that values are OK 
+# Find input year-range and check that values are OK
 # (For example, if the values are not only numeric, the operator ":" does not work.)
 #input_years <- tryCatch(suppressWarnings(starting_year:ending_year),
 #                        error = function (e) return(NULL))
-#stopifnot("The starting and the ending years should be numbers in the format yyyy." = 
+#stopifnot("The starting and the ending years should be numbers in the format yyyy." =
 #            !is.null(input_years))
 # No longer needed because years are now numeric.
 
-# Filter out years for which countries do not exist 
+# Filter out years for which countries do not exist
 #is.country <- faoswsUtil::countryExists(countries = d_idrssr$geographicAreaM49,
 #                                        years = d_idrssr$timePointYears)
 #ind_idrssr <- d_idrssr[is.country]
@@ -364,7 +378,7 @@ message(paste("Process completed successfully!"))
 #                      "%d written observations, %d appended, %d ignored, %d discarded.\n",
 #                      "SSR indicator:",
 #                      "%d written observations, %d appended, %d ignored, %d discarded.")
-# 
+#
 # Fill in with results from SaveData() and return message
 # message(do.call(sprintf, c(base_string,
 #                            lapply(idr_save[1:4], FUN = identity),

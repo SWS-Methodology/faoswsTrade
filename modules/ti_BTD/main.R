@@ -62,7 +62,7 @@ if (faosws::CheckDebug()) {
                              token = token)
 
   # Load helper functions
-  source('R/plugin_helper_functions.R')
+  source('plugin_helper_functions.R')
 
 }
 

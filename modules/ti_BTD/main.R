@@ -61,13 +61,25 @@ if (faosws::CheckDebug()) {
   faosws::GetTestEnvironment(baseUrl = server,
                              token = token)
 
-  # Load helper functions
-  source('plugin_helper_functions.R')
-
-}else{
-  source('plugin_helper_functions.R')
+  # # Load helper functions
+  # source('R/plugin_helper_functions.R')
 
 }
+
+# Always source files in R/ (useful for local runs).
+# Sourcing files is different in git renv context.
+# please use the following
+### from here
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
 
 
 # Import datatables -------------------------------------------------------

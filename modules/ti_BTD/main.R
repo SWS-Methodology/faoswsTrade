@@ -64,6 +64,9 @@ if (faosws::CheckDebug()) {
   # Load helper functions
   source('plugin_helper_functions.R')
 
+}else{
+  source('plugin_helper_functions.R')
+
 }
 
 

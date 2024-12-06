@@ -224,60 +224,30 @@ data_bilateral <- sws2dataset(dataset = 'completed_tf_cpc_m49',
 message(paste("The", plugin_name, "plugin is computing the indicators."))
 
 # Create swapped version of data_bilateral
-
-message("test 1") ##### TEST DEBUG
-
 data_bilateral_swapped <- data_bilateral
-
-message("test 2") ##### TEST DEBUG
-
 colnames(data_bilateral_swapped)[1:2] <- colnames(data_bilateral)[2:1]
-
-message("test 3") ##### TEST DEBUG
-
 
 # Merge original and swapped data_bilateral to get MBA, EAB, MAB, EBA
 data_btd <- merge(data_bilateral,
                   data_bilateral_swapped,
                   suffixes = c('A', 'B'))
 
-message("test 4") ##### TEST DEBUG
-
 # Filter out years for which either country does not report
 is.reporterA <- countryReports(countries = data_btd$geographicAreaM49Reporter,
                               years = data_btd$timePointYears)
-message("test 5") ##### TEST DEBUG
-
 is.reporterB <- countryReports(countries = data_btd$geographicAreaM49Partner,
                                years = data_btd$timePointYears)
-message("test 6") ##### TEST DEBUG
-
 data_btd <- data_btd[is.reporterA & is.reporterB]
 
-message("test 7") ##### TEST DEBUG
-
 # Bilateral trade discrepancy differences and indices
-
 data_btd[, btd_importA_diff := importA - exportB]
-
-message("test 8") ##### TEST DEBUG
-
 data_btd[, btd_importA := (importA - exportB) /  importA]
-message("test 9") ##### TEST DEBUG
-
 data_btd[, btd_exportA_diff := importB - exportA]
-message("test 10") ##### TEST DEBUG
-
 data_btd[, btd_exportA := (importB - exportA) /  importB]
-message("test 11") ##### TEST DEBUG
-
 
 # Make cases where the denominator is zero return NA
 data_btd[importA == 0, 'btd_importA'] <- NA_real_
-message("test 12") ##### TEST DEBUG
-
 data_btd[importB == 0, 'btd_exportA'] <- NA_real_
-message("test 13") ##### TEST DEBUG
 
 
 

@@ -4,7 +4,7 @@
     "Repositories": [
       {
         "Name": "CRAN",
-        "URL": "https://rstudiopm.qa.aws.fao.org/fao-sws-cran/latest"
+        "URL": "https://packagemanager.posit.co/cran/latest"
       }
     ]
   },

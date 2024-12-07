@@ -10,9 +10,9 @@
 #              (RCA) starting from elements 5622 (Import Value) and 5922 (Export
 #              Value. The following is a brief description of the indicator.
 #              RCA: proxy for the country’s export potential. The RCA indicates
-#                   whether a country is expanding the range of products in 
+#                   whether a country is expanding the range of products in
 #                   which it possesses trade potential, as opposed to situations
-#                   where the number of products that can be competitively 
+#                   where the number of products that can be competitively
 #                   exported remains static.
 #
 # Author's email: riccardo.giubilei@fao.org
@@ -42,28 +42,44 @@ suppressMessages({
   library(faoswsUtil)
   library(faoswsFlag)
   library(data.table)
-}) 
+})
 
 
 # Environment -------------------------------------------------------------
 
 if (faosws::CheckDebug()) {
-  
+
   # Connect to .yml file
   library(faoswsModules)
-  SETT <- faoswsModules::ReadSettings("sws_trade_indicators.yml")
-  
+  SETT <- faoswsModules::ReadSettings("sws.yml")
+
   # Set up offline environment
   server <- SETT[["server"]]
   token <- SETT[["token"]]
   faosws::GetTestEnvironment(baseUrl = server,
                              token = token)
-  
-  # Load helper functions
-  source('plugin_helper_functions.R')
-  
+  #
+  # # Load helper functions
+  # source('plugin_helper_functions.R')
+
 }
 
+# Always source files in R/ (useful for local runs).
+# Sourcing files is different in git renv context.
+# please use the following
+### START
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
+
+### END
 
 # Import datatables -------------------------------------------------------
 
@@ -99,7 +115,7 @@ empty_cols <- reporters_cols[na_number == nrow(reporters_by_year)]
 NA_years_reporters <- sub('year_', '', empty_cols)
 years_reporters <- setdiff(years_reporters,
                            NA_years_reporters)
-# NB: this is not strictly necessary as countryReports() already excludes these 
+# NB: this is not strictly necessary as countryReports() already excludes these
 #     years, but it allows to download the minimal set of data that is required.
 
 # NB: years can be possibly further refined using input parameters.
@@ -128,10 +144,10 @@ if (is.null(starting_year)) starting_year <- min(years_reporters)
 if (is.null(ending_year)) ending_year <- max(years_reporters)
 
 # Check that the starting year does not come after the ending year
-stopifnot("The starting year cannot come after the ending year." = 
+stopifnot("The starting year cannot come after the ending year." =
             starting_year <= ending_year)
 
-# Compute input year-range 
+# Compute input year-range
 input_years <- starting_year:ending_year
 
 # Final set of years as intersection between reporters and user interface input
@@ -146,7 +162,7 @@ query_only <- swsContext.computationParams$query_only
 
 # If query_only is 'yes', retrieve input keys from the query
 if (query_only == 'yes') {
-  
+
   # Input keys
   query_geo <- query_keys('geographicAreaM49')
   query_elem <- query_keys('measuredElementTrade')
@@ -155,15 +171,15 @@ if (query_only == 'yes') {
   # N.B.: query_elem is only used to choose which results to return; the others
   #       are used to get input data, and will override the three corresponding
   #       vectors of keys.
-  
-  # Replace m49_codes with the query_geo that are in m49_codes (reporter 
+
+  # Replace m49_codes with the query_geo that are in m49_codes (reporter
   # countries), if any; otherwise, throw warning and use the original m49_codes
   if (any(query_geo %in% m49_codes)) {
     m49_codes <- query_geo[query_geo %in% m49_codes]
   } else {
     warning('The queried key(s) for geographicAreaM49 is not present among the reporter countries. All the reporter countries will be considered instead.')
   }
-  
+
   # Replace selected_years with the query_years that are in selected_years, if
   # any; otherwise, throw warning and use the original selected_years
   if (any(query_years %in% selected_years)) {
@@ -171,7 +187,7 @@ if (query_only == 'yes') {
   } else {
     warning('The queried key(s) for timePointsYears is not included in the years specified when running the plugin. The latter are used instead.')
   }
-  
+
 }
 
 
@@ -185,7 +201,7 @@ message(paste("The", plugin_name, "plugin is importing input data."))
 #                and agricultural products F1881 and F1882
 data_agrtrade <- sws2dataset(dataset = trade_dataset,
                              keys = list(geo = m49_codes,
-                                         elem = c('5622', '5922'),   
+                                         elem = c('5622', '5922'),
                                          item = cpc_codes,
                                          years = selected_years),
                              elem_colnames = c('import', 'export'))
@@ -256,9 +272,9 @@ compute_rca_f1882 <- if ('509.02' %in% select_elem | nelem == 0) TRUE else FALSE
 
 # RCA - F1881
 if (isTRUE(compute_rca_f1881)) {
-  
+
   # Save the results back to the session
-  rca_f1881_save <- 
+  rca_f1881_save <-
     faosws::SaveData(domain = 'trade',
                      dataset = 'trade_indicators',
                      data = data_rca[, .(geographicAreaM49 = geographicAreaM49,
@@ -273,20 +289,20 @@ if (isTRUE(compute_rca_f1881)) {
                                                                  NA_character_,
                                                                  'i'))],
                      waitTimeout = 100000)
-  
+
   # Log
   base_string <- paste("Log for the RCA - F1881 indicator:",
                        "%d written observations, %d appended, %d ignored, %d discarded.")
   message(do.call(sprintf, c(base_string,
                              lapply(rca_f1881_save[1:4], FUN = identity))))
-  
+
 }
 
 # RCA - F1882
 if (isTRUE(compute_rca_f1882)) {
-  
+
   # Save the results back to the session
-  rca_f1882_save <- 
+  rca_f1882_save <-
     faosws::SaveData(domain = 'trade',
                      dataset = 'trade_indicators',
                      data = data_rca[, .(geographicAreaM49 = geographicAreaM49,
@@ -301,19 +317,19 @@ if (isTRUE(compute_rca_f1882)) {
                                                                  NA_character_,
                                                                  'i'))],
                      waitTimeout = 100000)
-  
+
   # Log
   base_string <- paste("Log for the RCA - F1882 indicator:",
                        "%d written observations, %d appended, %d ignored, %d discarded.")
   message(do.call(sprintf, c(base_string,
                              lapply(rca_f1882_save[1:4], FUN = identity))))
-  
+
 }
 
 # Print information
 #print(sessionInfo())
 #print(version)
 
-# Print ending message 
+# Print ending message
 message(paste("Process completed successfully!"))
 

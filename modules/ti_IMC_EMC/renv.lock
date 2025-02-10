@@ -4,7 +4,7 @@
     "Repositories": [
       {
         "Name": "CRAN",
-        "URL": "http://rstudiopm.fao.org/fao-sws-cran/latest"
+        "URL": "http://rstudiopm.qa.aws.fao.org/fao-sws-cran/latest"
       }
     ]
   },
@@ -119,6 +119,7 @@
       "Version": "1.1.1",
       "Source": "Repository",
       "Repository": "RSPM",
+      "RemoteType": "repository",
       "RemoteSha": "825aa308de5baffbdf38bde8b1afaec9c1eab0cd",
       "Requirements": [
         "R",
@@ -130,32 +131,34 @@
         "jsonlite",
         "methods"
       ],
-      "Hash": "1c9308715dfaacd681293458045b7641"
+      "Hash": "ea9ca969ced51ec09fd615f104d56b23"
     },
     "faoswsFlag": {
       "Package": "faoswsFlag",
       "Version": "0.5.4",
       "Source": "Repository",
       "Repository": "RSPM",
+      "RemoteType": "repository",
       "RemoteSha": "012185f1b4a65da17bf203022a5e9ef1888656e0",
       "Requirements": [
         "data.table",
         "entropy"
       ],
-      "Hash": "be5df981b2664c603653c19becd9c63e"
+      "Hash": "1ce6beb393d9233dd8c11300383782e9"
     },
     "faoswsModules": {
       "Package": "faoswsModules",
       "Version": "0.4.1",
       "Source": "Repository",
       "Repository": "RSPM",
+      "RemoteType": "repository",
       "RemoteSha": "56b7f4f8acdbc1da6065e7a76ef5a4c8706f317f",
       "Requirements": [
         "R",
         "methods",
         "yaml"
       ],
-      "Hash": "eb1f14f8a593e7f1a4dbc84a81d8712c"
+      "Hash": "a821373084fcf2a50c5a49df9bf698ee"
     },
     "faoswsUtil": {
       "Package": "faoswsUtil",

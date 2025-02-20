@@ -134,7 +134,14 @@ population <- population[geographicAreaM49 != "156",]
 # ("the KRI population at 5,122,747 individuals and the overall Iraqi
 # population at 36,004,552 individuals", pag.14; it implies 14.22805%)
 # https://iraq.unfpa.org/sites/default/files/pub-pdf/KRSO%20IOM%20UNFPA%20Demographic%20Survey%20Kurdistan%20Region%20of%20Iraq_0.pdf
-#population[geographicAreaM49 == "368" , Value := Value * 0.8577195]
+population[geographicAreaM49 == "368" , Value := Value * 0.8577195]
+
+# Fix for Moldova Population. We need to exclude Transnistria population,
+# since production and trade data exclude this area.We use an approximate value of 500,000,
+# following indication of 2014 census data provided by UN Population Division
+
+population[geographicAreaM49 == "498" , Value := Value - 500]
+
 
 # Flags will be totally discarded.
 population[, c('flagObservationStatus', 'flagMethod'):= NULL]
@@ -277,44 +284,89 @@ calculate_stat2[, flagMethod:= 'e']
 
 calculate_stat2$measuredElementTrade <- as.character(calculate_stat2$measuredElementTrade)
 
-# sessionKey = swsContext.datasets[[1]]
-# datasetConfig = GetDatasetConfig(domainCode = sessionKey@domain,
-#                                  datasetCode = sessionKey@dataset)
+######## CALCULATE TOTALS FOR FAOSTAT AGGREGATIONS #####
+# IMPORTS
+tosave_csv <- copy(totaltrade_pop_nut)
+tosave_csv[,  qty_edible_import:= (`5610`*`1061`)]
+tosave_csv[, `51002`:= (qty_edible_import*`1066`)/100]
+tosave_csv[, `51003`:= (qty_edible_import*`1079`)/100]
+tosave_csv[, `51004`:= (qty_edible_import*`1067`)/100]
+tosave_csv[, `51005`:= (qty_edible_import*`1064`)/100]
+tosave_csv[, `51006`:= (qty_edible_import*`1068`)/100]
+tosave_csv[, `51029`:= (qty_edible_import*`1089`)/100]
+tosave_csv[, `51007`:= (qty_edible_import*`1062`)/100]
+tosave_csv[, `51030`:= (qty_edible_import*`1063`)/100]
+tosave_csv[, `51008`:= (qty_edible_import*`1070`)/100]
+tosave_csv[, `51009`:= (qty_edible_import*`1071`)/100]
+tosave_csv[, `51010`:= (qty_edible_import*`1072`)/100]
+tosave_csv[, `51011`:= (qty_edible_import*`1073`)/100]
+tosave_csv[, `51012`:= (qty_edible_import*`1074`)/100]
+tosave_csv[, `51013`:= (qty_edible_import*`1075`)/100]
+tosave_csv[, `51014`:= (qty_edible_import*`1076`)/100]
+tosave_csv[, `51016`:= (qty_edible_import*`1083`)/100]
+tosave_csv[, `51017`:= (qty_edible_import*`1084`)/100]
+tosave_csv[, `51020`:= (qty_edible_import*`1081`)/100]
+tosave_csv[, `51021`:= (qty_edible_import*`1080`)/100]
+tosave_csv[, `51022`:= (qty_edible_import*`1078`)/100]
+tosave_csv[, `51028`:= (qty_edible_import*`1087`)/100]
+# EXPORTS
+tosave_csv[,  qty_edible_export:= (`5910`*`1061`)]
+tosave_csv[, `67002`:= (qty_edible_export*`1066`)/100]
+tosave_csv[, `67003`:= (qty_edible_export*`1079`)/100]
+tosave_csv[, `67004`:= (qty_edible_export*`1067`)/100]
+tosave_csv[, `67005`:= (qty_edible_export*`1064`)/100]
+tosave_csv[, `67006`:= (qty_edible_export*`1068`)/100]
+tosave_csv[, `67029`:= (qty_edible_export*`1089`)/100]
+tosave_csv[, `67007`:= (qty_edible_export*`1062`)/100]
+tosave_csv[, `67030`:= (qty_edible_export*`1063`)/100]
+tosave_csv[, `67008`:= (qty_edible_export*`1070`)/100]
+tosave_csv[, `67009`:= (qty_edible_export*`1071`)/100]
+tosave_csv[, `67010`:= (qty_edible_export*`1072`)/100]
+tosave_csv[, `67011`:= (qty_edible_export*`1073`)/100]
+tosave_csv[, `67012`:= (qty_edible_export*`1074`)/100]
+tosave_csv[, `67013`:= (qty_edible_export*`1075`)/100]
+tosave_csv[, `67014`:= (qty_edible_export*`1076`)/100]
+tosave_csv[, `67016`:= (qty_edible_export*`1083`)/100]
+tosave_csv[, `67017`:= (qty_edible_export*`1084`)/100]
+tosave_csv[, `67020`:= (qty_edible_export*`1081`)/100]
+tosave_csv[, `67021`:= (qty_edible_export*`1080`)/100]
+tosave_csv[, `67022`:= (qty_edible_export*`1078`)/100]
+tosave_csv[, `67028`:= (qty_edible_export*`1087`)/100]
 
+tosave_csv[,  c("5610", "5910", "Population", "1061", "1062", "1063", "1064", "1066", "1067",
+                "1068", "1070", "1071", "1072", "1073", "1074","1075", "1076", "1078", "1079", "1080", "1081",
+                "1083", "1084", "1087", "1089", "qty_edible_import", "qty_edible_export"):= NULL ]
+
+tosave_csv2 <- melt.data.table(tosave_csv, id.vars = c("geographicAreaM49", "measuredItemCPC","timePointYears"),
+                               measure.vars= c(names(tosave_csv)[names(tosave_csv) %!in% c("geographicAreaM49", "measuredItemCPC","timePointYears")]),
+                               variable.name = "measuredElementTrade", value.name= "Value")
+
+tosave_csv2 <- tosave_csv2[!is.na(Value),]
+
+setcolorder(tosave_csv2, c("geographicAreaM49", "measuredItemCPC", "measuredElementTrade", "timePointYears", "Value"))
+
+tosave_csv2[, flagObservationStatus:= 'E']
+tosave_csv2[, flagMethod:= 'e']
+
+population[, flagObservationStatus:= 'E']
+population[, flagMethod:= 'e']
+population[, measuredElementTrade:= '511']
+population[, measuredItemCPC:= 'F0001']
+setnames(population, 'Population', 'Value')
+setcolorder(population, c("geographicAreaM49", "measuredItemCPC", "measuredElementTrade", "timePointYears", "Value", "flagObservationStatus", "flagMethod"))
+tosave_csv2$measuredElementTrade <- as.character(tosave_csv2$measuredElementTrade)
+data <- rbind(tosave_csv2, population)
+
+message("Start cretaing csv...")
+write.csv(data,paste0(Sys.getenv('OUTPUT_FOLDER'),'/output.csv'),row.names=FALSE, quote=FALSE)
+message("csv saved.")
+
+
+##############################################
 
 SaveData(domain = "trade",
          dataset = "total_trade_cpc_m49",
          data = calculate_stat2, waitTimeout = 2000000)
-
-
-# ## GET BILATERAL TRADE DATA
-# bil_reportersDim =
-#   GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Reporter")[type == "country", code] %>%
-#   Dimension(name = "geographicAreaM49Reporter", keys = .)
-#
-# bil_partnersDim =
-#   GetCodeList("trade", "completed_tf_cpc_m49", "geographicAreaM49Partner")[type == "country", code] %>%
-#   Dimension(name = "geographicAreaM49Partner", keys = .)
-#
-# bil_eleDim =
-#   c("5607", "5608", "5609", "5610", "5907", "5908", "5909", "5910", "5622", "5922") %>%
-#   Dimension(name = "measuredElementTrade", keys = .)
-#
-# bil_itemDim =
-#   GetCodeList("trade", "completed_tf_cpc_m49", "measuredItemCPC")[,code] %>%
-#   Dimension(name = "measuredItemCPC", keys = .)
-#
-# bil_timeDim <- Dimension(name = "timePointYears", keys = as.character(years))
-#
-# bilateraltrade_key <- DatasetKey(domain = "trade", dataset = "completed_tf_cpc_m49", dimensions = list(
-#   geographicAreaM49Reporter = bil_reportersDim,
-#   geographicAreaM49Partner = bil_partnersDim,
-#   measuredElementTrade = bil_eleDim,
-#   measuredItemCPC = bil_itemDim,
-#   timePointYears = bil_timeDim
-#   ))
-#
-# completetrade <- GetData(bilateraltrade_key)
 
 
 

@@ -93,8 +93,11 @@ bilateraltrade_key <- DatasetKey(domain = "trade", dataset = "completed_tf_cpc_m
   measuredItemCPC = bil_itemDim,
   timePointYears = bil_timeDim
 ))
+message("reading trade data...")
 
 completetrade <- GetData(bilateraltrade_key)
+
+message("trade data is in")
 
 
 ## GET GLOBAL NCT DATASET
@@ -120,7 +123,11 @@ global_nct_key = DatasetKey(domain = "suafbs", dataset = "global_nct", dimension
   timePointYears = glo_timeDim
 ))
 
+message("reading global nct...")
+
 global_nct <- GetData(global_nct_key)
+
+message("global nct is in")
 
 
 ## GET POPULATION DATA
@@ -132,7 +139,12 @@ population_key <- DatasetKey(domain = "population", dataset = "population_unpd",
         timePointYears = Dimension(name = "timePointYears", keys = as.character(years))
       ))
 
+message("reading population data...")
+
 population <- GetData(population_key)
+
+message("population data is in")
+
 population <- population[geographicAreaM49 != "156",]
 
 # Fix for missing regional official data in the country total
@@ -140,7 +152,14 @@ population <- population[geographicAreaM49 != "156",]
 # ("the KRI population at 5,122,747 individuals and the overall Iraqi
 # population at 36,004,552 individuals", pag.14; it implies 14.22805%)
 # https://iraq.unfpa.org/sites/default/files/pub-pdf/KRSO%20IOM%20UNFPA%20Demographic%20Survey%20Kurdistan%20Region%20of%20Iraq_0.pdf
-#population[geographicAreaM49 == "368" , Value := Value * 0.8577195]
+population[geographicAreaM49 == "368" , Value := Value * 0.8577195]
+
+# Fix for Moldova Population. We need to exclude Transnistria population,
+# since production and trade data exclude this area.We use an approximate value of 500,000,
+# following indication of 2014 census data provided by UN Population Division
+
+population[geographicAreaM49 == "498" , Value := Value - 500]
+
 
 # Flags will be totally discarded.
 population[, c('flagObservationStatus', 'flagMethod'):= NULL]
@@ -177,6 +196,7 @@ global_nct_dcast <- dcast.data.table(global_nct, measuredItemCPC
                                ~ measuredElement, value.var = c('Value'))
 completetrade_pop_nut <- merge(completetrade_pop, global_nct_dcast, by= 'measuredItemCPC', all.x = TRUE)
 calculate_stat <- copy(completetrade_pop_nut)
+message("calculation of statistics....")
 
 ########### IMPORT ################
 
@@ -231,6 +251,7 @@ calculate_stat[, `50021`:= (qty_edible_import*`1080`)/Population/365*10]
 calculate_stat[, `50022`:= (qty_edible_import*`1078`)/Population/365*10]
 calculate_stat[, `50028`:= (qty_edible_import*`1087`)/Population/365*10]
 
+message("import statistics are calculated")
 
 
 ######### EXPORT ##########################
@@ -265,6 +286,9 @@ calculate_stat[, `66021`:= (qty_edible_export*`1080`)/Population/365*10]
 calculate_stat[, `66022`:= (qty_edible_export*`1078`)/Population/365*10]
 calculate_stat[, `66028`:= (qty_edible_export*`1087`)/Population/365*10]
 
+message("export statistics are calculated")
+
+
 calculate_stat[,  c("5610", "5910", "Population", "1061", "1062", "1063", "1064", "1066", "1067",
                     "1068", "1070", "1071", "1072", "1073", "1074","1075", "1076", "1078", "1079", "1080", "1081",
                     "1083", "1084", "1087", "1089", "qty_edible_import", "qty_edible_export"):= NULL ]
@@ -280,6 +304,9 @@ calculate_stat2 <- calculate_stat2[!is.na(Value),]
 
 setcolorder(calculate_stat2, c("geographicAreaM49Reporter", "geographicAreaM49Partner", "measuredItemCPC", "measuredElementTrade", "timePointYears", "Value"))
 
+message("putting the flags...")
+
+
 calculate_stat2[, flagObservationStatus:= 'E']
 calculate_stat2[, flagMethod:= 'e']
 
@@ -289,10 +316,12 @@ calculate_stat2$measuredElementTrade <- as.character(calculate_stat2$measuredEle
 # datasetConfig = GetDatasetConfig(domainCode = sessionKey@domain,
 #                                  datasetCode = sessionKey@dataset)
 
+message("saving data")
+
 
 SaveData(domain = "trade",
          dataset = "completed_tf_cpc_m49",
-         data = calculate_stat2, waitTimeout = 2000000)
+         data = calculate_stat2, waitTimeout = Inf)
 
 
 

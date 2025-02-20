@@ -53,12 +53,6 @@ if(CheckDebug()){
   )
 }
 
-# if (CheckDebug()) {
-#   SetClientFiles(dir = "C:/Users/Selek/Documents/certificates/production")
-#
-#   GetTestEnvironment(baseUrl = 'https://swsdev.aws.fao.org:8181', token = 'ba4f9eb4-c716-4f47-98be-a505748e487a')
-# }
-
 
 `%!in%` = Negate(`%in%`)
 options(warn=-1)
@@ -68,8 +62,7 @@ date_of_run <- Sys.Date() # To be able to follow the excel file's version, we wi
 # Set-up the parameters
 maxYearToProcess <- as.numeric(swsContext.computationParams$maxYearToProcess)
 minYearToProcess <- as.numeric(swsContext.computationParams$minYearToProcess)
-# maxYearToProcess <- 2017
-# minYearToProcess <- 2016
+
 
 if (any(length(minYearToProcess) == 0, length(maxYearToProcess) == 0)) {
   stop("Missing min or max year")
@@ -83,7 +76,6 @@ year_of_report = (minYearToProcess : maxYearToProcess)
 
 # Read the yearly basis raw trade data for reporting
 datapath <- file.path(R_SWS_SHARE_PATH, '/trade/datatables')
-# datapath <- file.path('D:/WINDOWS/trade/datatables')
 
 # file_ce = paste0('ce_combinednomenclature_unlogged_', year_of_report, '.rds') # Europe countries
 # file_ct = paste0('ct_tariffline_unlogged_', year_of_report, '.rds') # UNSD countries
@@ -92,10 +84,9 @@ datapath <- file.path(R_SWS_SHARE_PATH, '/trade/datatables')
 # file_path_ct = paste0(datapath, file_ct)
 
 # Read the previous version of the pre-processing reports and save new versions
-initial <- file.path(R_SWS_SHARE_PATH, "/selek/trade/preprocessing-reports")
+# initial <- file.path(R_SWS_SHARE_PATH, "/selek/trade/preprocessing-reports")
 save    <- file.path(R_SWS_SHARE_PATH, "trade/pre_processing_report")
-# initial <- file.path('E:/FAO DESKTOP/TRADE/pre-processing reports v0.3')
-# save    <- file.path("C:/Users/aydan selek/Desktop/pre_processing_report")
+
 
 # Create temporary location for the excel output
 TMP_DIR <- file.path(tempdir())
@@ -105,32 +96,31 @@ tmp_file_PreProcessing <- file.path(TMP_DIR, paste0("PreProcessing_reports_", da
 ##### READ PREVIOUS VERSIONS OF REPORTS (NOT FROM SHARED FOLDER ANYMORE BUT FROM SWS DATATABLE) ####
 
 # report_old_1 <- readRDS(file = file.path(initial, paste0('report_1.rds')))
-report_old_1 <- ReadDatatable('reporters_by_year_new_version')
+report_old_1 <- ReadDatatable('reporters_by_year')
 report_old_1 <- select_if(report_old_1, function(x){any(!is.na(x))})
 for (col in 1:ncol(report_old_1)){
   colnames(report_old_1)[col] <-  sub("year_", "", colnames(report_old_1)[col])
 }
 # report_old_2 <- readRDS(file = file.path(initial, paste0('report_2.rds')))
-report_old_2 <- ReadDatatable("non_reporting_countries_new_version")
+report_old_2 <- ReadDatatable("non_reporting_countries")
 report_old_2 <- select_if(report_old_2, function(x){any(!is.na(x))})
 for (col in 1:ncol(report_old_2)){
   colnames(report_old_2)[col] <-  sub("year_", "", colnames(report_old_2)[col])
 }
 # report_old_3 <- readRDS(file = file.path(initial, paste0('report_3.rds')))
-report_old_3<- ReadDatatable("number_records_by_reporter_year_new_version")
+report_old_3<- ReadDatatable("number_records_by_reporter_year")
 # report_old_4 <- readRDS(file = file.path(initial, paste0('report_4.rds')))
-report_old_4 <- ReadDatatable('import_and_export_content_check_new_version')
+report_old_4 <- ReadDatatable('import_and_export_content_check')
 # report_old_5 <- readRDS(file = file.path(initial, paste0('report_5.rds')))
-report_old_5 <- ReadDatatable("check_qty_and_value_included_new_version")
+report_old_5 <- ReadDatatable("check_qty_and_value_included")
 # report_old_6 <- readRDS(file = file.path(initial, paste0('report_6.rds')))
-report_old_6 <- ReadDatatable("missing_data_by_report_new_version")
+report_old_6 <- ReadDatatable("missing_data_by_report")
 
 country_names <- GetCodeList("trade", "total_trade_cpc_m49", "geographicAreaM49")
 stopifnot(nrow(country_names) > 0)
 
 country_names <- country_names[, .(m49 = code, description)]
 
-# use_new_data_format <- ReadDatatable('ess_trade_use_new_unsd_format')
 
 ################# FUNCTIONS ################
 
@@ -267,6 +257,11 @@ createReports<- function(year, names = country_names, report_number = 1){
     data_ct_2_countries <- unique(data_ct_2$rep)
     data_ct <- data_ct[rep %!in% data_ct_2_countries, ]
 
+    if (year >= 2020L){
+      setDT(data_ce)
+      data_ce <- data_ce[declarant != '006', ]
+    }
+
     # data_ct <- data_ct[!(rep %in% use_new_data_format$area[use_new_data_format$year==year])]
     data_ct <- rbind(data_ct, data_ct_2, fill = TRUE)
   # }
@@ -290,7 +285,7 @@ createReports<- function(year, names = country_names, report_number = 1){
   world_codes <- convert_m49_to_faoandm49(data_ct)
   com_codes <- world_codes[fao %!in% (eu_codes$fao)]
 
-  # The column 'code' should contain the Geonom code for eurospean countries and the UNSD M49 codefor the rest
+  # The column 'code' should contain the Geonom code for European countries and the UNSD M49 code for the rest of the world.
   com_codes <- com_codes[,colnames(eu_codes),with=FALSE]
   forreport <- rbind(eu_codes,com_codes[!eu_codes,on=c("fao", "m49")])
   forreport <- setDT(forreport)
@@ -538,13 +533,13 @@ data_third_report = lapply(year_of_report, createReports, report_number=3)
 
 data_third_report_all = rbindlist(data_third_report)
 
-data_third_report_all2 = data_third_report_all[order(data_third_report_all$description, data_third_report_all$flow),]
-data_third_report_all2 <- na.omit(data_third_report_all2, cols="description")
+data_third_report_all2 = data_third_report_all[order(data_third_report_all$m49, data_third_report_all$flow),]
+data_third_report_all2 <- na.omit(data_third_report_all2, cols="m49")
 setnames(data_third_report_all2, 'N', 'records_count')
 data_third_report_all3 = data_third_report_all2[ , .(hs_min_diff= ifelse(hs_min==shift(hs_min), FALSE, TRUE),
                                                      hs_max_diff= ifelse(hs_max==shift(hs_max),FALSE, TRUE),
                                                      records_diff=(records_count/shift(records_count)-1),
-                                                     code, m49, hs_min, hs_max, hs_n, records_count, year), by=.(description,flow)]
+                                                     code, description, hs_min, hs_max, hs_n, records_count, year), by=.(m49,flow)]
 
 report_new_3 <- data_third_report_all3
 
@@ -552,13 +547,13 @@ report_old_3 = report_old_3[report_old_3$year %!in% report_new_3$year] # Remove 
 
 report_3 <- rbind(report_old_3, report_new_3)
 
-report_3 = report_3[order(report_3$description, report_3$flow),] # Repeating the same thing since the report requires comparaison between the years
-report_3 <- na.omit(report_3, cols="description")
+report_3 = report_3[order(report_3$m49, report_3$flow),] # Repeating the same thing since the report requires comparison between the years
+report_3 <- na.omit(report_3, cols="m49")
 report_3$records_count <- as.numeric(report_3$records_count)
 report_3 = report_3[ , .(hs_min_diff= ifelse(hs_min==shift(hs_min), FALSE, TRUE),
                          hs_max_diff= ifelse(hs_max==shift(hs_max),FALSE, TRUE),
                          records_diff=(records_count/shift(records_count)-1),
-                         code, m49, hs_min, hs_max, hs_n, records_count, year), by=.(description,flow)]
+                         code, description, hs_min, hs_max, hs_n, records_count, year), by=.(m49,flow)]
 
 setcolorder(report_3, c("m49", "code", "description", "year", "flow", "hs_n", "hs_min", "hs_max", "hs_min_diff",
                         "hs_max_diff", "records_count", "records_diff"))
@@ -645,9 +640,9 @@ send_mail(from = "no-reply@fao.org", subject = "Trade Pre-Processing Reports", b
 
 message("Starting to save datatable on SWS...")
 
-allPPRtables <- c("reporters_by_year_new_version", "non_reporting_countries_new_version",
-                  "number_records_by_reporter_year_new_version", "import_and_export_content_check_new_version",
-                  "check_qty_and_value_included_new_version", "missing_data_by_report_new_version")
+allPPRtables <- c("reporters_by_year", "non_reporting_countries",
+                  "number_records_by_reporter_year", "import_and_export_content_check",
+                  "check_qty_and_value_included", "missing_data_by_report")
 
 files <- list(report_1, report_2, report_3, report_4, report_5, report_6)
 

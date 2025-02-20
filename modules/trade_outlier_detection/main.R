@@ -5,7 +5,6 @@
 ##'
 ##' This module is designed to identify outliers in total trade data
 ##'
-##'
 ##' **Inputs:**
 ##'
 ##' * total trade data
@@ -21,26 +20,9 @@ library(faosws)
 library(data.table)
 library(faoswsUtil)
 library(sendmailR)
+library(openxlsx)
 suppressPackageStartupMessages(library(dplyr, warn.conflicts = FALSE))
 
-
-# ## set up for the test environment and parameters
-# R_SWS_SHARE_PATH = Sys.getenv("R_SWS_SHARE_PATH")
-
-# if(CheckDebug()){
-#   message("Not on server, so setting up environment...")
-#
-#   library(faoswsModules)
-#   SETT <- ReadSettings("modules/trade_outlier_detection/sws.yml")
-#
-#   R_SWS_SHARE_PATH <- SETT[["share"]]
-#   ## Get SWS Parameters
-#   SetClientFiles(dir = SETT[["certdir"]])
-#   GetTestEnvironment(
-#     baseUrl = SETT[["server"]],
-#     token = SETT[["token"]]
-#   )
-# }
 if (CheckDebug()) {
   message("Not on server, so setting up environment...")
 
@@ -57,53 +39,127 @@ if (CheckDebug()) {
 }
 
 
-sendMailAttachment=function(fileToSend,name,textBody){
-  if(dim(fileToSend)[1]>0){
-    if(!CheckDebug()){
-      # Create the body of the message
+# sendMailAttachment=function(fileToSend,name,textBody){
+#   if(dim(fileToSend)[1]>0){
+#     if(!CheckDebug()){
+#       # Create the body of the message
+#
+#       FILETYPE = ".csv"
+#       CONFIG <- faosws::GetDatasetConfig(swsContext.datasets[[1]]@domain, swsContext.datasets[[1]]@dataset)
+#       sessionid <- ifelse(length(swsContext.datasets[[1]]@sessionId),
+#                           swsContext.datasets[[1]]@sessionId,
+#                           "core")
+#
+#       basename <- sprintf("%s_%s",
+#                           name,
+#                           sessionid)
+#       basedir <- tempfile()
+#       dir.create(basedir, recursive = TRUE)
+#       destfile <- file.path(basedir, paste0(basename, FILETYPE))
+#
+#       # create the csv in a temporary foldes
+#       write.csv(fileToSend, destfile, row.names = FALSE)
+#       # define on exit strategy
+#       on.exit(file.remove(destfile))
+#       #zipfile <- paste0(destfile, ".zip")
+#       #withCallingHandlers(zip(zipfile, destfile, flags = "-j9X"),
+#       # warning = function(w){
+#       # if(grepl("system call failed", w$message)){
+#       #  stop("The system ran out of memory trying to zip up your data. Consider splitting your request into chunks")
+#       # }
+#       # })
+#
+#       #on.exit(file.remove(zipfile), add = TRUE)
+#       body = textBody
+#
+#       sendmailR::sendmail(from = "sws@fao.org",
+#                           to = swsContext.userEmail,
+#                           subject = name,
+#                           msg = list(strsplit(body,"\n")[[1]],
+#                                      sendmailR::mime_part(destfile,
+#                                                           name = paste0(basename, FILETYPE)
+#                                      )
+#                           )
+#       )
+#     }
+#   }
+# }
 
-      FILETYPE = ".csv"
-      CONFIG <- faosws::GetDatasetConfig(swsContext.datasets[[1]]@domain, swsContext.datasets[[1]]@dataset)
-      sessionid <- ifelse(length(swsContext.datasets[[1]]@sessionId),
-                          swsContext.datasets[[1]]@sessionId,
-                          "core")
 
-      basename <- sprintf("%s_%s",
-                          name,
-                          sessionid)
-      basedir <- tempfile()
-      dir.create(basedir, recursive = TRUE)
-      destfile <- file.path(basedir, paste0(basename, FILETYPE))
+send_mail <- function(from = NA, to = NA, subject = NA,
+                      body = NA, remove = FALSE) {
 
-      # create the csv in a temporary foldes
-      write.csv(fileToSend, destfile, row.names = FALSE)
-      # define on exit strategy
-      on.exit(file.remove(destfile))
-      #zipfile <- paste0(destfile, ".zip")
-      #withCallingHandlers(zip(zipfile, destfile, flags = "-j9X"),
-      # warning = function(w){
-      # if(grepl("system call failed", w$message)){
-      #  stop("The system ran out of memory trying to zip up your data. Consider splitting your request into chunks")
-      # }
-      # })
+  if (missing(from)) from <- 'no-reply@fao.org'
 
-      #on.exit(file.remove(zipfile), add = TRUE)
-      body = textBody
-
-      sendmailR::sendmail(from = "sws@fao.org",
-                          to = swsContext.userEmail,
-                          subject = name,
-                          msg = list(strsplit(body,"\n")[[1]],
-                                     sendmailR::mime_part(destfile,
-                                                          name = paste0(basename, FILETYPE)
-                                     )
-                          )
-      )
+  if (missing(to)) {
+    if (exists('swsContext.userEmail')) {
+      to <- swsContext.userEmail
     }
   }
+
+  if (is.null(to)) {
+    stop('No valid email in `to` parameter.')
+  }
+
+  if (missing(subject)) stop('Missing `subject`.')
+
+  if (missing(body)) stop('Missing `body`.')
+
+  if (length(body) > 1) {
+    body <-
+      sapply(
+        body,
+        function(x) {
+          if (file.exists(x)) {
+            # https://en.wikipedia.org/wiki/Media_type
+            file_type <-
+              switch(
+                tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
+                txt  = 'text/plain',
+                csv  = 'text/csv',
+                png  = 'image/png',
+                jpeg = 'image/jpeg',
+                jpg  = 'image/jpeg',
+                gif  = 'image/gif',
+                xls  = 'application/vnd.ms-excel',
+                xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                doc  = 'application/msword',
+                docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                pdf  = 'application/pdf',
+                zip  = 'application/zip',
+                # https://stackoverflow.com/questions/24725593/mime-type-for-serialized-r-objects
+                rds  = 'application/octet-stream'
+              )
+
+            if (is.null(file_type)) {
+              stop(paste(tolower(sub('.*\\.([^.]+)$', '\\1', basename(x))),
+                         'is not a supported file type.'))
+            } else {
+              res <- sendmailR:::.file_attachment(x, basename(x), type = file_type)
+
+              if (remove == TRUE) {
+                unlink(x)
+              }
+
+              return(res)
+            }
+          } else {
+            return(x)
+          }
+        }
+      )
+  } else if (!is.character(body)) {
+    stop('`body` should be either a string or a list.')
+  }
+
+  sendmailR::sendmail(from, to, subject, as.list(body))
 }
 
 
+
+# Create temporary location for the output
+TMP_DIR <- file.path(tempdir())
+if (!file.exists(TMP_DIR)) dir.create(TMP_DIR, recursive = TRUE)
 
 startYear = as.numeric(swsContext.computationParams$startYear)
 #startYear = as.numeric(2013)
@@ -199,6 +255,9 @@ data = normalise(data, areaVar = "geographicAreaM49",
 
 trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, except = "timePointYears")
 
+COUNTRY_NAME <- as.character(unique(trade$geographicAreaM49_description))
+tmp_file_outlier <- file.path(TMP_DIR, paste0(COUNTRY_NAME, "_Outliers ", endYear, ".xlsx"))
+
 #trade$Value[trade$Value==0]<-NA # needed to remove NA from the mean, will be restored later
 
 trade <- trade[order(geographicAreaM49, measuredItemCPC, measuredElementTrade, timePointYears)]
@@ -242,21 +301,19 @@ outList <- trade[outlier == TRUE]
 
 threshold_used <- unique(outList$threshold)
 
-# outList[, c("flow", "big_qty", "outlier", "threshold") := NULL]
-#
-# outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
-#
-# bodyOutliers <- "The Email contains a list of trade outliers based on Unit Value"
-#
-# sendMailAttachment(outList, "outlierList", bodyOutliers)
 if (nrow(outList) > 0) {
   outList[, c("flow", "big_qty", "outlier", "threshold") := NULL]
 
-  outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
+  wb <- createWorkbook("Creator of workbook")
+  addWorksheet(wb, sheetName = "Outliers")
+  writeData(wb, "Outliers", outList)
+  saveWorkbook(wb, tmp_file_outlier, overwrite = TRUE)
+  # outList[, measuredItemCPC := paste0("'", measuredItemCPC)]
 
   bodyOutliers <- paste0("The Email contains a list of trade outliers based on Unit Value. The quantity threshold used for this country is: ", threshold_used)
 
-  sendMailAttachment(outList, "outlierList", bodyOutliers)
+  # sendMailAttachment(outList, paste0(COUNTRY_NAME, '_Outliers ', endYear), bodyOutliers)
+  send_mail(from = "no-reply@fao.org", subject = paste0(COUNTRY_NAME, "_Outliers ", endYear), body = c(bodyOutliers, tmp_file_outlier), remove = TRUE)
 
   print("Outliers found, please check email.")
 } else {

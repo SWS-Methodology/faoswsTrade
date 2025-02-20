@@ -144,7 +144,7 @@ COUNTRY <- as.character(swsContext.datasets[[1]]@dimensions$geographicAreaM49@ke
 # Create temporary location for the output
 TMP_DIR <- file.path(tempdir())
 if (!file.exists(TMP_DIR)) dir.create(TMP_DIR, recursive = TRUE)
-tmp_file_tpselection <- file.path(TMP_DIR, paste0("monetary_values_ranked_commodities_", COUNTRY, ".xlsx"))
+# tmp_file_tpselection <- file.path(TMP_DIR, paste0("monetary_values_ranked_commodities_", COUNTRY, ".xlsx"))
 
 
 # Get data configuration and session
@@ -202,6 +202,9 @@ data = normalise(data, areaVar = "geographicAreaM49",
 
 
 trade <- nameData(domain = "trade", dataset = "total_trade_cpc_m49", data, except = "timePointYears")
+
+COUNTRY_NAME <- as.character(unique(trade$geographicAreaM49_description))
+tmp_file_tpselection <- file.path(TMP_DIR, paste0(COUNTRY_NAME, "_monetary_values_ranked_commodities", ".xlsx"))
 
 trade_mnt <- trade[measuredElementTrade %in% c(5622,5922),]
 # trade_qty <- trade[grepl("Quantity", measuredElementTrade_description),]
@@ -339,6 +342,6 @@ bodyLastCheck = paste("Plugin completed. The attached excel file contains all im
                         ",
                       sep='\n')
 
-send_mail(from = "no-reply@fao.org", subject = "Monetary values ranked commodities", body = c(bodyLastCheck, tmp_file_tpselection), remove = TRUE)
+send_mail(from = "no-reply@fao.org", subject = paste0(COUNTRY_NAME, " - Monetary values ranked commodities"), body = c(bodyLastCheck, tmp_file_tpselection), remove = TRUE)
 
 print('Plug-in Completed')

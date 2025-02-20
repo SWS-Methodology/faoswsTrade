@@ -146,13 +146,11 @@ if (faosws::CheckDebug()){
 EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
 EMAIL_RECIPIENTS <- gsub(" ", "", EMAIL_RECIPIENTS)
 
-# Remove S.T.:
-EMAIL_RECIPIENTS <- EMAIL_RECIPIENTS[!grepl("yy", EMAIL_RECIPIENTS)]
-
 # Stop if required parameters were not set
 # The out_coef was removed as a parameter given that the
 # outlier detection/imputation was disabled.
 #stopifnot(!is.null(swsContext.computationParams$out_coef))
+
 stopifnot(!is.null(swsContext.computationParams$year))
 
 ##' # Parameters
@@ -164,6 +162,7 @@ stopifnot(!is.null(swsContext.computationParams$year))
 if (!exists('year', inherits = FALSE)) {
   year <- as.integer(swsContext.computationParams$year)
 }
+
 flog.info("Year: %s", year, name = "dev")
 
 stopifnot(!any(is.na(USER), USER == ""))
@@ -3146,8 +3145,11 @@ if (nrow(to_mirror_raw) > 0) { # should always be true, but just in case...
       )
     }
 
-    complete_trade_flow_cpc <-
-      complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
+    # OCTOBER 2024: We cancelled the TP exluding criteria. The plugin still continous to calculate imcomplete mirror statistics in order to anaysed.
+    # But we don't delete it from the dataset.
+    # complete_trade_flow_cpc <-
+    #   complete_trade_flow_cpc[exclude == FALSE][, exclude := NULL]
+    complete_trade_flow_cpc[, exclude := NULL]
   }
 }
 

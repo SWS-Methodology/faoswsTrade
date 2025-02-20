@@ -162,9 +162,8 @@ key = DatasetKey(domain = "trade", dataset = "total_trade_cpc_m49", dimensions =
 
 
 #### ACTUAL VALUES READ AND AGGREGATE FOR 'yearVals'###
-# The RDS files are coming from TP selection plug-in. The data is in complete trade flow level.
-# The actual values will be used to show which figures have been deleted by the TP selection plug-in.
-# It is only to easy the job of country analyst.
+# The RDS files are coming from Complete Trade Flow CPC plugin where the incomplete mirror statistics are identified (Exclude TP criteria).
+# The actual values will be used to show which figures have been identified by the plug-in, so that country anaysts should look for better data.
 
 actual_value_current = setDT(readRDS(paste0(R_SWS_SHARE_PATH, '/trade/validation_tool_files/tp_criterion/', year, '.rds')))
 actual_value_1 = setDT(readRDS(paste0(R_SWS_SHARE_PATH,'/trade/validation_tool_files/tp_criterion/', (year-1), '.rds')))
@@ -172,10 +171,10 @@ actual_value_2 = setDT(readRDS(paste0(R_SWS_SHARE_PATH,'/trade/validation_tool_f
 actual_value_3 = setDT(readRDS(paste0(R_SWS_SHARE_PATH,'/trade/validation_tool_files/tp_criterion/', (year-3), '.rds')))
 actual_value_4 = setDT(readRDS(paste0(R_SWS_SHARE_PATH,'/trade/validation_tool_files/tp_criterion/', (year-4), '.rds')))
 
-actual_value_current_value <- copy(actual_value_current)
-setDT(actual_value_current_value)
-actual_value_current_value <- actual_value_current_value[(measuredElementTrade == 5622 | measuredElementTrade == 5922) & geographicAreaM49Reporter == COUNTRY,
-                                             .(Value = sum(Value)), by = .(timePointYears, geographicAreaM49Reporter,measuredItemCPC, measuredElementTrade)]
+# actual_value_current_value <- copy(actual_value_current)
+# setDT(actual_value_current_value)
+# actual_value_current_value <- actual_value_current_value[(measuredElementTrade == 5622 | measuredElementTrade == 5922) & geographicAreaM49Reporter == COUNTRY,
+#                                              .(Value = sum(Value)), by = .(timePointYears, geographicAreaM49Reporter,measuredItemCPC, measuredElementTrade)]
 ######################
 
 actual_value_current <- actual_value_current[(measuredElementTrade == 5610 | measuredElementTrade == 5910) & geographicAreaM49Reporter == COUNTRY,
@@ -259,6 +258,10 @@ official_data3 <- official_data3[order(official_data3$id), ]
 
 official_data3[,id:=NULL]
 
+# # As of October 2024, excluding TP criteria doesn't apply. Therefore 'Value.x' won't be NA anymore.
+# # instead they should be equal (or at least near)
+
+
 ### Assign the actual values ###
 if (nrow(actual_value_total)>0){
   outList_to_actuals <- outList_final[,.(geographicAreaM49, geographicAreaM49_description, measuredItemCPC,
@@ -277,85 +280,102 @@ if (nrow(actual_value_total)>0){
 
   actual_value_total2[,id:=NULL]
 
-  idvars = c("geographicAreaM49", "measuredItemCPC", "measuredElementTrade", "geographicAreaM49_description",
-             "measuredItemCPC_description","measuredElementTrade_description")
+  # idvars = c("geographicAreaM49", "measuredItemCPC", "measuredElementTrade", "geographicAreaM49_description",
+  #            "measuredItemCPC_description","measuredElementTrade_description")
+  #
+  # outList_final2 <- melt.data.table(outList_final, id.vars = idvars,
+  #                                   measure.vars = c(names(outList_final)[names(outList_final) %!in% idvars]), variable.name = 'timePointYears', value.name = 'Value')
+  #
+  # actual_value_total2 <- melt.data.table(actual_value_total2, id.vars = idvars,
+  #                                        measure.vars = c(names(actual_value_total2)[names(actual_value_total2) %!in% idvars]), variable.name = 'timePointYears', value.name = 'Value')
+  #
+  # outList_final3 <- merge(outList_final2, actual_value_total2, by = c(idvars, 'timePointYears'), all = TRUE )
+  #
 
-  outList_final2 <- melt.data.table(outList_final, id.vars = idvars,
-                                    measure.vars = c(names(outList_final)[names(outList_final) %!in% idvars]), variable.name = 'timePointYears', value.name = 'Value')
+  # outList_final3 <- outList_final3[is.na(Value.x), Value.x:=Value.y]
+  # outList_final3 <- outList_final3[, Value.y := NULL]
+  # setnames(outList_final3, 'Value.x', 'Value')
 
-  actual_value_total2 <- melt.data.table(actual_value_total2, id.vars = idvars,
-                                         measure.vars = c(names(actual_value_total2)[names(actual_value_total2) %!in% idvars]), variable.name = 'timePointYears', value.name = 'Value')
-
-  outList_final3 <- merge(outList_final2, actual_value_total2, by = c(idvars, 'timePointYears'), all = TRUE )
-
-  outList_final3 <- outList_final3[is.na(Value.x), Value.x:=Value.y]
-  outList_final3 <- outList_final3[, Value.y := NULL]
-  setnames(outList_final3, 'Value.x', 'Value')
-
-  outList_final4 <- dcast.data.table(outList_final3, geographicAreaM49 + geographicAreaM49_description + measuredItemCPC +
-                                       measuredItemCPC_description + measuredElementTrade + measuredElementTrade_description
-                                     ~ timePointYears, value.var = list('Value'))
-
-  ordering <- outList_final[,.(geographicAreaM49, geographicAreaM49_description, measuredItemCPC,
-                               measuredItemCPC_description, measuredElementTrade,
-                               measuredElementTrade_description)]
-  ordering$id <- 1:nrow(ordering)
-
-  outList_final4 <- merge(ordering, outList_final4, by=c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC',
-                                                         'measuredItemCPC_description', 'measuredElementTrade',
-                                                         'measuredElementTrade_description'), all.x=T, all.y=F)
-
-  outList_final4 <- outList_final4[order(outList_final4$id), ]
-
-  outList_final4[,id:=NULL]
+  # outList_final4 <- dcast.data.table(outList_final3, geographicAreaM49 + geographicAreaM49_description + measuredItemCPC +
+  #                                      measuredItemCPC_description + measuredElementTrade + measuredElementTrade_description
+  #                                    ~ timePointYears, value.var = list('Value'))
+  #
+  # ordering <- outList_final[,.(geographicAreaM49, geographicAreaM49_description, measuredItemCPC,
+  #                              measuredItemCPC_description, measuredElementTrade,
+  #                              measuredElementTrade_description)]
+  # ordering$id <- 1:nrow(ordering)
+  #
+  # outList_final4 <- merge(ordering, outList_final4, by=c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC',
+  #                                                        'measuredItemCPC_description', 'measuredElementTrade',
+  #                                                        'measuredElementTrade_description'), all.x=T, all.y=F)
+  #
+  # outList_final4 <- outList_final4[order(outList_final4$id), ]
+  #
+  # outList_final4[,id:=NULL]
 
   ###
 
 
   #### ADD DELETED VALUE COLUMN #####
-  setnames(actual_value_current_value, 'geographicAreaM49Reporter', 'geographicAreaM49')
-  actual_value_current_value[, flow:= substr(measuredElementTrade, 1, 2)]
-  actual_value_current_value[, measuredElementTrade:= NULL]
-  if (nrow(actual_value_current_value)>0){
-    actual_value_current_value[timePointYears==year, timePointYears_dollar:= paste0(year, '_Dollar_value')]
-    actual_value_current_value[,timePointYears:= NULL]
-    actual_value_current_value <- dcast.data.table(actual_value_current_value, geographicAreaM49 + measuredItemCPC + flow
-                                                    ~ timePointYears_dollar, value.var = list('Value'))
+  # setnames(actual_value_current_value, 'geographicAreaM49Reporter', 'geographicAreaM49')
+  # actual_value_current_value[, flow:= substr(measuredElementTrade, 1, 2)]
+  # actual_value_current_value[, measuredElementTrade:= NULL]
+  # if (nrow(actual_value_current_value)>0){
+  #   actual_value_current_value[timePointYears==year, timePointYears_dollar:= paste0(year, '_Dollar_value')]
+  #   actual_value_current_value[,timePointYears:= NULL]
+  #   actual_value_current_value <- dcast.data.table(actual_value_current_value, geographicAreaM49 + measuredItemCPC + flow
+  #                                                   ~ timePointYears_dollar, value.var = list('Value'))
+  # }
+
+
+
+  # outList_final5 <- outList_final4[, flow:= substr(measuredElementTrade, 1, 2)]
+  #
+  # if (nrow(actual_value_current_value)>0){
+  #   outList_final6 <- merge(outList_final5, actual_value_current_value,
+  #                           by = c('geographicAreaM49', 'measuredItemCPC', 'flow'), all.x = TRUE)
+  # } else {
+  #   outList_final6 <- outList_final5
+  # }
+
+
+
+  # outList_final6 <- outList_final6[, flow:=NULL]
+
+
+  # ordering <- outList_final[,.(geographicAreaM49, geographicAreaM49_description, measuredItemCPC,
+  #                              measuredItemCPC_description, measuredElementTrade,
+  #                              measuredElementTrade_description)]
+  # ordering$id <- 1:nrow(ordering)
+  #
+  # outList_final7 <- merge(ordering, outList_final6, by=c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC',
+  #                                                        'measuredItemCPC_description', 'measuredElementTrade',
+  #                                                        'measuredElementTrade_description'), all.x=T, all.y=F)
+  #
+  # outList_final7 <- outList_final7[order(outList_final7$id), ]
+  #
+  # outList_final7[,id:=NULL]
+  #
+
+  #PUTTING THE IDENTIFIED POSSIBLE INCOMPLETE MIRROR DATA, IN THE SHAPE OF OUTLIST
+
+
+  if (ncol(outList_final)!=ncol(actual_value_total2)) {
+
+    missing_col <- names(outList_final)[names(outList_final) %!in% names(actual_value_total2)]
+
+    for (i in 1:length(missing_col)) {
+      actual_value_total2[, missing_col[i]:= NA]
+    }
+    setcolorder(actual_value_total2, names(outList_final))
   }
 
-
-
-  outList_final5 <- outList_final4[, flow:= substr(measuredElementTrade, 1, 2)]
-
-  if (nrow(actual_value_current_value)>0){
-    outList_final6 <- merge(outList_final5, actual_value_current_value,
-                            by = c('geographicAreaM49', 'measuredItemCPC', 'flow'), all.x = TRUE)
-  } else {
-    outList_final6 <- outList_final5
-  }
-
-
-
-  outList_final6 <- outList_final6[, flow:=NULL]
-
-
-  ordering <- outList_final[,.(geographicAreaM49, geographicAreaM49_description, measuredItemCPC,
-                               measuredItemCPC_description, measuredElementTrade,
-                               measuredElementTrade_description)]
-  ordering$id <- 1:nrow(ordering)
-
-  outList_final7 <- merge(ordering, outList_final6, by=c('geographicAreaM49', 'geographicAreaM49_description', 'measuredItemCPC',
-                                                         'measuredItemCPC_description', 'measuredElementTrade',
-                                                         'measuredElementTrade_description'), all.x=T, all.y=F)
-
-  outList_final7 <- outList_final7[order(outList_final7$id), ]
-
-  outList_final7[,id:=NULL]
-
-  outList_final5 <- outList_final7
+  outList_final5 <- outList_final
 
 } else {
+
   outList_final5 <- outList_final
+
 }
 
 
@@ -402,6 +422,12 @@ for (i in c(7,8,9,10,11,12)) {
 
 for (i in c(7,8,9,10,11,12)) {
   addStyle(wb, "main_commodities", cols = i, rows = 1 + c((1:nrow(outList_final))[is.na(outList_final[[i]])]), style = first_fill, gridExpand = TRUE, stack = TRUE)
+}
+
+if (nrow(actual_value_total)>0){
+  for (i in c(7,8,9,10,11,12)) {
+  addStyle(wb, "main_commodities", cols = i, rows = 1 + c((1:nrow(actual_value_total2))[!is.na(actual_value_total2[[i]])]), style = first_fill, gridExpand = TRUE, stack = TRUE)
+    }
 }
 
 for (i in c(7,8,9,10,11,12)) {

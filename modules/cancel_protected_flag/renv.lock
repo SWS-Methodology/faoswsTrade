@@ -249,7 +249,6 @@
       "Version": "0.4.1",
       "Source": "Repository",
       "Repository": "RSPM",
-      "RemoteSha": "56b7f4f8acdbc1da6065e7a76ef5a4c8706f317f",
       "Requirements": [
         "R",
         "methods",

@@ -187,7 +187,7 @@ saveWorkbook(wb, tmp_file_cancelflag, overwrite = TRUE)
 
 bodyCancelFlag = paste("Plugin completed.")
 
-# send_mail(from = "no-reply@fao.org", subject = "trade_cancel_flag", body = c(bodyCancelFlag, tmp_file_cancelflag), remove = TRUE)
+send_mail(from = "no-reply@fao.org", subject = "trade_cancel_flag", body = c(bodyCancelFlag, tmp_file_cancelflag), remove = TRUE)
 
 
 sessionKey = swsContext.datasets[[1]]

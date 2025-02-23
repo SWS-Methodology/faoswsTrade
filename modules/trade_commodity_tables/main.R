@@ -109,9 +109,9 @@ R_SWS_SHARE_PATH <- Sys.getenv("R_SWS_SHARE_PATH")
 if (CheckDebug()) {
 
   library(faoswsModules)
-  SETTINGS = ReadSettings("modules/trade_commodity_tables/sws.yml")
+  SETTINGS = ReadSettings("sws.yml")
   ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  # faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])

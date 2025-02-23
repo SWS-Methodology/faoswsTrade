@@ -32,9 +32,9 @@ library(openxlsx)
 
 if (CheckDebug()) {
   library(faoswsModules)
-  SETTINGS = ReadSettings("modules/calculate_mirror_quantity_value/sws.yml")
+  SETTINGS = ReadSettings("sws.yml")
   ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  # faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])

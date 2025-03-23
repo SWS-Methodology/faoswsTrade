@@ -32,6 +32,7 @@ library(faoswsUtil)
 library(faoswsFlag)
 library(tidyr)
 library(dplyr, warn.conflicts = FALSE)
+library(tibble)
 
 ##+ init
 
@@ -64,13 +65,31 @@ local({
 
 if (CheckDebug()) {
   library(faoswsModules)
-  SETTINGS = ReadSettings("modules/total_trade_CPC/sws.yml")
+  SETTINGS = ReadSettings("sws.yml")
   ## Define where your certificates are stored
-  faosws::SetClientFiles(SETTINGS[["certdir"]])
+  # faosws::SetClientFiles(SETTINGS[["certdir"]])
   ## Get session information from SWS. Token must be obtained from web interface
   GetTestEnvironment(baseUrl = SETTINGS[["server"]],
                      token = SETTINGS[["token"]])
 }
+
+# Always source files in R/ (useful for local runs).
+# Sourcing files is different in git renv context.
+# please use the following
+
+### START
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
+
+### END
 
 # E-mail addresses of people that will get notified.
 EMAIL_RECIPIENTS <- ReadDatatable("ess_trade_people")$fao_email
@@ -171,8 +190,9 @@ knitr::kable(faoswsFlag::flagWeightTable)
 
 ##+ aggregate
 
-flagWeightTable_status <- frame_data(
-  ~flagObservationStatus, ~flagObservationWeights,
+# flagWeightTable_status <- frame_data(
+  flagWeightTable_status <- tribble(   # code changed because frame_data is not supported anymore
+    ~flagObservationStatus, ~flagObservationWeights,
   'X',                   1.00,
   '',                    0.99,
   'T',                   0.80,
@@ -184,8 +204,9 @@ flagWeightTable_status <- frame_data(
 # This shouldn't ever be needed as all values are a sum ("s")
 # XXX No, not really: there are some reporters that for some
 # commodities and flow have just one partner
-flagWeightTable_method <- frame_data(
-  ~flagObservationStatus, ~flagObservationWeights,
+  # flagWeightTable_method <- frame_data(
+    flagWeightTable_method <- tribble(
+      ~flagObservationStatus, ~flagObservationWeights,
   'h',                   1.00,
   # XXX check why some are blanks
   '',                    0.99,

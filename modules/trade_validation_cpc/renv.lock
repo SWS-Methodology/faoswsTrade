@@ -277,7 +277,7 @@
     },
     "faosws": {
       "Package": "faosws",
-      "Version": "1.1.1",
+      "Version": "1.1.2",
       "Source": "Repository",
       "Repository": "RSPM",
       "RemoteSha": "825aa308de5baffbdf38bde8b1afaec9c1eab0cd",

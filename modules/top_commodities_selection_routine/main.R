@@ -95,10 +95,27 @@ send_mail <- function(from = NA, to = NA, subject = NA,
   sendmailR::sendmail(from, to, subject, as.list(body))
 }
 
-sapply(dir("R", full.names = TRUE), source)
+# Always source files in R/ (useful for local runs).
+# Sourcing files is different in git renv context.
+# please use the following
+
+### START
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
+
+### END
+
 
 R_SWS_SHARE_PATH <- Sys.getenv("R_SWS_SHARE_PATH")
-dev_sws_set_file <- "modules/top_commodities_selection_routine/sws.yml"
+dev_sws_set_file <- "sws.yml"
 if (CheckDebug()) {
   set_sws_dev_settings(dev_sws_set_file)
 }

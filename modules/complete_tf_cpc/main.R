@@ -39,8 +39,26 @@ library(faoswsTrade)
 library(faoswsFlag)
 library(bit64)
 `%!in%` = Negate(`%in%`)
-# Always source files in R/ (useful for local runs)
-sapply(dir("R", full.names = TRUE), source)
+
+
+
+# Always source files in R/ (useful for local runs).
+# Sourcing files is different in git renv context.
+# please use the following
+
+### START
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
+
+### END
 
 ##+ check_parameters
 
@@ -103,7 +121,7 @@ general_log2console <- FALSE
 # Save current options (will be reset at the end)
 old_options <- options()
 
-dev_sws_set_file <- "modules/complete_tf_cpc/sws.yml"
+dev_sws_set_file <- "sws.yml"
 
 # Switch off dplyr's progress bars globally
 options(dplyr.show_progress = FALSE)

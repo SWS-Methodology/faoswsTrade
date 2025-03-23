@@ -24,11 +24,16 @@ threshold <- 0.5
 
 # E-mail addresses (without @fao.org) of people that will
 # get notified when the plugin runs successfully.
-EMAIL_RECIPIENTS <-
-  c("Dominique.Habimana", "Claudia.DeVita", "Christian.Mongeau")
+# EMAIL_RECIPIENTS <-
+#   c("Dominique.Habimana", "Claudia.DeVita", "Christian.Mongeau")
 
+EMAIL_RECIPIENTS <-
+  c("Claudia.DeVita", "Christian.Mongeau","Aydan.Selek")
+
+library(data.table)
 library(faosws)
 library(dplyr)
+library(faoswsUtil)
 #library(tidyr)
 # stringr, zoo, RcppRoll, robustbase
 
@@ -36,11 +41,11 @@ library(dplyr)
 
 if (CheckDebug()) {
   library(faoswsModules)
-  settings_file <- "modules/trade_validation_cpc/sws.yml"
+  settings_file <- "sws.yml"
   SETTINGS = faoswsModules::ReadSettings(settings_file)
 
   ## Define where your certificates are stored
-  SetClientFiles(SETTINGS[["certdir"]])
+  # SetClientFiles(SETTINGS[["certdir"]])
 
   ## Get session information from SWS.
   ## Token must be obtained from web interface
@@ -97,7 +102,23 @@ if (!file.exists(dir_to_save)) dir.create(dir_to_save, recursive = TRUE)
 if (!file.exists(DB_rds_storage)) dir.create(DB_rds_storage, recursive = TRUE)
 
 ######################################################################
-for ( i in  dir("R/", full.names = TRUE) ) source(i)
+# Always source files in R/ (useful for local runs).
+# Sourcing files is different in git renv context.
+# please use the following
+
+### START
+if (CheckDebug()) {
+  # setwd(wd)
+  files = dir("./R", full.names = TRUE)
+} else{
+  path <- Sys.getenv('ROOT_PATH')
+  files <-
+    dir(paste(path, "./R" , sep = "/"), full.names = TRUE)
+}
+
+invisible(sapply(files, source))
+
+### END
 ######################################################################
 
 
@@ -324,7 +345,7 @@ boxB1 <- function (x, method = "asymmetric", k = 1.5,
       fine <- list(fences = c(lower = low.b, upper = up.b),
                    excluded = to.check)
     } else {
-      fine <- list(fences = c(lower = low.b, upper = up.b), 
+      fine <- list(fences = c(lower = low.b, upper = up.b),
                    excluded = to.check, outliers = lab[outl])
     }
 

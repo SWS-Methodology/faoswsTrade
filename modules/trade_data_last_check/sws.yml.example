@@ -1,0 +1,10 @@
+current: production
+all:
+  share: /media/share
+qa:
+  server: https://sws.qa.aws.fao.org:8181
+  token: abcdef0123456789
+production:
+  server: https://sws.aws.fao.org:8181
+  token: 9876543210fedcba
+

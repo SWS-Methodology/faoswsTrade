@@ -112,11 +112,11 @@ if(CheckDebug()){
   message("Not on server, so setting up environment...")
 
   library(faoswsModules)
-  SETT <- ReadSettings("modules/trade_data_last_check/sws.yml")
+  SETT <- ReadSettings("sws.yml")
 
   R_SWS_SHARE_PATH <- SETT[["share"]]
   ## Get SWS Parameters
-  SetClientFiles(dir = SETT[["certdir"]])
+  # SetClientFiles(dir = SETT[["certdir"]])
   GetTestEnvironment(
     baseUrl = SETT[["server"]],
     token = SETT[["token"]]
